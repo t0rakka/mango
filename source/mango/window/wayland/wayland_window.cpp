@@ -238,8 +238,12 @@ namespace
 
     void xdg_wm_base_ping(void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial)
     {
-        MANGO_UNREFERENCED(data);
+        WindowContext* window = static_cast<WindowContext*>(data);
         xdg_wm_base_pong(xdg_wm_base, serial);
+        if (window->display)
+        {
+            wl_display_flush(window->display);
+        }
     }
 
     static const struct xdg_wm_base_listener xdg_wm_base_listener =
@@ -421,6 +425,51 @@ namespace
         window->owner->onMouseClick(window->cursor[0], window->cursor[1], MOUSEBUTTON_WHEEL, count);
     }
 
+    void pointer_frame(void* data, struct wl_pointer* pointer)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(pointer);
+    }
+
+    void pointer_axis_source(void* data, struct wl_pointer* pointer, uint32_t axis_source)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(axis_source);
+    }
+
+    void pointer_axis_stop(void* data, struct wl_pointer* pointer, uint32_t time, uint32_t axis)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(time);
+        MANGO_UNREFERENCED(axis);
+    }
+
+    void pointer_axis_discrete(void* data, struct wl_pointer* pointer, uint32_t axis, int32_t discrete)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(axis);
+        MANGO_UNREFERENCED(discrete);
+    }
+
+    void pointer_axis_value120(void* data, struct wl_pointer* pointer, uint32_t axis, int32_t value120)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(axis);
+        MANGO_UNREFERENCED(value120);
+    }
+
+    void pointer_axis_relative_direction(void* data, struct wl_pointer* pointer, uint32_t axis, uint32_t direction)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(axis);
+        MANGO_UNREFERENCED(direction);
+    }
+
     static const struct wl_pointer_listener pointer_listener =
     {
         .enter = pointer_enter,
@@ -428,6 +477,12 @@ namespace
         .motion = pointer_motion,
         .button = pointer_button,
         .axis = pointer_axis,
+        .frame = pointer_frame,
+        .axis_source = pointer_axis_source,
+        .axis_stop = pointer_axis_stop,
+        .axis_discrete = pointer_axis_discrete,
+        .axis_value120 = pointer_axis_value120,
+        .axis_relative_direction = pointer_axis_relative_direction,
     };
 
     void keyboard_keymap(void* data, struct wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size)
@@ -996,6 +1051,7 @@ namespace mango
         }
 
         wl_display_dispatch_pending(display);
+        wl_display_flush(display);
     }
 
     // -----------------------------------------------------------------------

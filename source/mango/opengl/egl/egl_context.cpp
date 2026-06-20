@@ -8,6 +8,8 @@
 #include <mango/opengl/opengl.hpp>
 
 #include <algorithm>
+#include <cstring>
+#include <vector>
 
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
@@ -25,6 +27,139 @@
 #endif
 
 #include <EGL/egl.h>
+#include <EGL/eglext.h>
+
+namespace
+{
+
+    struct EGLConfigChoice
+    {
+        EGLConfig config = nullptr;
+        bool srgb = false;
+    };
+
+    bool eglHasExtension(EGLDisplay display, const char* name)
+    {
+        const char* extensions = eglQueryString(display, EGL_EXTENSIONS);
+        return extensions && std::strstr(extensions, name) != nullptr;
+    }
+
+    void eglClearErrors()
+    {
+        while (eglGetError() != EGL_SUCCESS)
+        {
+        }
+    }
+
+    std::vector<EGLint> buildConfigAttribs(const mango::OpenGLContext::Config& config)
+    {
+        std::vector<EGLint> attribs;
+
+        attribs.push_back(EGL_RED_SIZE);
+        attribs.push_back(int(config.red));
+        attribs.push_back(EGL_GREEN_SIZE);
+        attribs.push_back(int(config.green));
+        attribs.push_back(EGL_BLUE_SIZE);
+        attribs.push_back(int(config.blue));
+        attribs.push_back(EGL_ALPHA_SIZE);
+        attribs.push_back(int(config.alpha));
+
+        attribs.push_back(EGL_DEPTH_SIZE);
+        attribs.push_back(config.depth);
+
+        attribs.push_back(EGL_STENCIL_SIZE);
+        attribs.push_back(config.stencil);
+
+        attribs.push_back(EGL_SURFACE_TYPE);
+        attribs.push_back(EGL_WINDOW_BIT);
+
+        attribs.push_back(EGL_RENDERABLE_TYPE);
+        attribs.push_back(EGL_OPENGL_BIT);
+
+        if (config.samples > 1)
+        {
+            // MANGO TODO
+        }
+
+        attribs.push_back(EGL_NONE);
+        return attribs;
+    }
+
+    EGLConfigChoice chooseEGLConfig(EGLDisplay display, const std::vector<EGLint>& attribs,
+                                    EGLNativeWindowType native_window)
+    {
+        EGLConfigChoice choice;
+
+        EGLint num_configs = 0;
+        if (!eglChooseConfig(display, attribs.data(), nullptr, 0, &num_configs) || num_configs <= 0)
+        {
+            return choice;
+        }
+
+        std::vector<EGLConfig> configs{ size_t(num_configs) };
+        if (!eglChooseConfig(display, attribs.data(), configs.data(), num_configs, &num_configs) || num_configs <= 0)
+        {
+            return choice;
+        }
+        configs.resize(size_t(num_configs));
+
+        const EGLint srgb_attribs[] =
+        {
+            EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
+            EGL_NONE,
+        };
+
+        if (native_window && eglHasExtension(display, "EGL_KHR_gl_colorspace"))
+        {
+            for (EGLConfig config : configs)
+            {
+                eglClearErrors();
+                EGLSurface test = eglCreateWindowSurface(display, config, native_window, srgb_attribs);
+                if (test != EGL_NO_SURFACE)
+                {
+                    eglDestroySurface(display, test);
+                    choice.config = config;
+                    choice.srgb = true;
+                    return choice;
+                }
+            }
+
+            mango::printLine(mango::Print::Warning, "[EGL] no EGLConfig supports sRGB colorspace (0x{:x}), using linear",
+                eglGetError());
+        }
+
+        choice.config = configs[0];
+        return choice;
+    }
+
+    EGLSurface createEGLWindowSurface(EGLDisplay display, EGLConfig config,
+                                      EGLNativeWindowType native_window, bool srgb)
+    {
+        if (srgb)
+        {
+            const EGLint attribs[] =
+            {
+                EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
+                EGL_NONE,
+            };
+
+            eglClearErrors();
+            EGLSurface surface = eglCreateWindowSurface(display, config, native_window, attribs);
+            if (surface != EGL_NO_SURFACE)
+            {
+                mango::printLine("[EGL] EGL_KHR_gl_colorspace : sRGB");
+                return surface;
+            }
+
+            mango::printLine(mango::Print::Warning, "[EGL] sRGB surface creation failed (0x{:x}), using linear colorspace",
+                eglGetError());
+        }
+
+        eglClearErrors();
+        return eglCreateWindowSurface(display, config, native_window, nullptr);
+    }
+
+} // namespace
 
 namespace mango
 {
@@ -74,97 +209,9 @@ namespace mango
 
             // Configure attributes
 
-            std::vector<EGLint> configAttribs;
+            const std::vector<EGLint> configAttribs = buildConfigAttribs(config);
 
-            //config.red
-            //config.green
-            //config.blue
-            //config.alpha
-
-            /*
-
-            #ifndef EGL_EXT_pixel_format_float
-                #define EGL_COLOR_COMPONENT_TYPE_EXT      0x3339
-                #define EGL_COLOR_COMPONENT_TYPE_FIXED_EXT 0x333A
-                #define EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT 0x333B
-            #endif
-
-            #ifndef EGL_KHR_gl_colorspace
-                #define EGL_GL_COLORSPACE_KHR             0x309D
-                #define EGL_GL_COLORSPACE_SRGB_KHR        0x3089
-                #define EGL_GL_COLORSPACE_LINEAR_KHR      0x308A
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_bt2020_linear
-                #define EGL_GL_COLORSPACE_BT2020_LINEAR_EXT 0x333F
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_bt2020_pq
-                #define EGL_GL_COLORSPACE_BT2020_PQ_EXT   0x3340
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_display_p3
-                #define EGL_GL_COLORSPACE_DISPLAY_P3_EXT  0x3363
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_display_p3_linear
-                #define EGL_GL_COLORSPACE_DISPLAY_P3_LINEAR_EXT 0x3362
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_display_p3_passthrough
-                #define EGL_GL_COLORSPACE_DISPLAY_P3_PASSTHROUGH_EXT 0x3490
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_scrgb
-                #define EGL_GL_COLORSPACE_SCRGB_EXT       0x3351
-            #endif
-
-            #ifndef EGL_EXT_gl_colorspace_scrgb_linear
-                #define EGL_GL_COLORSPACE_SCRGB_LINEAR_EXT 0x3350
-            #endif
-
-            EGL_SURFACE_TYPE, EGL_WINDOW_BIT,
-            EGL_RENDERABLE_TYPE, EGL_OPENGL_BIT,
-            EGL_RED_SIZE, 16,
-            EGL_GREEN_SIZE, 16,
-            EGL_BLUE_SIZE, 16,
-            EGL_ALPHA_SIZE, 16,
-            EGL_COLOR_COMPONENT_TYPE_EXT, EGL_COLOR_COMPONENT_TYPE_FLOAT_EXT,
-            EGL_GL_COLORSPACE, EGL_GL_COLORSPACE_DISPLAY_P3_EXT,
-
-            */
-
-            configAttribs.push_back(EGL_BUFFER_SIZE);
-            configAttribs.push_back(8);
-
-            configAttribs.push_back(EGL_DEPTH_SIZE);
-            configAttribs.push_back(config.depth);
-
-            configAttribs.push_back(EGL_STENCIL_SIZE);
-            configAttribs.push_back(config.stencil);
-
-            configAttribs.push_back(EGL_SURFACE_TYPE);
-            configAttribs.push_back(EGL_WINDOW_BIT);
-
-            configAttribs.push_back(EGL_RENDERABLE_TYPE);
-            configAttribs.push_back(EGL_OPENGL_BIT);
-            //configAttribs.push_back(EGL_OPENGL_ES2_BIT);
-
-            if (config.samples > 1)
-            {
-                // MANGO TODO
-            }
-
-            configAttribs.push_back(EGL_NONE);
-
-            EGLint numConfig;
-            EGLConfig eglConfig[1];
-
-            if (!eglChooseConfig(egl_display, configAttribs.data(), eglConfig, 1, &numConfig))
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
-            }
+            eglBindAPI(EGL_OPENGL_API);
 
             OpenGLContextEGL* shared = reinterpret_cast<OpenGLContextEGL*>(theShared);
             EGLContext shared_context = shared ? shared->egl_context : EGL_NO_CONTEXT;
@@ -177,16 +224,8 @@ namespace mango
                 EGL_NONE
             };
 
-            eglBindAPI(EGL_OPENGL_API);
-
-            egl_context = eglCreateContext(egl_display, eglConfig[0], shared_context, contextAttribs);
-            if (egl_context == EGL_NO_CONTEXT)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
-            }
-
-            printLine("[EGL] eglCreateContext() : OK");
+            EGLConfig eglConfig = nullptr;
+            bool srgb_surface = false;
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
@@ -196,34 +235,20 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], *window, NULL);
-            if (egl_surface == EGL_NO_SURFACE)
             {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs, *window);
+                if (!choice.config)
+                {
+                    shutdown();
+                    MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
+                }
+                eglConfig = choice.config;
+                srgb_surface = choice.srgb;
             }
 
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-            // Get the default screen and its depth
-            const xcb_setup_t* setup = xcb_get_setup(window->connection);
-            xcb_screen_iterator_t iter = xcb_setup_roots_iterator(setup);
-            xcb_screen_t* screen = iter.data;
-            if (!screen)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get default screen.");
-            }
-
-            // Get visual info from EGL config
-            EGLint visual_id;
-            if (!eglGetConfigAttrib(egl_display, eglConfig[0], EGL_NATIVE_VISUAL_ID, &visual_id))
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] Failed to get visual ID from EGL config.");
-            }
 
             if (!window->init(width, height, flags, "OpenGL|ES"))
             {
@@ -231,11 +256,15 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0], *window, NULL);
-            if (egl_surface == EGL_NO_SURFACE)
             {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs, *window);
+                if (!choice.config)
+                {
+                    shutdown();
+                    MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
+                }
+                eglConfig = choice.config;
+                srgb_surface = choice.srgb;
             }
 
 #endif
@@ -258,8 +287,55 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] wl_egl_window_create() failed.");
             }
 
-            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0],
-                static_cast<EGLNativeWindowType>(window->egl_window), nullptr);
+            {
+                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs,
+                    static_cast<EGLNativeWindowType>(window->egl_window));
+                if (!choice.config)
+                {
+                    shutdown();
+                    MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
+                }
+                eglConfig = choice.config;
+                srgb_surface = choice.srgb;
+            }
+
+#endif
+
+            egl_context = eglCreateContext(egl_display, eglConfig, shared_context, contextAttribs);
+            if (egl_context == EGL_NO_CONTEXT)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
+            }
+
+            printLine("[EGL] eglCreateContext() : OK");
+
+#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+
+            egl_surface = createEGLWindowSurface(egl_display, eglConfig, *window, srgb_surface);
+            if (egl_surface == EGL_NO_SURFACE)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+            }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_XCB)
+
+            egl_surface = createEGLWindowSurface(egl_display, eglConfig, *window, srgb_surface);
+            if (egl_surface == EGL_NO_SURFACE)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+            }
+
+#endif
+
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+
+            egl_surface = createEGLWindowSurface(egl_display, eglConfig,
+                static_cast<EGLNativeWindowType>(window->egl_window), srgb_surface);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
