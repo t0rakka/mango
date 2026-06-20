@@ -87,6 +87,7 @@ namespace
         u16     VscreenSize;
 
         bool isPaletteMarker = false;
+
         ImageHeader header;
 
         HeaderPCX(ConstMemory memory)
@@ -120,29 +121,38 @@ namespace
                 return;
             }
 
-            if (memory.size > (128 + 768))
-            {
-                isPaletteMarker = memory.address[memory.size - 1 - 768] == 0x0c;
-            }
-            else if (memory.size < 128)
+            if (memory.size < 128)
             {
                 header.setError("[ImageDecoder.PCX] Incorrect file size.");
                 return;
             }
 
-            //printLine("PCX.Version: {}", Version);
-            //printLine("PCX.BitsPerPixel: {}", BitsPerPixel);
-            //printLine("PCX.NPlanes: {}", NPlanes);
-            //printLine("PCX.isPaletteMarker: {}", isPaletteMarker);
+            // 256-color palette marker is only valid for 8 bpp, 1 plane images
+            if (BitsPerPixel == 8 && NPlanes == 1 && memory.size > (128 + 768))
+            {
+                isPaletteMarker = memory.address[memory.size - 1 - 768] == 0x0c;
+            }
 
-            bool isPalette = isPaletteMarker || (BitsPerPixel == 1 && NPlanes == 4);
+            /*
+            printLine("PCX.Version: {}", Version);
+            printLine("PCX.BitsPerPixel: {}", BitsPerPixel);
+            printLine("PCX.NPlanes: {}", NPlanes);
+            printLine("PCX.isPaletteMarker: {}", isPaletteMarker);
+            */
+
+            const bool isTrueColor = (BitsPerPixel == 8 && (NPlanes == 3 || NPlanes == 4));
+            const bool isIndexed = !isTrueColor && (
+                (BitsPerPixel == 1 && NPlanes == 4) ||
+                (BitsPerPixel == 2 && NPlanes == 1) ||
+                (BitsPerPixel == 4 && NPlanes == 1) ||
+                (BitsPerPixel == 8 && NPlanes == 1));
 
             header.width   = int(Xmax - Xmin + 1);
             header.height  = int(Ymax - Ymin + 1);
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.format  = isPalette ? IndexedFormat(8)
+            header.format  = isIndexed ? IndexedFormat(8)
                                        : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             header.compression = TextureCompression::NONE;
         }
