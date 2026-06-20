@@ -778,7 +778,62 @@ public:
         m_graphicsQueueFamilyIndex = selectedQueueFamilyIndex;
         vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 
-        m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, m_graphicsQueue, this);
+
+        //VkBool32 supported = VK_FALSE;
+        //vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueFamilyIndex, m_surface, &supported);
+        //printLine("vkGetPhysicalDeviceSurfaceSupportKHR: {}", supported);
+
+        /*
+        VkSurfaceCapabilitiesKHR caps;
+        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
+        printLine("PhysicalDeviceSurface.Extent: {} x {}", caps.currentExtent.width, caps.currentExtent.height);
+
+        m_extent = caps.currentExtent;
+        */
+
+        const VkSurfaceFormatKHR formatSDR =
+        {
+            .format = VK_FORMAT_B8G8R8A8_UNORM,
+            .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
+        };
+
+        const VkSurfaceFormatKHR formatHDR =
+        {
+            .format = VK_FORMAT_R16G16B16A16_SFLOAT,
+            .colorSpace = VK_COLOR_SPACE_HDR10_ST2084_EXT
+        };
+
+        MANGO_UNREFERENCED(formatSDR);
+        MANGO_UNREFERENCED(formatHDR);
+
+        VkSurfaceFormatKHR preferredFormat = formatSDR;
+
+        std::vector<VkSurfaceFormatKHR> surfaceFormats = enumerateSurfaceFormats(m_physicalDevice, m_surface);
+
+        size_t selectedFormatIndex = 0;
+        VkSurfaceFormatKHR selectedFormat = surfaceFormats[0];
+
+        for (size_t i = 0; i < surfaceFormats.size(); ++i)
+        {
+            if (surfaceFormats[i].format == preferredFormat.format &&
+                surfaceFormats[i].colorSpace == preferredFormat.colorSpace)
+            {
+                selectedFormatIndex = i;
+                selectedFormat = surfaceFormats[i];
+                break;
+            }
+        }
+
+        printLine(Print::Info, "");
+        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
+
+        for (size_t i = 0; i < surfaceFormats.size(); ++i)
+        {
+            std::string_view prefix = i == selectedFormatIndex ? ">" : " ";
+            printLine(Print::Info, "  {} {} | {}", prefix, getString(surfaceFormats[i].format), getString(surfaceFormats[i].colorSpace));
+        }
+
+        m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, selectedFormat, m_graphicsQueue, this);
 
         VkCommandPoolCreateInfo poolInfo =
         {
@@ -992,6 +1047,7 @@ int mangoMain(const mango::CommandLine& commands)
     for (const char* extension : vulkan::getInstanceExtensions())
     {
         enabledExtensions.push_back(extension);
+        //enabledExtensions.push_back("VK_EXT_swapchain_colorspace");
     }
 
     VkApplicationInfo applicationInfo =

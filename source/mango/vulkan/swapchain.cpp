@@ -14,15 +14,17 @@ namespace mango::vulkan
     // Swapchain
     // ------------------------------------------------------------------------------
 
-    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue,
-                         const Window* window)
+    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice,
+                         VkSurfaceKHR surface, VkSurfaceFormatKHR format,
+                         VkQueue presentQueue, const Window* window)
         : m_device(device)
         , m_physicalDevice(physicalDevice)
         , m_surface(surface)
+        , m_format(format.format)
+        , m_colorSpace(format.colorSpace)
         , m_presentQueue(presentQueue)
         , m_window(window)
     {
-        configure();
         recreateSwapchain();
     }
 
@@ -65,45 +67,6 @@ namespace mango::vulkan
             vkDestroySwapchainKHR(m_device, m_swapchain, nullptr);
             m_swapchain = VK_NULL_HANDLE;
         }
-    }
-
-    void Swapchain::configure()
-    {
-        //VkBool32 supported = VK_FALSE;
-        //vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueFamilyIndex, m_surface, &supported);
-        //printLine("vkGetPhysicalDeviceSurfaceSupportKHR: {}", supported);
-
-        /*
-        VkSurfaceCapabilitiesKHR caps;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
-        printLine("PhysicalDeviceSurface.Extent: {} x {}", caps.currentExtent.width, caps.currentExtent.height);
-
-        m_extent = caps.currentExtent;
-        */
-
-        std::vector<VkSurfaceFormatKHR> formats = enumerateSurfaceFormats(m_physicalDevice, m_surface);
-
-        size_t selectedFormatIndex = 0;
-        for (size_t i = 0; i < formats.size(); ++i)
-        {
-            if (formats[i].format == VK_FORMAT_B8G8R8A8_UNORM)
-            {
-                selectedFormatIndex = i;
-                break;
-            }
-        }
-
-        printLine(Print::Info, "");
-        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
-
-        for (size_t i = 0; i < formats.size(); ++i)
-        {
-            std::string_view prefix = i == selectedFormatIndex ? ">" : " ";
-            printLine(Print::Info, "  {} {} | {}", prefix, getString(formats[i].format), getString(formats[i].colorSpace));
-        }
-
-        m_format = formats[selectedFormatIndex].format;
-        m_colorSpace = formats[selectedFormatIndex].colorSpace;
     }
 
     VkExtent2D Swapchain::resolveExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities) const

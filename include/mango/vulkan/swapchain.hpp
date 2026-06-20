@@ -78,7 +78,7 @@ namespace mango::vulkan
         VkResult present(u32 imageIndex);
 
     public:
-        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue,
+        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkSurfaceFormatKHR format, VkQueue presentQueue,
                   const Window* window);
         ~Swapchain();
 
