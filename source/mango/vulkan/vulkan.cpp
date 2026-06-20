@@ -22,7 +22,6 @@
 #endif
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-    // TODO
     #define VK_USE_PLATFORM_WAYLAND_KHR
     #include "../window/wayland/wayland_window.hpp"
 #endif
