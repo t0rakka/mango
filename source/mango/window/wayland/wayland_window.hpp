@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/window/window.hpp>
 
@@ -22,7 +22,6 @@ namespace mango
 
     struct WindowContext : WindowHandle
     {
-        WindowHandle handle;
         Window* owner = nullptr;
 
         // Wayland core objects
@@ -51,11 +50,17 @@ namespace mango
         bool keyboard_focused = false;
         bool key_pressed[256] = {};
 
+        // Pointer state
+        bool pointer_focused = false;
+
         // Window state
         bool is_looping = false;
         bool busy = false;
         bool configured = false;
         bool needs_redraw = false;
+        bool pending_resize = false;
+        bool maximized = false;
+        bool activated = false;
         int32_t size[2] = { 0, 0 };
         int32_t cursor[2] = { 0, 0 };
         uint32_t mouse_time[6] = {};
@@ -68,6 +73,7 @@ namespace mango
         math::int32x2 getWindowSize() const;
 
         bool createWaylandWindow(int width, int height, const char* title);
+        void syncSurfaceScale();
         void syncEGLWindow();
         void requestRefresh();
         void processEvents();

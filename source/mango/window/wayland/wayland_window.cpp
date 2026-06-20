@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -17,7 +17,9 @@
 
 #include "wayland_window.hpp"
 #include <wayland-client-protocol.h>
+#if defined(MANGO_ENABLE_EGL)
 #include <wayland-egl.h>
+#endif
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "xdg-shell-client-protocol.h"
 
@@ -107,6 +109,19 @@ namespace
 
 #undef TR
 
+    MouseButton translatePointerButton(uint32_t button)
+    {
+        switch (button)
+        {
+            case 0x110: return MOUSEBUTTON_LEFT;
+            case 0x111: return MOUSEBUTTON_RIGHT;
+            case 0x112: return MOUSEBUTTON_MIDDLE;
+            case 0x113: return MOUSEBUTTON_X1;
+            case 0x114: return MOUSEBUTTON_X2;
+            default:    return MOUSEBUTTON_MIDDLE;
+        }
+    }
+
     u32 getKeyMask(struct xkb_state* state)
     {
         u32 mask = 0;
@@ -165,8 +180,65 @@ namespace
         }
     }
 
+    void applyToplevelStates(WindowContext* window, struct wl_array* states)
+    {
+        if (!window || !window->owner)
+        {
+            return;
+        }
+
+        const bool was_maximized = window->maximized;
+        const bool was_activated = window->activated;
+
+        window->maximized = false;
+        window->activated = false;
+        window->fullscreen = false;
+
+        if (states)
+        {
+            const uint32_t* state_data = static_cast<const uint32_t*>(states->data);
+            const size_t count = states->size / sizeof(uint32_t);
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                switch (state_data[i])
+                {
+                    case XDG_TOPLEVEL_STATE_MAXIMIZED:
+                        window->maximized = true;
+                        break;
+
+                    case XDG_TOPLEVEL_STATE_FULLSCREEN:
+                        window->fullscreen = true;
+                        break;
+
+                    case XDG_TOPLEVEL_STATE_ACTIVATED:
+                        window->activated = true;
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+        }
+
+        if (was_maximized != window->maximized)
+        {
+            window->owner->onMaximize();
+        }
+
+        if (!was_activated && window->activated)
+        {
+            window->owner->onShow();
+        }
+        else if (was_activated && !window->activated)
+        {
+            window->owner->onHide();
+        }
+    }
+
     void xdg_wm_base_ping(void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial)
     {
+        MANGO_UNREFERENCED(data);
         xdg_wm_base_pong(xdg_wm_base, serial);
     }
 
@@ -178,6 +250,7 @@ namespace
     void xdg_surface_configure(void* data, struct xdg_surface* xdg_surface, uint32_t serial)
     {
         WindowContext* window = static_cast<WindowContext*>(data);
+        window->syncSurfaceScale();
         window->syncEGLWindow();
         xdg_surface_ack_configure(xdg_surface, serial);
         window->configured = true;
@@ -192,14 +265,36 @@ namespace
                                 int32_t width, int32_t height, struct wl_array* states)
     {
         MANGO_UNREFERENCED(xdg_toplevel);
-        MANGO_UNREFERENCED(states);
 
         WindowContext* window = static_cast<WindowContext*>(data);
-        if (width > 0 && height > 0)
+        applyToplevelStates(window, states);
+
+        const bool was_visible = window->size[0] > 0 && window->size[1] > 0;
+
+        if (width <= 0 || height <= 0)
+        {
+            if (was_visible && window->owner)
+            {
+                window->owner->onMinimize();
+            }
+
+            window->size[0] = 0;
+            window->size[1] = 0;
+            window->pending_resize = true;
+            window->requestRefresh();
+            return;
+        }
+
+        if (!was_visible && window->owner)
+        {
+            window->owner->onShow();
+        }
+
+        if (window->size[0] != width || window->size[1] != height)
         {
             window->size[0] = width;
             window->size[1] = height;
-            window->syncEGLWindow();
+            window->pending_resize = true;
             window->requestRefresh();
         }
     }
@@ -215,6 +310,124 @@ namespace
     {
         .configure = xdg_toplevel_configure,
         .close = xdg_toplevel_close,
+    };
+
+    void pointer_enter(void* data, struct wl_pointer* pointer, uint32_t serial,
+                       struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
+    {
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(serial);
+        MANGO_UNREFERENCED(surface);
+
+        WindowContext* window = static_cast<WindowContext*>(data);
+        window->pointer_focused = true;
+        window->cursor[0] = wl_fixed_to_int(surface_x);
+        window->cursor[1] = wl_fixed_to_int(surface_y);
+    }
+
+    void pointer_leave(void* data, struct wl_pointer* pointer, uint32_t serial, struct wl_surface* surface)
+    {
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(serial);
+        MANGO_UNREFERENCED(surface);
+
+        static_cast<WindowContext*>(data)->pointer_focused = false;
+    }
+
+    void pointer_motion(void* data, struct wl_pointer* pointer, uint32_t time,
+                        wl_fixed_t surface_x, wl_fixed_t surface_y)
+    {
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(time);
+
+        WindowContext* window = static_cast<WindowContext*>(data);
+        if (!window->owner)
+        {
+            return;
+        }
+
+        window->cursor[0] = wl_fixed_to_int(surface_x);
+        window->cursor[1] = wl_fixed_to_int(surface_y);
+        window->owner->onMouseMove(window->cursor[0], window->cursor[1]);
+    }
+
+    void pointer_button(void* data, struct wl_pointer* pointer, uint32_t serial,
+                        uint32_t time, uint32_t button, uint32_t state)
+    {
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(serial);
+        MANGO_UNREFERENCED(time);
+
+        WindowContext* window = static_cast<WindowContext*>(data);
+        if (!window->owner)
+        {
+            return;
+        }
+
+        const MouseButton mouse_button = translatePointerButton(button);
+
+        if (state == WL_POINTER_BUTTON_STATE_PRESSED)
+        {
+            int count = 1;
+
+            if (mouse_button <= MOUSEBUTTON_MIDDLE)
+            {
+                const u32 now = Time::ms();
+                const int idx = int(mouse_button);
+
+                if (idx >= 0 && idx < 6 && now - window->mouse_time[idx] < 300)
+                {
+                    count = 2;
+                }
+
+                if (idx >= 0 && idx < 6)
+                {
+                    window->mouse_time[idx] = now;
+                }
+            }
+
+            window->owner->onMouseClick(window->cursor[0], window->cursor[1], mouse_button, count);
+        }
+        else if (state == WL_POINTER_BUTTON_STATE_RELEASED)
+        {
+            window->owner->onMouseClick(window->cursor[0], window->cursor[1], mouse_button, 0);
+        }
+    }
+
+    void pointer_axis(void* data, struct wl_pointer* pointer, uint32_t time,
+                      uint32_t axis, wl_fixed_t value)
+    {
+        MANGO_UNREFERENCED(pointer);
+        MANGO_UNREFERENCED(time);
+
+        if (axis != WL_POINTER_AXIS_VERTICAL_SCROLL)
+        {
+            return;
+        }
+
+        WindowContext* window = static_cast<WindowContext*>(data);
+        if (!window->owner)
+        {
+            return;
+        }
+
+        const int delta = wl_fixed_to_int(value);
+        if (delta == 0)
+        {
+            return;
+        }
+
+        const int count = delta > 0 ? -120 : 120;
+        window->owner->onMouseClick(window->cursor[0], window->cursor[1], MOUSEBUTTON_WHEEL, count);
+    }
+
+    static const struct wl_pointer_listener pointer_listener =
+    {
+        .enter = pointer_enter,
+        .leave = pointer_leave,
+        .motion = pointer_motion,
+        .button = pointer_button,
+        .axis = pointer_axis,
     };
 
     void keyboard_keymap(void* data, struct wl_keyboard* keyboard, uint32_t format, int32_t fd, uint32_t size)
@@ -366,12 +579,25 @@ namespace
         if ((caps & WL_SEAT_CAPABILITY_POINTER) && !window->pointer)
         {
             window->pointer = wl_seat_get_pointer(seat);
+            wl_pointer_add_listener(window->pointer, &pointer_listener, window);
+        }
+        else if (!(caps & WL_SEAT_CAPABILITY_POINTER) && window->pointer)
+        {
+            wl_pointer_destroy(window->pointer);
+            window->pointer = nullptr;
+            window->pointer_focused = false;
         }
 
         if ((caps & WL_SEAT_CAPABILITY_KEYBOARD) && !window->keyboard)
         {
             window->keyboard = wl_seat_get_keyboard(seat);
             wl_keyboard_add_listener(window->keyboard, &keyboard_listener, window);
+        }
+        else if (!(caps & WL_SEAT_CAPABILITY_KEYBOARD) && window->keyboard)
+        {
+            clearKeyState(window);
+            wl_keyboard_destroy(window->keyboard);
+            window->keyboard = nullptr;
         }
     }
 
@@ -563,8 +789,6 @@ namespace mango
             MANGO_EXCEPTION("[Window] Failed to connect to Wayland display.");
         }
 
-        handle.display = display;
-
         registry = wl_display_get_registry(display);
         if (!registry)
         {
@@ -594,7 +818,9 @@ namespace mango
         if (xdg_wm_base) xdg_wm_base_destroy(xdg_wm_base);
         if (pointer) wl_pointer_destroy(pointer);
         if (keyboard) wl_keyboard_destroy(keyboard);
+#if defined(MANGO_ENABLE_EGL)
         if (egl_window) wl_egl_window_destroy(static_cast<struct wl_egl_window*>(egl_window));
+#endif
         if (seat) wl_seat_destroy(seat);
         if (compositor) wl_compositor_destroy(compositor);
         if (registry) wl_registry_destroy(registry);
@@ -636,10 +862,17 @@ namespace mango
 
     int32x2 WindowContext::getWindowSize() const
     {
+        if (size[0] > 0 && size[1] > 0)
+        {
+            return int32x2(size[0], size[1]);
+        }
+
+#if defined(MANGO_ENABLE_EGL)
         if (egl_window && egl_synced_size[0] > 0 && egl_synced_size[1] > 0)
         {
             return int32x2(egl_synced_size[0], egl_synced_size[1]);
         }
+#endif
 
         return int32x2(size[0], size[1]);
     }
@@ -656,8 +889,6 @@ namespace mango
         {
             return false;
         }
-
-        handle.surface = surface;
 
         xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, surface);
         if (!xdg_surface)
@@ -694,41 +925,60 @@ namespace mango
             }
         }
 
+        syncSurfaceScale();
         return true;
+    }
+
+    void WindowContext::syncSurfaceScale()
+    {
+        const int32_t scale = getPrimaryBufferScale();
+        if (!surface || scale <= 0 || buffer_scale == scale)
+        {
+            return;
+        }
+
+        buffer_scale = scale;
+        wl_surface_set_buffer_scale(surface, buffer_scale);
     }
 
     void WindowContext::syncEGLWindow()
     {
+#if defined(MANGO_ENABLE_EGL)
         if (!egl_window || size[0] <= 0 || size[1] <= 0)
         {
             return;
         }
 
-        if (egl_synced_size[0] == size[0] && egl_synced_size[1] == size[1] && buffer_scale == getPrimaryBufferScale())
+        syncSurfaceScale();
+
+        if (egl_synced_size[0] == size[0] && egl_synced_size[1] == size[1])
         {
             return;
-        }
-
-        buffer_scale = getPrimaryBufferScale();
-
-        if (surface && buffer_scale > 0)
-        {
-            wl_surface_set_buffer_scale(surface, buffer_scale);
         }
 
         wl_egl_window_resize(static_cast<struct wl_egl_window*>(egl_window), size[0], size[1], 0, 0);
 
         egl_synced_size[0] = size[0];
         egl_synced_size[1] = size[1];
+#endif
     }
 
     void WindowContext::dispatchPendingResize()
     {
-        if (!owner || busy)
+        if (!owner || busy || !pending_resize)
         {
             return;
         }
 
+        pending_resize = false;
+
+        if (size[0] <= 0 || size[1] <= 0)
+        {
+            return;
+        }
+
+        syncSurfaceScale();
+        syncEGLWindow();
         owner->onResize(size[0], size[1]);
     }
 
@@ -780,7 +1030,7 @@ namespace mango
 
     Window::operator WindowHandle () const
     {
-        return m_window_context->handle;
+        return *m_window_context;
     }
 
     Window::operator WindowContext* () const
@@ -803,6 +1053,7 @@ namespace mango
 
         m_window_context->size[0] = width;
         m_window_context->size[1] = height;
+        m_window_context->pending_resize = true;
         m_window_context->syncEGLWindow();
         m_window_context->requestRefresh();
     }
@@ -818,7 +1069,16 @@ namespace mango
 
     void Window::setVisible(bool enable)
     {
-        MANGO_UNREFERENCED(enable);
+        if (!m_window_context->surface || !m_window_context->display)
+        {
+            return;
+        }
+
+        if (enable)
+        {
+            wl_surface_commit(m_window_context->surface);
+            wl_display_flush(m_window_context->display);
+        }
     }
 
     int32x2 Window::getWindowSize() const
@@ -866,19 +1126,17 @@ namespace mango
         // Wayland compositors need at least one client buffer before the surface is shown.
         // The application is fully constructed by the time enterEventLoop() is called.
         m_window_context->processEvents();
+        m_window_context->syncSurfaceScale();
         m_window_context->syncEGLWindow();
-
-        int last_width = m_window_context->size[0];
-        int last_height = m_window_context->size[1];
 
         if (!m_window_context->busy)
         {
-            if (last_width > 0 && last_height > 0)
-            {
-                onResize(last_width, last_height);
-            }
+            m_window_context->dispatchPendingResize();
 
-            onDraw();
+            if (m_window_context->size[0] > 0 && m_window_context->size[1] > 0)
+            {
+                onDraw();
+            }
         }
 
         for (; m_window_context->is_looping;)
@@ -887,20 +1145,12 @@ namespace mango
 
             bool refreshed = false;
 
-            if (m_window_context->size[0] != last_width || m_window_context->size[1] != last_height)
+            if (m_window_context->pending_resize && !m_window_context->busy)
             {
-                last_width = m_window_context->size[0];
-                last_height = m_window_context->size[1];
-
-                m_window_context->syncEGLWindow();
-
-                if (!m_window_context->busy)
-                {
-                    onResize(last_width, last_height);
-                    onDraw();
-                    refreshed = true;
-                    m_window_context->needs_redraw = false;
-                }
+                m_window_context->dispatchPendingResize();
+                onDraw();
+                refreshed = true;
+                m_window_context->needs_redraw = false;
             }
 
             if (!refreshed && m_window_context->needs_redraw && !m_window_context->busy)
