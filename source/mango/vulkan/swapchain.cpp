@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <algorithm>
 #include <mango/core/configure.hpp>
 #include <mango/core/print.hpp>
 #include <mango/vulkan/vulkan.hpp>
@@ -13,11 +14,13 @@ namespace mango::vulkan
     // Swapchain
     // ------------------------------------------------------------------------------
 
-    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue)
+    Swapchain::Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue,
+                         const Window* window)
         : m_device(device)
         , m_physicalDevice(physicalDevice)
         , m_surface(surface)
         , m_presentQueue(presentQueue)
+        , m_window(window)
     {
         configure();
         recreateSwapchain();
@@ -111,7 +114,34 @@ namespace mango::vulkan
         m_colorSpace = formats[selectedFormatIndex].colorSpace;
     }
 
-    void Swapchain::createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities)
+    VkExtent2D Swapchain::resolveExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities) const
+    {
+        VkExtent2D extent = surfaceCapabilities.currentExtent;
+
+        if (extent.width == UINT32_MAX || extent.height == UINT32_MAX || extent.width == 0 || extent.height == 0)
+        {
+            if (m_window)
+            {
+                math::int32x2 size = m_window->getWindowSize();
+                extent.width = u32(std::max(size.x, 0));
+                extent.height = u32(std::max(size.y, 0));
+            }
+        }
+
+        if (extent.width == 0 || extent.height == 0)
+        {
+            return { 0, 0 };
+        }
+
+        extent.width = std::max(extent.width, surfaceCapabilities.minImageExtent.width);
+        extent.width = std::min(extent.width, surfaceCapabilities.maxImageExtent.width);
+        extent.height = std::max(extent.height, surfaceCapabilities.minImageExtent.height);
+        extent.height = std::min(extent.height, surfaceCapabilities.maxImageExtent.height);
+
+        return extent;
+    }
+
+    void Swapchain::createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent)
     {
         // create swapchain
         VkSwapchainCreateInfoKHR createInfo =
@@ -121,7 +151,7 @@ namespace mango::vulkan
             .minImageCount = surfaceCapabilities.minImageCount,
             .imageFormat = m_format,
             .imageColorSpace = m_colorSpace,
-            .imageExtent = surfaceCapabilities.currentExtent,
+            .imageExtent = extent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
             .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
@@ -329,14 +359,15 @@ namespace mango::vulkan
 
         VkSurfaceCapabilitiesKHR surfaceCapabilities;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
-        VkExtent2D extent = surfaceCapabilities.currentExtent;
+
+        VkExtent2D extent = resolveExtent(surfaceCapabilities);
 
         if (extent.width > 0 && extent.height > 0)
         {
             if (extent.width != m_extent.width || extent.height != m_extent.height)
             {
                 cleanup();
-                createSwapchain(surfaceCapabilities);
+                createSwapchain(surfaceCapabilities, extent);
                 createSyncObjects();
                 m_currentFrame = 0;
                 recreate = true;

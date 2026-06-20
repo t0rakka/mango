@@ -56,6 +56,8 @@ namespace mango::vulkan
         VkExtent2D m_extent { 0, 0 };
         VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 
+        const Window* m_window = nullptr;
+
         std::vector<VkImage> m_images;
         std::vector<VkImageView> m_imageViews;
 
@@ -69,13 +71,15 @@ namespace mango::vulkan
 
         void cleanup();
         void configure();
-        void createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities);
+        VkExtent2D resolveExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities) const;
+        void createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent);
         void createSyncObjects();
         VkResult acquireNextImage(u32& imageIndex);
         VkResult present(u32 imageIndex);
 
     public:
-        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue);
+        Swapchain(VkDevice device, VkPhysicalDevice physicalDevice, VkSurfaceKHR surface, VkQueue presentQueue,
+                  const Window* window);
         ~Swapchain();
 
         u32 getImageCount() const;

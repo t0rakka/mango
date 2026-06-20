@@ -162,14 +162,9 @@ if (BUILD_OPENGL)
 endif ()
 
 if (BUILD_VULKAN)
-    if (APPLE)
-        # Vulkan package can be found on macOS, but MANGO does not support it yet
+    find_package(Vulkan QUIET)
+    if (NOT VULKAN_FOUND)
         set(BUILD_VULKAN OFF)
-    else ()
-        find_package(Vulkan QUIET)
-        if (NOT VULKAN_FOUND)
-            set(BUILD_VULKAN OFF)
-        endif ()
     endif ()
 endif ()
 
@@ -289,7 +284,7 @@ function(select_window_system_sources system)
     endif ()
 endfunction()
 
-if (BUILD_OPENGL)
+if (BUILD_OPENGL OR BUILD_VULKAN)
 
     if (NOT EMSCRIPTEN)
 
@@ -299,19 +294,10 @@ if (BUILD_OPENGL)
 
     endif ()
 
-    FILE(GLOB OPENGL_HEADERS
-        "${MANGO_INCLUDE_DIR}/opengl/*.hpp"
-    )
-
     if (WIN32 OR CYGWIN)
 
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
-        )
-
-        FILE(GLOB OPENGL_SOURCES
-            "${MANGO_SOURCE_DIR}/opengl/*.cpp"
-            "${MANGO_SOURCE_DIR}/opengl/wgl/*.cpp"
         )
 
     elseif (APPLE)
@@ -319,6 +305,29 @@ if (BUILD_OPENGL)
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/cocoa/*.mm"
         )
+
+    elseif (NOT EMSCRIPTEN)
+
+        select_window_system_sources(${WINDOW_SYSTEM})
+
+    endif ()
+
+endif ()
+
+if (BUILD_OPENGL)
+
+    FILE(GLOB OPENGL_HEADERS
+        "${MANGO_INCLUDE_DIR}/opengl/*.hpp"
+    )
+
+    if (WIN32 OR CYGWIN)
+
+        FILE(GLOB OPENGL_SOURCES
+            "${MANGO_SOURCE_DIR}/opengl/*.cpp"
+            "${MANGO_SOURCE_DIR}/opengl/wgl/*.cpp"
+        )
+
+    elseif (APPLE)
 
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
@@ -333,8 +342,6 @@ if (BUILD_OPENGL)
 
     else ()
 
-        select_window_system_sources(${WINDOW_SYSTEM})
-
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/glx/*.cpp"
@@ -347,35 +354,17 @@ endif ()
 
 if (BUILD_VULKAN)
 
-    if (NOT (APPLE OR EMSCRIPTEN))
-
-        FILE(GLOB WINDOW_HEADERS
-            "${MANGO_INCLUDE_DIR}/window/*.hpp"
-        )
-
-    endif ()
-
     FILE(GLOB VULKAN_HEADERS
         "${MANGO_INCLUDE_DIR}/vulkan/*.hpp"
     )
 
-    if (WIN32 OR CYGWIN)
-
-        FILE(GLOB WINDOW_SOURCES
-            "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
-        )
+    if (WIN32 OR CYGWIN OR APPLE)
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
         )
 
-    elseif (APPLE OR EMSCRIPTEN)
-
-        # NOT SUPPORTED
-
-    else ()
-
-        select_window_system_sources(${WINDOW_SYSTEM})
+    elseif (NOT EMSCRIPTEN)
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
@@ -580,10 +569,15 @@ if (LIBRARY_LZFSE)
     )
 endif ()
 
-if (BUILD_OPENGL)
+if (BUILD_OPENGL OR BUILD_VULKAN)
     list(APPEND MANGO_SOURCES
         ${WINDOW_HEADERS}
         ${WINDOW_SOURCES}
+    )
+endif ()
+
+if (BUILD_OPENGL)
+    list(APPEND MANGO_SOURCES
         ${OPENGL_HEADERS}
         ${OPENGL_SOURCES}
     )
@@ -591,8 +585,6 @@ endif ()
 
 if (BUILD_VULKAN)
     list(APPEND MANGO_SOURCES
-        ${WINDOW_HEADERS}
-        ${WINDOW_SOURCES}
         ${VULKAN_HEADERS}
         ${VULKAN_SOURCES}
     )
@@ -618,6 +610,17 @@ set_target_properties(mango PROPERTIES
 
 if (APPLE)
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
+endif ()
+
+if (BUILD_OPENGL)
+    target_compile_definitions(mango PUBLIC MANGO_ENABLE_OPENGL)
+endif ()
+
+if (BUILD_VULKAN)
+    target_compile_definitions(mango PUBLIC MANGO_ENABLE_VULKAN)
+    if (APPLE)
+        target_compile_definitions(mango PRIVATE VK_USE_PLATFORM_METAL_EXT)
+    endif ()
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -713,6 +716,10 @@ if (BUILD_VULKAN)
             message("    Vulkan: WIN32")
             target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
             target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES})
+        elseif (APPLE)
+            message("    Vulkan: Metal (MoltenVK)")
+            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
+            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
         else ()
             if (WINDOW_SYSTEM STREQUAL "xlib")
                 target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")

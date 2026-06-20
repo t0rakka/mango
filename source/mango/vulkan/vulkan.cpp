@@ -3,6 +3,7 @@
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/configure.hpp>
+#include <mango/core/exception.hpp>
 #include <mango/core/print.hpp>
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
@@ -27,6 +28,11 @@
 #endif
 
 #include <mango/vulkan/vulkan.hpp>
+
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+    #include "../window/cocoa/cocoa_window.hpp"
+    #include <vulkan/vulkan_metal.h>
+#endif
 
 namespace mango::vulkan
 {
@@ -184,6 +190,72 @@ namespace mango::vulkan
 
 #endif
 
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+
+    std::vector<const char*> getSurfaceExtensions()
+    {
+        return { "VK_KHR_surface", "VK_EXT_metal_surface" };
+    }
+
+    static
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
+    {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkMetalSurfaceCreateInfoEXT surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+            .pLayer = static_cast<const CAMetalLayer*>(handle.layer),
+        };
+
+        VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, &surface);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "vkCreateMetalSurfaceEXT : {}", getString(result));
+        }
+
+        return surface;
+    }
+
+    static
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    {
+        MANGO_UNREFERENCED(physicalDevice);
+        MANGO_UNREFERENCED(queueFamilyIndex);
+        MANGO_UNREFERENCED(handle);
+        return true;
+    }
+
+#endif
+
+    // ------------------------------------------------------------------------------
+    // Instance / device extensions (MoltenVK portability on macOS only)
+    // ------------------------------------------------------------------------------
+
+    std::vector<const char*> getInstanceExtensions()
+    {
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+        return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
+#else
+        return {};
+#endif
+    }
+
+    std::vector<const char*> getDeviceExtensions(VkPhysicalDevice physicalDevice)
+    {
+        MANGO_UNREFERENCED(physicalDevice);
+
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+        return
+        {
+            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
+            "VK_KHR_portability_subset",
+        };
+#else
+        return { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+#endif
+    }
+
     // ------------------------------------------------------------------------------
     // Instance
     // ------------------------------------------------------------------------------
@@ -192,9 +264,15 @@ namespace mango::vulkan
                        const std::vector<const char*> layers,
                        const std::vector<const char*> extensions)
     {
+        u32 flags = 0;
+#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+        flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+#endif
+
         VkInstanceCreateInfo instanceCreateInfo
         {
             .sType = VK_STRUCTURE_TYPE_INSTANCE_CREATE_INFO,
+            .flags = flags,
             .pApplicationInfo = &applicationInfo,
             .enabledLayerCount = uint32_t(layers.size()),
             .ppEnabledLayerNames = layers.data(),
@@ -275,6 +353,12 @@ namespace mango::vulkan
         , m_surface(VK_NULL_HANDLE)
     {
         m_surface = createSurface(m_instance, *m_window_context);
+        if (!m_surface)
+        {
+            MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
+        }
+
+        setVisible(true);
     }
 
     VulkanWindow::~VulkanWindow()
@@ -288,7 +372,6 @@ namespace mango::vulkan
     bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const
     {
         return vulkan::getPresentationSupport(physicalDevice, queueFamilyIndex, *m_window_context);
-        return false;
     }
 
     void VulkanWindow::toggleFullscreen()
