@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -75,6 +75,8 @@ namespace mango::vulkan
     };
 
     std::vector<const char*> getSurfaceExtensions();
+    std::vector<const char*> getInstanceExtensions();
+    std::vector<const char*> getDeviceExtensions(VkPhysicalDevice physicalDevice);
 
     std::vector<VkLayerProperties> enumerateInstanceLayerProperties();
     std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName = nullptr);

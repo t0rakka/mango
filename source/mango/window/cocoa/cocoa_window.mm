@@ -1,22 +1,18 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <mango/core/exception.hpp>
 #include <mango/core/timer.hpp>
 #include "cocoa_window.h"
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
-
-#include <chrono>
-#include <thread>
 
 // -----------------------------------------------------------------------
 // CustomNSWindow
 // -----------------------------------------------------------------------
 
 @implementation CustomNSWindow
-
-@synthesize window;
 
 - (BOOL)canBecomeKeyWindow
 {
@@ -54,13 +50,12 @@ namespace mango
 
     Window::Window(int width, int height, u32 flags)
     {
-        // NOTE: Cocoa/macOS implementation only uses Window as interface and does NOT use the window
-        //       constructor for anything else except creating the internal state (m_window_context).
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
-        MANGO_UNREFERENCED(flags);
-
         m_window_context = std::make_unique<WindowContext>();
+
+        if (!m_window_context->init(this, width, height, flags, "Mango"))
+        {
+            MANGO_EXCEPTION("[Window] Creating window failed.");
+        }
     }
 
     Window::~Window()
@@ -69,30 +64,22 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        // MANGO TODO: support more than default screen
         return 1;
     }
 
     math::int32x2 Window::getScreenSize(int screen)
     {
-        // MANGO TODO: support more than default screen
         MANGO_UNREFERENCED(screen);
 
-        // NOTE: both of these report incorrect resolution on Retina Display :D
-#if 1
         auto display = CGMainDisplayID();
-        int width = int(CGDisplayPixelsWide(display));
-        int height = int(CGDisplayPixelsHigh(display));
-        return math::int32x2(width, height);
-#else
-        NSRect rect = [[NSScreen mainScreen] frame];
-        return math::int32x2(rect.size.width, rect.size.height);
-#endif
+        int w = int(CGDisplayPixelsWide(display));
+        int h = int(CGDisplayPixelsHigh(display));
+        return math::int32x2(w, h);
     }
 
     Window::operator WindowHandle () const
     {
-        return nullptr;
+        return *m_window_context;
     }
 
     Window::operator WindowContext* () const
@@ -102,45 +89,54 @@ namespace mango
 
     void Window::setWindowPosition(int x, int y)
     {
-        // NOTE: Retina conversion
-        [m_window_context->window setFrameTopLeftPoint:NSMakePoint(x, y)];
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        [win setFrameTopLeftPoint:NSMakePoint(x, y)];
     }
 
     void Window::setWindowSize(int width, int height)
     {
-        [m_window_context->window setContentSize:NSMakeSize(width, height)];
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        [win setContentSize:NSMakeSize(width, height)];
     }
 
     void Window::setTitle(const std::string& title)
     {
-        [m_window_context->window setTitle:[NSString stringWithUTF8String:title.c_str()]];
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        [win setTitle:[NSString stringWithUTF8String:title.c_str()]];
     }
 
     void Window::setVisible(bool enable)
     {
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
         if (enable)
         {
-            [m_window_context->window makeKeyAndOrderFront:nil];
+            [win makeKeyAndOrderFront:nil];
         }
         else
         {
-            [m_window_context->window orderOut:nil];
+            [win orderOut:nil];
         }
     }
 
     math::int32x2 Window::getWindowSize() const
     {
-        // NOTE: Retina conversion
-        NSRect rect = [[m_window_context->window contentView] frame];
-        rect = [[m_window_context->window contentView] convertRectToBacking:rect];
-        return math::int32x2(rect.size.width, rect.size.height);
+        if (m_window_context->content_view)
+        {
+            return m_window_context->getContentSize();
+        }
+
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSRect rect = [[win contentView] frame];
+        rect = [[win contentView] convertRectToBacking:rect];
+        return math::int32x2(int(rect.size.width), int(rect.size.height));
     }
 
     math::int32x2 Window::getCursorPosition() const
     {
-        NSRect rect = [[m_window_context->window contentView] frame];
-        NSPoint point = [m_window_context->window mouseLocationOutsideOfEventStream];
-        return math::int32x2(point.x, rect.size.height - point.y - 1);
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSRect rect = [[win contentView] frame];
+        NSPoint point = [win mouseLocationOutsideOfEventStream];
+        return math::int32x2(int(point.x), int(rect.size.height - point.y - 1));
     }
 
     bool Window::isKeyPressed(Keycode code) const
@@ -159,9 +155,7 @@ namespace mango
 
         const int keyIndex = int(code);
         u32 state = m_window_context->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
-        bool pressed = state != 0;
-
-        return pressed;
+        return state != 0;
     }
 
     void Window::enterEventLoop()
@@ -170,24 +164,20 @@ namespace mango
 
         while (m_window_context->is_looping)
         {
-            NSEvent* event = [NSApp nextEventMatchingMask: NSEventMaskAny
-                              untilDate: nil
-                              inMode: NSDefaultRunLoopMode
-                              dequeue: YES];
+            NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                              untilDate:nil
+                              inMode:NSDefaultRunLoopMode
+                              dequeue:YES];
 
             if (event)
             {
-                //if ([event type] == NSKeyUp && ([event modifierFlags] & NSCommandKeyMask))
-                //    [[NSApp keyWindow] sendEvent:event];
-                //else
-                    [NSApp sendEvent:event];
+                [NSApp sendEvent:event];
             }
             else
             {
                 onIdle();
             }
 
-            // avoid saturating cpu
             Sleep::us(100);
         }
     }
@@ -207,27 +197,24 @@ namespace mango
 
     void Window::onResize(int width, int height)
     {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
+        MANGO_UNREFERENCED(width); MANGO_UNREFERENCED(height); 
     }
 
     void Window::onMinimize()
     {
     }
-
     void Window::onMaximize()
     {
     }
 
     void Window::onKeyPress(Keycode code, u32 mask)
     {
-        MANGO_UNREFERENCED(code);
-        MANGO_UNREFERENCED(mask);
+        MANGO_UNREFERENCED(code); MANGO_UNREFERENCED(mask);
     }
 
     void Window::onKeyRelease(Keycode code)
     {
-        MANGO_UNREFERENCED(code);
+        MANGO_UNREFERENCED(code); 
     }
 
     void Window::onMouseMove(int x, int y)

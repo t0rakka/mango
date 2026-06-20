@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.5.0
+        VERSION 2.6.0
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -162,14 +162,9 @@ if (BUILD_OPENGL)
 endif ()
 
 if (BUILD_VULKAN)
-    if (APPLE)
-        # Vulkan package can be found on macOS, but MANGO does not support it yet
+    find_package(Vulkan QUIET)
+    if (NOT VULKAN_FOUND)
         set(BUILD_VULKAN OFF)
-    else ()
-        find_package(Vulkan QUIET)
-        if (NOT VULKAN_FOUND)
-            set(BUILD_VULKAN OFF)
-        endif ()
     endif ()
 endif ()
 
@@ -289,7 +284,7 @@ function(select_window_system_sources system)
     endif ()
 endfunction()
 
-if (BUILD_OPENGL)
+if (BUILD_OPENGL OR BUILD_VULKAN)
 
     if (NOT EMSCRIPTEN)
 
@@ -299,19 +294,10 @@ if (BUILD_OPENGL)
 
     endif ()
 
-    FILE(GLOB OPENGL_HEADERS
-        "${MANGO_INCLUDE_DIR}/opengl/*.hpp"
-    )
-
     if (WIN32 OR CYGWIN)
 
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
-        )
-
-        FILE(GLOB OPENGL_SOURCES
-            "${MANGO_SOURCE_DIR}/opengl/*.cpp"
-            "${MANGO_SOURCE_DIR}/opengl/wgl/*.cpp"
         )
 
     elseif (APPLE)
@@ -319,6 +305,51 @@ if (BUILD_OPENGL)
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/cocoa/*.mm"
         )
+
+    elseif (NOT EMSCRIPTEN)
+
+        select_window_system_sources(${WINDOW_SYSTEM})
+
+        if (WINDOW_SYSTEM STREQUAL "wayland")
+            find_package(PkgConfig REQUIRED)
+            pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
+            pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
+            find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
+
+            set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
+            set(XDG_SHELL_CLIENT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h")
+            set(XDG_SHELL_PRIVATE_CODE "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-protocol.c")
+
+            add_custom_command(
+                OUTPUT ${XDG_SHELL_CLIENT_HEADER} ${XDG_SHELL_PRIVATE_CODE}
+                COMMAND ${WAYLAND_SCANNER} client-header ${XDG_SHELL_XML} ${XDG_SHELL_CLIENT_HEADER}
+                COMMAND ${WAYLAND_SCANNER} private-code ${XDG_SHELL_XML} ${XDG_SHELL_PRIVATE_CODE}
+                DEPENDS ${XDG_SHELL_XML}
+                COMMENT "Generating xdg-shell Wayland protocol"
+                VERBATIM
+            )
+
+            list(APPEND WINDOW_SOURCES ${XDG_SHELL_PRIVATE_CODE})
+        endif()
+
+    endif ()
+
+endif ()
+
+if (BUILD_OPENGL)
+
+    FILE(GLOB OPENGL_HEADERS
+        "${MANGO_INCLUDE_DIR}/opengl/*.hpp"
+    )
+
+    if (WIN32 OR CYGWIN)
+
+        FILE(GLOB OPENGL_SOURCES
+            "${MANGO_SOURCE_DIR}/opengl/*.cpp"
+            "${MANGO_SOURCE_DIR}/opengl/wgl/*.cpp"
+        )
+
+    elseif (APPLE)
 
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
@@ -333,8 +364,6 @@ if (BUILD_OPENGL)
 
     else ()
 
-        select_window_system_sources(${WINDOW_SYSTEM})
-
         FILE(GLOB OPENGL_SOURCES
             "${MANGO_SOURCE_DIR}/opengl/*.cpp"
             "${MANGO_SOURCE_DIR}/opengl/glx/*.cpp"
@@ -347,35 +376,17 @@ endif ()
 
 if (BUILD_VULKAN)
 
-    if (NOT (APPLE OR EMSCRIPTEN))
-
-        FILE(GLOB WINDOW_HEADERS
-            "${MANGO_INCLUDE_DIR}/window/*.hpp"
-        )
-
-    endif ()
-
     FILE(GLOB VULKAN_HEADERS
         "${MANGO_INCLUDE_DIR}/vulkan/*.hpp"
     )
 
-    if (WIN32 OR CYGWIN)
-
-        FILE(GLOB WINDOW_SOURCES
-            "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
-        )
+    if (WIN32 OR CYGWIN OR APPLE)
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
         )
 
-    elseif (APPLE OR EMSCRIPTEN)
-
-        # NOT SUPPORTED
-
-    else ()
-
-        select_window_system_sources(${WINDOW_SYSTEM})
+    elseif (NOT EMSCRIPTEN)
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
@@ -580,10 +591,15 @@ if (LIBRARY_LZFSE)
     )
 endif ()
 
-if (BUILD_OPENGL)
+if (BUILD_OPENGL OR BUILD_VULKAN)
     list(APPEND MANGO_SOURCES
         ${WINDOW_HEADERS}
         ${WINDOW_SOURCES}
+    )
+endif ()
+
+if (BUILD_OPENGL)
+    list(APPEND MANGO_SOURCES
         ${OPENGL_HEADERS}
         ${OPENGL_SOURCES}
     )
@@ -591,8 +607,6 @@ endif ()
 
 if (BUILD_VULKAN)
     list(APPEND MANGO_SOURCES
-        ${WINDOW_HEADERS}
-        ${WINDOW_SOURCES}
         ${VULKAN_HEADERS}
         ${VULKAN_SOURCES}
     )
@@ -618,6 +632,28 @@ set_target_properties(mango PROPERTIES
 
 if (APPLE)
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
+endif ()
+
+if (BUILD_OPENGL)
+    target_compile_definitions(mango PUBLIC MANGO_ENABLE_OPENGL)
+endif ()
+
+if (BUILD_VULKAN)
+    target_compile_definitions(mango PUBLIC MANGO_ENABLE_VULKAN)
+    if (APPLE)
+        target_compile_definitions(mango PRIVATE VK_USE_PLATFORM_METAL_EXT)
+    endif ()
+endif ()
+
+# Window system selection affects OpenGLContext layout in public headers.
+if (NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN)
+    if (WINDOW_SYSTEM STREQUAL "xlib")
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
+    elseif (WINDOW_SYSTEM STREQUAL "xcb")
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XCB")
+    elseif (WINDOW_SYSTEM STREQUAL "wayland")
+        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_WAYLAND")
+    endif ()
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -651,33 +687,32 @@ if (BUILD_OPENGL)
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
             if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
                 target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
                 if (ENABLE_EGL)
                     message("    OpenGL: EGL | XLIB")
-                    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                    target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
                     target_link_libraries(mango PUBLIC EGL)
                 else ()
                     message("    OpenGL: GLX | XLIB")
                 endif ()
             elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
                 target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
                 if (ENABLE_EGL)
                     message("    OpenGL: EGL | XCB")
-                    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                    target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
                     target_link_libraries(mango PUBLIC EGL)
                 else ()
                     message("    OpenGL: GLX | XCB")
                 endif ()
             elseif (WINDOW_SYSTEM STREQUAL "wayland")
                 message("    OpenGL: EGL | Wayland")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_EGL")
+                target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
                 find_package(PkgConfig REQUIRED)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
+                pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
-                target_link_libraries(mango PUBLIC EGL GL wayland-client xkbcommon)
+                target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
+                target_link_libraries(mango PUBLIC EGL GL wayland-client wayland-egl xkbcommon)
             endif()
         endif ()
     endif ()
@@ -713,21 +748,23 @@ if (BUILD_VULKAN)
             message("    Vulkan: WIN32")
             target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
             target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES})
+        elseif (APPLE)
+            message("    Vulkan: Metal (MoltenVK)")
+            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
+            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
         else ()
             if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XLIB")
                 target_link_libraries(mango PUBLIC X11 vulkan)
                 message("    Vulkan: XLIB")
             elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_XCB")
                 target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon)
                 message("    Vulkan: XCB")
             elseif (WINDOW_SYSTEM STREQUAL "wayland")
                 message("    Vulkan: Wayland")
-                target_compile_definitions(mango PRIVATE "MANGO_ENABLE_WAYLAND")
                 find_package(PkgConfig REQUIRED)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
+                target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
                 target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
             endif()
         endif ()

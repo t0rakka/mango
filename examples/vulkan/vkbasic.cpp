@@ -753,15 +753,18 @@ public:
             .pQueuePriorities = &queuePriority,
         };
 
-        const char* enabledExtensions[] = { "VK_KHR_swapchain" };
+        const char* enabledLayers[] = { "VK_LAYER_KHRONOS_validation" };
+        MANGO_UNREFERENCED(enabledLayers);
+
+        std::vector<const char*> deviceExtensions = vulkan::getDeviceExtensions(m_physicalDevice);
 
         VkDeviceCreateInfo deviceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
             .queueCreateInfoCount = 1,
             .pQueueCreateInfos = &queueCreateInfo,
-            .enabledExtensionCount = 1,
-            .ppEnabledExtensionNames = enabledExtensions,
+            .enabledExtensionCount = u32(deviceExtensions.size()),
+            .ppEnabledExtensionNames = deviceExtensions.data(),
         };
 
         VkResult result = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
@@ -774,7 +777,7 @@ public:
         m_graphicsQueueFamilyIndex = selectedQueueFamilyIndex;
         vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
 
-        m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, m_graphicsQueue);
+        m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, m_graphicsQueue, this);
 
         VkCommandPoolCreateInfo poolInfo =
         {
@@ -983,6 +986,11 @@ int mangoMain(const mango::CommandLine& commands)
 
     std::vector<const char*> enabledLayers = { "VK_LAYER_KHRONOS_validation" };
     std::vector<const char*> enabledExtensions = vulkan::getSurfaceExtensions();
+
+    for (const char* extension : vulkan::getInstanceExtensions())
+    {
+        enabledExtensions.push_back(extension);
+    }
 
     VkApplicationInfo applicationInfo =
     {

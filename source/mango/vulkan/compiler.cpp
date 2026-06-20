@@ -231,6 +231,8 @@ namespace mango::vulkan
             case VK_SHADER_STAGE_CALLABLE_BIT_KHR:            return "callable";
             case VK_SHADER_STAGE_ALL_GRAPHICS:                return "all graphics";
             case VK_SHADER_STAGE_ALL:                         return "all";
+            case VK_SHADER_STAGE_SUBPASS_SHADING_BIT_HUAWEI:  return "subpass shading";
+            case VK_SHADER_STAGE_CLUSTER_CULLING_BIT_HUAWEI:  return "cluster culling";
         }
 
         return "unknown";

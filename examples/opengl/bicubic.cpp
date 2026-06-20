@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
@@ -63,12 +63,12 @@ public:
 
         float t = sin(time0 / 1000000.0f) * 0.5f + 0.5f;
 
-        float width = (m_width - 1) * t + 1.0f;
-        float height = (m_height - 1) * t + 1.0f;
-        float x = (m_width - width) * 0.5f;
-        float y = (m_height - height) * 0.5f;
+        float width = (s.width - 1) * t + 1.0f;
+        float height = (s.height - 1) * t + 1.0f;
+        float x = (s.width - width) * 0.5f;
+        float y = (s.height - height) * 0.5f;
 
-        u32_bicubic_blit(s, m_bitmap, x + 0.5, y + 0.5f, width - 1.0f, height - 1.0f);
+        u32_bicubic_blit(s, m_bitmap, x + 0.5f, y + 0.5f, width - 1.0f, height - 1.0f);
 
         u64 time1 = mango::Time::us();
         u64 time = time1 - time0;

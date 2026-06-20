@@ -2,12 +2,18 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+#include "cocoa_input.hpp"
+#include "cocoa_window.h"
 
-#include "CustomOpenGLView.h"
-#include "../../window/cocoa/cocoa_input.hpp"
+#if defined(MANGO_WINDOW_SYSTEM_COCOA) && defined(MANGO_ENABLE_VULKAN)
 
-@implementation CustomView
+#import <QuartzCore/QuartzCore.h>
+
+// -----------------------------------------------------------------------
+// MangoMetalView
+// -----------------------------------------------------------------------
+
+@implementation MangoMetalView
 
 - (id)initWithFrame:(NSRect)frame window:(mango::Window*)window context:(mango::WindowContext*)context
 {
@@ -15,24 +21,18 @@
     {
         mangoWindow = window;
         mangoContext = context;
+
+        self.wantsLayer = YES;
+        self.layer = [CAMetalLayer layer];
+        self.layer.contentsScale = [[NSScreen mainScreen] backingScaleFactor];
+
+        [self registerForDraggedTypes:[NSArray arrayWithObjects:NSPasteboardTypeFileURL, nil]];
     }
 
-    [self registerForDraggedTypes:[NSArray arrayWithObjects:NSPasteboardTypeFileURL, nil]];
     return self;
 }
 
-- (void)prepareOpenGL
-{
-    [super prepareOpenGL];
-    [self setWantsBestResolutionOpenGLSurface:YES];
-}
-
 - (BOOL)isOpaque
-{
-    return YES;
-}
-
-- (BOOL)canBecomeKeyView
 {
     return YES;
 }
@@ -42,14 +42,21 @@
     return YES;
 }
 
-- (void)trackContentView:(NSWindow*)window
+- (void)viewDidChangeBackingProperties
 {
-    mango::cocoa::trackContentView(self, window);
+    [super viewDidChangeBackingProperties];
+    self.layer.contentsScale = self.window.backingScaleFactor;
+    mangoContext->updateMetalDrawableSize();
 }
 
 - (void)dispatchResize:(NSRect)frame
 {
     mango::cocoa::dispatchResize(mangoWindow, mangoContext, self, frame);
+}
+
+- (void)trackContentView:(NSWindow*)window
+{
+    mango::cocoa::trackContentView(self, window);
 }
 
 - (void)keyDown:(NSEvent*)event
@@ -99,14 +106,7 @@
 
 - (void)scrollWheel:(NSEvent*)event
 {
-    [super scrollWheel:event];
     mango::cocoa::viewScrollWheel(mangoWindow, self, event);
-}
-
-- (void)drawRect:(NSRect)dirtyRect
-{
-    (void)dirtyRect;
-    mangoWindow->onDraw();
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender
@@ -128,12 +128,6 @@
     return YES;
 }
 
-- (void)concludeDragOperation:(id<NSDraggingInfo>)sender
-{
-    (void)sender;
-    [self setNeedsDisplay:YES];
-}
-
 @end
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_WINDOW_SYSTEM_COCOA) && defined(MANGO_ENABLE_VULKAN)

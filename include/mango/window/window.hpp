@@ -37,7 +37,10 @@ namespace mango
 namespace mango
 {
 
-    using WindowHandle = void*;
+    struct WindowHandle
+    {
+        void* layer { nullptr }; // CAMetalLayer*, set when created with API_VULKAN
+    };
 
 } // namespace mango
 
