@@ -179,6 +179,21 @@ namespace mango
         int32x2 screen = OpenGLContext::getScreenSize(screenIndex);
         int32x2 content(width, height);
 
+        if (screen.x <= 0 || screen.y <= 0)
+        {
+            constexpr int max_dim = 1280;
+            const int max_side = std::max(content.x, content.y);
+
+            if (max_side > max_dim)
+            {
+                const float scale = float(max_dim) / float(max_side);
+                content.x = std::max(1, int(float(content.x) * scale + 0.5f));
+                content.y = std::max(1, int(float(content.y) * scale + 0.5f));
+            }
+
+            return content;
+        }
+
         if (content.x > screen.x)
         {
             // fit horizontally
@@ -484,6 +499,8 @@ namespace mango
         // compute aspect ratio
 
         int32x2 window = getWindowSize();
+        window.x = std::max(1, window.x);
+        window.y = std::max(1, window.y);
 
         float32x2 aspect;
         aspect.x = float(window.x) / float(m_width);

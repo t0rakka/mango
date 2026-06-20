@@ -37,15 +37,25 @@ namespace mango
         struct wl_pointer* pointer = nullptr;
         struct wl_keyboard* keyboard = nullptr;
 
+        // EGL native window (wl_egl_window*, stored as void* to avoid wayland-egl in this header)
+        void* egl_window = nullptr;
+        int32_t egl_synced_size[2] = { 0, 0 };
+        int32_t buffer_scale = 1;
+
         // XKB handling
         struct xkb_context* xkb_context = nullptr;
         struct xkb_keymap* xkb_keymap = nullptr;
         struct xkb_state* xkb_state = nullptr;
 
+        // Keyboard state
+        bool keyboard_focused = false;
+        bool key_pressed[256] = {};
+
         // Window state
         bool is_looping = false;
         bool busy = false;
         bool configured = false;
+        bool needs_redraw = false;
         int32_t size[2] = { 0, 0 };
         int32_t cursor[2] = { 0, 0 };
         uint32_t mouse_time[6] = {};
@@ -58,6 +68,8 @@ namespace mango
         math::int32x2 getWindowSize() const;
 
         bool createWaylandWindow(int width, int height, const char* title);
+        void syncEGLWindow();
+        void requestRefresh();
         void processEvents();
         void dispatchPendingResize();
     };

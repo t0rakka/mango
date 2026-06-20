@@ -11,9 +11,13 @@
 #include <unistd.h>
 #include <sys/mman.h>
 #include <cstring>
+#include <algorithm>
+#include <memory>
+#include <vector>
 
 #include "wayland_window.hpp"
 #include <wayland-client-protocol.h>
+#include <wayland-egl.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "xdg-shell-client-protocol.h"
 
@@ -103,6 +107,64 @@ namespace
 
 #undef TR
 
+    u32 getKeyMask(struct xkb_state* state)
+    {
+        u32 mask = 0;
+
+        if (!state)
+        {
+            return mask;
+        }
+
+        if (xkb_state_mod_name_is_active(state, XKB_MOD_NAME_CTRL, XKB_STATE_MODS_EFFECTIVE))
+        {
+            mask |= KEYMASK_CONTROL;
+        }
+
+        if (xkb_state_mod_name_is_active(state, XKB_MOD_NAME_SHIFT, XKB_STATE_MODS_EFFECTIVE))
+        {
+            mask |= KEYMASK_SHIFT;
+        }
+
+        if (xkb_state_mod_name_is_active(state, XKB_MOD_NAME_LOGO, XKB_STATE_MODS_EFFECTIVE))
+        {
+            mask |= KEYMASK_SUPER;
+        }
+
+        return mask;
+    }
+
+    void setKeyPressed(WindowContext* window, Keycode code, bool pressed)
+    {
+        if (!window || code == KEYCODE_NONE)
+        {
+            return;
+        }
+
+        const int idx = int(code);
+        if (idx > 0 && idx < 256)
+        {
+            window->key_pressed[idx] = pressed;
+        }
+    }
+
+    void clearKeyState(WindowContext* window)
+    {
+        if (!window)
+        {
+            return;
+        }
+
+        window->keyboard_focused = false;
+        std::memset(window->key_pressed, 0, sizeof(window->key_pressed));
+
+        if (window->xkb_state && window->xkb_keymap)
+        {
+            xkb_state_unref(window->xkb_state);
+            window->xkb_state = xkb_state_new(window->xkb_keymap);
+        }
+    }
+
     void xdg_wm_base_ping(void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial)
     {
         xdg_wm_base_pong(xdg_wm_base, serial);
@@ -116,6 +178,7 @@ namespace
     void xdg_surface_configure(void* data, struct xdg_surface* xdg_surface, uint32_t serial)
     {
         WindowContext* window = static_cast<WindowContext*>(data);
+        window->syncEGLWindow();
         xdg_surface_ack_configure(xdg_surface, serial);
         window->configured = true;
     }
@@ -136,6 +199,8 @@ namespace
         {
             window->size[0] = width;
             window->size[1] = height;
+            window->syncEGLWindow();
+            window->requestRefresh();
         }
     }
 
@@ -196,19 +261,38 @@ namespace
     void keyboard_enter(void* data, struct wl_keyboard* keyboard, uint32_t serial,
                         struct wl_surface* surface, struct wl_array* keys)
     {
-        MANGO_UNREFERENCED(data);
         MANGO_UNREFERENCED(keyboard);
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(surface);
-        MANGO_UNREFERENCED(keys);
+
+        WindowContext* window = static_cast<WindowContext*>(data);
+        window->keyboard_focused = true;
+
+        if (!window->xkb_state || !keys)
+        {
+            return;
+        }
+
+        const uint32_t* key_array = static_cast<const uint32_t*>(keys->data);
+        const size_t count = keys->size / sizeof(uint32_t);
+
+        for (size_t i = 0; i < count; ++i)
+        {
+            const uint32_t keycode = key_array[i] + 8;
+            xkb_state_update_key(window->xkb_state, keycode, XKB_KEY_DOWN);
+
+            const xkb_keysym_t sym = xkb_state_key_get_one_sym(window->xkb_state, keycode);
+            setKeyPressed(window, translateKeysym(sym), true);
+        }
     }
 
     void keyboard_leave(void* data, struct wl_keyboard* keyboard, uint32_t serial, struct wl_surface* surface)
     {
-        MANGO_UNREFERENCED(data);
         MANGO_UNREFERENCED(keyboard);
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(surface);
+
+        clearKeyState(static_cast<WindowContext*>(data));
     }
 
     void keyboard_key(void* data, struct wl_keyboard* keyboard, uint32_t serial,
@@ -225,15 +309,20 @@ namespace
         }
 
         const uint32_t keycode = key + 8;
+        xkb_state_update_key(window->xkb_state, keycode,
+            state == WL_KEYBOARD_KEY_STATE_PRESSED ? XKB_KEY_DOWN : XKB_KEY_UP);
+
         const xkb_keysym_t sym = xkb_state_key_get_one_sym(window->xkb_state, keycode);
         const Keycode code = translateKeysym(sym);
 
         if (state == WL_KEYBOARD_KEY_STATE_PRESSED)
         {
-            window->owner->onKeyPress(code, 0);
+            setKeyPressed(window, code, true);
+            window->owner->onKeyPress(code, getKeyMask(window->xkb_state));
         }
         else if (state == WL_KEYBOARD_KEY_STATE_RELEASED)
         {
+            setKeyPressed(window, code, false);
             window->owner->onKeyRelease(code);
         }
     }
@@ -299,6 +388,97 @@ namespace
         .name = seat_name,
     };
 
+    struct WaylandOutput
+    {
+        struct wl_output* output = nullptr;
+        uint32_t registry_name = 0;
+        int32_t width = 0;
+        int32_t height = 0;
+        int32_t scale = 1;
+    };
+
+    std::vector<std::unique_ptr<WaylandOutput>> g_outputs;
+
+    int32_t getPrimaryBufferScale()
+    {
+        int32_t scale = 1;
+
+        for (const auto& output : g_outputs)
+        {
+            scale = std::max(scale, output->scale);
+        }
+
+        return scale;
+    }
+
+    void output_geometry(void* data, struct wl_output* output, int32_t x, int32_t y,
+                         int32_t physical_width, int32_t physical_height, int32_t subpixel,
+                         const char* make, const char* model, int32_t transform)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(output);
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+        MANGO_UNREFERENCED(physical_width);
+        MANGO_UNREFERENCED(physical_height);
+        MANGO_UNREFERENCED(subpixel);
+        MANGO_UNREFERENCED(make);
+        MANGO_UNREFERENCED(model);
+        MANGO_UNREFERENCED(transform);
+    }
+
+    void output_mode(void* data, struct wl_output* output, uint32_t flags,
+                     int32_t width, int32_t height, int32_t refresh)
+    {
+        MANGO_UNREFERENCED(output);
+        MANGO_UNREFERENCED(refresh);
+
+        WaylandOutput* info = static_cast<WaylandOutput*>(data);
+        if (flags & WL_OUTPUT_MODE_CURRENT)
+        {
+            info->width = width;
+            info->height = height;
+        }
+    }
+
+    void output_done(void* data, struct wl_output* output)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(output);
+    }
+
+    void output_scale(void* data, struct wl_output* output, int32_t factor)
+    {
+        MANGO_UNREFERENCED(output);
+
+        WaylandOutput* info = static_cast<WaylandOutput*>(data);
+        info->scale = factor;
+    }
+
+    void output_name(void* data, struct wl_output* output, const char* name)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(output);
+        MANGO_UNREFERENCED(name);
+    }
+
+    void output_description(void* data, struct wl_output* output, const char* description)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(output);
+        MANGO_UNREFERENCED(description);
+    }
+
+    static const struct wl_output_listener output_listener =
+    {
+        .geometry = output_geometry,
+        .mode = output_mode,
+        .done = output_done,
+        .scale = output_scale,
+        .name = output_name,
+        .description = output_description,
+    };
+
     void registry_global(void* data, struct wl_registry* registry,
                          uint32_t name, const char* interface, uint32_t version)
     {
@@ -322,13 +502,36 @@ namespace
                 wl_registry_bind(registry, name, &wl_seat_interface, 5));
             wl_seat_add_listener(window->seat, &seat_listener, window);
         }
+        else if (std::strcmp(interface, "wl_output") == 0)
+        {
+            const uint32_t bind_version = version < 4 ? version : 4;
+            auto output = std::make_unique<WaylandOutput>();
+            output->registry_name = name;
+            output->output = static_cast<struct wl_output*>(
+                wl_registry_bind(registry, name, &wl_output_interface, bind_version));
+            wl_output_add_listener(output->output, &output_listener, output.get());
+            g_outputs.push_back(std::move(output));
+        }
     }
 
     void registry_global_remove(void* data, struct wl_registry* registry, uint32_t name)
     {
         MANGO_UNREFERENCED(data);
         MANGO_UNREFERENCED(registry);
-        MANGO_UNREFERENCED(name);
+
+        for (auto it = g_outputs.begin(); it != g_outputs.end(); ++it)
+        {
+            if ((*it)->registry_name == name)
+            {
+                if ((*it)->output)
+                {
+                    wl_output_destroy((*it)->output);
+                }
+
+                g_outputs.erase(it);
+                break;
+            }
+        }
     }
 
     static const struct wl_registry_listener registry_listener =
@@ -370,6 +573,7 @@ namespace mango
 
         wl_registry_add_listener(registry, &registry_listener, this);
         wl_display_roundtrip(display);
+        wl_display_roundtrip(display);
 
         if (!createWaylandWindow(width, height, "Mango Window"))
         {
@@ -390,6 +594,7 @@ namespace mango
         if (xdg_wm_base) xdg_wm_base_destroy(xdg_wm_base);
         if (pointer) wl_pointer_destroy(pointer);
         if (keyboard) wl_keyboard_destroy(keyboard);
+        if (egl_window) wl_egl_window_destroy(static_cast<struct wl_egl_window*>(egl_window));
         if (seat) wl_seat_destroy(seat);
         if (compositor) wl_compositor_destroy(compositor);
         if (registry) wl_registry_destroy(registry);
@@ -420,10 +625,22 @@ namespace mango
             xdg_toplevel_set_fullscreen(xdg_toplevel, nullptr);
             fullscreen = true;
         }
+
+        requestRefresh();
+    }
+
+    void WindowContext::requestRefresh()
+    {
+        needs_redraw = true;
     }
 
     int32x2 WindowContext::getWindowSize() const
     {
+        if (egl_window && egl_synced_size[0] > 0 && egl_synced_size[1] > 0)
+        {
+            return int32x2(egl_synced_size[0], egl_synced_size[1]);
+        }
+
         return int32x2(size[0], size[1]);
     }
 
@@ -480,6 +697,31 @@ namespace mango
         return true;
     }
 
+    void WindowContext::syncEGLWindow()
+    {
+        if (!egl_window || size[0] <= 0 || size[1] <= 0)
+        {
+            return;
+        }
+
+        if (egl_synced_size[0] == size[0] && egl_synced_size[1] == size[1] && buffer_scale == getPrimaryBufferScale())
+        {
+            return;
+        }
+
+        buffer_scale = getPrimaryBufferScale();
+
+        if (surface && buffer_scale > 0)
+        {
+            wl_surface_set_buffer_scale(surface, buffer_scale);
+        }
+
+        wl_egl_window_resize(static_cast<struct wl_egl_window*>(egl_window), size[0], size[1], 0, 0);
+
+        egl_synced_size[0] = size[0];
+        egl_synced_size[1] = size[1];
+    }
+
     void WindowContext::dispatchPendingResize()
     {
         if (!owner || busy)
@@ -522,13 +764,18 @@ namespace mango
 
     int Window::getScreenCount()
     {
-        return 1;
+        return int(g_outputs.size());
     }
 
     int32x2 Window::getScreenSize(int index)
     {
-        MANGO_UNREFERENCED(index);
-        return int32x2(0, 0);
+        if (index < 0 || index >= int(g_outputs.size()))
+        {
+            return int32x2(0, 0);
+        }
+
+        const WaylandOutput& output = *g_outputs[index];
+        return int32x2(output.width, output.height);
     }
 
     Window::operator WindowHandle () const
@@ -549,16 +796,23 @@ namespace mango
 
     void Window::setWindowSize(int width, int height)
     {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
+        if (width <= 0 || height <= 0)
+        {
+            return;
+        }
+
+        m_window_context->size[0] = width;
+        m_window_context->size[1] = height;
+        m_window_context->syncEGLWindow();
+        m_window_context->requestRefresh();
     }
 
     void Window::setTitle(const std::string& title)
     {
-        if (m_window_context->xdg_toplevel)
+        if (m_window_context->xdg_toplevel && m_window_context->display)
         {
             xdg_toplevel_set_title(m_window_context->xdg_toplevel, title.c_str());
-            wl_surface_commit(m_window_context->surface);
+            wl_display_flush(m_window_context->display);
         }
     }
 
@@ -579,30 +833,80 @@ namespace mango
 
     bool Window::isKeyPressed(Keycode code) const
     {
-        MANGO_UNREFERENCED(code);
-        return false;
+        switch (code)
+        {
+            case KEYCODE_SHIFT:
+                return isKeyPressed(KEYCODE_LEFT_SHIFT) || isKeyPressed(KEYCODE_RIGHT_SHIFT);
+
+            case KEYCODE_CONTROL:
+                return isKeyPressed(KEYCODE_LEFT_CONTROL) || isKeyPressed(KEYCODE_RIGHT_CONTROL);
+
+            default:
+                break;
+        }
+
+        if (!m_window_context->keyboard_focused)
+        {
+            return false;
+        }
+
+        const int idx = int(code);
+        if (idx <= 0 || idx >= 256)
+        {
+            return false;
+        }
+
+        return m_window_context->key_pressed[idx];
     }
 
     void Window::enterEventLoop()
     {
         m_window_context->is_looping = true;
 
+        // Wayland compositors need at least one client buffer before the surface is shown.
+        // The application is fully constructed by the time enterEventLoop() is called.
+        m_window_context->processEvents();
+        m_window_context->syncEGLWindow();
+
         int last_width = m_window_context->size[0];
         int last_height = m_window_context->size[1];
+
+        if (!m_window_context->busy)
+        {
+            if (last_width > 0 && last_height > 0)
+            {
+                onResize(last_width, last_height);
+            }
+
+            onDraw();
+        }
 
         for (; m_window_context->is_looping;)
         {
             m_window_context->processEvents();
+
+            bool refreshed = false;
 
             if (m_window_context->size[0] != last_width || m_window_context->size[1] != last_height)
             {
                 last_width = m_window_context->size[0];
                 last_height = m_window_context->size[1];
 
+                m_window_context->syncEGLWindow();
+
                 if (!m_window_context->busy)
                 {
                     onResize(last_width, last_height);
+                    onDraw();
+                    refreshed = true;
+                    m_window_context->needs_redraw = false;
                 }
+            }
+
+            if (!refreshed && m_window_context->needs_redraw && !m_window_context->busy)
+            {
+                onDraw();
+                m_window_context->needs_redraw = false;
             }
 
             if (!m_window_context->busy)

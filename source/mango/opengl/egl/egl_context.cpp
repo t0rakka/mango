@@ -7,6 +7,8 @@
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
+#include <algorithm>
+
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
@@ -19,6 +21,7 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 #include "../../window/wayland/wayland_window.hpp"
+#include <wayland-egl.h>
 #endif
 
 #include <EGL/egl.h>
@@ -44,7 +47,11 @@ namespace mango
         {
 
             //egl_display = eglGetDisplay((EGLNativeDisplayType)window->display);
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+            egl_display = eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(window->display));
+#else
             egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
+#endif
             if (egl_display == EGL_NO_DISPLAY)
             {
                 shutdown();
@@ -235,7 +242,32 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 
-            // TODO
+            if (!window->surface)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] Wayland surface is not ready.");
+            }
+
+            const int egl_width = std::max(1, window->size[0] > 0 ? window->size[0] : width);
+            const int egl_height = std::max(1, window->size[1] > 0 ? window->size[1] : height);
+
+            window->egl_window = wl_egl_window_create(window->surface, egl_width, egl_height);
+            if (!window->egl_window)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] wl_egl_window_create() failed.");
+            }
+
+            egl_surface = eglCreateWindowSurface(egl_display, eglConfig[0],
+                static_cast<EGLNativeWindowType>(window->egl_window), nullptr);
+            if (egl_surface == EGL_NO_SURFACE)
+            {
+                shutdown();
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+            }
+
+            wl_display_roundtrip(window->display);
+            window->syncEGLWindow();
 
 #endif
 
@@ -276,6 +308,9 @@ namespace mango
 
         void swapBuffers() override
         {
+#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+            window->syncEGLWindow();
+#endif
             eglSwapBuffers(egl_display, egl_surface);
         }
 
@@ -320,7 +355,13 @@ namespace mango
 
     void toggleFullscreen() override
     {
-        // TODO
+        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
+        window->busy = true;
+
+        window->toggleFullscreen();
+
+        window->busy = false;
+        eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
     }
 
 #endif

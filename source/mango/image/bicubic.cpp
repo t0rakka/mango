@@ -610,6 +610,12 @@ namespace mango::image
             return;
         }
 
+        if (xsize <= 0.0f || ysize <= 0.0f)
+        {
+            printLine(Print::Error, "Incorrect source region dimensions: {} x {}", xsize, ysize);
+            return;
+        }
+
         const float xscale = dest.width / xsize;
         const float yscale = dest.height / ysize;
 
