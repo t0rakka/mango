@@ -38,7 +38,7 @@ namespace mango::vulkan
 {
 
     // ------------------------------------------------------------------------------
-    // VkSurface functions
+    // VK_KHR_win32_surface
     // ------------------------------------------------------------------------------
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
@@ -78,6 +78,10 @@ namespace mango::vulkan
 
 #endif
 
+    // ------------------------------------------------------------------------------
+    // VK_KHR_xlib_surface
+    // ------------------------------------------------------------------------------
+
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
     std::vector<const char*> requiredSurfaceExtensions()
@@ -113,6 +117,10 @@ namespace mango::vulkan
     }
 
 #endif
+
+    // ------------------------------------------------------------------------------
+    // VK_KHR_xcb_surface
+    // ------------------------------------------------------------------------------
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
@@ -150,6 +158,10 @@ namespace mango::vulkan
 
 #endif
 
+    // ------------------------------------------------------------------------------
+    // VK_KHR_wayland_surface
+    // ------------------------------------------------------------------------------
+
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 
     std::vector<const char*> requiredSurfaceExtensions()
@@ -186,6 +198,10 @@ namespace mango::vulkan
     }
 
 #endif
+
+    // ------------------------------------------------------------------------------
+    // VK_EXT_metal_surface
+    // ------------------------------------------------------------------------------
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
