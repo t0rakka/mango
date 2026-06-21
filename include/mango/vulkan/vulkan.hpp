@@ -6,6 +6,10 @@
 
 #include <vulkan/vulkan.h>
 
+#include <string_view>
+#include <unordered_set>
+#include <vector>
+
 #include <mango/core/configure.hpp>
 #include <mango/window/window.hpp>
 #include <mango/vulkan/swapchain.hpp>
@@ -27,12 +31,71 @@ namespace mango::vulkan
         }
     };
 
+    class ExtensionProperties : protected NonCopyable
+    {
+    public:
+        bool contains(std::string_view name) const;
+        bool contains(const char* name) const;
+        void print() const;
+
+        size_t size() const
+        {
+            return m_properties.size();
+        }
+
+        bool empty() const
+        {
+            return m_properties.empty();
+        }
+
+        auto begin()
+        {
+            return m_properties.begin();
+        }
+
+        auto end()
+        {
+            return m_properties.end();
+        }
+
+        auto begin() const
+        {
+            return m_properties.begin();
+        }
+
+        auto end() const
+        {
+            return m_properties.end();
+        }
+
+    protected:
+        ExtensionProperties(const std::vector<VkExtensionProperties>& properties);
+        ~ExtensionProperties() = default;
+
+        std::vector<VkExtensionProperties> m_properties;
+        std::unordered_set<std::string_view> m_names;
+    };
+
+    class InstanceExtensionProperties : public ExtensionProperties
+    {
+    public:
+        InstanceExtensionProperties(const char* layerName = nullptr);
+        ~InstanceExtensionProperties() = default;
+    };
+
+    class DeviceExtensionProperties : public ExtensionProperties
+    {
+    public:
+        DeviceExtensionProperties(VkPhysicalDevice physicalDevice);
+        ~DeviceExtensionProperties() = default;
+    };
+
     class Instance : public VulkanHandle<VkInstance>
     {
     public:
         Instance(const VkApplicationInfo& applicationInfo,
-                 const std::vector<const char*> layers,
-                 const std::vector<const char*> extensions);
+                 std::vector<const char*> layers,
+                 std::vector<const char*> extensions);
         ~Instance();
 
     };
@@ -74,17 +137,17 @@ namespace mango::vulkan
         bool isFullscreen() const;
     };
 
-    std::vector<const char*> getSurfaceExtensions();
-    std::vector<const char*> getInstanceExtensions();
-    std::vector<const char*> getDeviceExtensions(VkPhysicalDevice physicalDevice);
-
-    std::vector<VkLayerProperties> enumerateInstanceLayerProperties();
-    std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName = nullptr);
-    std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance);
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
+
+    std::vector<const char*> requiredSurfaceExtensions();
+    std::vector<const char*> requiredDeviceExtensions();
+
+    std::vector<VkLayerProperties>       getInstanceLayerProperties();
+    std::vector<VkExtensionProperties>   getInstanceExtensionProperties(const char* layerName = nullptr);
+    std::vector<VkPhysicalDevice>        getPhysicalDevices(VkInstance instance);
     std::vector<VkQueueFamilyProperties> getPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice);
-    std::vector<VkExtensionProperties> enumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice);
-    std::vector<VkSurfaceFormatKHR> enumerateSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+    std::vector<VkExtensionProperties>   getDeviceExtensionProperties(VkPhysicalDevice physicalDevice);
+    std::vector<VkSurfaceFormatKHR>      getSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
 
     std::string_view getString(VkResult result);
     std::string_view getString(VkPhysicalDeviceType deviceType);

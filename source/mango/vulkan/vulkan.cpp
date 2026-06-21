@@ -5,6 +5,7 @@
 #include <mango/core/configure.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/print.hpp>
+#include <cstring>
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
     #define VK_USE_PLATFORM_WIN32_KHR
@@ -42,7 +43,7 @@ namespace mango::vulkan
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
 
-    std::vector<const char*> getSurfaceExtensions()
+    std::vector<const char*> requiredSurfaceExtensions()
     {
         return { "VK_KHR_surface", "VK_KHR_win32_surface" };
     }
@@ -79,7 +80,7 @@ namespace mango::vulkan
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
-    std::vector<const char*> getSurfaceExtensions()
+    std::vector<const char*> requiredSurfaceExtensions()
     {
         return { "VK_KHR_surface", "VK_KHR_xlib_surface" };
     }
@@ -115,7 +116,7 @@ namespace mango::vulkan
 
 #if defined(MANGO_WINDOW_SYSTEM_XCB)
 
-    std::vector<const char*> getSurfaceExtensions()
+    std::vector<const char*> requiredSurfaceExtensions()
     {
         return { "VK_KHR_surface", "VK_KHR_xcb_surface" };
     }
@@ -151,7 +152,7 @@ namespace mango::vulkan
 
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 
-    std::vector<const char*> getSurfaceExtensions()
+    std::vector<const char*> requiredSurfaceExtensions()
     {
         return { "VK_KHR_surface", "VK_KHR_wayland_surface" };
     }
@@ -188,7 +189,7 @@ namespace mango::vulkan
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
-    std::vector<const char*> getSurfaceExtensions()
+    std::vector<const char*> requiredSurfaceExtensions()
     {
         return { "VK_KHR_surface", "VK_EXT_metal_surface" };
     }
@@ -225,31 +226,62 @@ namespace mango::vulkan
 #endif
 
     // ------------------------------------------------------------------------------
-    // Instance / device extensions (MoltenVK portability on macOS only)
+    // ExtensionProperties
     // ------------------------------------------------------------------------------
 
-    std::vector<const char*> getInstanceExtensions()
+    ExtensionProperties::ExtensionProperties(const std::vector<VkExtensionProperties>& properties)
+        : m_properties(properties)
     {
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
-        return { VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME };
-#else
-        return {};
-#endif
+        m_names.reserve(m_properties.size());
+
+        for (const VkExtensionProperties& property : m_properties)
+        {
+            m_names.insert(property.extensionName);
+        }
     }
 
-    std::vector<const char*> getDeviceExtensions(VkPhysicalDevice physicalDevice)
+    void ExtensionProperties::print() const
     {
-        MANGO_UNREFERENCED(physicalDevice);
+        for (auto property : m_properties)
+        {
+            printLine(Print::Info, "  {}", property.extensionName);
+        }
+        printLine(Print::Info, "");
+    }
+
+    bool ExtensionProperties::contains(std::string_view name) const
+    {
+        return m_names.contains(name);
+    }
+
+    bool ExtensionProperties::contains(const char* name) const
+    {
+        return m_names.contains(std::string_view(name));
+    }
+
+    InstanceExtensionProperties::InstanceExtensionProperties(const char* layerName)
+        : ExtensionProperties(getInstanceExtensionProperties(layerName))
+    {
+    }
+
+    DeviceExtensionProperties::DeviceExtensionProperties(VkPhysicalDevice physicalDevice)
+        : ExtensionProperties(getDeviceExtensionProperties(physicalDevice))
+    {
+    }
+
+    // ------------------------------------------------------------------------------
+    // Device extensions (MoltenVK portability on macOS only)
+    // ------------------------------------------------------------------------------
+
+    std::vector<const char*> requiredDeviceExtensions()
+    {
+        std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
-        return
-        {
-            VK_KHR_SWAPCHAIN_EXTENSION_NAME,
-            "VK_KHR_portability_subset",
-        };
-#else
-        return { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
+        extensions.push_back("VK_KHR_portability_subset");
 #endif
+
+        return extensions;
     }
 
     // ------------------------------------------------------------------------------
@@ -257,12 +289,14 @@ namespace mango::vulkan
     // ------------------------------------------------------------------------------
 
     Instance::Instance(const VkApplicationInfo& applicationInfo,
-                       const std::vector<const char*> layers,
-                       const std::vector<const char*> extensions)
+                       std::vector<const char*> layers,
+                       std::vector<const char*> extensions)
     {
         u32 flags = 0;
+
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
         flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
+        extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif
 
         VkInstanceCreateInfo instanceCreateInfo
@@ -381,10 +415,10 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // enumerateInstanceLayerProperties()
+    // getInstanceLayerProperties()
     // ------------------------------------------------------------------------------
 
-    std::vector<VkLayerProperties> enumerateInstanceLayerProperties()
+    std::vector<VkLayerProperties> getInstanceLayerProperties()
     {
         VkResult result = VK_SUCCESS;
 
@@ -419,10 +453,10 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // enumerateInstanceExtensionProperties()
+    // getInstanceExtensionProperties()
     // ------------------------------------------------------------------------------
 
-    std::vector<VkExtensionProperties> enumerateInstanceExtensionProperties(const char* layerName)
+    std::vector<VkExtensionProperties> getInstanceExtensionProperties(const char* layerName)
     {
         VkResult result = VK_SUCCESS;
 
@@ -444,23 +478,14 @@ namespace mango::vulkan
             return {};
         }
 
-        printLine(Print::Info, "InstanceExtensionProperties:");
-
-        for (auto property : extensionProperties)
-        {
-            printLine(Print::Info, "  - {}", property.extensionName);
-        }
-
-        printLine(Print::Info, "");
-
         return extensionProperties;
     }
 
     // ------------------------------------------------------------------------------
-    // enumeratePhysicalDevices()
+    // getPhysicalDevices()
     // ------------------------------------------------------------------------------
 
-    std::vector<VkPhysicalDevice> enumeratePhysicalDevices(VkInstance instance)
+    std::vector<VkPhysicalDevice> getPhysicalDevices(VkInstance instance)
     {
         VkResult result = VK_SUCCESS;
         uint32_t count = 0;
@@ -661,10 +686,10 @@ namespace mango::vulkan
                 printLine(Print::Info, "    minImageTransferGranularity: {} x {} x {}", granularity.width, granularity.height, granularity.depth);
             }
 
-            std::vector<VkExtensionProperties> extensionProperties = enumerateDeviceExtensionProperties(physicalDevice);
+            std::vector<VkExtensionProperties> extensionProperties = getDeviceExtensionProperties(physicalDevice);
 
             printLine(Print::Info, "");
-            printLine(Print::Info, "  extensionProperties:");
+            printLine(Print::Info, "  DeviceExtensionProperties:");
 
             for (const VkExtensionProperties& property : extensionProperties)
             {
@@ -675,18 +700,6 @@ namespace mango::vulkan
         printLine(Print::Info, "");
 
         return physicalDevices;
-    }
-
-    void printEnabledExtensions(std::string_view title, const std::vector<const char*>& extensions)
-    {
-        printLine(Print::Info, "{}:", title);
-
-        for (const char* extension : extensions)
-        {
-            printLine(Print::Info, "  + {}", extension);
-        }
-
-        printLine(Print::Info, "");
     }
 
     // ------------------------------------------------------------------------------
@@ -712,7 +725,7 @@ namespace mango::vulkan
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance)
     {
-        std::vector<VkPhysicalDevice> physicalDevices = enumeratePhysicalDevices(instance);
+        std::vector<VkPhysicalDevice> physicalDevices = getPhysicalDevices(instance);
         std::vector<PhysicalDeviceScore> scores;
 
         if (physicalDevices.empty())
@@ -794,10 +807,10 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // enumerateDeviceExtensionProperties()
+    // getDeviceExtensionProperties()
     // ------------------------------------------------------------------------------
 
-    std::vector<VkExtensionProperties> enumerateDeviceExtensionProperties(VkPhysicalDevice physicalDevice)
+    std::vector<VkExtensionProperties> getDeviceExtensionProperties(VkPhysicalDevice physicalDevice)
     {
         uint32_t count = 0;
 
@@ -820,7 +833,7 @@ namespace mango::vulkan
         return extensionProperties;
     }
 
-    std::vector<VkSurfaceFormatKHR> enumerateSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
+    std::vector<VkSurfaceFormatKHR> getSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface)
     {
         uint32_t formatCount;
         vkGetPhysicalDeviceSurfaceFormatsKHR(physicalDevice, surface, &formatCount, nullptr);

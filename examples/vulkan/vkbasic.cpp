@@ -754,10 +754,7 @@ public:
             .pQueuePriorities = &queuePriority,
         };
 
-        const char* enabledLayers[] = { "VK_LAYER_KHRONOS_validation" };
-        MANGO_UNREFERENCED(enabledLayers);
-
-        std::vector<const char*> deviceExtensions = vulkan::getDeviceExtensions(m_physicalDevice);
+        std::vector<const char*> deviceExtensions = vulkan::requiredDeviceExtensions();
 
         VkDeviceCreateInfo deviceCreateInfo =
         {
@@ -800,7 +797,7 @@ public:
         const VkSurfaceFormatKHR formatHDR =
         {
             .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-            .colorSpace = VK_COLOR_SPACE_HDR10_ST2084_EXT
+            .colorSpace = VK_COLOR_SPACE_BT2020_LINEAR_EXT
         };
 
         MANGO_UNREFERENCED(formatSDR);
@@ -808,7 +805,7 @@ public:
 
         VkSurfaceFormatKHR preferredFormat = formatSDR;
 
-        std::vector<VkSurfaceFormatKHR> surfaceFormats = enumerateSurfaceFormats(m_physicalDevice, m_surface);
+        std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(m_physicalDevice, m_surface);
 
         size_t selectedFormatIndex = 0;
         VkSurfaceFormatKHR selectedFormat = surfaceFormats[0];
@@ -1041,13 +1038,17 @@ int mangoMain(const mango::CommandLine& commands)
 
     printEnable(Print::Info, true);
 
-    std::vector<const char*> enabledLayers = { "VK_LAYER_KHRONOS_validation" };
-    std::vector<const char*> enabledExtensions = vulkan::getSurfaceExtensions();
+    InstanceExtensionProperties instanceExtensionProperties;
 
-    for (const char* extension : vulkan::getInstanceExtensions())
+    printLine(Print::Info, "InstanceExtensionProperties:");
+    instanceExtensionProperties.print();
+
+    std::vector<const char*> enabledLayers = { "VK_LAYER_KHRONOS_validation" };
+    std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
+
+    if (instanceExtensionProperties.contains(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME))
     {
-        enabledExtensions.push_back(extension);
-        //enabledExtensions.push_back("VK_EXT_swapchain_colorspace");
+        enabledExtensions.push_back(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME);
     }
 
     VkApplicationInfo applicationInfo =
