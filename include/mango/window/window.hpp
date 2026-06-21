@@ -270,7 +270,7 @@ namespace mango
 
         virtual math::int32x2 getWindowSize() const;
         virtual math::int32x2 getCursorPosition() const;
-        virtual bool isKeyPressed(Keycode code) const;
+        bool isKeyPressed(Keycode code) const;
 
         void enterEventLoop();
         void breakEventLoop();
