@@ -51,7 +51,7 @@ namespace mango
     {
         if (isEnable(target))
         {
-            std::printf("%s", fmt::vformat(fmt, fmt::make_format_args(args...)).c_str());
+            std::printf("%s", fmt::format(fmt, std::forward<T>(args)...).c_str());
         }
     }
 
@@ -61,7 +61,7 @@ namespace mango
     {
         if (isEnable(target))
         {
-            std::printf("%*s%s", indent, "", fmt::vformat(fmt, fmt::make_format_args(args...)).c_str());
+            std::printf("%*s%s", indent, "", fmt::format(fmt, std::forward<T>(args)...).c_str());
         }
     }
 
@@ -119,7 +119,7 @@ namespace mango
     {
         if (isEnable(target))
         {
-            std::printf("%s\n", fmt::vformat(fmt, fmt::make_format_args(args...)).c_str());
+            std::printf("%s\n", fmt::format(fmt, std::forward<T>(args)...).c_str());
         }
     }
 
@@ -129,7 +129,7 @@ namespace mango
     {
         if (isEnable(target))
         {
-            std::printf("%*s%s\n", indent, "", fmt::vformat(fmt, fmt::make_format_args(args...)).c_str());
+            std::printf("%*s%s\n", indent, "", fmt::format(fmt, std::forward<T>(args)...).c_str());
         }
     }
 
