@@ -33,6 +33,9 @@ namespace mango::vulkan
                 return m_swapchain != nullptr;
             }
 
+            VkImage image() const;
+            VkImageView imageView() const;
+
             VkResult submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer);
 
         private:
@@ -86,7 +89,11 @@ namespace mango::vulkan
         VkFormat getFormat() const;
         VkColorSpaceKHR getColorSpace() const;
         VkExtent2D getExtent() const;
+        VkImage getImage(u32 imageIndex) const;
         VkImageView getImageView(u32 imageIndex) const;
+
+        void cmdTransitionImageToColorAttachment(VkCommandBuffer commandBuffer, u32 imageIndex) const;
+        void cmdTransitionImageToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const;
 
         bool recreateSwapchain();
         Frame beginFrame();
