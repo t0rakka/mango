@@ -172,7 +172,8 @@ namespace mango
 
     size_t ThreadPool::getHardwareConcurrency()
     {
-        return std::max(std::thread::hardware_concurrency(), 1u);
+        size_t concurrency = std::max(std::thread::hardware_concurrency(), 1u);
+        return concurrency;
     }
 
     ThreadPool& ThreadPool::getInstance()
@@ -520,6 +521,10 @@ namespace mango
 
                 std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
                 --m_task_counter;
+                if (m_task_counter == 0)
+                {
+                    m_wait_condition.notify_all();
+                }
             }
             else
             {
