@@ -673,7 +673,7 @@ namespace mango
         ::SetForegroundWindow(hwnd);
         ::SetFocus(hwnd);
         ::DragAcceptFiles(hwnd, TRUE);
-        ::ShowWindow(hwnd, SW_SHOWNORMAL);
+        ::ShowWindow(hwnd, SW_HIDE);
     }
 
     WindowContext::~WindowContext()
