@@ -84,10 +84,43 @@ namespace mango
         std::this_thread::sleep_for(std::chrono::milliseconds(count));
     }
 
+#if defined(MANGO_PLATFORM_EMSCRIPTEN)
+
+    void Sleep::us(s32 count)
+    {
+        if (count <= 0)
+        {
+            return;
+        }
+
+        // pthread sleep_for() has poor sub-millisecond resolution under Node/Wasm.
+        // Pure spin-yield can starve other pthreads (SerialQueue workers); yield
+        // then briefly sleep so the pool scheduler can run them.
+        const auto end = std::chrono::high_resolution_clock::now() + std::chrono::microseconds(count);
+        int yields = 0;
+
+        while (std::chrono::high_resolution_clock::now() < end)
+        {
+            if (++yields >= 32)
+            {
+                yields = 0;
+                std::this_thread::sleep_for(std::chrono::microseconds(100));
+            }
+            else
+            {
+                std::this_thread::yield();
+            }
+        }
+    }
+
+#else
+
     void Sleep::us(s32 count)
     {
         std::this_thread::sleep_for(std::chrono::microseconds(count));
     }
+
+#endif
 
 #endif
 
