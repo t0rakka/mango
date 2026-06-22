@@ -729,7 +729,7 @@ public:
         for (size_t i = 0; i < queueFamilyProperties.size(); ++i)
         {
             const VkQueueFamilyProperties& properties = queueFamilyProperties[i];
-            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i));
+            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i), *this);
             bool graphics = properties.queueFlags & VK_QUEUE_GRAPHICS_BIT;
 
             if (graphics && presentationSupport)
@@ -863,6 +863,8 @@ public:
         createDescriptorPoolAndSet();
         createPipeline(extent);
         createFramebuffers(extent);
+
+        setVisible(true);
     }
 
     ~TestWindow()

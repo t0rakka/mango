@@ -48,7 +48,6 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_win32_surface" };
     }
 
-    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -69,7 +68,6 @@ namespace mango::vulkan
         return surface;
     }
 
-    static
     bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
     {
         MANGO_UNREFERENCED(handle);
@@ -89,7 +87,6 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_xlib_surface" };
     }
 
-    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -110,8 +107,7 @@ namespace mango::vulkan
         return surface;
     }
 
-    static
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
     {
         return vkGetPhysicalDeviceXlibPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.display, handle.visualid);
     }
@@ -129,7 +125,6 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_xcb_surface" };
     }
 
-    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -150,8 +145,7 @@ namespace mango::vulkan
         return surface;
     }
 
-    static
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
     {
         return vkGetPhysicalDeviceXcbPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.connection, handle.visualid);
     }
@@ -169,7 +163,6 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_KHR_wayland_surface" };
     }
 
-    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -190,8 +183,7 @@ namespace mango::vulkan
         return surface;
     }
 
-    static
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
     {
 
         return vkGetPhysicalDeviceWaylandPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.display);
@@ -210,7 +202,6 @@ namespace mango::vulkan
         return { "VK_KHR_surface", "VK_EXT_metal_surface" };
     }
 
-    static
     VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
     {
         VkSurfaceKHR surface = VK_NULL_HANDLE;
@@ -230,8 +221,7 @@ namespace mango::vulkan
         return surface;
     }
 
-    static
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
     {
         MANGO_UNREFERENCED(physicalDevice);
         MANGO_UNREFERENCED(queueFamilyIndex);
@@ -403,8 +393,6 @@ namespace mango::vulkan
         {
             MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
         }
-
-        setVisible(true);
     }
 
     VulkanWindow::~VulkanWindow()
@@ -413,11 +401,6 @@ namespace mango::vulkan
         {
             vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
         }
-    }
-
-    bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const
-    {
-        return vulkan::getPresentationSupport(physicalDevice, queueFamilyIndex, *m_window_context);
     }
 
     void VulkanWindow::toggleFullscreen()

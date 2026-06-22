@@ -132,12 +132,14 @@ namespace mango::vulkan
             return m_instance;
         }
 
-        bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex) const;
         void toggleFullscreen();
         bool isFullscreen() const;
     };
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
+
+    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle);
+    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle);
 
     std::vector<const char*> requiredSurfaceExtensions();
     std::vector<const char*> requiredDeviceExtensions();
