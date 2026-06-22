@@ -94,6 +94,11 @@ set_property(CACHE LINKER PROPERTY STRINGS default mold)
 
 # Emscripten
 if (EMSCRIPTEN)
+    # Host macOS toolchain variables must not leak into em++ invocations.
+    set(CMAKE_OSX_ARCHITECTURES "" CACHE STRING "" FORCE)
+    set(CMAKE_OSX_SYSROOT "" CACHE PATH "" FORCE)
+    set(CMAKE_OSX_DEPLOYMENT_TARGET "" CACHE STRING "" FORCE)
+
     if (BUILD_OPENGL)
         set(BUILD_OPENGL OFF)
     endif ()
@@ -108,8 +113,15 @@ if (EMSCRIPTEN)
 
     # Enable pthreads in compiler and linker
     add_compile_options(-pthread)
+    add_link_options(
+        "-pthread"
+        "-sUSE_PTHREADS=1"
+        "-sPTHREAD_POOL_SIZE=32"
+        "-sPTHREAD_POOL_SIZE_STRICT=0"
+    )
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -pthread -sUSE_PTHREADS=1")
-    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE=4")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE=32")
+    set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sPTHREAD_POOL_SIZE_STRICT=0")
     set(CMAKE_EXE_LINKER_FLAGS "${CMAKE_EXE_LINKER_FLAGS} -sALLOW_MEMORY_GROWTH=1")
 
     # Enable WebAssembly SIMD
@@ -405,6 +417,17 @@ if (WIN32 OR CYGWIN)
     FILE(GLOB FILESYSTEM_SOURCES
         "${MANGO_SOURCE_DIR}/filesystem/*.cpp"
         "${MANGO_SOURCE_DIR}/filesystem/win32/*.cpp"
+    )
+
+elseif (EMSCRIPTEN)
+
+    FILE(GLOB CORE_SOURCES
+        "${MANGO_SOURCE_DIR}/core/*.cpp"
+    )
+
+    FILE(GLOB FILESYSTEM_SOURCES
+        "${MANGO_SOURCE_DIR}/filesystem/*.cpp"
+        "${MANGO_SOURCE_DIR}/filesystem/unix/*.cpp"
     )
 
 elseif (APPLE)

@@ -52,6 +52,8 @@
                 "CMAKE_BUILD_TYPE": "Release",
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
                 "VCPKG_TARGET_TRIPLET": "wasm32-emscripten",
+                "CMAKE_OSX_ARCHITECTURES": "",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "",
                 "BUILD_ALL": "ON",
                 "BUILD_SHARED_LIBS": "OFF"
             }
