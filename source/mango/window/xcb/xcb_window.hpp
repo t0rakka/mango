@@ -74,6 +74,7 @@ namespace mango
 
         bool init(int width, int height, u32 flags, const char* title);
         void toggleFullscreen();
+        bool isFullscreen() const;
         math::int32x2 getWindowSize() const;
     };
 

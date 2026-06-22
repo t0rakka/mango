@@ -270,6 +270,10 @@ namespace mango
 
         virtual math::int32x2 getWindowSize() const;
         virtual math::int32x2 getCursorPosition() const;
+
+        virtual void toggleFullscreen() = 0;
+        virtual bool isFullscreen() const = 0;
+
         bool isKeyPressed(Keycode code) const;
 
         void enterEventLoop();

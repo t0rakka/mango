@@ -594,6 +594,11 @@ namespace mango
         fullscreen = !fullscreen;
     }
 
+    bool WindowContext::isFullscreen() const
+    {
+        return fullscreen;
+    }
+
     math::int32x2 WindowContext::getWindowSize() const
     {
         xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);

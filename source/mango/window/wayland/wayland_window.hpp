@@ -70,6 +70,7 @@ namespace mango
         ~WindowContext();
 
         void toggleFullscreen();
+        bool isFullscreen() const;
         math::int32x2 getWindowSize() const;
 
         bool createWaylandWindow(int width, int height, const char* title);

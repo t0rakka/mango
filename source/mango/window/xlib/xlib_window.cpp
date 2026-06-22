@@ -680,6 +680,11 @@ namespace mango
         fullscreen = !fullscreen;
     }
 
+    bool WindowContext::isFullscreen() const
+    {
+        return fullscreen;
+    }
+
     math::int32x2 WindowContext::getWindowSize() const
     {
         XWindowAttributes attributes;

@@ -23,6 +23,7 @@ namespace mango
         ~WindowContext();
 
         void toggleFullscreen();
+        bool isFullscreen() const;
     };
 
 } // namespace mango

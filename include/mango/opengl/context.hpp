@@ -196,8 +196,8 @@ namespace mango
         void makeCurrent();
         void swapBuffers();
         void swapInterval(int interval);
-        void toggleFullscreen();
-        bool isFullscreen() const;
+        void toggleFullscreen() override;
+        bool isFullscreen() const override;
         math::int32x2 getWindowSize() const override;
 
         // extension masks

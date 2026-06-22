@@ -160,6 +160,17 @@ namespace mango
         cocoa::toggleViewFullscreen(win->mangoWindow, this, win, (__bridge NSView*)content_view);
     }
 
+    bool WindowContext::isFullscreen() const
+    {
+        if (content_view)
+        {
+            NSView* view = (__bridge NSView*)content_view;
+            return [view isInFullScreenMode];
+        }
+
+        return fullscreen;
+    }
+
     math::int32x2 WindowContext::getContentSize() const
     {
         if (!content_view)

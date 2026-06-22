@@ -143,8 +143,7 @@ namespace mango
 
         bool isFullscreen() const override
         {
-            CustomView* view = (__bridge CustomView*)window_context->content_view;
-            return view ? [view isInFullScreenMode] : false;
+            return window_context->isFullscreen();
         }
 
         math::int32x2 getWindowSize() const override

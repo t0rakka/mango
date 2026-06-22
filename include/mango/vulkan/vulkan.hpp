@@ -132,8 +132,8 @@ namespace mango::vulkan
             return m_instance;
         }
 
-        void toggleFullscreen();
-        bool isFullscreen() const;
+        void toggleFullscreen() override;
+        bool isFullscreen() const override;
     };
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);

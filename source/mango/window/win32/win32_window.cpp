@@ -731,6 +731,11 @@ namespace mango
         fullscreen = !fullscreen;
     }
 
+    bool WindowContext::isFullscreen() const
+    {
+        return fullscreen;
+    }
+
     // -----------------------------------------------------------------------
     // Window
     // -----------------------------------------------------------------------

@@ -32,6 +32,7 @@ namespace mango
         void shutdown();
 
         void toggleFullscreen();
+        bool isFullscreen() const;
         math::int32x2 getContentSize() const;
         void updateMetalDrawableSize();
     };

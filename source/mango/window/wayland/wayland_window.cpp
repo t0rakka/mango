@@ -910,6 +910,11 @@ namespace mango
         requestRefresh();
     }
 
+    bool WindowContext::isFullscreen() const
+    {
+        return fullscreen;
+    }
+
     void WindowContext::requestRefresh()
     {
         needs_redraw = true;

@@ -410,7 +410,7 @@ namespace mango::vulkan
 
     bool VulkanWindow::isFullscreen() const
     {
-        return m_window_context->fullscreen;
+        return m_window_context->isFullscreen();
     }
 
     // ------------------------------------------------------------------------------

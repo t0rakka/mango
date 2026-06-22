@@ -326,7 +326,7 @@ namespace mango
 
         bool isFullscreen() const
         {
-            return window->fullscreen;
+            return window->isFullscreen();
         }
 
         int32x2 getWindowSize() const
