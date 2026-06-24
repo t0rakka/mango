@@ -929,18 +929,13 @@ public:
         createPipeline(extent);
     }
 
-    void updateSwapchain()
-    {
-        if (!m_swapchain->recreateSwapchain())
-        {
-            return;
-        }
-
-        rebuildSwapchainResources();
-    }
-
     void render()
     {
+        if (m_swapchain->recreateSwapchain())
+        {
+            rebuildSwapchainResources();
+        }
+
         auto frame = m_swapchain->beginFrame();
         if (!frame)
         {
@@ -953,13 +948,6 @@ public:
         VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
         recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
         frame.submitAndPresent(m_graphicsQueue, commandBuffer);
-    }
-
-    void onResize(int width, int height) override
-    {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
-        updateSwapchain();
     }
 
     void onDraw() override

@@ -71,6 +71,7 @@ namespace mango::vulkan
         std::vector<VkFence> m_fences;
         std::vector<VkFence> m_imagesInFlight;
         u32 m_currentFrame = 0;
+        bool m_recreateRequired = false;
 
         void cleanup();
         void configure();
