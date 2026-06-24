@@ -64,7 +64,10 @@ namespace mango::vulkan
         std::vector<VkImage> m_images;
         std::vector<VkImageView> m_imageViews;
 
-        static constexpr u32 m_maxImagesInFlight = 5;
+        // Keep the CPU-ahead present queue shallow. With FIFO (vsync-locked)
+        // present, a deep queue means the displayed image trails the current
+        // window geometry by that many vsyncs, which reads as resize lag/stretch.
+        static constexpr u32 m_maxImagesInFlight = 2;
 
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
@@ -78,6 +81,7 @@ namespace mango::vulkan
         void destroyImageViews();
         void configure();
         VkExtent2D resolveExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities) const;
+        VkPresentModeKHR choosePresentMode() const;
         bool createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
         bool createImageViews();
         void createSyncObjects();

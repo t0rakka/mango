@@ -371,7 +371,7 @@ protected:
         }
     }
 
-    void createPipeline(VkExtent2D extent)
+    void createPipeline()
     {
         destroyPipeline();
 
@@ -438,26 +438,27 @@ protected:
             .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST,
         };
 
-        VkViewport viewport =
-        {
-            .width = float(extent.width),
-            .height = float(extent.height),
-            .minDepth = 0.0f,
-            .maxDepth = 1.0f,
-        };
-
-        VkRect2D scissor =
-        {
-            .extent = extent,
-        };
-
+        // Viewport and scissor are dynamic so window resizes never require a
+        // pipeline rebuild. Avoiding vkCreateGraphicsPipelines on every resize
+        // step removes the stall (lag) and the rebuild gap (flicker).
         VkPipelineViewportStateCreateInfo viewportState =
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO,
             .viewportCount = 1,
-            .pViewports = &viewport,
             .scissorCount = 1,
-            .pScissors = &scissor,
+        };
+
+        VkDynamicState dynamicStates[] =
+        {
+            VK_DYNAMIC_STATE_VIEWPORT,
+            VK_DYNAMIC_STATE_SCISSOR,
+        };
+
+        VkPipelineDynamicStateCreateInfo dynamicState =
+        {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO,
+            .dynamicStateCount = 2,
+            .pDynamicStates = dynamicStates,
         };
 
         VkPipelineRasterizationStateCreateInfo rasterizer =
@@ -519,6 +520,7 @@ protected:
             .pMultisampleState = &multisampling,
             .pDepthStencilState = &depthStencil,
             .pColorBlendState = &colorBlending,
+            .pDynamicState = &dynamicState,
             .layout = m_pipelineLayout,
         };
 
@@ -645,6 +647,25 @@ protected:
 
         vkCmdBeginRendering(commandBuffer, &renderingInfo);
         vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
+
+        VkViewport viewport =
+        {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = float(extent.width),
+            .height = float(extent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+        vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
+
+        VkRect2D scissor =
+        {
+            .offset = { 0, 0 },
+            .extent = extent,
+        };
+        vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
+
         vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
 
         VkBuffer vertexBuffers[] = { m_vertexBuffer };
@@ -844,7 +865,7 @@ public:
         createGeometry();
         createDescriptorSetLayout();
         createDescriptorPoolAndSet();
-        createPipeline(extent);
+        createPipeline();
 
         setVisible(true);
     }
@@ -918,15 +939,15 @@ public:
 
     void rebuildSwapchainResources()
     {
+        // The swapchain already waited on all in-flight fences during recreate,
+        // but keep a device idle here so the depth image is safe to replace.
+        // The graphics pipeline is NOT rebuilt: viewport/scissor are dynamic.
         vkDeviceWaitIdle(m_device);
-
-        destroyPipeline();
 
         destroyDepthResources();
 
         VkExtent2D extent = m_swapchain->getExtent();
         createDepthResources(extent);
-        createPipeline(extent);
     }
 
     void render()

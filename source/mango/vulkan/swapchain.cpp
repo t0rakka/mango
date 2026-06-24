@@ -153,9 +153,42 @@ namespace mango::vulkan
         return true;
     }
 
+    VkPresentModeKHR Swapchain::choosePresentMode() const
+    {
+        // FIFO is always supported and is the guaranteed fallback. MAILBOX is
+        // preferred because vkQueuePresentKHR does not block on vsync: the event
+        // loop keeps spinning and processes window resize (configure) events
+        // immediately, which makes interactive resize track in real time while
+        // still being tear-free. FIFO would stall the loop one vsync per frame.
+        u32 count = 0;
+        vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &count, nullptr);
+
+        std::vector<VkPresentModeKHR> presentModes(count);
+        vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &count, presentModes.data());
+
+        for (VkPresentModeKHR mode : presentModes)
+        {
+            if (mode == VK_PRESENT_MODE_MAILBOX_KHR)
+            {
+                return VK_PRESENT_MODE_MAILBOX_KHR;
+            }
+        }
+
+        return VK_PRESENT_MODE_FIFO_KHR;
+    }
+
     bool Swapchain::createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent, VkSwapchainKHR oldSwapchain)
     {
+        const VkPresentModeKHR presentMode = choosePresentMode();
+
         u32 imageCount = surfaceCapabilities.minImageCount;
+
+        // MAILBOX needs at least three images to actually overlap a queued frame
+        // with one being presented; otherwise it degenerates toward FIFO latency.
+        if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
+        {
+            imageCount = std::max(imageCount, 3u);
+        }
 
         if (oldSwapchain != VK_NULL_HANDLE)
         {
@@ -184,7 +217,7 @@ namespace mango::vulkan
             .pQueueFamilyIndices = nullptr,
             .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
             .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
-            .presentMode = VK_PRESENT_MODE_FIFO_KHR,
+            .presentMode = presentMode,
             .clipped = VK_TRUE,
             .oldSwapchain = oldSwapchain,
         };
