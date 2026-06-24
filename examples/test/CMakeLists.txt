@@ -1,6 +1,7 @@
 
 list(APPEND EXAMPLES
     aes
+    cache
     checksum
     hash
     compress

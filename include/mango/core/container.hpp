@@ -4,11 +4,15 @@
 */
 #pragma once
 
+#include <algorithm>
 #include <cstddef>
-#include <unordered_map>
-#include <optional>
 #include <list>
+#include <optional>
+#include <stdexcept>
+#include <type_traits>
+#include <unordered_map>
 #include <utility>
+#include <variant>
 
 namespace mango
 {
@@ -43,6 +47,10 @@ namespace mango
         LRUCache(size_t capacity)
             : m_capacity(capacity)
         {
+            if (capacity < 1)
+            {
+                throw std::invalid_argument("cache capacity must be >= 1");
+            }
         }
 
         void insert(const Key& key, const Value& value)
@@ -401,8 +409,12 @@ namespace mango
 
     public:
         explicit ARCCache(size_t capacity)
-            : m_capacity(std::max(capacity, size_t(1)))
+            : m_capacity(capacity)
         {
+            if (capacity < 1)
+            {
+                throw std::invalid_argument("cache capacity must be >= 1");
+            }
         }
 
         void insert(const Key& key, const Value& value)
@@ -720,17 +732,25 @@ namespace mango
 
     public:
         explicit TwoQCache(size_t capacity)
-            : m_capacity(std::max(capacity, size_t(1)))
-            , m_kin(default_kin(m_capacity))
-            , m_kout(default_kout(m_capacity))
+            : m_capacity(capacity)
+            , m_kin(default_kin(capacity))
+            , m_kout(default_kout(capacity))
         {
+            if (capacity < 1)
+            {
+                throw std::invalid_argument("cache capacity must be >= 1");
+            }
         }
 
         TwoQCache(size_t capacity, size_t kin, size_t kout)
-            : m_capacity(std::max(capacity, size_t(1)))
+            : m_capacity(capacity)
             , m_kin(std::max(kin, size_t(1)))
             , m_kout(kout)
         {
+            if (capacity < 1)
+            {
+                throw std::invalid_argument("cache capacity must be >= 1");
+            }
         }
 
         size_t kin() const
@@ -883,7 +903,10 @@ namespace mango
     //   - insert(key, value) without cost defaults to 1 (slot semantics).
     //   - LRU on cost-budget still ignores re-fetch difficulty beyond cost.
     //
-    // insert fails only when cost exceeds budget or capacity is zero.
+    // insert fails only when capacity is zero (rejected at construction).
+    // Entries may exceed the budget alone; the next insert evicts LRU victims until
+    // there is room (or only the new entry remains). Zero cost is counted as 1 so
+    // eviction bookkeeping stays meaningful.
     // -------------------------------------------------------------------------
 
     template <typename Key, typename Value, typename Cost = size_t>
@@ -908,6 +931,13 @@ namespace mango
         Cost m_budget;
         Cost m_used {};
 
+        static Cost normalized_cost(Cost cost)
+        {
+            // Zero-cost entries never increase m_used, so they would never be evicted
+            // by the budget loop; count them as 1 for eviction bookkeeping.
+            return cost == Cost(0) ? Cost(1) : cost;
+        }
+
     public:
         explicit CostLRUCache(Cost budget)
             : m_budget(budget)
@@ -916,10 +946,7 @@ namespace mango
 
         void insert(const Key& key, const Value& value, Cost cost = Cost(1))
         {
-            if (cost > m_budget)
-            {
-                return;
-            }
+            cost = normalized_cost(cost);
 
             erase(key);
 
@@ -927,7 +954,7 @@ namespace mango
             {
                 if (m_values.empty())
                 {
-                    return;
+                    break;
                 }
 
                 auto victim = std::prev(m_values.end());
