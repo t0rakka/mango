@@ -178,7 +178,7 @@ namespace mango
             return 0.0;
         }
 
-        if (@available(macOS 10.15, *))
+        if (@available(macOS 12.0, *))
         {
             return double([screen maximumFramesPerSecond]);
         }
