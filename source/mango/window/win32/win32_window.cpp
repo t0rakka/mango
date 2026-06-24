@@ -438,6 +438,12 @@ namespace
 
             window->onResize(width, height);
 
+            if (wparam != SIZE_MINIMIZED && width > 0 && height > 0)
+            {
+                window->invalidate();
+                window->dispatchFrame();
+            }
+
             switch (wparam)
             {
             case SIZE_MINIMIZED:
@@ -893,12 +899,6 @@ namespace mango
             dispatchFrame();
             waitForNextIteration();
         }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_event_loop.running = false;
-        ::PostQuitMessage(0);
     }
 
     void Window::onMinimize()

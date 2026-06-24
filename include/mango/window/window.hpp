@@ -312,9 +312,7 @@ namespace mango
         std::unique_ptr<struct WindowContext> m_window_context;
         EventLoopState m_event_loop;
 
-        void dispatchFrame();
         void waitForNextIteration();
-        void syncDisplayRefreshRate();
 
         virtual void runEventLoop();
 
@@ -357,7 +355,10 @@ namespace mango
 
         bool isRunning() const;
         void invalidate();
+        void dispatchFrame();
         void frameComplete();
+
+        void syncDisplayRefreshRate();
 
         const EventLoopConfig& getEventLoopConfig() const;
         void setEventLoopConfig(const EventLoopConfig& config);

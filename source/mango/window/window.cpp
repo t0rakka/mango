@@ -35,9 +35,14 @@ namespace mango
             return false;
         }
 
+        if (needs_redraw)
+        {
+            return true;
+        }
+
         if (config.mode == FrameMode::OnDemand)
         {
-            return needs_redraw;
+            return false;
         }
 
         if (config.maxFrameRate > 0.0)
