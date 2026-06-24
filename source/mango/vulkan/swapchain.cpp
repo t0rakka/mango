@@ -183,11 +183,12 @@ namespace mango::vulkan
 
         u32 imageCount = surfaceCapabilities.minImageCount;
 
-        // MAILBOX needs at least three images to actually overlap a queued frame
-        // with one being presented; otherwise it degenerates toward FIFO latency.
+        // MAILBOX's non-blocking vkAcquireNextImageKHR guarantee requires
+        // minImageCount + 1 images (one held by the presentation engine, one
+        // queued, one for the application to render into).
         if (presentMode == VK_PRESENT_MODE_MAILBOX_KHR)
         {
-            imageCount = std::max(imageCount, 3u);
+            imageCount = surfaceCapabilities.minImageCount + 1;
         }
 
         if (oldSwapchain != VK_NULL_HANDLE)
