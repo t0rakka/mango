@@ -94,8 +94,8 @@ namespace mango::vulkan
         VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
         {
             .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
-            .dpy = handle.display,
-            .window = handle.window
+            .dpy = static_cast<Display*>(handle.display),
+            .window = static_cast<::Window>(handle.window)
         };
 
         VkResult result = vkCreateXlibSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
@@ -109,7 +109,8 @@ namespace mango::vulkan
 
     bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
     {
-        return vkGetPhysicalDeviceXlibPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.display, handle.visualid);
+        return vkGetPhysicalDeviceXlibPresentationSupportKHR(physicalDevice, queueFamilyIndex,
+            static_cast<Display*>(handle.display), static_cast<VisualID>(handle.visualid));
     }
 
 #endif

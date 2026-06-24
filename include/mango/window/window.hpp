@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -52,21 +52,21 @@ namespace mango
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
-    #include <X11/Xlib.h>
-
-    #ifdef Status
-        #undef Status
-        using Status = int;
-    #endif
-
 namespace mango
 {
 
+    namespace xlib
+    {
+        using Display = void*;
+        using Window = unsigned long;
+        using VisualID = unsigned long;
+    }
+
     struct WindowHandle
     {
-        ::Display* display { nullptr };
-        ::Window window { 0 };
-        ::VisualID visualid { 0 };
+        xlib::Display display { nullptr };
+        xlib::Window window { 0 };
+        xlib::VisualID visualid { 0 };
     };
 
 } // namespace mango

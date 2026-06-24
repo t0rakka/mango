@@ -371,8 +371,18 @@ namespace mango::vulkan
 
         u32 imageIndex = 0;
         VkResult result = acquireNextImage(imageIndex);
+        if (result == VK_ERROR_OUT_OF_DATE_KHR)
+        {
+            m_recreateRequired = true;
+            return Frame();
+        }
+
         if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
         {
+            if (result == VK_SUBOPTIMAL_KHR)
+            {
+                m_recreateRequired = true;
+            }
             return Frame(this, imageIndex, result);
         }
 
@@ -390,12 +400,14 @@ namespace mango::vulkan
 
         if (extent.width > 0 && extent.height > 0)
         {
-            if (extent.width != m_extent.width || extent.height != m_extent.height)
+            bool extentChanged = extent.width != m_extent.width || extent.height != m_extent.height;
+            if (m_recreateRequired || extentChanged)
             {
                 cleanup();
                 createSwapchain(surfaceCapabilities, extent);
                 createSyncObjects();
                 m_currentFrame = 0;
+                m_recreateRequired = false;
                 recreate = true;
             }
         }
@@ -460,7 +472,11 @@ namespace mango::vulkan
         };
 
         VkResult result = vkQueuePresentKHR(m_presentQueue, &presentInfo);
-        if (result != VK_SUCCESS && result != VK_SUBOPTIMAL_KHR)
+        if (result == VK_ERROR_OUT_OF_DATE_KHR || result == VK_SUBOPTIMAL_KHR)
+        {
+            m_recreateRequired = true;
+        }
+        else if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkQueuePresentKHR failed: {}", getString(result));
         }
