@@ -370,7 +370,7 @@ namespace
             {
                 if (::GetUpdateRect(hwnd, NULL, FALSE))
                 {
-                    window->onDraw();
+                    window->invalidate();
                 }
             }
 
@@ -839,14 +839,12 @@ namespace mango
         return pressed;
     }
 
-    void Window::enterEventLoop()
+    void Window::runEventLoop()
     {
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        m_window_context->is_looping = true;
-
-        for (; m_window_context->is_looping && msg.message != WM_QUIT;)
+        while (isRunning() && msg.message != WM_QUIT)
         {
             while (::PeekMessage(&msg, m_window_context->hwnd, 0, 0, PM_REMOVE))
             {
@@ -854,33 +852,15 @@ namespace mango
                 ::DispatchMessage(&msg);
             }
 
-            onIdle();
-
-            // avoid saturating cpu
-            Sleep::ms(1);
+            dispatchFrame();
+            waitForNextIteration();
         }
-
-        m_window_context->is_looping = false;
     }
 
     void Window::breakEventLoop()
     {
+        m_event_loop.running = false;
         ::PostQuitMessage(0);
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
     }
 
     void Window::onMinimize()

@@ -61,13 +61,10 @@ public:
             breakEventLoop();
     }
 
-    void onIdle() override
+    void onFrame(const FrameInfo& info) override
     {
-        onDraw();
-    }
+        MANGO_UNREFERENCED(info);
 
-    void onDraw() override
-    {
         u32 time = m_timer.ms();
         if (time < m_target_time)
         {

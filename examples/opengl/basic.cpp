@@ -99,8 +99,10 @@ public:
         glScissor(0, 0, width, height);
     }
 
-    void onDraw() override
+    void onFrame(const FrameInfo& info) override
     {
+        MANGO_UNREFERENCED(info);
+
         glClearColor(0.1f, 0.14f, 0.8f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT);
 

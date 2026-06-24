@@ -44,13 +44,10 @@ public:
             breakEventLoop();
     }
 
-    void onIdle() override
+    void onFrame(const FrameInfo& info) override
     {
-        onDraw();
-    }
+        MANGO_UNREFERENCED(info);
 
-    void onDraw() override
-    {
         u64 time = timer.us();
         u64 diff = time - prev_time;
         ++frames;

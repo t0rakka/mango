@@ -54,17 +54,17 @@ public:
 
         case KEYCODE_1:
             m_filter = OpenGLFramebuffer::FILTER_NEAREST;
-            onDraw();
+            invalidate();
             break;
 
         case KEYCODE_2:
             m_filter = OpenGLFramebuffer::FILTER_BILINEAR;
-            onDraw();
+            invalidate();
             break;
 
         case KEYCODE_3:
             m_filter = OpenGLFramebuffer::FILTER_BICUBIC;
-            onDraw();
+            invalidate();
             break;
 
         case KEYCODE_S:
@@ -74,7 +74,7 @@ public:
                 glEnable(GL_FRAMEBUFFER_SRGB);
             else
                 glDisable(GL_FRAMEBUFFER_SRGB);
-            onDraw();
+            invalidate();
             break;
 
         default:
@@ -82,12 +82,9 @@ public:
         }
     }
 
-    void onIdle() override
+    void onFrame(const FrameInfo& info) override
     {
-    }
-
-    void onDraw() override
-    {
+        MANGO_UNREFERENCED(info);
         present(m_filter);
     }
 
@@ -130,6 +127,9 @@ public:
 int mangoMain(const mango::CommandLine& commands)
 {
     TestWindow window;
-    window.enterEventLoop();
+
+    EventLoopConfig config;
+    config.mode = FrameMode::OnDemand;
+    window.enterEventLoop(config);
     return 0;
 }

@@ -950,19 +950,16 @@ public:
         frame.submitAndPresent(m_graphicsQueue, commandBuffer);
     }
 
-    void onDraw() override
+    void onFrame(const FrameInfo& info) override
     {
+        MANGO_UNREFERENCED(info);
+
         u64 time0 = mango::Time::us();
 
         render();
 
         u64 time1 = mango::Time::us();
         setTitle(fmt::format("vkbasic: {:.2f} ms", (time1 - time0) / 1000.0));
-    }
-
-    void onIdle() override
-    {
-        onDraw();
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -1020,7 +1017,12 @@ int mangoMain(const mango::CommandLine& commands)
 
     TestWindow window(instance, 1280, 720, 0);
     window.setTitle("vkbasic");
-    window.enterEventLoop();
+
+    EventLoopConfig config;
+    config.mode = FrameMode::Continuous;
+    config.waitForFrame = true;
+
+    window.enterEventLoop(config);
 
     return 0;
 }

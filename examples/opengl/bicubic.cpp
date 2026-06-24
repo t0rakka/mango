@@ -44,13 +44,10 @@ public:
         }
     }
 
-    void onIdle() override
+    void onFrame(const FrameInfo& info) override
     {
-        onDraw();
-    }
+        MANGO_UNREFERENCED(info);
 
-    void onDraw() override
-    {
         Surface s = lock();
         render(s);
         unlock();

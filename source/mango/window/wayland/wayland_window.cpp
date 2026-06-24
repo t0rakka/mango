@@ -307,7 +307,10 @@ namespace
     {
         MANGO_UNREFERENCED(xdg_toplevel);
         WindowContext* window = static_cast<WindowContext*>(data);
-        window->is_looping = false;
+        if (window->owner)
+        {
+            window->owner->breakEventLoop();
+        }
     }
 
     static const struct xdg_toplevel_listener s_xdg_toplevel_listener =
@@ -1040,6 +1043,7 @@ namespace mango
         syncSurfaceScale();
         syncEGLWindow();
         owner->onResize(size[0], size[1]);
+        owner->invalidate();
     }
 
     void WindowContext::processEvents()
@@ -1051,7 +1055,10 @@ namespace mango
 
         if (wl_display_read_events(display) < 0)
         {
-            is_looping = false;
+            if (owner)
+            {
+                owner->breakEventLoop();
+            }
             return;
         }
 
@@ -1180,12 +1187,8 @@ namespace mango
         return m_window_context->key_pressed[idx];
     }
 
-    void Window::enterEventLoop()
+    void Window::runEventLoop()
     {
-        m_window_context->is_looping = true;
-
-        // Wayland compositors need at least one client buffer before the surface is shown.
-        // The application is fully constructed by the time enterEventLoop() is called.
         m_window_context->processEvents();
         m_window_context->syncSurfaceScale();
         m_window_context->syncEGLWindow();
@@ -1193,59 +1196,24 @@ namespace mango
         if (!m_window_context->busy)
         {
             m_window_context->dispatchPendingResize();
-
-            if (m_window_context->size[0] > 0 && m_window_context->size[1] > 0)
-            {
-                onDraw();
-            }
         }
 
-        for (; m_window_context->is_looping;)
+        while (isRunning())
         {
             m_window_context->processEvents();
-
-            bool refreshed = false;
 
             if (m_window_context->pending_resize && !m_window_context->busy)
             {
                 m_window_context->dispatchPendingResize();
-                onDraw();
-                refreshed = true;
-                m_window_context->needs_redraw = false;
-            }
-
-            if (!refreshed && m_window_context->needs_redraw && !m_window_context->busy)
-            {
-                onDraw();
-                m_window_context->needs_redraw = false;
             }
 
             if (!m_window_context->busy)
             {
-                onIdle();
+                dispatchFrame();
             }
 
-            usleep(125);
+            waitForNextIteration();
         }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
     }
 
     void Window::onMinimize()

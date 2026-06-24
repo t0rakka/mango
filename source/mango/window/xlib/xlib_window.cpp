@@ -861,18 +861,16 @@ namespace mango
         return pressed;
     }
 
-    void Window::enterEventLoop()
+    void Window::runEventLoop()
     {
-        m_window_context->is_looping = true;
-
         for (int i = 0; i < 6; ++i)
         {
             m_window_context->mouse_time[i] = 0;
         }
 
-        for (; m_window_context->is_looping;)
+        while (isRunning())
         {
-            for (; XPending(m_window_context->x11Display()) > 0;)
+            while (XPending(m_window_context->x11Display()) > 0)
             {
                 XEvent e;
                 XNextEvent(m_window_context->x11Display(), &e);
@@ -971,6 +969,7 @@ namespace mango
                             if (!m_window_context->busy)
                             {
                                 onResize(width, height);
+                                invalidate();
                             }
                         }
                         break;
@@ -979,7 +978,7 @@ namespace mango
                     case Expose:
                         if (!m_window_context->busy)
                         {
-                            onDraw();
+                            invalidate();
                         }
                         break;
 
@@ -1140,31 +1139,11 @@ namespace mango
 
             if (!m_window_context->busy)
             {
-                onIdle();
+                dispatchFrame();
             }
 
-            // Sleep 0.125 ms to avoid saturating CPU
-            usleep(125);
+            waitForNextIteration();
         }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
     }
 
     void Window::onMinimize()

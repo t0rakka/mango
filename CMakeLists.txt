@@ -275,18 +275,21 @@ set(MANGO_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango")
 function(select_window_system_sources system)
     if (${system} STREQUAL "xlib")
         set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/window.cpp
             ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
             ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
             PARENT_SCOPE
         )
     elseif (${system} STREQUAL "xcb")
         set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/window.cpp
             ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
             ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
             PARENT_SCOPE
         )
     elseif (${system} STREQUAL "wayland")
         set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/window.cpp
             ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
             ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
             PARENT_SCOPE
@@ -311,12 +314,14 @@ if (BUILD_OPENGL OR BUILD_VULKAN)
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
         )
+        list(APPEND WINDOW_SOURCES ${MANGO_SOURCE_DIR}/window/window.cpp)
 
     elseif (APPLE)
 
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/cocoa/*.mm"
         )
+        list(APPEND WINDOW_SOURCES ${MANGO_SOURCE_DIR}/window/window.cpp)
 
     elseif (NOT EMSCRIPTEN)
 

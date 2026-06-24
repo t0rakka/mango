@@ -806,15 +806,22 @@ namespace mango
         return pressed;
     }
 
-    void Window::enterEventLoop()
+    void Window::runEventLoop()
     {
-        m_window_context->is_looping = true;
-
-        for (; m_window_context->is_looping;)
+        while (isRunning())
         {
-            xcb_generic_event_t* event = xcb_poll_for_event(m_window_context->connection);
-            if (event)
+            bool hadEvents = false;
+
+            for (;;)
             {
+                xcb_generic_event_t* event = xcb_poll_for_event(m_window_context->connection);
+                if (!event)
+                {
+                    break;
+                }
+
+                hadEvents = true;
+
                 switch (event->response_type & 0x7f)
                 {
                     case XCB_BUTTON_PRESS:
@@ -954,6 +961,7 @@ namespace mango
                                 xcb_flush(m_window_context->connection);
                                 
                                 onResize(configure->width, configure->height);
+                                invalidate();
                                 m_window_context->busy = false;
                             }
                         }
@@ -964,7 +972,7 @@ namespace mango
                     {
                         if (!m_window_context->busy)
                         {
-                            onDraw();
+                            invalidate();
                         }
                         break;
                     }
@@ -1084,34 +1092,17 @@ namespace mango
 
                 free(event);
             }
-            else
+
+            if (!m_window_context->busy)
             {
-                if (!m_window_context->busy)
-                {
-                    onIdle();
-                }
-                usleep(125);
+                dispatchFrame();
+            }
+
+            if (!hadEvents)
+            {
+                waitForNextIteration();
             }
         }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
     }
 
     void Window::onMinimize()

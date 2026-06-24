@@ -158,46 +158,35 @@ namespace mango
         return state != 0;
     }
 
-    void Window::enterEventLoop()
+    void Window::runEventLoop()
     {
-        m_window_context->is_looping = true;
-
-        while (m_window_context->is_looping)
+        while (isRunning())
         {
-            NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                              untilDate:nil
-                              inMode:NSDefaultRunLoopMode
-                              dequeue:YES];
+            bool hadEvents = false;
 
-            if (event)
+            for (;;)
             {
+                NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                  untilDate:[NSDate dateWithTimeIntervalSinceNow:0.0]
+                                  inMode:NSDefaultRunLoopMode
+                                  dequeue:YES];
+
+                if (!event)
+                {
+                    break;
+                }
+
+                hadEvents = true;
                 [NSApp sendEvent:event];
             }
-            else
+
+            dispatchFrame();
+
+            if (!hadEvents)
             {
-                onIdle();
+                waitForNextIteration();
             }
-
-            Sleep::us(100);
         }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width); MANGO_UNREFERENCED(height); 
     }
 
     void Window::onMinimize()
