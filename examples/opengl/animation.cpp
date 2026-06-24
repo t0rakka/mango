@@ -39,8 +39,6 @@ class DemoWindow : public OpenGLFramebuffer
 {
 protected:
     ImageAnimation& m_animation;
-    Timer m_timer;
-    u64 m_target_time;
 
 public:
     DemoWindow(ImageAnimation& animation)
@@ -48,7 +46,6 @@ public:
         , m_animation(animation)
     {
         setTitle(fmt::format("[ {} ]", filesystem::removePath(m_animation.m_file.filename())));
-        m_target_time = m_timer.ms();
     }
 
     ~DemoWindow()
@@ -61,23 +58,18 @@ public:
             breakEventLoop();
     }
 
-    void onIdle() override
+    void onFrame(const FrameInfo& info) override
     {
-        onDraw();
-    }
-
-    void onDraw() override
-    {
-        u32 time = m_timer.ms();
-        if (time < m_target_time)
-        {
-            Sleep::ms(m_target_time - time);
-        }
+        MANGO_UNREFERENCED(info);
 
         Surface s = lock();
 
         m_animation.decode();
-        m_target_time = m_timer.ms() + m_animation.m_delay;
+
+        if (m_animation.m_delay > 0)
+        {
+            setMaxFrameRate(1000.0 / double(m_animation.m_delay));
+        }
 
         s.blit(0, 0, m_animation.m_bitmap);
 
@@ -103,7 +95,11 @@ int mangoMain(const mango::CommandLine& commands)
 
     ImageAnimation animation(filename);
     DemoWindow demo(animation);
-    demo.enterEventLoop();
+
+    EventLoopConfig config;
+    config.trackDisplayRefreshRate = false;
+
+    demo.enterEventLoop(config);
 
     return 0;
 }

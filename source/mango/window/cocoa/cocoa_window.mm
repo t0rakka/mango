@@ -5,6 +5,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/timer.hpp>
 #include "cocoa_window.h"
+#import <CoreVideo/CoreVideo.h>
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
@@ -158,46 +159,76 @@ namespace mango
         return state != 0;
     }
 
-    void Window::enterEventLoop()
+    double Window::getDisplayRefreshRate() const
     {
-        m_window_context->is_looping = true;
-
-        while (m_window_context->is_looping)
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        if (!win)
         {
-            NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                              untilDate:nil
-                              inMode:NSDefaultRunLoopMode
-                              dequeue:YES];
+            return 0.0;
+        }
 
-            if (event)
+        NSScreen* screen = [win screen];
+        if (!screen)
+        {
+            screen = [NSScreen mainScreen];
+        }
+
+        if (!screen)
+        {
+            return 0.0;
+        }
+
+        if (@available(macOS 10.15, *))
+        {
+            return double([screen maximumFramesPerSecond]);
+        }
+
+        CGDirectDisplayID displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
+        CVDisplayLinkRef link = nullptr;
+        if (CVDisplayLinkCreateWithCGDisplay(displayID, &link) == kCVReturnSuccess)
+        {
+            const CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(link);
+            CVDisplayLinkRelease(link);
+            if (time.timeScale > 0 && time.timeValue > 0)
             {
+                return double(time.timeScale) / double(time.timeValue);
+            }
+        }
+
+        return 0.0;
+    }
+
+    void Window::runEventLoop()
+    {
+        syncDisplayRefreshRate();
+
+        while (isRunning())
+        {
+            bool hadEvents = false;
+
+            for (;;)
+            {
+                NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                                  untilDate:[NSDate dateWithTimeIntervalSinceNow:0.0]
+                                  inMode:NSDefaultRunLoopMode
+                                  dequeue:YES];
+
+                if (!event)
+                {
+                    break;
+                }
+
+                hadEvents = true;
                 [NSApp sendEvent:event];
             }
-            else
+
+            dispatchFrame();
+
+            if (!hadEvents)
             {
-                onIdle();
+                waitForNextIteration();
             }
-
-            Sleep::us(100);
         }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width); MANGO_UNREFERENCED(height); 
     }
 
     void Window::onMinimize()

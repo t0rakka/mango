@@ -44,24 +44,19 @@ public:
         }
     }
 
-    void onIdle() override
-    {
-        onDraw();
-    }
-
-    void onDraw() override
+    void onFrame(const FrameInfo& info) override
     {
         Surface s = lock();
-        render(s);
+        render(s, info.time);
         unlock();
         present();
     }
 
-    void render(Surface s)
+    void render(Surface s, double time)
     {
         u64 time0 = mango::Time::us();
 
-        float t = sin(time0 / 1000000.0f) * 0.5f + 0.5f;
+        const float t = std::sin(float(time)) * 0.5f + 0.5f;
 
         float width = (s.width - 1) * t + 1.0f;
         float height = (s.height - 1) * t + 1.0f;
@@ -71,8 +66,8 @@ public:
         u32_bicubic_blit(s, m_bitmap, x + 0.5f, y + 0.5f, width - 1.0f, height - 1.0f);
 
         u64 time1 = mango::Time::us();
-        u64 time = time1 - time0;
-        std::string title = fmt::format("time: {}.{} ms", time / 1000, time % 1000);
+        u64 duration = time1 - time0;
+        std::string title = fmt::format("time: {}.{} ms", duration / 1000, duration % 1000);
         setTitle(title);
     }
 };

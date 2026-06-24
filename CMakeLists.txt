@@ -275,18 +275,21 @@ set(MANGO_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango")
 function(select_window_system_sources system)
     if (${system} STREQUAL "xlib")
         set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/window.cpp
             ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
             ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
             PARENT_SCOPE
         )
     elseif (${system} STREQUAL "xcb")
         set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/window.cpp
             ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
             ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
             PARENT_SCOPE
         )
     elseif (${system} STREQUAL "wayland")
         set(WINDOW_SOURCES
+            ${MANGO_SOURCE_DIR}/window/window.cpp
             ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
             ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
             PARENT_SCOPE
@@ -311,12 +314,14 @@ if (BUILD_OPENGL OR BUILD_VULKAN)
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/win32/*.cpp"
         )
+        list(APPEND WINDOW_SOURCES ${MANGO_SOURCE_DIR}/window/window.cpp)
 
     elseif (APPLE)
 
         FILE(GLOB WINDOW_SOURCES
             "${MANGO_SOURCE_DIR}/window/cocoa/*.mm"
         )
+        list(APPEND WINDOW_SOURCES ${MANGO_SOURCE_DIR}/window/window.cpp)
 
     elseif (NOT EMSCRIPTEN)
 
@@ -704,13 +709,13 @@ if (BUILD_OPENGL)
     if (OPENGL_FOUND)
         if (APPLE)
             message("    OpenGL: Cocoa")
-            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL")
+            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL -framework CoreVideo")
         elseif (WIN32)
             message("    OpenGL: WIN32")
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
             if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY})
+                target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY} Xrandr)
                 if (ENABLE_EGL)
                     message("    OpenGL: EGL | XLIB")
                     target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
@@ -719,7 +724,7 @@ if (BUILD_OPENGL)
                     message("    OpenGL: GLX | XLIB")
                 endif ()
             elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
+                target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
                 if (ENABLE_EGL)
                     message("    OpenGL: EGL | XCB")
                     target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
@@ -777,10 +782,10 @@ if (BUILD_VULKAN)
             target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
         else ()
             if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_link_libraries(mango PUBLIC X11 vulkan)
+                target_link_libraries(mango PUBLIC X11 Xrandr vulkan)
                 message("    Vulkan: XLIB")
             elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xkbcommon)
+                target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon)
                 message("    Vulkan: XCB")
             elseif (WINDOW_SYSTEM STREQUAL "wayland")
                 message("    Vulkan: Wayland")

@@ -321,6 +321,36 @@ namespace
         return screens;
     }
 
+    double queryWin32RefreshRate(HWND hwnd)
+    {
+        HMONITOR monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        if (!monitor)
+        {
+            return 0.0;
+        }
+
+        MONITORINFOEXW info = {};
+        info.cbSize = sizeof(info);
+        if (!::GetMonitorInfoW(monitor, &info))
+        {
+            return 0.0;
+        }
+
+        DEVMODEW mode = {};
+        mode.dmSize = sizeof(mode);
+        if (!::EnumDisplaySettingsW(info.szDevice, ENUM_CURRENT_SETTINGS, &mode))
+        {
+            return 0.0;
+        }
+
+        if (mode.dmDisplayFrequency == 0)
+        {
+            return 0.0;
+        }
+
+        return double(mode.dmDisplayFrequency);
+    }
+
     // -----------------------------------------------------------------------
     // WindowProc()
     // -----------------------------------------------------------------------
@@ -360,6 +390,7 @@ namespace
 
         case WM_DISPLAYCHANGE:
         {
+            window->syncDisplayRefreshRate();
             ::InvalidateRect(hwnd, NULL, FALSE);
             return 0;
         }
@@ -370,7 +401,7 @@ namespace
             {
                 if (::GetUpdateRect(hwnd, NULL, FALSE))
                 {
-                    window->onDraw();
+                    window->invalidate();
                 }
             }
 
@@ -839,14 +870,19 @@ namespace mango
         return pressed;
     }
 
-    void Window::enterEventLoop()
+    double Window::getDisplayRefreshRate() const
+    {
+        return queryWin32RefreshRate(m_window_context->hwnd);
+    }
+
+    void Window::runEventLoop()
     {
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        m_window_context->is_looping = true;
+        syncDisplayRefreshRate();
 
-        for (; m_window_context->is_looping && msg.message != WM_QUIT;)
+        while (isRunning() && msg.message != WM_QUIT)
         {
             while (::PeekMessage(&msg, m_window_context->hwnd, 0, 0, PM_REMOVE))
             {
@@ -854,33 +890,15 @@ namespace mango
                 ::DispatchMessage(&msg);
             }
 
-            onIdle();
-
-            // avoid saturating cpu
-            Sleep::ms(1);
+            dispatchFrame();
+            waitForNextIteration();
         }
-
-        m_window_context->is_looping = false;
     }
 
     void Window::breakEventLoop()
     {
+        m_event_loop.running = false;
         ::PostQuitMessage(0);
-        m_window_context->is_looping = false;
-    }
-
-    void Window::onIdle()
-    {
-    }
-
-    void Window::onDraw()
-    {
-    }
-
-    void Window::onResize(int width, int height)
-    {
-        MANGO_UNREFERENCED(width);
-        MANGO_UNREFERENCED(height);
     }
 
     void Window::onMinimize()

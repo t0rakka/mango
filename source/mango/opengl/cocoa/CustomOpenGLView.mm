@@ -106,7 +106,7 @@
 - (void)drawRect:(NSRect)dirtyRect
 {
     (void)dirtyRect;
-    mangoWindow->onDraw();
+    mangoWindow->invalidate();
 }
 
 - (NSDragOperation)draggingEntered:(id<NSDraggingInfo>)sender

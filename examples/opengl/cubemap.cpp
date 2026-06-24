@@ -422,12 +422,7 @@ public:
         glScissor(0, 0, width, height);
     }
 
-    void onIdle() override
-    {
-        onDraw();
-    }
-
-    void onDraw() override
+    void onFrame(const FrameInfo& info) override
     {
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
@@ -449,7 +444,7 @@ public:
             xfov *= s;
         }
 
-        float time = mango::Time::us() / 10000000.0f * 3.0f;
+        const float time = float(info.time * 0.3);
 
         Matrix4x4 model = Matrix4x4::identity();
         Matrix4x4 view = Matrix4x4::rotateXYZ(time, time * 2, -time*0.5) * Matrix4x4::translate(0.0f, 0.0f, -2.0f);
