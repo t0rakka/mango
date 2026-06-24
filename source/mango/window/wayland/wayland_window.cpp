@@ -683,29 +683,6 @@ namespace
     };
 
     std::vector<std::unique_ptr<WaylandOutput>> g_outputs;
-    std::vector<Window*> g_refresh_tracking_windows;
-
-    void registerRefreshTrackingWindow(Window* window)
-    {
-        g_refresh_tracking_windows.push_back(window);
-    }
-
-    void unregisterRefreshTrackingWindow(Window* window)
-    {
-        const auto it = std::find(g_refresh_tracking_windows.begin(), g_refresh_tracking_windows.end(), window);
-        if (it != g_refresh_tracking_windows.end())
-        {
-            g_refresh_tracking_windows.erase(it);
-        }
-    }
-
-    void notifyDisplayRefreshRateChanged()
-    {
-        for (Window* window : g_refresh_tracking_windows)
-        {
-            window->syncDisplayRefreshRate();
-        }
-    }
 
     double queryWaylandRefreshRate()
     {
@@ -762,7 +739,6 @@ namespace
             info->width = width;
             info->height = height;
             info->refresh_mhz = refresh;
-            notifyDisplayRefreshRateChanged();
         }
     }
 
@@ -1115,12 +1091,10 @@ namespace mango
     {
         m_window_context = std::make_unique<WindowContext>(width, height, flags);
         m_window_context->owner = this;
-        registerRefreshTrackingWindow(this);
     }
 
     Window::~Window()
     {
-        unregisterRefreshTrackingWindow(this);
     }
 
     int Window::getScreenCount()
@@ -1250,6 +1224,7 @@ namespace mango
         while (isRunning())
         {
             m_window_context->processEvents();
+            syncDisplayRefreshRate();
 
             if (m_window_context->pending_resize && !m_window_context->busy)
             {
