@@ -18,7 +18,8 @@ namespace mango
         running = true;
         needs_redraw = true;
         frame_in_flight = false;
-        last_frame_time_us = Time::us();
+        loop_start_time_us = Time::us();
+        last_frame_time_us = 0;
         last_dt = 0.0;
     }
 
@@ -78,6 +79,7 @@ namespace mango
     void Window::enterEventLoop(const EventLoopConfig& config)
     {
         m_event_loop.reset(config);
+        syncDisplayRefreshRate();
         runEventLoop();
     }
 
@@ -109,6 +111,7 @@ namespace mango
     void Window::setEventLoopConfig(const EventLoopConfig& config)
     {
         m_event_loop.config = config;
+        syncDisplayRefreshRate();
     }
 
     void Window::setFrameMode(FrameMode mode)
@@ -119,6 +122,21 @@ namespace mango
     void Window::setMaxFrameRate(double frameRate)
     {
         m_event_loop.config.maxFrameRate = frameRate;
+        m_event_loop.config.trackDisplayRefreshRate = false;
+    }
+
+    void Window::syncDisplayRefreshRate()
+    {
+        if (!m_event_loop.config.trackDisplayRefreshRate)
+        {
+            return;
+        }
+
+        const double hz = getDisplayRefreshRate();
+        if (hz > 0.0)
+        {
+            m_event_loop.config.maxFrameRate = hz * m_event_loop.config.displayRefreshHeadroom;
+        }
     }
 
     void Window::frameComplete()
@@ -142,6 +160,7 @@ namespace mango
 
         FrameInfo info;
         info.time_us = now;
+        info.time = double(now - m_event_loop.loop_start_time_us) / 1'000'000.0;
         info.dt = m_event_loop.computeDt(now);
         info.invalidated = m_event_loop.consumeInvalidated();
 

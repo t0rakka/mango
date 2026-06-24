@@ -17,6 +17,7 @@
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_keysyms.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
+#include <xcb/randr.h>
 #undef explicit
 
 #include "xcb_window.hpp"
@@ -53,6 +54,152 @@ namespace
         }
 
         return screens;
+    }
+
+    double queryXcbRefreshRate(xcb_connection_t* conn, xcb_window_t win)
+    {
+        xcb_randr_query_version_cookie_t version_cookie = xcb_randr_query_version(conn, 1, 6);
+        xcb_randr_query_version_reply_t* version_reply = xcb_randr_query_version_reply(conn, version_cookie, nullptr);
+        if (!version_reply)
+        {
+            return 0.0;
+        }
+        free(version_reply);
+
+        xcb_randr_get_screen_resources_current_cookie_t resources_cookie =
+            xcb_randr_get_screen_resources_current(conn, win);
+        xcb_randr_get_screen_resources_current_reply_t* resources =
+            xcb_randr_get_screen_resources_current_reply(conn, resources_cookie, nullptr);
+        if (!resources)
+        {
+            return 0.0;
+        }
+
+        xcb_get_geometry_cookie_t geom_cookie = xcb_get_geometry(conn, win);
+        xcb_get_geometry_reply_t* geom = xcb_get_geometry_reply(conn, geom_cookie, nullptr);
+        if (!geom)
+        {
+            free(resources);
+            return 0.0;
+        }
+
+        xcb_translate_coordinates_cookie_t trans_cookie =
+            xcb_translate_coordinates(conn, win, geom->root, geom->width / 2, geom->height / 2);
+        xcb_translate_coordinates_reply_t* trans =
+            xcb_translate_coordinates_reply(conn, trans_cookie, nullptr);
+
+        double refresh = 0.0;
+        xcb_randr_output_t chosen = XCB_NONE;
+
+        if (trans)
+        {
+            const int root_x = trans->dst_x;
+            const int root_y = trans->dst_y;
+
+            xcb_randr_output_t* outputs = xcb_randr_get_screen_resources_current_outputs(resources);
+            const int noutputs = xcb_randr_get_screen_resources_current_outputs_length(resources);
+
+            for (int i = 0; i < noutputs; ++i)
+            {
+                xcb_randr_get_output_info_cookie_t output_cookie =
+                    xcb_randr_get_output_info(conn, outputs[i], XCB_CURRENT_TIME);
+                xcb_randr_get_output_info_reply_t* output =
+                    xcb_randr_get_output_info_reply(conn, output_cookie, nullptr);
+                if (!output || output->connection != XCB_RANDR_CONNECTION_CONNECTED)
+                {
+                    free(output);
+                    continue;
+                }
+
+                xcb_randr_crtc_t* crtcs = xcb_randr_get_output_info_crtcs(output);
+                const int ncrtcs = xcb_randr_get_output_info_crtcs_length(output);
+                bool matched = false;
+
+                for (int j = 0; j < ncrtcs; ++j)
+                {
+                    xcb_randr_get_crtc_info_cookie_t crtc_cookie =
+                        xcb_randr_get_crtc_info(conn, crtcs[j], XCB_CURRENT_TIME);
+                    xcb_randr_get_crtc_info_reply_t* crtc =
+                        xcb_randr_get_crtc_info_reply(conn, crtc_cookie, nullptr);
+                    if (!crtc || crtc->mode == XCB_NONE)
+                    {
+                        free(crtc);
+                        continue;
+                    }
+
+                    if (root_x >= crtc->x && root_x < int(crtc->x + crtc->width) &&
+                        root_y >= crtc->y && root_y < int(crtc->y + crtc->height))
+                    {
+                        chosen = outputs[i];
+                        matched = true;
+                    }
+
+                    free(crtc);
+                    if (matched)
+                    {
+                        break;
+                    }
+                }
+
+                free(output);
+                if (matched)
+                {
+                    break;
+                }
+            }
+        }
+
+        if (chosen == XCB_NONE)
+        {
+            xcb_randr_get_output_primary_cookie_t primary_cookie =
+                xcb_randr_get_output_primary(conn, geom->root);
+            xcb_randr_get_output_primary_reply_t* primary =
+                xcb_randr_get_output_primary_reply(conn, primary_cookie, nullptr);
+            if (primary)
+            {
+                chosen = primary->output;
+                free(primary);
+            }
+        }
+
+        if (chosen != XCB_NONE)
+        {
+            xcb_randr_get_output_info_cookie_t output_cookie =
+                xcb_randr_get_output_info(conn, chosen, XCB_CURRENT_TIME);
+            xcb_randr_get_output_info_reply_t* output =
+                xcb_randr_get_output_info_reply(conn, output_cookie, nullptr);
+            if (output && output->crtc != XCB_NONE)
+            {
+                xcb_randr_get_crtc_info_cookie_t crtc_cookie =
+                    xcb_randr_get_crtc_info(conn, output->crtc, XCB_CURRENT_TIME);
+                xcb_randr_get_crtc_info_reply_t* crtc =
+                    xcb_randr_get_crtc_info_reply(conn, crtc_cookie, nullptr);
+                if (crtc && crtc->mode != XCB_NONE)
+                {
+                    xcb_randr_mode_info_t* modes = xcb_randr_get_screen_resources_current_modes(resources);
+                    const int nmodes = xcb_randr_get_screen_resources_current_modes_length(resources);
+                    for (int i = 0; i < nmodes; ++i)
+                    {
+                        if (modes[i].id == crtc->mode)
+                        {
+                            const xcb_randr_mode_info_t& mode = modes[i];
+                            if (mode.htotal > 0 && mode.vtotal > 0)
+                            {
+                                refresh = double(mode.dot_clock) / double(mode.htotal * mode.vtotal);
+                            }
+                            break;
+                        }
+                    }
+                }
+                free(crtc);
+            }
+            free(output);
+        }
+
+        free(trans);
+        free(geom);
+        free(resources);
+        return refresh;
     }
 
 #define TR(a, b) case a: code = b; break
@@ -540,6 +687,12 @@ namespace mango
         xcb_map_window(connection, window);
         xcb_flush(connection);
 
+        const xcb_query_extension_reply_t* randr = xcb_get_extension_data(connection, &xcb_randr_id);
+        if (randr && randr->present)
+        {
+            xcb_randr_select_input(connection, window, XCB_RANDR_NOTIFY_MASK_SCREEN_CHANGE);
+        }
+
         return true;
     }
 
@@ -806,8 +959,15 @@ namespace mango
         return pressed;
     }
 
+    double Window::getDisplayRefreshRate() const
+    {
+        return queryXcbRefreshRate(m_window_context->connection, m_window_context->window);
+    }
+
     void Window::runEventLoop()
     {
+        syncDisplayRefreshRate();
+
         while (isRunning())
         {
             bool hadEvents = false;
@@ -965,6 +1125,8 @@ namespace mango
                                 m_window_context->busy = false;
                             }
                         }
+
+                        syncDisplayRefreshRate();
                         break;
                     }
 

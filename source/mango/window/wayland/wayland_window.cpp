@@ -678,10 +678,50 @@ namespace
         uint32_t registry_name = 0;
         int32_t width = 0;
         int32_t height = 0;
+        int32_t refresh_mhz = 0;
         int32_t scale = 1;
     };
 
     std::vector<std::unique_ptr<WaylandOutput>> g_outputs;
+    std::vector<Window*> g_refresh_tracking_windows;
+
+    void registerRefreshTrackingWindow(Window* window)
+    {
+        g_refresh_tracking_windows.push_back(window);
+    }
+
+    void unregisterRefreshTrackingWindow(Window* window)
+    {
+        const auto it = std::find(g_refresh_tracking_windows.begin(), g_refresh_tracking_windows.end(), window);
+        if (it != g_refresh_tracking_windows.end())
+        {
+            g_refresh_tracking_windows.erase(it);
+        }
+    }
+
+    void notifyDisplayRefreshRateChanged()
+    {
+        for (Window* window : g_refresh_tracking_windows)
+        {
+            window->syncDisplayRefreshRate();
+        }
+    }
+
+    double queryWaylandRefreshRate()
+    {
+        double refresh = 0.0;
+
+        for (const auto& output : g_outputs)
+        {
+            if (output->refresh_mhz > 0)
+            {
+                const double hz = double(output->refresh_mhz) / 1000.0;
+                refresh = std::max(refresh, hz);
+            }
+        }
+
+        return refresh;
+    }
 
     int32_t getPrimaryBufferScale()
     {
@@ -715,13 +755,14 @@ namespace
                      int32_t width, int32_t height, int32_t refresh)
     {
         MANGO_UNREFERENCED(output);
-        MANGO_UNREFERENCED(refresh);
 
         WaylandOutput* info = static_cast<WaylandOutput*>(data);
         if (flags & WL_OUTPUT_MODE_CURRENT)
         {
             info->width = width;
             info->height = height;
+            info->refresh_mhz = refresh;
+            notifyDisplayRefreshRateChanged();
         }
     }
 
@@ -1074,10 +1115,12 @@ namespace mango
     {
         m_window_context = std::make_unique<WindowContext>(width, height, flags);
         m_window_context->owner = this;
+        registerRefreshTrackingWindow(this);
     }
 
     Window::~Window()
     {
+        unregisterRefreshTrackingWindow(this);
     }
 
     int Window::getScreenCount()
@@ -1187,11 +1230,17 @@ namespace mango
         return m_window_context->key_pressed[idx];
     }
 
+    double Window::getDisplayRefreshRate() const
+    {
+        return queryWaylandRefreshRate();
+    }
+
     void Window::runEventLoop()
     {
         m_window_context->processEvents();
         m_window_context->syncSurfaceScale();
         m_window_context->syncEGLWindow();
+        syncDisplayRefreshRate();
 
         if (!m_window_context->busy)
         {

@@ -21,9 +21,8 @@ u32 nColor(int n)
 class DemoWindow : public OpenGLFramebuffer
 {
 protected:
-    Timer timer;
-    u64 prev_time;
-    u64 frames = 0;
+    u32 frames = 0;
+    double elapsed = 0.0;
     float color = 0;
 
 public:
@@ -31,7 +30,6 @@ public:
         : OpenGLFramebuffer(width, height)
     {
         setTitle("[DemoWindow] Initializing...");
-        prev_time = timer.us();
     }
 
     ~DemoWindow()
@@ -46,18 +44,16 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        MANGO_UNREFERENCED(info);
-
-        u64 time = timer.us();
-        u64 diff = time - prev_time;
         ++frames;
-        if (diff > 1000000 / 4)
+        elapsed += info.dt;
+
+        if (elapsed > 0.25)
         {
-            diff = diff / frames;
+            const double avg_dt = elapsed / frames;
+            const int fps = int(0.5 + 1.0 / avg_dt);
+            setTitle(fmt::format("[Mandelbrot]  time: {:.2f} ms ({} fps)", avg_dt * 1000.0, fps));
             frames = 0;
-            prev_time = time;
-            std::string text = fmt::format("[Mandelbrot]  time: {:.2f} ms ({} fps)", diff / 1000.0f, diff ? 1000000 / diff : 0);
-            setTitle(text);
+            elapsed = 0.0;
         }
 
         Surface s = lock();

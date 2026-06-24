@@ -14,11 +14,117 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <X11/extensions/Xrandr.h>
 
 namespace
 {
     using namespace mango;
     using namespace mango::filesystem;
+
+    double queryXlibRefreshRate(Display* dpy, ::Window win)
+    {
+        int event_base, error_base;
+        if (!XRRQueryExtension(dpy, &event_base, &error_base))
+        {
+            return 0.0;
+        }
+
+        XRRScreenResources* resources = XRRGetScreenResourcesCurrent(dpy, win);
+        if (!resources)
+        {
+            return 0.0;
+        }
+
+        double refresh = 0.0;
+
+        ::Window root;
+        int x, y;
+        unsigned width, height, border, depth;
+        if (XGetGeometry(dpy, win, &root, &x, &y, &width, &height, &border, &depth))
+        {
+            int root_x, root_y;
+            ::Window child;
+            if (XTranslateCoordinates(dpy, win, root, int(width / 2), int(height / 2), &root_x, &root_y, &child))
+            {
+                RROutput chosen = None;
+
+                for (int i = 0; i < resources->noutput; ++i)
+                {
+                    XRROutputInfo* output = XRRGetOutputInfo(dpy, resources, resources->outputs[i]);
+                    if (!output || output->connection != RR_Connected)
+                    {
+                        XRRFreeOutputInfo(output);
+                        continue;
+                    }
+
+                    bool matched = false;
+
+                    for (int j = 0; j < output->ncrtc; ++j)
+                    {
+                        XRRCrtcInfo* crtc = XRRGetCrtcInfo(dpy, resources, output->crtcs[j]);
+                        if (!crtc || crtc->mode == None)
+                        {
+                            XRRFreeCrtcInfo(crtc);
+                            continue;
+                        }
+
+                        if (root_x >= crtc->x && root_x < int(crtc->x + crtc->width) &&
+                            root_y >= crtc->y && root_y < int(crtc->y + crtc->height))
+                        {
+                            chosen = resources->outputs[i];
+                            matched = true;
+                        }
+
+                        XRRFreeCrtcInfo(crtc);
+                        if (matched)
+                        {
+                            break;
+                        }
+                    }
+
+                    XRRFreeOutputInfo(output);
+                    if (matched)
+                    {
+                        break;
+                    }
+                }
+
+                if (chosen == None)
+                {
+                    chosen = XRRGetOutputPrimary(dpy, root);
+                }
+
+                if (chosen != None)
+                {
+                    XRROutputInfo* output = XRRGetOutputInfo(dpy, resources, chosen);
+                    if (output && output->crtc != None)
+                    {
+                        XRRCrtcInfo* crtc = XRRGetCrtcInfo(dpy, resources, output->crtc);
+                        if (crtc && crtc->mode != None)
+                        {
+                            for (int i = 0; i < resources->nmode; ++i)
+                            {
+                                const XRRModeInfo& mode = resources->modes[i];
+                                if (mode.id == crtc->mode)
+                                {
+                                    if (mode.hTotal > 0 && mode.vTotal > 0)
+                                    {
+                                        refresh = double(mode.dotClock) / double(mode.hTotal * mode.vTotal);
+                                    }
+                                    break;
+                                }
+                            }
+                        }
+                        XRRFreeCrtcInfo(crtc);
+                    }
+                    XRRFreeOutputInfo(output);
+                }
+            }
+        }
+
+        XRRFreeScreenResources(resources);
+        return refresh;
+    }
 
 #define TR(a, b) case a: code = b; break
 
@@ -637,6 +743,12 @@ namespace mango
         XStoreName(dpy, win, title);
         XMapWindow(dpy, win);
 
+        int randr_event_base, randr_error_base;
+        if (XRRQueryExtension(dpy, &randr_event_base, &randr_error_base))
+        {
+            XRRSelectInput(dpy, win, RRScreenChangeNotifyMask);
+        }
+
         return true;
     }
 
@@ -861,12 +973,19 @@ namespace mango
         return pressed;
     }
 
+    double Window::getDisplayRefreshRate() const
+    {
+        return queryXlibRefreshRate(m_window_context->x11Display(), m_window_context->x11Window());
+    }
+
     void Window::runEventLoop()
     {
         for (int i = 0; i < 6; ++i)
         {
             m_window_context->mouse_time[i] = 0;
         }
+
+        syncDisplayRefreshRate();
 
         while (isRunning())
         {
@@ -972,6 +1091,8 @@ namespace mango
                                 invalidate();
                             }
                         }
+
+                        syncDisplayRefreshRate();
                         break;
                     }
 

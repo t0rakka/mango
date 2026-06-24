@@ -248,8 +248,15 @@ namespace mango
 
     struct FrameInfo
     {
+        // Seconds since the previous onFrame (0 on the first frame after enterEventLoop).
         double dt = 0.0;
+
+        // Seconds since enterEventLoop() (monotonic, for animation phase).
+        double time = 0.0;
+
+        // Monotonic timestamp when this frame was scheduled (microseconds).
         u64 time_us = 0;
+
         bool invalidated = false;
     };
 
@@ -261,12 +268,19 @@ namespace mango
         double maxFrameRate = 0.0;
 
         // Do not schedule another onFrame until the current frame is complete.
-        // By default completion is signaled when onFrame() returns; call
-        // frameComplete() explicitly for async presentation (before onFrame returns).
+        // Sync rendering: completion is automatic when onFrame() returns.
+        // Async rendering: call frameComplete() when present/GPU finishes (idempotent).
         bool waitForFrame = true;
 
         // Event poll sleep when idle (milliseconds).
         u32 pollTimeoutMs = 1;
+
+        // Keep maxFrameRate matched to the window display refresh rate.
+        bool trackDisplayRefreshRate = true;
+
+        // CPU cap = getDisplayRefreshRate() * headroom when tracking is enabled.
+        // Set above 1.0 so vsync/present stays the real limiter (nominal Hz is approximate).
+        double displayRefreshHeadroom = 2.0;
     };
 
     struct EventLoopState
@@ -278,6 +292,7 @@ namespace mango
         bool frame_in_flight = false;
 
         u64 last_frame_time_us = 0;
+        u64 loop_start_time_us = 0;
         double last_dt = 0.0;
 
         void reset(const EventLoopConfig& loopConfig);
@@ -299,6 +314,7 @@ namespace mango
 
         void dispatchFrame();
         void waitForNextIteration();
+        void syncDisplayRefreshRate();
 
         virtual void runEventLoop();
 
@@ -327,6 +343,8 @@ namespace mango
 
         virtual math::int32x2 getWindowSize() const;
         virtual math::int32x2 getCursorPosition() const;
+
+        virtual double getDisplayRefreshRate() const;
 
         virtual void toggleFullscreen() = 0;
         virtual bool isFullscreen() const = 0;

@@ -212,12 +212,10 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        MANGO_UNREFERENCED(info);
-
         glClearColor(0.1f, 0.1f, 0.1f, 1.0f);
         glClear(GL_COLOR_BUFFER_BIT | GL_DEPTH_BUFFER_BIT);
 
-        float time = mango::Time::ms() * 0.1f;
+        const float time = float(info.time * 100.0);
 
         glUseProgram(computeProgram);
         glUniform1f(glGetUniformLocation(computeProgram, "time"), time);

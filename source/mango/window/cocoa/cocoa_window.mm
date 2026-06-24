@@ -5,6 +5,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/timer.hpp>
 #include "cocoa_window.h"
+#import <CoreVideo/CoreVideo.h>
 
 #if defined(MANGO_WINDOW_SYSTEM_COCOA)
 
@@ -158,8 +159,49 @@ namespace mango
         return state != 0;
     }
 
+    double Window::getDisplayRefreshRate() const
+    {
+        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        if (!win)
+        {
+            return 0.0;
+        }
+
+        NSScreen* screen = [win screen];
+        if (!screen)
+        {
+            screen = [NSScreen mainScreen];
+        }
+
+        if (!screen)
+        {
+            return 0.0;
+        }
+
+        if (@available(macOS 10.15, *))
+        {
+            return double([screen maximumFramesPerSecond]);
+        }
+
+        CGDirectDisplayID displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
+        CVDisplayLinkRef link = nullptr;
+        if (CVDisplayLinkCreateWithCGDisplay(displayID, &link) == kCVReturnSuccess)
+        {
+            const CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(link);
+            CVDisplayLinkRelease(link);
+            if (time.timeScale > 0 && time.timeValue > 0)
+            {
+                return double(time.timeScale) / double(time.timeValue);
+            }
+        }
+
+        return 0.0;
+    }
+
     void Window::runEventLoop()
     {
+        syncDisplayRefreshRate();
+
         while (isRunning())
         {
             bool hadEvents = false;

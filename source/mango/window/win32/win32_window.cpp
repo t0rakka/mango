@@ -321,6 +321,36 @@ namespace
         return screens;
     }
 
+    double queryWin32RefreshRate(HWND hwnd)
+    {
+        HMONITOR monitor = ::MonitorFromWindow(hwnd, MONITOR_DEFAULTTONEAREST);
+        if (!monitor)
+        {
+            return 0.0;
+        }
+
+        MONITORINFOEXW info = {};
+        info.cbSize = sizeof(info);
+        if (!::GetMonitorInfoW(monitor, &info))
+        {
+            return 0.0;
+        }
+
+        DEVMODEW mode = {};
+        mode.dmSize = sizeof(mode);
+        if (!::EnumDisplaySettingsW(info.szDevice, ENUM_CURRENT_SETTINGS, &mode))
+        {
+            return 0.0;
+        }
+
+        if (mode.dmDisplayFrequency == 0)
+        {
+            return 0.0;
+        }
+
+        return double(mode.dmDisplayFrequency);
+    }
+
     // -----------------------------------------------------------------------
     // WindowProc()
     // -----------------------------------------------------------------------
@@ -360,6 +390,7 @@ namespace
 
         case WM_DISPLAYCHANGE:
         {
+            window->syncDisplayRefreshRate();
             ::InvalidateRect(hwnd, NULL, FALSE);
             return 0;
         }
@@ -839,10 +870,17 @@ namespace mango
         return pressed;
     }
 
+    double Window::getDisplayRefreshRate() const
+    {
+        return queryWin32RefreshRate(m_window_context->hwnd);
+    }
+
     void Window::runEventLoop()
     {
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
+
+        syncDisplayRefreshRate();
 
         while (isRunning() && msg.message != WM_QUIT)
         {
