@@ -13,6 +13,7 @@
 #include <sys/stat.h>
 #include <mango/math/math.hpp>
 
+#include <X11/Xlib.h>
 #include <X11/Xatom.h>
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
@@ -63,7 +64,11 @@ namespace mango
         WindowContext();
         ~WindowContext();
 
-        operator ::Window () const { return window; }
+        ::Display* x11Display() const { return static_cast<::Display*>(display); }
+        ::Window x11Window() const { return static_cast<::Window>(window); }
+        ::VisualID x11VisualID() const { return static_cast<::VisualID>(visualid); }
+
+        operator ::Window () const { return x11Window(); }
 
         bool init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title);
         void toggleFullscreen();

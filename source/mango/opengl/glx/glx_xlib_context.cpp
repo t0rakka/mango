@@ -42,7 +42,7 @@ namespace mango
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
             : window(*theContext)
         {
-            Display* display = window->display;
+            Display* display = window->x11Display();
             int screen = DefaultScreen(display);
 
             GLXConfiguration glxConfiguration(display, screen, pConfig);
@@ -105,7 +105,7 @@ namespace mango
 
             // MANGO TODO: configuration selection API
             // MANGO TODO: initialize GLX extensions using GLEXT headers
-            glXMakeCurrent(display, *window, context);
+            glXMakeCurrent(display, window->x11Window(), context);
 
 #if 0
             PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
@@ -138,7 +138,7 @@ namespace mango
 
         void shutdown()
         {
-            Display* display = window->display;
+            Display* display = window->x11Display();
             if (display)
             {
                 glXMakeCurrent(display, 0, 0);
@@ -152,22 +152,22 @@ namespace mango
 
         void makeCurrent() override
         {
-            glXMakeCurrent(window->display, *window, context);
+            glXMakeCurrent(window->x11Display(), window->x11Window(), context);
         }
 
         void swapBuffers() override
         {
-            glXSwapBuffers(window->display, *window);
+            glXSwapBuffers(window->x11Display(), window->x11Window());
         }
 
         void swapInterval(int interval) override
         {
-            glXSwapIntervalEXT(window->display, *window, interval);
+            glXSwapIntervalEXT(window->x11Display(), window->x11Window(), interval);
         }
 
         void toggleFullscreen() override
         {
-            Display* display = window->display;
+            Display* display = window->x11Display();
 
             // Disable rendering while switching fullscreen mode
             glXMakeCurrent(display, 0, 0);
@@ -177,7 +177,7 @@ namespace mango
 
             // Enable rendering now that all the tricks are done
             window->busy = false;
-            glXMakeCurrent(display, *window, context);
+            glXMakeCurrent(display, window->x11Window(), context);
         }
 
         bool isFullscreen() const override
