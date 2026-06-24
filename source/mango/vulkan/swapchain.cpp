@@ -155,11 +155,21 @@ namespace mango::vulkan
 
     VkPresentModeKHR Swapchain::choosePresentMode() const
     {
-        // FIFO is always supported and is the guaranteed fallback. MAILBOX is
-        // preferred because vkQueuePresentKHR does not block on vsync: the event
-        // loop keeps spinning and processes window resize (configure) events
-        // immediately, which makes interactive resize track in real time while
-        // still being tear-free. FIFO would stall the loop one vsync per frame.
+        // FIFO is always supported and is the guaranteed fallback.
+        //
+        // On Win32 we deliberately prefer FIFO: under DWM composited windowed
+        // mode, NVIDIA MAILBOX trails the live window geometry during interactive
+        // resize, so DWM stretches the last image and it "snaps" to size when the
+        // drag ends. FIFO is synchronized to the DWM present cadence, so each
+        // composited frame matches the current window size and resize stays smooth.
+        //
+        // Everywhere else (notably Wayland) MAILBOX is preferred: vkQueuePresentKHR
+        // does not block on vsync, so the event loop keeps processing window
+        // configure events immediately and interactive resize tracks in real time
+        // while staying tear-free. FIFO is blocking there and causes problems.
+#if defined(MANGO_PLATFORM_WINDOWS)
+        return VK_PRESENT_MODE_FIFO_KHR;
+#else
         u32 count = 0;
         vkGetPhysicalDeviceSurfacePresentModesKHR(m_physicalDevice, m_surface, &count, nullptr);
 
@@ -175,6 +185,7 @@ namespace mango::vulkan
         }
 
         return VK_PRESENT_MODE_FIFO_KHR;
+#endif
     }
 
     bool Swapchain::createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent, VkSwapchainKHR oldSwapchain)
