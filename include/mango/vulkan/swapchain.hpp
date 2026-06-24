@@ -74,9 +74,12 @@ namespace mango::vulkan
         bool m_recreateRequired = false;
 
         void cleanup();
+        void destroySyncObjects();
+        void destroyImageViews();
         void configure();
         VkExtent2D resolveExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities) const;
-        void createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent);
+        bool createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
+        bool createImageViews();
         void createSyncObjects();
         VkResult acquireNextImage(u32& imageIndex);
         VkResult present(u32 imageIndex);
