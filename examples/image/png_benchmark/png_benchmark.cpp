@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -42,6 +42,7 @@ using namespace mango::image;
 // options
 // ----------------------------------------------------------------------
 
+bool g_option_save = true;
 bool g_option_tracing = false;
 bool g_option_multithread = true;
 int g_option_compression = 4;
@@ -157,6 +158,11 @@ void load_libpng(Memory memory)
 
 size_t save_libpng(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-libpng.png";
 
     int width = bitmap.width;
@@ -234,6 +240,11 @@ void load_lodepng(Memory memory)
 
 size_t save_lodepng(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-lodepng.png";
 
     LodePNGEncoderSettings settings;
@@ -267,6 +278,11 @@ void load_stb(Memory memory)
 
 size_t save_stb(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-stb.png";
     stbi_write_png(filename, bitmap.width, bitmap.height, 4, bitmap.image, bitmap.width * 4);
     return getFileSize(filename);
@@ -381,6 +397,11 @@ void load_spng(Memory memory)
 
 size_t save_spng(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-spng.png";
 
     struct spng_ihdr ihdr;
@@ -512,6 +533,11 @@ void load_fpng(Memory memory)
 
 size_t save_fpng(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-fpng.png";
     fpng::fpng_encode_image_to_file(filename, bitmap.image, bitmap.width, bitmap.height, 4, false);
     return getFileSize(filename);
@@ -527,6 +553,11 @@ size_t save_fpng(const Bitmap& bitmap)
 
 size_t save_fpnge(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-fpnge.png";
 
     u8* output = nullptr;
@@ -650,6 +681,11 @@ void load_mango(Memory memory)
 
 size_t save_mango(const Bitmap& bitmap)
 {
+    if (!g_option_save)
+    {
+        return 0;
+    }
+
     const char* filename = "output-mango.png";
 
     ImageEncodeOptions options;
@@ -870,6 +906,11 @@ int main(int argc, const char* argv[])
         else if (!strcmp(argv[i], "--trace"))
         {
             g_option_tracing = true;
+        }
+        else if (!strcmp(argv[i], "--save"))
+        {
+            // NOTE: reverse condition --save means DISABLE save testing
+            g_option_save = false;
         }
     }
 

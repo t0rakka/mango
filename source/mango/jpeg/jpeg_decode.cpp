@@ -2594,6 +2594,10 @@ namespace mango::image::jpeg
                     const int left = std::min(restartInterval, mcus - i);
                     for (int j = 0; j < left; ++j)
                     {
+                        if (!(j & 0x200) && m_interface->cancelled)
+                        {
+                            break;
+                        }
                         state.decode(dest, &state);
                         dest += blocks_in_mcu * 64;
                     }
@@ -2671,6 +2675,11 @@ namespace mango::image::jpeg
                     const int left = std::min(restartInterval, mcus - i);
                     for (int j = 0; j < left; ++j)
                     {
+                        if (!(j & 0x200) && m_interface->cancelled)
+                        {
+                            break;
+                        }
+
                         int n = i + j;
                         int x = n % xmcu;
                         int y = n / xmcu;

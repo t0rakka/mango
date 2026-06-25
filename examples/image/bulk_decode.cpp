@@ -27,6 +27,8 @@ struct State
         size_t image_bytes = 0;
         size_t input_bytes = 0;
 
+        u64 time0 = Time::ms();
+
         ImageDecoder decoder(memory, filename);
         if (decoder.isDecoder())
         {
@@ -47,11 +49,13 @@ struct State
             image_bytes = header.width * header.height * 4;
         }
 
+        u64 time1 = Time::ms();
+
         total_input_files ++;
         total_input_bytes += input_bytes;
         total_image_bytes += image_bytes;
 
-        printLine("Decoded: \"{}\" ({} KB -> {} KB).", filename, input_bytes >> 10, image_bytes >> 10);
+        printLine("Decoded: \"{}\" ({} KB -> {} KB) : {} ms.", filename, input_bytes >> 10, image_bytes >> 10, time1 - time0);
     }
 
     bool isImageFormat(const FileInfo& node, const std::string& format) const

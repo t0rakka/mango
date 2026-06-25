@@ -24,6 +24,8 @@ using namespace mango::image;
 
 static constexpr u64 NOT_AVAILABLE = ~0;
 
+static bool g_enable_save = true;
+
 static
 std::string format_time(u64 time)
 {
@@ -112,6 +114,11 @@ Surface load_jpeg(const char* filename)
 
 size_t save_jpeg(const char* filename, const Surface& surface)
 {
+    if (!g_enable_save)
+    {
+        return 0;
+    }
+
     struct jpeg_compress_struct cinfo;
     jpeg_create_compress(&cinfo);
 
@@ -189,6 +196,11 @@ Surface stb_load_jpeg(const char* filename)
 
 size_t stb_save_jpeg(const char* filename, const Surface& surface)
 {
+    if (!g_enable_save)
+    {
+        return 0;
+    }
+
     stbi_write_jpg(filename, surface.width, surface.height, 3, surface.image, surface.width * 3);
     stbi_image_free(surface.image);
     return getFileSize(filename);
@@ -216,6 +228,11 @@ Surface jpgd_load(const char* filename)
 
 size_t jpge_save(const char* filename, const Surface& surface)
 {
+    if (!g_enable_save)
+    {
+        return 0;
+    }
+
     jpge::compress_image_to_jpeg_file(filename, surface.width, surface.height, 4, surface.image);
     free(surface.image);
     return getFileSize(filename);
@@ -248,6 +265,11 @@ void toojpeg_write_byte(u8 value)
 
 size_t toojpeg_save(const char* filename, const Surface& surface)
 {
+    if (!g_enable_save)
+    {
+        return 0;
+    }
+
     OutputFileStream file(filename);
 
     toojpeg_stream = &file;
@@ -398,6 +420,11 @@ int main(int argc, const char* argv[])
         {
             tracing = true;
         }
+        else if (!strcmp(argv[i], "--save"))
+        {
+            // NOTE: reverse logic --save means DISABLE save testing
+            g_enable_save = false;
+        }
         else
         {
             test_count = std::atoi(argv[i]);
@@ -527,8 +554,15 @@ int main(int argc, const char* argv[])
     encode_options.simd = true;
     encode_options.multithread = multithread;
 
-    bitmap.save("output-mango.jpg", encode_options);
-    size = getFileSize("output-mango.jpg");
+    if (g_enable_save)
+    {
+        bitmap.save("output-mango.jpg", encode_options);
+        size = getFileSize("output-mango.jpg");
+    }
+    else
+    {
+        size = 0;
+    }
 
     time2 = Time::us();
     ::print("mango:   ", time1 - time0, time2 - time1, size);
@@ -545,10 +579,15 @@ int main(int argc, const char* argv[])
         for (int i = 0; i < test_count; ++i)
         {
             time0 = Time::us();
+
             Bitmap bitmap(filename, decode_options);
 
             time1 = Time::us();
-            bitmap.save("output-mango.jpg", encode_options);
+
+            if (g_enable_save)
+            {
+                bitmap.save("output-mango.jpg", encode_options);
+            }
 
             time2 = Time::us();
 
