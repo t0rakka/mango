@@ -69,6 +69,14 @@ namespace mango
             [win setRestorable:NO];
         }
 
+        // Enable AppKit native (window-level) fullscreen. This keeps the same window,
+        // content view and CAMetalLayer when toggling fullscreen, so the Vulkan surface
+        // stays valid and the swapchain recreates via the normal windowDidResize path.
+        if (!(flags & Window::DISABLE_RESIZE))
+        {
+            [win setCollectionBehavior:NSWindowCollectionBehaviorFullScreenPrimary];
+        }
+
 #if defined(MANGO_ENABLE_VULKAN)
         if (is_vulkan)
         {
@@ -162,13 +170,13 @@ namespace mango
 
     bool WindowContext::isFullscreen() const
     {
-        if (content_view)
+        if (ns_window)
         {
-            NSView* view = (__bridge NSView*)content_view;
-            return [view isInFullScreenMode];
+            NSWindow* win = (__bridge NSWindow*)ns_window;
+            return ([win styleMask] & NSWindowStyleMaskFullScreen) != 0;
         }
 
-        return fullscreen;
+        return false;
     }
 
     math::int32x2 WindowContext::getContentSize() const

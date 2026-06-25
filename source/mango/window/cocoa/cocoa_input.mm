@@ -191,24 +191,18 @@ namespace mango::cocoa
 
     void toggleViewFullscreen(Window* window, WindowContext* context, NSWindow* nsWindow, NSView* view)
     {
-        [view setHidden:YES];
+        (void) window;
+        (void) context;
+        (void) view;
 
-        if ([view isInFullScreenMode])
-        {
-            [view exitFullScreenModeWithOptions:nil];
-            [nsWindow makeFirstResponder:view];
-            [nsWindow makeKeyAndOrderFront:view];
-            trackContentView(view, nsWindow);
-            context->fullscreen = false;
-        }
-        else
-        {
-            [view enterFullScreenMode:[nsWindow screen] withOptions:nil];
-            context->fullscreen = true;
-        }
-
-        dispatchResize(window, context, view, [view frame]);
-        [view setHidden:NO];
+        // AppKit native (window-level) fullscreen. The old view-level
+        // enterFullScreenMode: reparented the NSView into a temporary window, which
+        // left the CAMetalLayer backing the Vulkan surface orphaned (frames rendered
+        // but never composited -> gray window). toggleFullScreen: keeps the same
+        // window, content view and layer intact; the resulting size change arrives
+        // through the normal windowDidResize -> dispatchResize path and the swapchain
+        // recreates exactly as it does for an ordinary resize.
+        [nsWindow toggleFullScreen:nil];
     }
 
 } // namespace mango::cocoa
