@@ -178,9 +178,12 @@ namespace mango
             return math::int32x2(0, 0);
         }
 
+        // Use the view's own bounds (the coordinate space convertRectToBacking
+        // expects) so the reported size matches the Metal drawable / swapchain
+        // extent exactly. [view frame] is in the superview's coordinate space and
+        // could diverge across reparenting (e.g. fullscreen enter/exit).
         NSView* view = (__bridge NSView*)content_view;
-        NSRect rect = [view frame];
-        rect = [view convertRectToBacking:rect];
+        NSRect rect = [view convertRectToBacking:[view bounds]];
         return math::int32x2(int(rect.size.width), int(rect.size.height));
     }
 

@@ -71,6 +71,13 @@ namespace mango::cocoa
             context->updateMetalDrawableSize();
         }
         window->onResize(int(backing.size.width), int(backing.size.height));
+
+        // Live window resize runs inside a modal event-tracking run loop, so the
+        // normal runEventLoop() frame pump is suspended until the drag ends. Drive
+        // a frame here (as win32/x11/wayland do) so the content re-renders at the
+        // new extent instead of the compositor stretching the last drawable.
+        window->invalidate();
+        window->dispatchFrame();
     }
 
     void trackContentView(NSView* view, NSWindow* window)
