@@ -2087,6 +2087,7 @@ namespace
                 m_header.depth   = 0;
                 m_header.levels  = 0;
                 m_header.faces   = 0;
+                m_header.frames  = m_number_of_frames; // APNG frame count (0 when not animated)
                 m_header.compression = TextureCompression::NONE;
 
                 u16 flags = 0;
@@ -2176,6 +2177,47 @@ namespace
 
             // keep track of parsing position
             m_pointer = p;
+
+            // make the animation frame count available from the header (APNG)
+            scanAnimationControl();
+        }
+
+        void scanAnimationControl()
+        {
+            // Pre-scan chunks for the acTL (Animation Control) chunk so the frame count is
+            // known up front. Per the APNG spec acTL must precede the first IDAT; if we hit
+            // image data first there is no animation. This does not disturb the parsing
+            // position used by decode().
+            BigEndianConstPointer p = m_pointer;
+
+            for ( ; p < m_end - 8; )
+            {
+                const u32 size = p.read32();
+                const u32 id = p.read32();
+
+                if (id == u32_mask_rev('a', 'c', 'T', 'L'))
+                {
+                    if (size == 8 && p + 8 <= m_end)
+                    {
+                        m_number_of_frames = p.read32();
+                        m_repeat_count = p.read32();
+                    }
+                    return;
+                }
+
+                if (id == u32_mask_rev('I', 'D', 'A', 'T') || id == u32_mask_rev('I', 'E', 'N', 'D'))
+                {
+                    return;
+                }
+
+                if (p + size + 4 > m_end)
+                {
+                    return;
+                }
+
+                p += size;
+                p += sizeof(u32); // skip crc
+            }
         }
 
         size_t getInterlacedPassSize(int pass, int width, int height) const

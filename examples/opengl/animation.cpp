@@ -16,7 +16,9 @@ struct ImageAnimation
     ImageDecoder m_decoder;
     ImageHeader m_header;
     Bitmap m_bitmap;
-    u64 m_delay = 20;
+
+    int m_frame = 0;  // index of the frame currently in m_bitmap
+    u64 m_delay = 0;  // how long the current frame should be shown, in milliseconds
 
     ImageAnimation(const std::string& filename)
         : m_file(filename)
@@ -26,12 +28,23 @@ struct ImageAnimation
     {
     }
 
-    void decode()
+    // ImageHeader::frames: 0 means not animated; a count of 1 is a degenerate
+    // animation (a single still image) and aliases with 0.
+    bool isAnimation() const
+    {
+        return m_header.frames > 1;
+    }
+
+    // Decode the next frame into m_bitmap and remember its display duration.
+    void decodeFrame()
     {
         ImageDecodeStatus status = m_decoder.decode(m_bitmap);
         m_delay = (1000 * status.frame_delay_numerator) / status.frame_delay_denominator;
-        printLine("current: {}, next: {} ({} ms)", 
-            status.current_frame_index, status.next_frame_index, m_delay);
+
+        if (isAnimation())
+        {
+            m_frame = (m_frame + 1) % m_header.frames;
+        }
     }
 };
 
@@ -39,13 +52,23 @@ class DemoWindow : public OpenGLFramebuffer
 {
 protected:
     ImageAnimation& m_animation;
+    bool m_presented = false;
 
 public:
     DemoWindow(ImageAnimation& animation)
         : OpenGLFramebuffer(animation.m_bitmap.width, animation.m_bitmap.height)
         , m_animation(animation)
     {
-        setTitle(fmt::format("[ {} ]", filesystem::removePath(m_animation.m_file.filename())));
+        std::string name = filesystem::removePath(m_animation.m_file.filename());
+
+        if (m_animation.isAnimation())
+        {
+            setTitle(fmt::format("[ {} ]  {} frames", name, m_animation.m_header.frames));
+        }
+        else
+        {
+            setTitle(fmt::format("[ {} ]", name));
+        }
     }
 
     ~DemoWindow()
@@ -62,9 +85,14 @@ public:
     {
         MANGO_UNREFERENCED(info);
 
+        // A still image only needs to be decoded and presented once; an animation
+        // decodes a new frame every time and paces itself with the frame delay.
+        if (!m_animation.isAnimation() && m_presented)
+            return;
+
         Surface s = lock();
 
-        m_animation.decode();
+        m_animation.decodeFrame();
 
         if (m_animation.m_delay > 0)
         {
@@ -75,6 +103,8 @@ public:
 
         unlock();
         present();
+
+        m_presented = true;
     }
 };
 

@@ -53,6 +53,7 @@ namespace mango::image
         int     depth = 0;   // depth
         int     levels = 0;  // mipmap levels
         int     faces = 0;   // cubemap faces
+        int     frames = 0;  // animation frame count: 0 = not animated, > 0 = animation (1 is a degenerate animation, aliases with 0)
         bool    premultiplied = false; // alpha is premultiplied
         bool    linear = false; // linear colorspace (non-linear is sRGB)
         Format  format; // preferred format (fastest available "direct" decoding is possible)
@@ -65,9 +66,9 @@ namespace mango::image
         bool direct = false; // decoding doesn't use temporary storage
 
         // animation information
-        // NOTE: we would love to simply return number of animation frames in the ImageHeader
-        //       but some formats do not provide this information without decompressing frames
-        //       until running out of data.
+        // NOTE: ImageHeader::frames reports the total frame count up front when the format
+        //       can provide it (e.g. GIF, APNG). These indices remain useful for streaming
+        //       playback and for formats that only discover the count while decoding.
         int current_frame_index = 0;
         int next_frame_index = 0;
 

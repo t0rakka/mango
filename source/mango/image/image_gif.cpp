@@ -829,6 +829,7 @@ namespace
                 header.depth   = 0;
                 header.levels  = 0;
                 header.faces   = 0;
+                header.frames  = frames;
                 header.format  = format;
                 header.compression = TextureCompression::NONE;
             }
