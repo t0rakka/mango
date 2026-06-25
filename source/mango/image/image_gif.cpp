@@ -111,15 +111,34 @@ namespace
     struct gif_state
     {
         gif_logical_screen_descriptor screen_desc;
-        gif_image_descriptor image_desc;
 
         bool first_frame = true;
 
+        // Graphics Control Extension. A GCE applies ONLY to the image that follows it,
+        // so these are reset to defaults before every frame and only overwritten when a
+        // GCE is actually present.
         u16 delay = 2; // default: 50 Hz
         int disposal_method = 0;
         int user_input_flag = 0;
         int transparent_color_flag = 0;
         u8 transparent_color = 0;
+
+        // Persistent RGBA canvas (logical screen size), used for animations. Each frame
+        // can carry its own local color table, so per the spec the accumulated canvas is
+        // a rendered raster of colors, not indices: every frame is resolved through its
+        // own palette before compositing. Single-frame GIFs skip this and stay indexed.
+        std::unique_ptr<u32[]> canvas;
+        std::unique_ptr<u32[]> saved; // snapshot for disposal method 3 (restore to previous)
+        bool saved_valid = false;
+
+        // Disposal bookkeeping for the previously drawn frame. Disposal happens between
+        // frames, so the previous frame's disposal is applied at the start of the next.
+        int prev_disposal = 0;
+        int prev_x = 0;
+        int prev_y = 0;
+        int prev_w = 0;
+        int prev_h = 0;
+        u32 prev_clear_color = 0; // fill color used by disposal method 2 (restore background)
     };
 
     const u8* lzw_decode(u8* dest, u8* dest_end, const u8* src, const u8* src_end)
@@ -292,63 +311,59 @@ namespace
         }
     }
 
-    void scanline_copy_indices(u8* dest, const u8* src, int width, const Palette& palette, u8 transparent)
+    void canvas_fill_rect(u32* canvas, int cw, int ch, int x, int y, int w, int h, u32 value)
     {
-        MANGO_UNREFERENCED(palette);
-        MANGO_UNREFERENCED(transparent);
+        // NOTE: frame rectangles can extend past the logical screen; clip to canvas.
+        int x0 = std::max(0, x);
+        int y0 = std::max(0, y);
+        int x1 = std::min(cw, x + w);
+        int y1 = std::min(ch, y + h);
 
-        std::memcpy(dest, src, width);
-    }
-
-    void scanline_blend_indices(u8* dest, const u8* src, int width, const Palette& palette, u8 transparent)
-    {
-        MANGO_UNREFERENCED(palette);
-
-        for (int x = 0; x < width; ++x)
+        for (int yy = y0; yy < y1; ++yy)
         {
-            u8 sample = src[x];
-            if (sample != transparent)
+            u32* d = canvas + yy * cw;
+            for (int xx = x0; xx < x1; ++xx)
             {
-                dest[x] = sample;
+                d[xx] = value;
             }
         }
     }
 
-    void scanline_copy_palette(u8* dest8, const u8* src, int width, const Palette& palette, u8 transparent)
+    void canvas_composite(u32* canvas, int cw, int ch, const u8* src, int x, int y, int w, int h,
+                          const Palette& palette, bool transparent_flag, u8 transparent)
     {
-        MANGO_UNREFERENCED(transparent);
-
-        u32* dest = reinterpret_cast<u32*>(dest8);
-
-        for (int x = 0; x < width; ++x)
+        // Resolve this frame's indices through its own palette while compositing. Because
+        // the canvas is true color, a later frame with a different palette can't corrupt
+        // pixels we draw here.
+        // NOTE: clipping happens with some image files; don't be too clever and "optimize" this later :)
+        for (int sy = 0; sy < h; ++sy)
         {
-            u8 sample = src[x];
-            dest[x] = palette[sample];
-        }
-    }
+            int cy = y + sy;
+            if (cy < 0 || cy >= ch)
+                continue;
 
-    void scanline_blend_palette(u8* dest8, const u8* src, int width, const Palette& palette, u8 transparent)
-    {
-        u32* dest = reinterpret_cast<u32*>(dest8);
+            const u8* s = src + sy * w;
+            u32* d = canvas + cy * cw;
 
-        for (int x = 0; x < width; ++x)
-        {
-            u8 sample = src[x];
-            if (sample != transparent)
+            for (int sx = 0; sx < w; ++sx)
             {
-                dest[x] = palette[sample];
+                int cx = x + sx;
+                if (cx < 0 || cx >= cw)
+                    continue;
+
+                u8 sample = s[sx];
+                if (transparent_flag && sample == transparent)
+                    continue; // transparent pixels leave the canvas (previous frame) untouched
+
+                d[cx] = palette[sample];
             }
         }
     }
 
-    const u8* read_image(const u8* data, const u8* end, gif_state& state, Surface& target)
+    Palette build_palette(const gif_image_descriptor& image_desc, gif_state& state)
     {
-        gif_image_descriptor image_desc;
-        data = image_desc.read(data, end);
-
         Palette palette;
 
-        // choose palette
         if (image_desc.color_table_flag())
         {
             // local palette
@@ -376,29 +391,43 @@ namespace
             }
         }
 
-        // transparency
-        u8 background = state.screen_desc.background;
-        u8 transparent = state.transparent_color;
-
+        // transparency: only the alpha matters, the rgb of the index is left intact
         if (state.transparent_color_flag)
         {
-            palette[transparent].r = palette[background].r;
-            palette[transparent].g = palette[background].g;
-            palette[transparent].b = palette[background].b;
-            palette[transparent].a = 0;
+            palette[state.transparent_color].a = 0;
         }
 
-        bool blend = !state.first_frame && state.transparent_color_flag;
+        return palette;
+    }
 
-        int x = image_desc.left;
-        int y = image_desc.top;
+    // Background color from the GLOBAL color table (the Background Color Index is only
+    // meaningful when a Global Color Table is present), as an opaque rgba value.
+    u32 background_color(const gif_state& state)
+    {
+        if (state.screen_desc.color_table_flag())
+        {
+            const u8* gp = state.screen_desc.palette;
+            u32 i = state.screen_desc.background;
+            return Color(gp[i * 3 + 0], gp[i * 3 + 1], gp[i * 3 + 2], 0xff);
+        }
+
+        return 0;
+    }
+
+    std::unique_ptr<u8[]> decode_indices(const u8*& data, const u8* end, const gif_image_descriptor& image_desc)
+    {
         int width = image_desc.width;
         int height = image_desc.height;
-
-        // decode gif bit stream
         int bytes = width * height;
+
         std::unique_ptr<u8[]> bits(new u8[bytes]);
-        data = lzw_decode(bits.get(), bits.get() + bytes, data, end);
+        const u8* next = lzw_decode(bits.get(), bits.get() + bytes, data, end);
+        if (!next)
+        {
+            // truncated or corrupt lzw stream
+            return nullptr;
+        }
+        data = next;
 
         // deinterlace
         if (image_desc.interlaced())
@@ -408,30 +437,181 @@ namespace
             bits.reset(temp);
         }
 
-        void (*func)(u8*, const u8*, int , const Palette& , u8) = nullptr;
+        return bits;
+    }
+
+    // Single-frame GIFs decode straight into an indexed target (the legacy/demoscene
+    // path): we keep the indices and palette intact.
+    const u8* read_image_indexed(const u8* data, const u8* end, gif_state& state, Surface& target)
+    {
+        gif_image_descriptor image_desc;
+        data = image_desc.read(data, end);
+
+        Palette palette = build_palette(image_desc, state);
+
+        u8 background = state.screen_desc.background;
+        u8 transparent = state.transparent_color;
+
+        std::unique_ptr<u8[]> bits = decode_indices(data, end, image_desc);
+        if (!bits)
+        {
+            return nullptr;
+        }
 
         if (target.palette)
         {
             *target.palette = palette;
-            func = blend ? scanline_blend_indices : scanline_copy_indices;
         }
-        else
+
+        int x = image_desc.left;
+        int y = image_desc.top;
+        int width = image_desc.width;
+        int height = image_desc.height;
+
+        // clear the canvas: transparent index when transparency is in use, else background
+        u8 clear = state.transparent_color_flag ? transparent : background;
+        for (int sy = 0; sy < target.height; ++sy)
         {
-            func = blend ? scanline_blend_palette : scanline_copy_palette;
+            std::memset(target.address<u8>(0, sy), clear, target.width);
         }
 
         // NOTE: clipping happens with some image files; don't be too clever and "optimize" this later :)
-        Surface rect(target, x, y, width, height);
-        u8* src = bits.get();
-
-        for (int sy = 0; sy < rect.height; ++sy)
+        for (int sy = 0; sy < height; ++sy)
         {
-            u8* dest = rect.address<u8>(0, sy);
-            func(dest, src, rect.width, palette, transparent);
-            src += width;
+            int cy = y + sy;
+            if (cy < 0 || cy >= target.height)
+                continue;
+
+            const u8* s = bits.get() + sy * width;
+            u8* d = target.address<u8>(0, cy);
+
+            for (int sx = 0; sx < width; ++sx)
+            {
+                int cx = x + sx;
+                if (cx < 0 || cx >= target.width)
+                    continue;
+
+                u8 sample = s[sx];
+                if (state.transparent_color_flag && sample == transparent)
+                    continue;
+
+                d[cx] = sample;
+            }
         }
 
         return data;
+    }
+
+    // Animations decode into a persistent RGBA canvas: each frame is resolved through its
+    // own palette and composited with transparency + disposal applied in color space.
+    const u8* read_image_rgba(const u8* data, const u8* end, gif_state& state, Surface& target)
+    {
+        gif_image_descriptor image_desc;
+        data = image_desc.read(data, end);
+
+        Palette palette = build_palette(image_desc, state);
+        u8 transparent = state.transparent_color;
+
+        const int screen_w = state.screen_desc.width;
+        const int screen_h = state.screen_desc.height;
+        const int canvas_size = screen_w * screen_h;
+
+        // allocate the persistent canvas (once)
+        if (!state.canvas)
+        {
+            state.canvas.reset(new u32[canvas_size]);
+            state.saved.reset(new u32[canvas_size]);
+        }
+
+        // restore-to-background uses transparent when this frame has transparency,
+        // otherwise the logical screen background color
+        u32 clear_color = state.transparent_color_flag ? 0 : background_color(state);
+
+        if (state.first_frame)
+        {
+            std::fill_n(state.canvas.get(), canvas_size, clear_color);
+            state.prev_disposal = 0;
+            state.saved_valid = false;
+        }
+        else
+        {
+            // Apply the previous frame's disposal before drawing this one.
+            switch (state.prev_disposal)
+            {
+                case 2:
+                    // restore to background color
+                    canvas_fill_rect(state.canvas.get(), screen_w, screen_h,
+                                     state.prev_x, state.prev_y, state.prev_w, state.prev_h,
+                                     state.prev_clear_color);
+                    break;
+
+                case 3:
+                    // restore to previous (the snapshot we took before the previous frame)
+                    if (state.saved_valid)
+                    {
+                        std::memcpy(state.canvas.get(), state.saved.get(), canvas_size * sizeof(u32));
+                    }
+                    break;
+
+                default:
+                    // 0/1: do not dispose, leave the canvas as-is
+                    break;
+            }
+        }
+
+        int x = image_desc.left;
+        int y = image_desc.top;
+        int width = image_desc.width;
+        int height = image_desc.height;
+
+        // Snapshot for disposal method 3. We only ever modify the frame rectangle, so a
+        // full-canvas snapshot is equivalent to (and simpler than) saving just the rect.
+        if (state.disposal_method == 3)
+        {
+            std::memcpy(state.saved.get(), state.canvas.get(), canvas_size * sizeof(u32));
+            state.saved_valid = true;
+        }
+
+        std::unique_ptr<u8[]> bits = decode_indices(data, end, image_desc);
+        if (!bits)
+        {
+            return nullptr;
+        }
+
+        // composite this frame into the persistent rgba canvas
+        canvas_composite(state.canvas.get(), screen_w, screen_h, bits.get(),
+                         x, y, width, height,
+                         palette, state.transparent_color_flag != 0, transparent);
+
+        // remember disposal bookkeeping for the next frame
+        state.prev_disposal = state.disposal_method;
+        state.prev_x = x;
+        state.prev_y = y;
+        state.prev_w = width;
+        state.prev_h = height;
+        state.prev_clear_color = clear_color;
+
+        // publish the rgba canvas to the decode target
+        int copy_w = std::min(screen_w, target.width);
+        int copy_h = std::min(screen_h, target.height);
+
+        for (int sy = 0; sy < copy_h; ++sy)
+        {
+            u8* dest = target.address<u8>(0, sy);
+            std::memcpy(dest, state.canvas.get() + sy * screen_w, copy_w * sizeof(u32));
+        }
+
+        return data;
+    }
+
+    const u8* read_image(const u8* data, const u8* end, gif_state& state, Surface& target)
+    {
+        if (target.format.isIndexed())
+        {
+            return read_image_indexed(data, end, state, target);
+        }
+
+        return read_image_rgba(data, end, state, target);
     }
 
     void read_graphics_control_extension(const u8* p, gif_state& state)
@@ -511,6 +691,14 @@ namespace
 
     const u8* read_chunks(const u8* data, const u8* end, gif_state& state, Surface& target)
     {
+        // A Graphics Control Extension applies only to the next image, so reset to
+        // defaults here; the values are overwritten only if this frame carries a GCE.
+        state.delay = 2;
+        state.disposal_method = 0;
+        state.user_input_flag = 0;
+        state.transparent_color_flag = 0;
+        state.transparent_color = 0;
+
         while (data < end)
         {
             u8 chunkID = *data++;
@@ -531,6 +719,73 @@ namespace
         }
 
         return nullptr;
+    }
+
+    // Count the number of image (frame) blocks in the stream. This is a cheap structural
+    // walk used to decide the output format up front: single frame -> indexed (keep the
+    // indices + palette), multiple frames -> rgba (frames may carry differing palettes
+    // and must be composited in color space).
+    int count_images(const u8* data, const u8* end)
+    {
+        const u8* p = data;
+        int count = 0;
+
+        while (p < end)
+        {
+            u8 id = *p++;
+
+            if (id == GIF_EXTENSION)
+            {
+                if (p >= end)
+                    break;
+                ++p; // label
+
+                // skip sub-blocks
+                while (p < end)
+                {
+                    u8 size = *p++;
+                    if (!size)
+                        break;
+                    p += size;
+                }
+            }
+            else if (id == GIF_IMAGE)
+            {
+                if (p + 9 > end)
+                    break;
+
+                u8 field = p[8];
+                p += 9;
+
+                if (field & 0x80)
+                {
+                    // local color table
+                    p += (1 << ((field & 0x07) + 1)) * 3;
+                }
+
+                if (p >= end)
+                    break;
+                ++p; // lzw minimum code size
+
+                // skip image data sub-blocks
+                while (p < end)
+                {
+                    u8 size = *p++;
+                    if (!size)
+                        break;
+                    p += size;
+                }
+
+                ++count;
+            }
+            else
+            {
+                // GIF_TERMINATE or anything unexpected
+                break;
+            }
+        }
+
+        return count;
     }
 
     // ------------------------------------------------------------
@@ -562,12 +817,19 @@ namespace
 
                 m_start = m_data;
 
+                // Single-frame GIFs stay indexed (the indices + palette are preserved);
+                // animations resolve to rgba because frames may carry differing palettes.
+                int frames = count_images(m_start, m_end);
+                Format format = frames > 1
+                    ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
+                    : IndexedFormat(8);
+
                 header.width   = m_state.screen_desc.width;
                 header.height  = m_state.screen_desc.height;
                 header.depth   = 0;
                 header.levels  = 0;
                 header.faces   = 0;
-                header.format  = IndexedFormat(8);
+                header.format  = format;
                 header.compression = TextureCompression::NONE;
             }
         }
