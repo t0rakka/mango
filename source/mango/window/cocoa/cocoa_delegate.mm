@@ -18,6 +18,7 @@
 }
 
 - (id)initWithWindow:(mango::Window*)window view:(NSView*)view;
+- (void)deferredSettle;
 
 @end
 
@@ -48,6 +49,50 @@
 
     mango::WindowContext* context = mangoWindow->operator mango::WindowContext*();
     mango::cocoa::dispatchResize(mangoWindow, context, contentView, frame);
+}
+
+// Force one clean redraw on the *next* main-loop turn, after AppKit has finished
+// laying out and committed the settled CAMetalLayer geometry. The per-event frame
+// driven from windowDidResize during a live resize / fullscreen animation can race
+// the final geometry commit on macOS: the frame is rendered and presented, but the
+// last drawable lands a beat before the layer settles, so the compositor leaves the
+// window gray. Because rendering is on-demand, nothing redraws afterwards and the
+// gray sticks. Re-running the resize+present path deferred guarantees a final frame
+// composited against the settled size.
+- (void)deferredSettle
+{
+    mango::Window* window = mangoWindow;
+    NSView* view = contentView;
+
+    dispatch_async(dispatch_get_main_queue(), ^{
+        NSWindow* nsWindow = [view window];
+        if (!nsWindow)
+        {
+            return;
+        }
+
+        NSRect frame = [nsWindow contentRectForFrameRect:[nsWindow frame]];
+        mango::WindowContext* context = window->operator mango::WindowContext*();
+        mango::cocoa::dispatchResize(window, context, view, frame);
+    });
+}
+
+- (void)windowDidEndLiveResize:(NSNotification*)notification
+{
+    (void)notification;
+    [self deferredSettle];
+}
+
+- (void)windowDidEnterFullScreen:(NSNotification*)notification
+{
+    (void)notification;
+    [self deferredSettle];
+}
+
+- (void)windowDidExitFullScreen:(NSNotification*)notification
+{
+    (void)notification;
+    [self deferredSettle];
 }
 
 - (BOOL)applicationShouldTerminateAfterLastWindowClosed:(NSApplication*)theApplication
