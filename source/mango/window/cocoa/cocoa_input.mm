@@ -66,10 +66,15 @@ namespace mango::cocoa
     void dispatchResize(Window* window, WindowContext* context, NSView* view, const NSRect& frame)
     {
         NSRect backing = [view convertRectToBacking:frame];
-        if (context->is_vulkan)
-        {
-            context->updateMetalDrawableSize();
-        }
+
+        // Do NOT set the CAMetalLayer drawableSize during resize. MoltenVK derives the
+        // surface's currentExtent (and the swapchain it creates) from the layer's own
+        // bounds, and sets drawableSize to match. Setting drawableSize ourselves from
+        // the constraint-driven subview bounds (which can lag the layer bounds mid
+        // resize) made the two diverge, so MoltenVK returned a drawable of a different
+        // size than the swapchain was created with: VK_SUBOPTIMAL_KHR, and the cube was
+        // clipped out leaving only the clear (the resize flicker). Letting MoltenVK own
+        // drawableSize keeps it in lockstep with the swapchain extent.
         window->onResize(int(backing.size.width), int(backing.size.height));
 
         // Live window resize runs inside a modal event-tracking run loop, so the

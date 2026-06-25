@@ -157,17 +157,20 @@ namespace mango::vulkan
     {
         // FIFO is always supported and is the guaranteed fallback.
         //
-        // On Win32 we deliberately prefer FIFO: under DWM composited windowed
-        // mode, NVIDIA MAILBOX trails the live window geometry during interactive
-        // resize, so DWM stretches the last image and it "snaps" to size when the
-        // drag ends. FIFO is synchronized to the DWM present cadence, so each
-        // composited frame matches the current window size and resize stays smooth.
+        // On compositor-driven windowing systems (Win32 DWM, macOS CoreAnimation /
+        // WindowServer) we deliberately prefer FIFO. With non-blocking MAILBOX the
+        // swapchain is recreated on nearly every resize step while a queued present
+        // is still in flight; recreate destroys that swapchain before the compositor
+        // has shown it, so blank/clear-only frames slip through and the content
+        // flickers (and trails the live window geometry). FIFO blocks present until
+        // the image is actually displayed, so each rendered frame is shown before the
+        // next recreate and resize stays smooth.
         //
         // Everywhere else (notably Wayland) MAILBOX is preferred: vkQueuePresentKHR
         // does not block on vsync, so the event loop keeps processing window
         // configure events immediately and interactive resize tracks in real time
         // while staying tear-free. FIFO is blocking there and causes problems.
-#if defined(MANGO_PLATFORM_WINDOWS)
+#if defined(MANGO_PLATFORM_WINDOWS) || defined(MANGO_PLATFORM_MACOS)
         return VK_PRESENT_MODE_FIFO_KHR;
 #else
         u32 count = 0;

@@ -952,23 +952,40 @@ public:
 
     void render()
     {
-        if (m_swapchain->recreateSwapchain())
+        // On VK_SUBOPTIMAL_KHR the acquired image no longer matches the surface: the
+        // window resized between resolving the surface extent and acquiring the image,
+        // so MoltenVK hands back a drawable of a different size. Presenting it clips the
+        // cube out (only the clear shows -> a brief background flash during resize).
+        // Recreate to match the surface and re-acquire so we only present a correctly
+        // sized frame. Bounded to two attempts: a second consecutive mismatch is so
+        // rare that presenting it (one negligible flash) is preferable to looping.
+        for (int attempt = 0; attempt < 2; ++attempt)
         {
-            rebuildSwapchainResources();
-        }
+            if (m_swapchain->recreateSwapchain())
+            {
+                rebuildSwapchainResources();
+            }
 
-        auto frame = m_swapchain->beginFrame();
-        if (!frame)
-        {
+            auto frame = m_swapchain->beginFrame();
+            if (!frame)
+            {
+                return;
+            }
+
+            if (frame.acquireResult() == VK_SUBOPTIMAL_KHR && attempt == 0)
+            {
+                // beginFrame() already flagged a recreate; loop to rebuild + re-acquire.
+                continue;
+            }
+
+            updateUniformBuffer();
+
+            const VkExtent2D extent = m_swapchain->getExtent();
+            VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
+            recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
+            frame.submitAndPresent(m_graphicsQueue, commandBuffer);
             return;
         }
-
-        updateUniformBuffer();
-
-        VkExtent2D extent = m_swapchain->getExtent();
-        VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
-        recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
-        frame.submitAndPresent(m_graphicsQueue, commandBuffer);
     }
 
     void onFrame(const FrameInfo& info) override
