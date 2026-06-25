@@ -83,6 +83,7 @@ namespace mango::vulkan
         VkExtent2D resolveExtent(const VkSurfaceCapabilitiesKHR& surfaceCapabilities) const;
         VkPresentModeKHR choosePresentMode() const;
         bool createSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent, VkSwapchainKHR oldSwapchain = VK_NULL_HANDLE);
+        bool recreateSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent);
         bool createImageViews();
         void createSyncObjects();
         VkResult acquireNextImage(u32& imageIndex);
@@ -103,7 +104,11 @@ namespace mango::vulkan
         void cmdTransitionImageToColorAttachment(VkCommandBuffer commandBuffer, u32 imageIndex) const;
         void cmdTransitionImageToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const;
 
-        bool recreateSwapchain();
+        // Refreshes the swapchain to match the current surface. Recreation is
+        // triggered only when the surface extent changed or a previous frame flagged
+        // VK_SUBOPTIMAL_KHR / VK_ERROR_OUT_OF_DATE_KHR; returns true when a recreation
+        // actually happened (so the caller can rebuild size-dependent resources).
+        bool updateSwapchain();
         Frame beginFrame();
     };
 

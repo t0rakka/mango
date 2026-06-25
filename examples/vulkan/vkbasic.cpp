@@ -961,7 +961,7 @@ public:
         // rare that presenting it (one negligible flash) is preferable to looping.
         for (int attempt = 0; attempt < 2; ++attempt)
         {
-            if (m_swapchain->recreateSwapchain())
+            if (m_swapchain->updateSwapchain())
             {
                 rebuildSwapchainResources();
             }

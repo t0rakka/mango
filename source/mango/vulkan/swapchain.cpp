@@ -25,7 +25,7 @@ namespace mango::vulkan
         , m_presentQueue(presentQueue)
         , m_window(window)
     {
-        recreateSwapchain();
+        updateSwapchain();
     }
 
     Swapchain::~Swapchain()
@@ -475,51 +475,64 @@ namespace mango::vulkan
         return Frame();
     }
 
-    bool Swapchain::recreateSwapchain()
+    bool Swapchain::updateSwapchain()
     {
-        bool recreate = false;
-
         VkSurfaceCapabilitiesKHR surfaceCapabilities;
         vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &surfaceCapabilities);
 
         VkExtent2D extent = resolveExtent(surfaceCapabilities);
 
+        bool recreated = false;
+
         if (extent.width > 0 && extent.height > 0)
         {
-            bool extentChanged = extent.width != m_extent.width || extent.height != m_extent.height;
+            const bool extentChanged = extent.width != m_extent.width || extent.height != m_extent.height;
             if (m_recreateRequired || extentChanged)
             {
-                if (!m_fences.empty())
+                if (!recreateSwapchain(surfaceCapabilities, extent))
                 {
-                    vkWaitForFences(m_device, u32(m_fences.size()), m_fences.data(), VK_TRUE, UINT64_MAX);
-                }
-
-                VkSwapchainKHR oldSwapchain = m_swapchain;
-
-                destroyImageViews();
-                destroySyncObjects();
-
-                if (!createSwapchain(surfaceCapabilities, extent, oldSwapchain))
-                {
-                    if (oldSwapchain != VK_NULL_HANDLE)
-                    {
-                        m_swapchain = oldSwapchain;
-                        createImageViews();
-                        createSyncObjects();
-                    }
+                    // Recreation failed; the previous swapchain has been restored.
+                    // Leave m_extent unchanged so the next update retries.
                     return false;
                 }
 
-                createSyncObjects();
-                m_currentFrame = 0;
-                m_recreateRequired = false;
-                recreate = true;
+                recreated = true;
             }
         }
 
         m_extent = extent;
 
-        return recreate;
+        return recreated;
+    }
+
+    bool Swapchain::recreateSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent)
+    {
+        if (!m_fences.empty())
+        {
+            vkWaitForFences(m_device, u32(m_fences.size()), m_fences.data(), VK_TRUE, UINT64_MAX);
+        }
+
+        VkSwapchainKHR oldSwapchain = m_swapchain;
+
+        destroyImageViews();
+        destroySyncObjects();
+
+        if (!createSwapchain(surfaceCapabilities, extent, oldSwapchain))
+        {
+            if (oldSwapchain != VK_NULL_HANDLE)
+            {
+                m_swapchain = oldSwapchain;
+                createImageViews();
+                createSyncObjects();
+            }
+            return false;
+        }
+
+        createSyncObjects();
+        m_currentFrame = 0;
+        m_recreateRequired = false;
+
+        return true;
     }
 
     VkResult Swapchain::acquireNextImage(u32& imageIndex)
