@@ -310,7 +310,13 @@ namespace mango
 
         void replace(bool favor_t1)
         {
-            if (!m_t2.empty() && (m_t1.size() > m_p || (favor_t1 && m_t1.size() == m_p)))
+            // Per Megiddo & Modha: evict the LRU of T1 (to B1) when T1 is non-empty
+            // and either over its target size p, or exactly at p in the favoured
+            // case; otherwise evict the LRU of T2 (to B2). Gating on T1 (not T2) is
+            // essential: gating on T2 would skip this branch when T2 is empty and
+            // then fall through to evict an empty T2, freeing no slot and letting
+            // the resident set exceed capacity.
+            if (!m_t1.empty() && (m_t1.size() > m_p || (favor_t1 && m_t1.size() == m_p)))
             {
                 if (evict_entry(m_t1, ListKind::T1, ListKind::B1))
                 {
