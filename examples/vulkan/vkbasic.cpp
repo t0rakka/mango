@@ -79,6 +79,7 @@ protected:
     VkDeviceMemory m_depthImageMemory = VK_NULL_HANDLE;
     VkImageView m_depthImageView = VK_NULL_HANDLE;
     VkFormat m_depthFormat = VK_FORMAT_UNDEFINED;
+    VkExtent2D m_depthExtent { 0, 0 };
 
     u64 m_startTime = 0;
 
@@ -236,6 +237,8 @@ protected:
         {
             printLine(Print::Error, "vkCreateImageView: {}", getString(result));
         }
+
+        m_depthExtent = extent;
     }
 
     void destroyDepthResources()
@@ -937,55 +940,42 @@ public:
         }
     }
 
-    void rebuildSwapchainResources()
+    void ensureDepthResources()
     {
-        // The swapchain already waited on all in-flight fences during recreate,
-        // but keep a device idle here so the depth image is safe to replace.
+        const VkExtent2D extent = m_swapchain->getExtent();
+        if (m_depthImage != VK_NULL_HANDLE &&
+            extent.width == m_depthExtent.width &&
+            extent.height == m_depthExtent.height)
+        {
+            return;
+        }
+
+        // beginFrame()'s recreate already waited on all swapchain fences, but the depth
+        // image may still be referenced by an earlier submission; idle before replacing.
         // The graphics pipeline is NOT rebuilt: viewport/scissor are dynamic.
         vkDeviceWaitIdle(m_device);
-
         destroyDepthResources();
-
-        VkExtent2D extent = m_swapchain->getExtent();
         createDepthResources(extent);
     }
 
     void render()
     {
-        // On VK_SUBOPTIMAL_KHR the acquired image no longer matches the surface: the
-        // window resized between resolving the surface extent and acquiring the image,
-        // so MoltenVK hands back a drawable of a different size. Presenting it clips the
-        // cube out (only the clear shows -> a brief background flash during resize).
-        // Recreate to match the surface and re-acquire so we only present a correctly
-        // sized frame. Bounded to two attempts: a second consecutive mismatch is so
-        // rare that presenting it (one negligible flash) is preferable to looping.
-        for (int attempt = 0; attempt < 2; ++attempt)
+        // beginFrame() owns the swapchain recreate + suboptimal retry and only ever
+        // returns a correctly-sized image, so the client just syncs its own extent-sized
+        // resources (the depth buffer) to the now final extent and renders.
+        auto frame = m_swapchain->beginFrame();
+        if (!frame)
         {
-            if (m_swapchain->updateSwapchain())
-            {
-                rebuildSwapchainResources();
-            }
-
-            auto frame = m_swapchain->beginFrame();
-            if (!frame)
-            {
-                return;
-            }
-
-            if (frame.acquireResult() == VK_SUBOPTIMAL_KHR && attempt == 0)
-            {
-                // beginFrame() already flagged a recreate; loop to rebuild + re-acquire.
-                continue;
-            }
-
-            updateUniformBuffer();
-
-            const VkExtent2D extent = m_swapchain->getExtent();
-            VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
-            recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
-            frame.submitAndPresent(m_graphicsQueue, commandBuffer);
             return;
         }
+
+        ensureDepthResources();
+        updateUniformBuffer();
+
+        const VkExtent2D extent = m_swapchain->getExtent();
+        VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
+        recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
+        frame.submitAndPresent(m_graphicsQueue, commandBuffer);
     }
 
     void onFrame(const FrameInfo& info) override

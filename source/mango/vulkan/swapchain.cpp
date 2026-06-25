@@ -450,26 +450,53 @@ namespace mango::vulkan
 
     Swapchain::Frame Swapchain::beginFrame()
     {
-        if (m_extent.width <= 1 || m_extent.height <= 1)
+        // Acquire a correctly-sized image, hiding the recreate/retry dance from callers.
+        // updateSwapchain() recreates when the surface extent changed (or a previous
+        // frame flagged it). On VK_SUBOPTIMAL_KHR / VK_ERROR_OUT_OF_DATE_KHR the acquired
+        // image no longer matches the surface (the window resized mid-acquire), so we
+        // recreate and re-acquire once rather than hand back a wrong-sized drawable that
+        // would present at the wrong extent for a frame (the resize flash). Bounded to
+        // two attempts: a second consecutive mismatch is rare enough that returning it
+        // beats looping. After this returns a valid frame, getExtent() is final and the
+        // caller can lazily sync its own extent-sized resources to it.
+        for (int attempt = 0; attempt < 2; ++attempt)
         {
-            return Frame();
-        }
+            updateSwapchain();
 
-        u32 imageIndex = 0;
-        VkResult result = acquireNextImage(imageIndex);
-        if (result == VK_ERROR_OUT_OF_DATE_KHR)
-        {
-            m_recreateRequired = true;
-            return Frame();
-        }
+            if (m_extent.width <= 1 || m_extent.height <= 1)
+            {
+                return Frame();
+            }
 
-        if (result == VK_SUCCESS || result == VK_SUBOPTIMAL_KHR)
-        {
+            u32 imageIndex = 0;
+            VkResult result = acquireNextImage(imageIndex);
+
+            if (result == VK_ERROR_OUT_OF_DATE_KHR)
+            {
+                m_recreateRequired = true;
+                if (attempt == 0)
+                {
+                    continue;
+                }
+                return Frame();
+            }
+
             if (result == VK_SUBOPTIMAL_KHR)
             {
                 m_recreateRequired = true;
+                if (attempt == 0)
+                {
+                    continue;
+                }
+                return Frame(this, imageIndex, result);
             }
-            return Frame(this, imageIndex, result);
+
+            if (result == VK_SUCCESS)
+            {
+                return Frame(this, imageIndex, result);
+            }
+
+            return Frame();
         }
 
         return Frame();
