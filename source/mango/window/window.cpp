@@ -138,11 +138,13 @@ namespace mango
     void Window::invalidate()
     {
         m_event_loop.invalidate();
+        wakeEventLoop();
     }
 
     void Window::requestFrameAt(u64 time_us)
     {
         m_event_loop.next_frame_deadline_us = time_us;
+        wakeEventLoop();
     }
 
     void Window::requestFrameIn(double seconds)
@@ -150,7 +152,7 @@ namespace mango
         if (seconds <= 0.0)
         {
             // already due; fire on the next loop iteration
-            m_event_loop.next_frame_deadline_us = Time::us();
+            requestFrameAt(Time::us());
             return;
         }
 
@@ -170,6 +172,7 @@ namespace mango
     void Window::breakEventLoop()
     {
         m_event_loop.running = false;
+        wakeEventLoop();
     }
 
     const EventLoopConfig& Window::getEventLoopConfig() const

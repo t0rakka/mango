@@ -881,19 +881,20 @@ namespace mango
         return queryWin32RefreshRate(m_window_context->hwnd);
     }
 
+    void Window::wakeEventLoop()
+    {
+        // Post a no-op message so a loop blocked in MsgWaitForMultipleObjectsEx
+        // returns at once. PostMessage is thread-safe, so a cross-thread invalidate /
+        // requestFrame / breakEventLoop is observed immediately.
+        ::PostMessage(m_window_context->hwnd, WM_NULL, 0, 0);
+    }
+
     void Window::runEventLoop()
     {
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
         syncDisplayRefreshRate();
-
-        // An idle (WAIT_INFINITE) block is capped so a cross-thread state change
-        // (breakEventLoop / invalidate / requestFrame issued from another thread) is
-        // still noticed promptly. Same-thread changes happen while we are processing
-        // messages and wake the queue naturally, so this only bounds the rare
-        // cross-thread case. ~10 harmless wakeups/sec while truly idle.
-        constexpr DWORD idleCapMs = 100;
 
         while (isRunning())
         {
@@ -925,12 +926,13 @@ namespace mango
 
             // Block on the event queue until the next message or the computed deadline
             // instead of busy-polling with Sleep(). This is what drops idle CPU to ~0%:
-            // when nothing is scheduled the loop sleeps until real input arrives.
+            // when nothing is scheduled the loop sleeps (INFINITE) until real input
+            // arrives or wakeEventLoop() posts a message.
             const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
             if (timeout != 0)
             {
                 const DWORD wait = (timeout == EventLoopState::WAIT_INFINITE)
-                    ? idleCapMs
+                    ? INFINITE
                     : DWORD(timeout);
 
                 ::MsgWaitForMultipleObjectsEx(0, nullptr, wait, QS_ALLINPUT, MWMO_INPUTAVAILABLE);

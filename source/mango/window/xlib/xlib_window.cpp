@@ -978,6 +978,12 @@ namespace mango
         return queryXlibRefreshRate(m_window_context->x11Display(), m_window_context->x11Window());
     }
 
+    void Window::wakeEventLoop()
+    {
+        // This loop still polls on a timeout (waitForNextIteration); no blocking wait
+        // to interrupt yet, so nothing to do here.
+    }
+
     void Window::runEventLoop()
     {
         for (int i = 0; i < 6; ++i)

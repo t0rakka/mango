@@ -341,6 +341,12 @@ namespace mango
 
         virtual void runEventLoop();
 
+        // Unblock a loop that is sleeping on the OS event queue. Platform-specific:
+        // posts a no-op event so a state change (invalidate / requestFrame /
+        // breakEventLoop) is observed immediately, even from another thread. Lets the
+        // idle wait block indefinitely instead of polling on a timeout.
+        void wakeEventLoop();
+
     public:
         enum : u32
         {

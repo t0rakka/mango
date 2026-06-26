@@ -198,16 +198,29 @@ namespace mango
         return 0.0;
     }
 
+    void Window::wakeEventLoop()
+    {
+        // Post a no-op event so a loop blocked in nextEventMatchingMask returns at
+        // once. postEvent:atStart: is safe to call from any thread, so a cross-thread
+        // invalidate / requestFrame / breakEventLoop is observed immediately.
+        @autoreleasepool
+        {
+            NSEvent* event = [NSEvent otherEventWithType:NSEventTypeApplicationDefined
+                              location:NSMakePoint(0, 0)
+                              modifierFlags:0
+                              timestamp:0.0
+                              windowNumber:0
+                              context:nil
+                              subtype:0
+                              data1:0
+                              data2:0];
+            [NSApp postEvent:event atStart:YES];
+        }
+    }
+
     void Window::runEventLoop()
     {
         syncDisplayRefreshRate();
-
-        // An idle (WAIT_INFINITE) block is capped so a cross-thread state change
-        // (breakEventLoop / invalidate / requestFrame from another thread) is still
-        // noticed promptly. Same-thread changes happen while we are processing events
-        // and unblock the run loop naturally; this only bounds the rare cross-thread
-        // case. ~10 harmless wakeups/sec while truly idle.
-        constexpr double idleCapSeconds = 0.1;
 
         while (isRunning())
         {
@@ -221,7 +234,9 @@ namespace mango
             }
             else if (timeout == EventLoopState::WAIT_INFINITE)
             {
-                deadline = [NSDate dateWithTimeIntervalSinceNow:idleCapSeconds];
+                // Nothing scheduled: sleep until an event arrives. wakeEventLoop()
+                // posts one whenever the schedule changes, so this never stalls.
+                deadline = [NSDate distantFuture];
             }
             else
             {

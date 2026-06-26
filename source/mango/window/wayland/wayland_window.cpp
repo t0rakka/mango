@@ -1209,6 +1209,12 @@ namespace mango
         return queryWaylandRefreshRate();
     }
 
+    void Window::wakeEventLoop()
+    {
+        // This loop still polls on a timeout (waitForNextIteration); no blocking wait
+        // to interrupt yet, so nothing to do here.
+    }
+
     void Window::runEventLoop()
     {
         m_window_context->processEvents();
