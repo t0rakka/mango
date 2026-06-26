@@ -10,6 +10,8 @@
 #if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
 #include "../../window/xlib/xlib_window.hpp"
+#define GLX_GLXEXT_PROTOTYPES
+#include <GL/glx.h>
 #include "glx_context.hpp"
 
 namespace mango

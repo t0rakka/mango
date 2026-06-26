@@ -13,6 +13,7 @@
 #include <xcb/xcb.h>
 #include <xcb/xproto.h>
 #include <xcb/xcb_icccm.h>
+#define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #include "../../window/xcb/xcb_window.hpp"
 #include "glx_context.hpp"
