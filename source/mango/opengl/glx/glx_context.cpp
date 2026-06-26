@@ -9,10 +9,11 @@
 
 #if defined(MANGO_WINDOW_SYSTEM_XLIB) || defined(MANGO_WINDOW_SYSTEM_XCB)
 
-#include "glx_context.hpp"
-
+#define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
 #include <X11/Xlib.h>
+
+#include "glx_context.hpp"
 
 #ifndef GLX_CONTEXT_SHARE_CONTEXT_ARB
 #define GLX_CONTEXT_SHARE_CONTEXT_ARB        0x2090

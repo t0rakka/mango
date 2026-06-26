@@ -73,14 +73,13 @@
     #include <GL/gl.h>
     #include <GL/glext.h>
 
-    #define GLX_GLXEXT_PROTOTYPES
-    #include <GL/glx.h>
-    #include <GL/glxext.h>
-
-    #if defined(Status)
-        #undef Status
-        typedef int Status;
-    #endif
+    // NOTE: <GL/glx.h> transitively includes <X11/Xlib.h>, which pollutes the
+    // global namespace with identifiers such as "Time", "Status", "Window",
+    // "Bool", "Cursor", "Font", etc. These collide with mango (and user) symbols
+    // wherever the public OpenGL API is included. The GLX/Xlib headers are only
+    // required by the X11/XCB context implementations, so they are included
+    // directly in those translation files and deliberately kept out of this
+    // public header.
 
 #endif
 
