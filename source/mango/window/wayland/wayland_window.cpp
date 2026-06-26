@@ -9,6 +9,7 @@
 #if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
 
 #include <unistd.h>
+#include <poll.h>
 #include <sys/mman.h>
 #include <cstring>
 #include <algorithm>
@@ -1211,8 +1212,10 @@ namespace mango
 
     void Window::wakeEventLoop()
     {
-        // This loop still polls on a timeout (waitForNextIteration); no blocking wait
-        // to interrupt yet, so nothing to do here.
+        // The loop blocks in poll() on the Wayland display fd. Same-thread state changes
+        // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
+        // and the idle wait is capped, so a cross-thread change is noticed within the
+        // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
     void Window::runEventLoop()
@@ -1229,7 +1232,8 @@ namespace mango
 
         while (isRunning())
         {
-            m_window_context->processEvents();
+            // Dispatch anything already queued without blocking.
+            wl_display_dispatch_pending(m_window_context->display);
             syncDisplayRefreshRate();
 
             if (m_window_context->pending_resize && !m_window_context->busy)
@@ -1242,7 +1246,41 @@ namespace mango
                 dispatchFrame();
             }
 
-            waitForNextIteration();
+            if (!isRunning())
+            {
+                break;
+            }
+
+            // Block on the Wayland display fd until an event arrives or the next frame
+            // is due, instead of busy-polling. The poll() sits between prepare_read and
+            // read_events (the canonical Wayland pattern). An idle (WAIT_INFINITE) wait
+            // is capped so a cross-thread state change is observed within the cap; a
+            // pending deadline (animation) is waited exactly so it fires on time.
+            wl_display* display = m_window_context->display;
+
+            while (wl_display_prepare_read(display) != 0)
+            {
+                wl_display_dispatch_pending(display);
+            }
+
+            wl_display_flush(display);
+
+            const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+            const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
+
+            struct pollfd pfd = { wl_display_get_fd(display), POLLIN, 0 };
+            if (::poll(&pfd, 1, wait_ms) > 0 && (pfd.revents & POLLIN))
+            {
+                if (wl_display_read_events(display) < 0)
+                {
+                    breakEventLoop();
+                }
+            }
+            else
+            {
+                // timeout (frame due) or error: abandon the read we announced
+                wl_display_cancel_read(display);
+            }
         }
     }
 

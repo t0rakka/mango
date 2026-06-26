@@ -14,6 +14,7 @@
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
+#include <poll.h>
 #include <X11/extensions/Xrandr.h>
 
 namespace
@@ -980,8 +981,10 @@ namespace mango
 
     void Window::wakeEventLoop()
     {
-        // This loop still polls on a timeout (waitForNextIteration); no blocking wait
-        // to interrupt yet, so nothing to do here.
+        // The loop blocks in poll() on the X connection fd. Same-thread state changes
+        // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
+        // and the idle wait is capped, so a cross-thread change is noticed within the
+        // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
     void Window::runEventLoop()
@@ -1269,7 +1272,20 @@ namespace mango
                 dispatchFrame();
             }
 
-            waitForNextIteration();
+            // Block on the X connection fd until an event arrives or the next frame is
+            // due, instead of busy-polling. An idle (WAIT_INFINITE) wait is capped so a
+            // cross-thread state change is still observed within the cap; a pending
+            // deadline (animation) is waited exactly, so a timed frame fires on time.
+            if (XPending(m_window_context->x11Display()) == 0)
+            {
+                const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+                if (timeout != 0)
+                {
+                    const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
+                    struct pollfd pfd = { ConnectionNumber(m_window_context->x11Display()), POLLIN, 0 };
+                    ::poll(&pfd, 1, wait_ms);
+                }
+            }
         }
     }
 
