@@ -888,16 +888,53 @@ namespace mango
 
         syncDisplayRefreshRate();
 
-        while (isRunning() && msg.message != WM_QUIT)
+        // An idle (WAIT_INFINITE) block is capped so a cross-thread state change
+        // (breakEventLoop / invalidate / requestFrame issued from another thread) is
+        // still noticed promptly. Same-thread changes happen while we are processing
+        // messages and wake the queue naturally, so this only bounds the rare
+        // cross-thread case. ~10 harmless wakeups/sec while truly idle.
+        constexpr DWORD idleCapMs = 100;
+
+        while (isRunning())
         {
-            while (::PeekMessage(&msg, m_window_context->hwnd, 0, 0, PM_REMOVE))
+            // Drain all pending messages. A NULL filter also delivers thread messages
+            // (e.g. WM_QUIT); DispatchMessage routes each to the window procedure.
+            while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
             {
+                if (msg.message == WM_QUIT)
+                {
+                    breakEventLoop();
+                    break;
+                }
+
                 ::TranslateMessage(&msg);
                 ::DispatchMessage(&msg);
             }
 
+            if (!isRunning())
+            {
+                break;
+            }
+
             dispatchFrame();
-            waitForNextIteration();
+
+            if (!isRunning())
+            {
+                break;
+            }
+
+            // Block on the event queue until the next message or the computed deadline
+            // instead of busy-polling with Sleep(). This is what drops idle CPU to ~0%:
+            // when nothing is scheduled the loop sleeps until real input arrives.
+            const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+            if (timeout != 0)
+            {
+                const DWORD wait = (timeout == EventLoopState::WAIT_INFINITE)
+                    ? idleCapMs
+                    : DWORD(timeout);
+
+                ::MsgWaitForMultipleObjectsEx(0, nullptr, wait, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+            }
         }
     }
 

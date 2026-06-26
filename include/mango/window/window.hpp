@@ -310,11 +310,21 @@ namespace mango
         // dispatch; the client re-arms it (e.g. from onFrame) to keep an animation going.
         u64 next_frame_deadline_us = 0;
 
+        // Sentinel for computeWaitTimeoutMs(): nothing is pending, so the platform
+        // loop may block until an OS event arrives (subject to a platform safety cap).
+        static constexpr u32 WAIT_INFINITE = 0xffffffffu;
+
         void reset(const EventLoopConfig& loopConfig);
         void invalidate();
         bool shouldScheduleFrame(u64 now_us) const;
         bool consumeInvalidated();
         double computeDt(u64 now_us);
+
+        // Maximum time (ms) the platform loop may block before the next
+        // dispatchFrame() opportunity. 0 = a frame is already due (don't block);
+        // WAIT_INFINITE = idle, block until an event. Lets the loop sleep on the OS
+        // event queue instead of busy-polling, so an idle window costs ~0% CPU.
+        u32 computeWaitTimeoutMs(u64 now_us) const;
     };
 
     // -----------------------------------------------------------------------
