@@ -65,6 +65,45 @@ namespace mango
         return true;
     }
 
+    u32 EventLoopState::computeWaitTimeoutMs(u64 now_us) const
+    {
+        // Async backpressure: a frame is in flight and will be cleared by
+        // frameComplete() (possibly from another context that posts no event), so we
+        // must keep polling to notice it promptly rather than blocking.
+        if (config.waitForFrame && frame_in_flight)
+        {
+            return config.pollTimeoutMs;
+        }
+
+        // A redraw is already queued; resolve it on the next pass without sleeping.
+        if (needs_redraw)
+        {
+            return 0;
+        }
+
+        // A pending timed wake bounds the sleep in either mode.
+        if (next_frame_deadline_us)
+        {
+            if (now_us >= next_frame_deadline_us)
+            {
+                return 0;
+            }
+
+            // round up so we never wake a hair early and spin
+            const u64 remaining_ms = (next_frame_deadline_us - now_us + 999) / 1000;
+            return remaining_ms > 0x7fffffffull ? 0x7fffffffu : u32(remaining_ms);
+        }
+
+        // OnDemand with nothing scheduled: idle until an event wakes the loop.
+        if (config.mode == FrameMode::OnDemand)
+        {
+            return WAIT_INFINITE;
+        }
+
+        // Continuous: keep the existing poll cadence; present()/vsync is the limiter.
+        return config.pollTimeoutMs;
+    }
+
     bool EventLoopState::consumeInvalidated()
     {
         const bool was_invalidated = needs_redraw;
