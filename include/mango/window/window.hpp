@@ -246,6 +246,13 @@ namespace mango
         Continuous, // paced repeat for animations
     };
 
+    enum class FrameTrigger
+    {
+        Invalidate,  // a redraw was requested via invalidate() (resize / expose / first frame)
+        Timed,       // a requestFrameAt() / requestFrameIn() deadline elapsed
+        Continuous,  // a paced repeat in FrameMode::Continuous
+    };
+
     struct FrameInfo
     {
         // Seconds since the previous onFrame (0 on the first frame after enterEventLoop).
@@ -257,7 +264,10 @@ namespace mango
         // Monotonic timestamp when this frame was scheduled (microseconds).
         u64 time_us = 0;
 
-        bool invalidated = false;
+        // Why this frame was dispatched. Time-driven work (advancing an animation)
+        // should key off FrameTrigger::Timed; FrameTrigger::Invalidate means "repaint
+        // the current content" and must not advance the clock.
+        FrameTrigger trigger = FrameTrigger::Invalidate;
     };
 
     struct EventLoopConfig
@@ -294,6 +304,11 @@ namespace mango
         u64 last_frame_time_us = 0;
         u64 loop_start_time_us = 0;
         double last_dt = 0.0;
+
+        // One-shot timed wake (0 = none). When set, a frame is scheduled once the
+        // monotonic clock reaches this deadline, in either FrameMode. Consumed on
+        // dispatch; the client re-arms it (e.g. from onFrame) to keep an animation going.
+        u64 next_frame_deadline_us = 0;
 
         void reset(const EventLoopConfig& loopConfig);
         void invalidate();
@@ -355,6 +370,8 @@ namespace mango
 
         bool isRunning() const;
         void invalidate();
+        void requestFrameAt(u64 time_us);  // schedule one frame at an absolute monotonic time (microseconds)
+        void requestFrameIn(double seconds); // schedule one frame after a delay from now
         void dispatchFrame();
         void frameComplete();
 

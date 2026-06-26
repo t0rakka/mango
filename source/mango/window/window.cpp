@@ -21,6 +21,7 @@ namespace mango
         loop_start_time_us = Time::us();
         last_frame_time_us = 0;
         last_dt = 0.0;
+        next_frame_deadline_us = 0;
     }
 
     void EventLoopState::invalidate()
@@ -36,6 +37,13 @@ namespace mango
         }
 
         if (needs_redraw)
+        {
+            return true;
+        }
+
+        // A pending timed wake fires in either mode; this is what drives OnDemand
+        // animation (and lets Continuous request a precise next frame).
+        if (next_frame_deadline_us && now_us >= next_frame_deadline_us)
         {
             return true;
         }
@@ -91,6 +99,23 @@ namespace mango
     void Window::invalidate()
     {
         m_event_loop.invalidate();
+    }
+
+    void Window::requestFrameAt(u64 time_us)
+    {
+        m_event_loop.next_frame_deadline_us = time_us;
+    }
+
+    void Window::requestFrameIn(double seconds)
+    {
+        if (seconds <= 0.0)
+        {
+            // already due; fire on the next loop iteration
+            m_event_loop.next_frame_deadline_us = Time::us();
+            return;
+        }
+
+        requestFrameAt(Time::us() + u64(seconds * 1'000'000.0));
     }
 
     bool Window::isRunning() const
@@ -163,11 +188,37 @@ namespace mango
             return;
         }
 
+        // Classify why we're dispatching, mirroring shouldScheduleFrame's precedence:
+        // an explicit redraw request wins, then a pending timed wake, otherwise the
+        // continuous cadence. consumeInvalidated() also clears the needs_redraw flag.
+        FrameTrigger trigger;
+        if (m_event_loop.consumeInvalidated())
+        {
+            trigger = FrameTrigger::Invalidate;
+        }
+        else if (m_event_loop.next_frame_deadline_us && now >= m_event_loop.next_frame_deadline_us)
+        {
+            trigger = FrameTrigger::Timed;
+        }
+        else
+        {
+            trigger = FrameTrigger::Continuous;
+        }
+
+        // Only a frame that actually fired the deadline consumes it. If an invalidate
+        // preempts a due deadline, the wake stays armed and fires on a later iteration
+        // rather than being silently dropped; the client re-arms it (e.g. from onFrame)
+        // to schedule the following frame.
+        if (trigger == FrameTrigger::Timed)
+        {
+            m_event_loop.next_frame_deadline_us = 0;
+        }
+
         FrameInfo info;
         info.time_us = now;
         info.time = double(now - m_event_loop.loop_start_time_us) / 1'000'000.0;
         info.dt = m_event_loop.computeDt(now);
-        info.invalidated = m_event_loop.consumeInvalidated();
+        info.trigger = trigger;
 
         if (m_event_loop.config.waitForFrame)
         {

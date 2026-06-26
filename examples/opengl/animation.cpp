@@ -52,7 +52,9 @@ class DemoWindow : public OpenGLFramebuffer
 {
 protected:
     ImageAnimation& m_animation;
-    bool m_presented = false;
+
+    bool m_decoded = false; // the still-image case decodes exactly once
+    u64 m_target_us = 0;    // absolute deadline for the next frame (drift-free pacing)
 
 public:
     DemoWindow(ImageAnimation& animation)
@@ -83,20 +85,22 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        MANGO_UNREFERENCED(info);
-
-        // A still image only needs to be decoded and presented once; an animation
-        // decodes a new frame every time and paces itself with the frame delay.
-        if (!m_animation.isAnimation() && m_presented)
-            return;
+        // onFrame is dispatched with a trigger that says *why* it fired. Only a timed
+        // wake (our requestFrameIn) should advance the animation; an Invalidate (resize
+        // / expose) must re-blit the *current* frame so a burst of redraw requests can't
+        // run the animation ahead of its schedule. The very first frame is the exception:
+        // it arrives as an Invalidate but must decode and start the clock.
+        const bool firstFrame = !m_decoded;
+        const bool timedWake = info.trigger == FrameTrigger::Timed;
+        const bool advance = m_animation.isAnimation() ? (firstFrame || timedWake)
+                                                       : firstFrame;
 
         Surface s = lock();
 
-        m_animation.decodeFrame();
-
-        if (m_animation.m_delay > 0)
+        if (advance)
         {
-            setMaxFrameRate(1000.0 / double(m_animation.m_delay));
+            m_animation.decodeFrame();
+            m_decoded = true;
         }
 
         s.blit(0, 0, m_animation.m_bitmap);
@@ -104,7 +108,32 @@ public:
         unlock();
         present();
 
-        m_presented = true;
+        if (m_animation.isAnimation())
+        {
+            // Advance the target on an absolute timeline only when we actually showed a
+            // new frame; resize/expose keeps the existing schedule intact.
+            if (advance)
+            {
+                if (firstFrame)
+                {
+                    m_target_us = info.time_us;
+                }
+
+                m_target_us += m_animation.m_delay * 1000; // milliseconds -> microseconds
+            }
+
+            const u64 now = Time::us();
+            if (m_target_us < now)
+            {
+                // fell behind (e.g. window drag stalled the loop): resync instead of
+                // bursting through a backlog of frames
+                m_target_us = now;
+            }
+
+            // Re-arm the wake. The deadline is consumed on every dispatch, so even an
+            // invalidate-driven frame must re-arm to keep the animation running.
+            requestFrameIn(double(m_target_us - now) / 1'000'000.0);
+        }
     }
 };
 
@@ -126,7 +155,10 @@ int mangoMain(const mango::CommandLine& commands)
     ImageAnimation animation(filename);
     DemoWindow demo(animation);
 
+    // OnDemand: the first frame fires automatically, after which animations re-arm a
+    // timed wake via requestFrameIn() and still images simply idle until invalidated.
     EventLoopConfig config;
+    config.mode = FrameMode::OnDemand;
     config.trackDisplayRefreshRate = false;
 
     demo.enterEventLoop(config);
