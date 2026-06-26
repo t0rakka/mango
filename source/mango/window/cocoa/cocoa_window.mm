@@ -202,32 +202,50 @@ namespace mango
     {
         syncDisplayRefreshRate();
 
+        // An idle (WAIT_INFINITE) block is capped so a cross-thread state change
+        // (breakEventLoop / invalidate / requestFrame from another thread) is still
+        // noticed promptly. Same-thread changes happen while we are processing events
+        // and unblock the run loop naturally; this only bounds the rare cross-thread
+        // case. ~10 harmless wakeups/sec while truly idle.
+        constexpr double idleCapSeconds = 0.1;
+
         while (isRunning())
         {
-            bool hadEvents = false;
+            // How long we may block before the next frame is due.
+            const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
 
-            for (;;)
+            NSDate* deadline;
+            if (timeout == 0)
             {
-                NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
-                                  untilDate:[NSDate dateWithTimeIntervalSinceNow:0.0]
-                                  inMode:NSDefaultRunLoopMode
-                                  dequeue:YES];
+                deadline = [NSDate distantPast];        // a frame is due: don't block
+            }
+            else if (timeout == EventLoopState::WAIT_INFINITE)
+            {
+                deadline = [NSDate dateWithTimeIntervalSinceNow:idleCapSeconds];
+            }
+            else
+            {
+                deadline = [NSDate dateWithTimeIntervalSinceNow:double(timeout) / 1000.0];
+            }
 
-                if (!event)
-                {
-                    break;
-                }
+            // Block on the run loop until the first event arrives or the deadline
+            // elapses (this is what idles at ~0% CPU instead of busy-polling), then
+            // drain any remaining events without blocking.
+            NSEvent* event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                              untilDate:deadline
+                              inMode:NSDefaultRunLoopMode
+                              dequeue:YES];
 
-                hadEvents = true;
+            while (event)
+            {
                 [NSApp sendEvent:event];
+                event = [NSApp nextEventMatchingMask:NSEventMaskAny
+                         untilDate:[NSDate distantPast]
+                         inMode:NSDefaultRunLoopMode
+                         dequeue:YES];
             }
 
             dispatchFrame();
-
-            if (!hadEvents)
-            {
-                waitForNextIteration();
-            }
         }
     }
 
