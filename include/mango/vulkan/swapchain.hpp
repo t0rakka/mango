@@ -38,6 +38,18 @@ namespace mango::vulkan
 
             VkResult submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer);
 
+            // Same as above, but the queue submit additionally signals a caller-owned
+            // timeline semaphore at signalValue (so the caller can track frame
+            // completion on a unified timeline), and optionally waits on a timeline
+            // value first at waitStage (e.g. an upload the frame's sampling depends on,
+            // such as work done on a separate transfer queue). Pass VK_NULL_HANDLE to
+            // skip either. The internal binary image-available / render-finished
+            // semaphores and the per-frame fence are used exactly as in the 2-arg form.
+            VkResult submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
+                                      VkSemaphore signalTimeline, u64 signalValue,
+                                      VkSemaphore waitTimeline = VK_NULL_HANDLE, u64 waitValue = 0,
+                                      VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
         private:
             friend class Swapchain;
 

@@ -410,6 +410,14 @@ namespace mango::vulkan
 
     VkResult Swapchain::Frame::submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer)
     {
+        return submitAndPresent(graphicsQueue, commandBuffer, VK_NULL_HANDLE, 0);
+    }
+
+    VkResult Swapchain::Frame::submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
+                                                VkSemaphore signalTimeline, u64 signalValue,
+                                                VkSemaphore waitTimeline, u64 waitValue,
+                                                VkPipelineStageFlags waitStage)
+    {
         if (!m_swapchain)
         {
             return VK_ERROR_INITIALIZATION_FAILED;
@@ -419,21 +427,42 @@ namespace mango::vulkan
         VkSemaphore renderFinishedSemaphore = m_swapchain->m_renderFinishedSemaphores[m_imageIndex];
         VkFence fence = m_swapchain->m_fences[m_swapchain->m_currentFrame];
 
-        VkPipelineStageFlags waitStages [] =
+        // The binary image-available semaphore is always waited; an optional caller
+        // timeline wait (e.g. a transfer-queue upload) is appended. Likewise the binary
+        // render-finished semaphore is always signalled for present, with an optional
+        // caller timeline signal appended for frame-completion tracking. Per-semaphore
+        // values are ignored for binary semaphores but the arrays must stay parallel.
+        VkSemaphore waitSemaphores [2] = { imageAvailableSemaphore, waitTimeline };
+        u64 waitValues [2] = { 0, waitValue };
+        VkPipelineStageFlags waitStages [2] = { VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, waitStage };
+        const u32 waitCount = (waitTimeline != VK_NULL_HANDLE) ? 2 : 1;
+
+        VkSemaphore signalSemaphores [2] = { renderFinishedSemaphore, signalTimeline };
+        u64 signalValues [2] = { 0, signalValue };
+        const u32 signalCount = (signalTimeline != VK_NULL_HANDLE) ? 2 : 1;
+
+        const bool useTimeline = (signalTimeline != VK_NULL_HANDLE) || (waitTimeline != VK_NULL_HANDLE);
+
+        VkTimelineSemaphoreSubmitInfo timelineInfo =
         {
-            VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT
+            .sType = VK_STRUCTURE_TYPE_TIMELINE_SEMAPHORE_SUBMIT_INFO,
+            .waitSemaphoreValueCount = waitCount,
+            .pWaitSemaphoreValues = waitValues,
+            .signalSemaphoreValueCount = signalCount,
+            .pSignalSemaphoreValues = signalValues,
         };
 
         VkSubmitInfo submitInfo =
         {
             .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .waitSemaphoreCount = 1,
-            .pWaitSemaphores = &imageAvailableSemaphore,
+            .pNext = useTimeline ? &timelineInfo : nullptr,
+            .waitSemaphoreCount = waitCount,
+            .pWaitSemaphores = waitSemaphores,
             .pWaitDstStageMask = waitStages,
             .commandBufferCount = 1,
             .pCommandBuffers = &commandBuffer,
-            .signalSemaphoreCount = 1,
-            .pSignalSemaphores = &renderFinishedSemaphore,
+            .signalSemaphoreCount = signalCount,
+            .pSignalSemaphores = signalSemaphores,
         };
 
         vkResetFences(m_swapchain->m_device, 1, &fence);
