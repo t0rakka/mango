@@ -907,6 +907,20 @@ namespace mango
 
         owner->syncDisplayRefreshRate();
 
+        // High-resolution waitable timer for sub-15 ms frame pacing. A plain
+        // MsgWaitForMultipleObjectsEx timeout rounds up to the global system timer
+        // resolution (~15.6 ms by default), which caps the loop near 60 Hz once
+        // vsync is disabled. Waiting on a high-resolution timer object instead
+        // honors the requested interval without calling timeBeginPeriod() (which
+        // would change the timer resolution process-wide).
+        HANDLE timer = ::CreateWaitableTimerExW(nullptr, nullptr,
+            CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
+        if (!timer)
+        {
+            // Older systems without high-resolution timer support.
+            timer = ::CreateWaitableTimerExW(nullptr, nullptr, 0, TIMER_ALL_ACCESS);
+        }
+
         while (owner->isRunning())
         {
             // Drain all pending messages. A NULL filter also delivers thread messages
@@ -940,14 +954,36 @@ namespace mango
             // when nothing is scheduled the loop sleeps (INFINITE) until real input
             // arrives or wakeEventLoop() posts a message.
             const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
-            if (timeout != 0)
+            if (timeout == 0)
             {
-                const DWORD wait = (timeout == EventLoopState::WAIT_INFINITE)
-                    ? INFINITE
-                    : DWORD(timeout);
-
-                ::MsgWaitForMultipleObjectsEx(0, nullptr, wait, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+                continue;
             }
+
+            if (timeout == EventLoopState::WAIT_INFINITE)
+            {
+                ::MsgWaitForMultipleObjectsEx(0, nullptr, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+            }
+            else if (timer)
+            {
+                // Negative due time is relative, in 100 ns units. Wait on the timer
+                // (high-resolution) or any input, whichever comes first.
+                LARGE_INTEGER due;
+                due.QuadPart = -(LONGLONG(timeout) * 10000);
+                ::SetWaitableTimer(timer, &due, 0, nullptr, nullptr, FALSE);
+
+                HANDLE handles[1] = { timer };
+                ::MsgWaitForMultipleObjectsEx(1, handles, INFINITE, QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+            }
+            else
+            {
+                // No timer object available: fall back to the coarse timeout.
+                ::MsgWaitForMultipleObjectsEx(0, nullptr, DWORD(timeout), QS_ALLINPUT, MWMO_INPUTAVAILABLE);
+            }
+        }
+
+        if (timer)
+        {
+            ::CloseHandle(timer);
         }
     }
 

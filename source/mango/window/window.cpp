@@ -355,6 +355,15 @@ namespace mango
         return m_backend->isKeyPressed(code);
     }
 
+    void Window::enterEventLoop()
+    {
+        // Reuse the already-configured loop so setFrameMode() / setMaxFrameRate()
+        // (and any setEventLoopConfig()) called before entering are preserved.
+        m_event_loop.reset(m_event_loop.config);
+        syncDisplayRefreshRate();
+        m_backend->runEventLoop();
+    }
+
     void Window::enterEventLoop(const EventLoopConfig& config)
     {
         m_event_loop.reset(config);

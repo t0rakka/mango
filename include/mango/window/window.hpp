@@ -310,7 +310,12 @@ namespace mango
 
         bool isKeyPressed(Keycode code) const;
 
-        void enterEventLoop(const EventLoopConfig& config = {});
+        // Run with the currently configured event loop (honors setFrameMode /
+        // setMaxFrameRate / setEventLoopConfig calls made before entering).
+        void enterEventLoop();
+
+        // Run with an explicit config, replacing any prior configuration.
+        void enterEventLoop(const EventLoopConfig& config);
         virtual void breakEventLoop();
         void requestQuit();
 
