@@ -1016,7 +1016,7 @@ int mangoMain(const mango::CommandLine& commands)
 {
     MANGO_UNREFERENCED(commands);
 
-    printEnable(Print::Info, true);
+    //printEnable(Print::Info, true);
 
     InstanceExtensionProperties instanceExtensionProperties;
 

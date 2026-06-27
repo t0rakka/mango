@@ -6,7 +6,7 @@
 
 #include "cocoa_window.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
 #if defined(MANGO_ENABLE_OPENGL)
     #ifndef GL_SILENCE_DEPRECATION
@@ -47,4 +47,4 @@
 
 #endif // defined(MANGO_ENABLE_VULKAN)
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)
+#endif // defined(MANGO_ENABLE_COCOA)

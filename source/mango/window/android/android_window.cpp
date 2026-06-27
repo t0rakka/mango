@@ -4,7 +4,7 @@
 */
 #include <mango/window/window.hpp>
 
-#if defined(MANGO_WINDOW_SYSTEM_ANDROID)
+#if defined(MANGO_ENABLE_ANDROID)
 
 namespace mango
 {
@@ -19,4 +19,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_ANDROID)
+#endif // defined(MANGO_ENABLE_ANDROID)

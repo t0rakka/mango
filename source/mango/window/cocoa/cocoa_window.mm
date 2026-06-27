@@ -7,7 +7,7 @@
 #include "cocoa_window.h"
 #import <CoreVideo/CoreVideo.h>
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
 // -----------------------------------------------------------------------
 // CustomNSWindow
@@ -257,4 +257,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)
+#endif // defined(MANGO_ENABLE_COCOA)

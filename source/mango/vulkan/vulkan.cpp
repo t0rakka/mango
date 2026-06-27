@@ -20,49 +20,65 @@ namespace mango::vulkan
     // The actual surface creation (and presentation support query) lives behind
     // WindowBackend virtuals, so the native window-system headers (xcb, wayland,
     // Xlib, ...) never have to coexist in this translation unit. Only the surface
-    // extension names are selected here, keyed on the window system.
+    // extension names are selected here, keyed on the window system. These are
+    // plain string literals (no native types), so every backend can be handled in
+    // one switch regardless of platform.
 
     std::vector<const char*> requiredSurfaceExtensions(WindowSystem ws)
     {
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
-        MANGO_UNREFERENCED(ws);
-        return { "VK_KHR_surface", "VK_KHR_win32_surface" };
-#elif defined(MANGO_WINDOW_SYSTEM_COCOA)
-        MANGO_UNREFERENCED(ws);
-        return { "VK_KHR_surface", "VK_EXT_metal_surface" };
-#else
-        // Linux: the backend is selected at runtime, and the instance is created
-        // before the window exists. For a specific request return just that
-        // backend's surface extension; for Default enable every compiled-in
-        // backend's extension so one instance can serve any runtime choice.
-        std::vector<const char*> extensions = { "VK_KHR_surface" };
-
         switch (ws)
         {
+            case WindowSystem::Win32:
+                return { "VK_KHR_surface", "VK_KHR_win32_surface" };
+            case WindowSystem::Cocoa:
+                return { "VK_KHR_surface", "VK_EXT_metal_surface" };
             case WindowSystem::Xlib:
-                extensions.push_back("VK_KHR_xlib_surface");
-                break;
+                return { "VK_KHR_surface", "VK_KHR_xlib_surface" };
             case WindowSystem::Xcb:
-                extensions.push_back("VK_KHR_xcb_surface");
-                break;
+                return { "VK_KHR_surface", "VK_KHR_xcb_surface" };
             case WindowSystem::Wayland:
-                extensions.push_back("VK_KHR_wayland_surface");
-                break;
-            default:
-#if defined(MANGO_ENABLE_XLIB)
-                extensions.push_back("VK_KHR_xlib_surface");
-#endif
-#if defined(MANGO_ENABLE_XCB)
-                extensions.push_back("VK_KHR_xcb_surface");
-#endif
-#if defined(MANGO_ENABLE_WAYLAND)
-                extensions.push_back("VK_KHR_wayland_surface");
-#endif
+                return { "VK_KHR_surface", "VK_KHR_wayland_surface" };
+            case WindowSystem::Default:
                 break;
         }
 
-        return extensions;
+        // Default: the concrete backend is resolved at window-creation time, but
+        // the instance is created first. Enable every surface extension this build
+        // can provide *and* that the runtime actually advertises, so one instance
+        // serves whichever backend is chosen at runtime. Filtering against the
+        // available set matters because vkCreateInstance fails with
+        // VK_ERROR_EXTENSION_NOT_PRESENT if any requested name is missing (e.g. a
+        // loader/ICD built without Wayland WSI); the backend selected at runtime
+        // corresponds to a running display server, whose extension is present.
+        std::vector<const char*> extensions = { "VK_KHR_surface" };
+
+        const InstanceExtensionProperties available;
+
+        auto enableIfAvailable = [&] (const char* name)
+        {
+            if (available.contains(name))
+            {
+                extensions.push_back(name);
+            }
+        };
+
+#if defined(MANGO_ENABLE_WIN32)
+        enableIfAvailable("VK_KHR_win32_surface");
 #endif
+#if defined(MANGO_ENABLE_COCOA)
+        enableIfAvailable("VK_EXT_metal_surface");
+#endif
+#if defined(MANGO_ENABLE_XLIB)
+        enableIfAvailable("VK_KHR_xlib_surface");
+#endif
+#if defined(MANGO_ENABLE_XCB)
+        enableIfAvailable("VK_KHR_xcb_surface");
+#endif
+#if defined(MANGO_ENABLE_WAYLAND)
+        enableIfAvailable("VK_KHR_wayland_surface");
+#endif
+
+        return extensions;
     }
 
     // ------------------------------------------------------------------------------
@@ -117,7 +133,7 @@ namespace mango::vulkan
     {
         std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
         extensions.push_back("VK_KHR_portability_subset");
 #endif
 
@@ -134,7 +150,7 @@ namespace mango::vulkan
     {
         u32 flags = 0;
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
         flags = VK_INSTANCE_CREATE_ENUMERATE_PORTABILITY_BIT_KHR;
         extensions.push_back(VK_KHR_PORTABILITY_ENUMERATION_EXTENSION_NAME);
 #endif

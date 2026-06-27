@@ -2,13 +2,124 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <cstdlib>
+#include <string>
 #include <mango/window/window.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/core/exception.hpp>
+#include <mango/core/print.hpp>
+#include <mango/core/string.hpp>
 #include "window_backend.hpp"
 
 namespace mango
 {
+
+    // ------------------------------------------------------------------------------
+    // Window system selection helpers
+    // ------------------------------------------------------------------------------
+
+    std::string_view getString(WindowSystem ws)
+    {
+        switch (ws)
+        {
+            case WindowSystem::Win32:   return "Win32";
+            case WindowSystem::Cocoa:   return "Cocoa";
+            case WindowSystem::Xlib:    return "Xlib";
+            case WindowSystem::Xcb:     return "Xcb";
+            case WindowSystem::Wayland: return "Wayland";
+            case WindowSystem::Default: return "Default";
+        }
+        return "UNDEFINED";
+    }
+
+    namespace
+    {
+
+#if !defined(MANGO_ENABLE_WIN32) && !defined(MANGO_ENABLE_COCOA)
+
+        // Linux: a backend is "available" when its support is compiled into the
+        // binary. The preferred fallback order is Wayland > Xlib > Xcb.
+
+        bool isWindowSystemAvailable(WindowSystem ws)
+        {
+            switch (ws)
+            {
+#if defined(MANGO_ENABLE_WAYLAND)
+                case WindowSystem::Wayland: return true;
+#endif
+#if defined(MANGO_ENABLE_XLIB)
+                case WindowSystem::Xlib:    return true;
+#endif
+#if defined(MANGO_ENABLE_XCB)
+                case WindowSystem::Xcb:     return true;
+#endif
+                default:                    return false;
+            }
+        }
+
+        WindowSystem firstAvailableWindowSystem()
+        {
+#if defined(MANGO_ENABLE_WAYLAND)
+            return WindowSystem::Wayland;
+#elif defined(MANGO_ENABLE_XLIB)
+            return WindowSystem::Xlib;
+#elif defined(MANGO_ENABLE_XCB)
+            return WindowSystem::Xcb;
+#else
+            return WindowSystem::Default;
+#endif
+        }
+
+        WindowSystem autoDetectWindowSystem()
+        {
+            // 1. Explicit override (forcing a backend, e.g. for testing):
+            //    MANGO_WINDOW_SYSTEM = wayland | xlib | x11 | xcb
+            if (const char* env = std::getenv("MANGO_WINDOW_SYSTEM"))
+            {
+                std::string value = toLower(env);
+
+                WindowSystem requested = WindowSystem::Default;
+                if (value == "wayland")
+                    requested = WindowSystem::Wayland;
+                else if (value == "xlib" || value == "x11")
+                    requested = WindowSystem::Xlib;
+                else if (value == "xcb")
+                    requested = WindowSystem::Xcb;
+
+                if (requested != WindowSystem::Default && isWindowSystemAvailable(requested))
+                {
+                    return requested;
+                }
+
+                printLine(Print::Warning,
+                    "[Window] MANGO_WINDOW_SYSTEM=\"{}\" ignored (unknown or not compiled in).", env);
+            }
+
+            // 2. Auto-detect from the running session (preferred order Wayland > X).
+#if defined(MANGO_ENABLE_WAYLAND)
+            if (const char* display = std::getenv("WAYLAND_DISPLAY"); display && *display)
+            {
+                return WindowSystem::Wayland;
+            }
+#endif
+#if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
+            if (const char* display = std::getenv("DISPLAY"); display && *display)
+            {
+#if defined(MANGO_ENABLE_XLIB)
+                return WindowSystem::Xlib;
+#else
+                return WindowSystem::Xcb;
+#endif
+            }
+#endif
+
+            // 3. Nothing detected: first available in preferred order.
+            return firstAvailableWindowSystem();
+        }
+
+#endif // !MANGO_ENABLE_WIN32 && !MANGO_ENABLE_COCOA
+
+    } // namespace
 
     // ------------------------------------------------------------------------------
     // EventLoopState
@@ -148,6 +259,8 @@ namespace mango
         {
             MANGO_EXCEPTION("[Window] Creating window backend failed.");
         }
+
+        printLine("[Window] WindowSystem: {}", getString(m_window_system));
     }
 
     WindowSystem Window::getWindowSystem() const
@@ -422,53 +535,37 @@ namespace mango
 
     WindowSystem resolveWindowSystem(WindowSystem ws)
     {
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+#if defined(MANGO_ENABLE_WIN32)
         MANGO_UNREFERENCED(ws);
         return WindowSystem::Win32;
-#elif defined(MANGO_WINDOW_SYSTEM_COCOA)
+#elif defined(MANGO_ENABLE_COCOA)
         MANGO_UNREFERENCED(ws);
         return WindowSystem::Cocoa;
 #else
-        // Linux: pick the requested backend, resolving Default to a sensible
-        // available choice. Honor only backends actually compiled in.
-        switch (ws)
+        // Linux: Default runs env-override + auto-detection. An explicit request is
+        // honored when its backend is compiled in, otherwise we fall back to the
+        // preferred order (Wayland > Xlib > Xcb).
+        if (ws == WindowSystem::Default)
         {
-#if defined(MANGO_ENABLE_XLIB)
-            case WindowSystem::Xlib:
-                return WindowSystem::Xlib;
-#endif
-#if defined(MANGO_ENABLE_XCB)
-            case WindowSystem::Xcb:
-                return WindowSystem::Xcb;
-#endif
-#if defined(MANGO_ENABLE_WAYLAND)
-            case WindowSystem::Wayland:
-                return WindowSystem::Wayland;
-#endif
-            default:
-                break;
+            return autoDetectWindowSystem();
         }
 
-        // Default / unavailable request -> first compiled-in backend.
-#if defined(MANGO_ENABLE_XLIB)
-        return WindowSystem::Xlib;
-#elif defined(MANGO_ENABLE_XCB)
-        return WindowSystem::Xcb;
-#elif defined(MANGO_ENABLE_WAYLAND)
-        return WindowSystem::Wayland;
-#else
-        return WindowSystem::Default;
-#endif
+        if (isWindowSystemAvailable(ws))
+        {
+            return ws;
+        }
+
+        return firstAvailableWindowSystem();
 #endif
     }
 
     std::unique_ptr<WindowBackend> createWindowBackend(WindowSystem ws, Window* window,
         int width, int height, u32 flags, const char* title)
     {
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+#if defined(MANGO_ENABLE_WIN32)
         MANGO_UNREFERENCED(ws);
         return createWin32Backend(window, width, height, flags, title);
-#elif defined(MANGO_WINDOW_SYSTEM_COCOA)
+#elif defined(MANGO_ENABLE_COCOA)
         MANGO_UNREFERENCED(ws);
         return createCocoaBackend(window, width, height, flags, title);
 #else

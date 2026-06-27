@@ -20,7 +20,7 @@
 
 #include "win32_window.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+#if defined(MANGO_ENABLE_WIN32)
 
 #include <shellapi.h>
 
@@ -982,4 +982,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_WIN32)
+#endif // defined(MANGO_ENABLE_WIN32)

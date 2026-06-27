@@ -9,11 +9,13 @@
 #include <mango/core/configure.hpp>
 #include <mango/math/math.hpp>
 
+#if defined(MANGO_ENABLE_OPENGL)
+
 // -----------------------------------------------------------------------
 // OpenGL Configuration
 // -----------------------------------------------------------------------
 
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+#if defined(MANGO_ENABLE_WIN32)
 
     // -----------------------------------------------------------------------
     // WGL
@@ -36,7 +38,7 @@
 
 #endif
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
     // -----------------------------------------------------------------------
     // Cocoa
@@ -89,21 +91,9 @@
 
 #endif
 
-#if defined(MANGO_WINDOW_SYSTEM_NONE)
-
-    // -----------------------------------------------------------------------
-    // NONE
-    // -----------------------------------------------------------------------
-
-    #define MANGO_OPENGL_CONTEXT_NONE
-
-#endif
-
 // -----------------------------------------------------------------------
 // OpenGL API
 // -----------------------------------------------------------------------
-
-#if !defined(MANGO_OPENGL_CONTEXT_NONE)
 
 #include <mango/image/compression.hpp>
 #include <mango/window/window.hpp>
@@ -215,4 +205,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // !defined(MANGO_OPENGL_CONTEXT_NONE)
+#endif // defined(MANGO_ENABLE_OPENGL)

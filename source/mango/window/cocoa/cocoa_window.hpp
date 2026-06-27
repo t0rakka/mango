@@ -7,7 +7,7 @@
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
 namespace mango
 {
@@ -61,4 +61,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)
+#endif // defined(MANGO_ENABLE_COCOA)

@@ -8,7 +8,7 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../window/cocoa/cocoa_window.hpp"
 
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+#if defined(MANGO_ENABLE_OPENGL)
 
 #include "CustomOpenGLView.h"
 
@@ -159,4 +159,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_ENABLE_OPENGL)

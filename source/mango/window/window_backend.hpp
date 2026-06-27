@@ -6,7 +6,7 @@
 
 #include <mango/window/window.hpp>
 
-#if !defined(MANGO_WINDOW_SYSTEM_NONE)
+#if defined(MANGO_ENABLE_WINDOW)
 
 #if defined(MANGO_ENABLE_VULKAN)
 #include <vulkan/vulkan.h>
@@ -101,4 +101,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // !defined(MANGO_WINDOW_SYSTEM_NONE)
+#endif // defined(MANGO_ENABLE_WINDOW)

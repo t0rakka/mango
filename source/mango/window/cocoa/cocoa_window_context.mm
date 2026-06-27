@@ -6,7 +6,7 @@
 #include "cocoa_input.hpp"
 #include "cocoa_window.h"
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -232,4 +232,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)
+#endif // defined(MANGO_ENABLE_COCOA)

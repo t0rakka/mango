@@ -5,13 +5,14 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <memory>
 #include <mango/math/math.hpp>
 #include <mango/image/surface.hpp>
 #include <mango/filesystem/filesystem.hpp>
 
-#if !defined(MANGO_WINDOW_SYSTEM_NONE)
+#if defined(MANGO_ENABLE_WINDOW)
 
 namespace mango
 {
@@ -33,6 +34,8 @@ namespace mango
         Xcb,
         Wayland,
     };
+
+    std::string_view getString(WindowSystem ws);
 
     // The per-window-system implementation (OS window + event loop + native
     // surface creation). Opaque to the public API: native types (HWND, xcb,
@@ -334,4 +337,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // !defined(MANGO_WINDOW_SYSTEM_NONE)
+#endif // defined(MANGO_ENABLE_WINDOW)

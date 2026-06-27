@@ -7,7 +7,7 @@
 #include <mango/core/system.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+#if defined(MANGO_ENABLE_OPENGL)
 
 namespace
 {
@@ -727,4 +727,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_ENABLE_OPENGL)
