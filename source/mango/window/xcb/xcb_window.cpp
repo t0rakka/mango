@@ -690,8 +690,10 @@ namespace mango
         free(wm_state_reply);
         free(wm_state_normal_reply);
 
-        // Map the window
-        xcb_map_window(connection, window);
+        // NOTE: the window is created un-mapped (not visible). This is required by Vulkan
+        // so that nothing is shown while the application configures itself; the caller
+        // makes the window visible with setVisible(true). The OpenGL context does this
+        // automatically once the context is current.
         xcb_flush(connection);
 
         const xcb_query_extension_reply_t* randr = xcb_get_extension_data(connection, &xcb_randr_id);

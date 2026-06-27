@@ -34,6 +34,12 @@ namespace mango
     // OpenGLContextGLX
     // -----------------------------------------------------------------------
 
+    // Unnamed namespace: this type shares its name with the XCB GLX context, so it
+    // must have internal linkage. Otherwise both definitions collide (ODR) and the
+    // linker may bind the Xlib factory to the XCB constructor.
+    namespace
+    {
+
     struct OpenGLContextGLX : OpenGLContextHandle
     {
         GLXContext context { 0 };
@@ -192,6 +198,8 @@ namespace mango
             return window->getWindowSize();
         }
     };
+
+    } // unnamed namespace
 
     OpenGLContextHandle* createOpenGLContextGLX_Xlib(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
     {

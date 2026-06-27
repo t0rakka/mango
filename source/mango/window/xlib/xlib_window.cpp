@@ -714,7 +714,6 @@ namespace mango
             hints.max_height = height;
             XSetWMNormalHints(dpy, win, &hints);
             XClearWindow(dpy, win);
-            XMapRaised(dpy, win);
             XFlush(dpy);
         }
 
@@ -748,7 +747,11 @@ namespace mango
 
         XFlush(dpy);
         XStoreName(dpy, win, title);
-        XMapWindow(dpy, win);
+
+        // NOTE: the window is created un-mapped (not visible). This is required by Vulkan
+        // so that nothing is shown while the application configures itself; the caller
+        // makes the window visible with setVisible(true). The OpenGL context does this
+        // automatically once the context is current.
 
         int randr_event_base, randr_error_base;
         if (XRRQueryExtension(dpy, &randr_event_base, &randr_error_base))
@@ -904,7 +907,7 @@ namespace mango
     void XlibBackend::setTitle(const std::string& title)
     {
         XStoreName(x11Display(), x11Window(), title.c_str());
-        XMapWindow(x11Display(), x11Window());
+        XFlush(x11Display());
     }
 
     void XlibBackend::setVisible(bool enable)

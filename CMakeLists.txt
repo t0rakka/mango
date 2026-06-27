@@ -723,7 +723,7 @@ if (BUILD_OPENGL)
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
             # Linux: link the union of every enabled backend's GL dependencies.
-            message("    OpenGL: runtime [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND} EGL=${ENABLE_EGL}]")
+            message("    OpenGL: [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND} EGL=${ENABLE_EGL}]")
 
             target_link_libraries(mango PUBLIC GL)
 
@@ -794,7 +794,7 @@ if (BUILD_VULKAN)
             target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
         else ()
             # Linux: link the union of every enabled backend's Vulkan dependencies.
-            message("    Vulkan: runtime [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND}]")
+            message("    Vulkan: [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND}]")
 
             target_link_libraries(mango PUBLIC vulkan)
 
