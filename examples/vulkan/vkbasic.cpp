@@ -1016,7 +1016,8 @@ int mangoMain(const mango::CommandLine& commands)
 {
     MANGO_UNREFERENCED(commands);
 
-    //printEnable(Print::Info, true);
+    printEnable(Print::Info, true);
+    //Window::setWindowSystem(WindowSystem::Xcb);
 
     InstanceExtensionProperties instanceExtensionProperties;
 
@@ -1024,7 +1025,7 @@ int mangoMain(const mango::CommandLine& commands)
     instanceExtensionProperties.print();
 
     std::vector<const char*> enabledLayers;// = { "VK_LAYER_KHRONOS_validation" };
-    std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions(WindowSystem::Default);
+    std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
 
     if (instanceExtensionProperties.contains(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME))
     {

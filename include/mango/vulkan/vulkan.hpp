@@ -124,7 +124,7 @@ namespace mango::vulkan
         VkSurfaceKHR m_surface;
 
     public:
-        VulkanWindow(VkInstance instance, int width, int height, u32 flags, WindowSystem ws = WindowSystem::Default);
+        VulkanWindow(VkInstance instance, int width, int height, u32 flags);
         ~VulkanWindow();
 
         operator VkInstance () const
@@ -139,8 +139,11 @@ namespace mango::vulkan
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
 
-    // Surface extensions required before any window/surface exists; keyed on the
-    // window system that will be used (resolve WindowSystem::Default first).
+    // Surface extensions required before any window/surface exists. The no-argument
+    // form uses the process-global active window system (Window::getWindowSystem(),
+    // resolving it if needed) so the instance and the window agree by construction.
+    // The explicit overload is for callers that pin the system themselves.
+    std::vector<const char*> requiredSurfaceExtensions();
     std::vector<const char*> requiredSurfaceExtensions(WindowSystem ws);
     std::vector<const char*> requiredDeviceExtensions();
 

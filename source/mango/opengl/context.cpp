@@ -228,7 +228,7 @@ namespace mango
         // Linux: the X11/Wayland backends coexist; pick the GL context
         // implementation from the window's runtime WindowSystem. EGL is used for
         // Wayland and whenever the caller requests it explicitly (OpenGLContext::EGL).
-        const WindowSystem ws = parent->getWindowSystem();
+        const WindowSystem ws = Window::getWindowSystem();
 
     #if defined(MANGO_ENABLE_XLIB)
         if (ws == WindowSystem::Xlib)
@@ -264,14 +264,14 @@ namespace mango
     // OpenGLContext
     // -----------------------------------------------------------------------
 
-    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared, WindowSystem ws)
-        : Window(width, height, flags | API_OPENGL, ws)
+    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+        : Window(width, height, flags | API_OPENGL)
     {
         initContext(width, height, flags, configPtr, shared);
     }
 
-    OpenGLContext::OpenGLContext(math::int32x2 extent, u32 flags, const Config* configPtr, OpenGLContext* shared, WindowSystem ws)
-        : Window(extent.x, extent.y, flags | API_OPENGL, ws)
+    OpenGLContext::OpenGLContext(math::int32x2 extent, u32 flags, const Config* configPtr, OpenGLContext* shared)
+        : Window(extent.x, extent.y, flags | API_OPENGL)
     {
         initContext(extent.x, extent.y, flags, configPtr, shared);
     }

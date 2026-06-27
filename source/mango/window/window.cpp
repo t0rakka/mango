@@ -4,6 +4,7 @@
 */
 #include <cstdlib>
 #include <string>
+#include <mutex>
 #include <mango/window/window.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/core/exception.hpp>
@@ -34,6 +35,16 @@ namespace mango
 
     namespace
     {
+
+        // Process-global active window system. g_window_system holds the current
+        // selection (Default == not chosen yet); g_window_system_locked becomes
+        // true once the value has been handed out, after which overrides are
+        // refused (the resolved value has already driven instance/surface setup).
+        // The mutex keeps the value, the lock flag and the one-time resolve/log
+        // consistent across threads (the value and flag must move together).
+        std::mutex g_window_system_mutex;
+        WindowSystem g_window_system = WindowSystem::Default;
+        bool g_window_system_locked = false;
 
 #if !defined(MANGO_ENABLE_WIN32) && !defined(MANGO_ENABLE_COCOA)
 
@@ -241,9 +252,9 @@ namespace mango
     // Window facade
     // ------------------------------------------------------------------------------
 
-    Window::Window(int width, int height, u32 flags, WindowSystem ws)
+    Window::Window(int width, int height, u32 flags)
     {
-        createBackend(ws, width, height, flags, "Mango");
+        createBackend(width, height, flags, "Mango");
     }
 
     Window::~Window()
@@ -251,21 +262,47 @@ namespace mango
         // m_backend destroyed by unique_ptr
     }
 
-    void Window::createBackend(WindowSystem ws, int width, int height, u32 flags, const char* title)
+    void Window::setWindowSystem(WindowSystem ws)
     {
-        m_window_system = resolveWindowSystem(ws);
-        m_backend = createWindowBackend(m_window_system, this, width, height, flags, title);
+        std::lock_guard<std::mutex> guard(g_window_system_mutex);
+
+        if (g_window_system_locked)
+        {
+            printLine(Print::Warning,
+                "[Window] setWindowSystem() ignored: the window system is already in use ({}). "
+                "Call it before creating any window or querying surface extensions.",
+                getString(g_window_system));
+            return;
+        }
+
+        g_window_system = resolveWindowSystem(ws);
+        printLine("WindowSystem: {}", getString(g_window_system));
+    }
+
+    WindowSystem Window::getWindowSystem()
+    {
+        std::lock_guard<std::mutex> guard(g_window_system_mutex);
+
+        if (!g_window_system_locked)
+        {
+            if (g_window_system == WindowSystem::Default)
+            {
+                // No explicit override; resolve now (env + auto-detect) and log.
+                g_window_system = resolveWindowSystem(WindowSystem::Default);
+                printLine("WindowSystem: {}", getString(g_window_system));
+            }
+            g_window_system_locked = true;
+        }
+        return g_window_system;
+    }
+
+    void Window::createBackend(int width, int height, u32 flags, const char* title)
+    {
+        m_backend = createWindowBackend(getWindowSystem(), this, width, height, flags, title);
         if (!m_backend)
         {
             MANGO_EXCEPTION("[Window] Creating window backend failed.");
         }
-
-        printLine("[Window] WindowSystem: {}", getString(m_window_system));
-    }
-
-    WindowSystem Window::getWindowSystem() const
-    {
-        return m_window_system;
     }
 
     void Window::setWindowPosition(int x, int y)

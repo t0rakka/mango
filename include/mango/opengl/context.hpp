@@ -159,8 +159,8 @@ namespace mango
         void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared);
 
     public:
-        OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr, WindowSystem ws = WindowSystem::Default);
-        OpenGLContext(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr, WindowSystem ws = WindowSystem::Default);
+        OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
+        OpenGLContext(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
         ~OpenGLContext();
 
         bool isExtension(const std::string& name) const;

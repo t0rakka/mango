@@ -24,6 +24,13 @@ namespace mango::vulkan
     // plain string literals (no native types), so every backend can be handled in
     // one switch regardless of platform.
 
+    std::vector<const char*> requiredSurfaceExtensions()
+    {
+        // Resolve (and lock) the process-global window system, so the instance is
+        // created with the exact surface extension the window will later need.
+        return requiredSurfaceExtensions(Window::getWindowSystem());
+    }
+
     std::vector<const char*> requiredSurfaceExtensions(WindowSystem ws)
     {
         switch (ws)
@@ -233,8 +240,8 @@ namespace mango::vulkan
     // VulkanWindow
     // ------------------------------------------------------------------------------
 
-    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags, WindowSystem ws)
-        : Window(width, height, flags | Window::API_VULKAN, ws)
+    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
+        : Window(width, height, flags | Window::API_VULKAN)
         , m_instance(instance)
         , m_surface(VK_NULL_HANDLE)
     {

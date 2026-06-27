@@ -257,11 +257,11 @@ namespace mango
     protected:
         std::unique_ptr<WindowBackend> m_backend;
         EventLoopState m_event_loop;
-        WindowSystem m_window_system = WindowSystem::Default;
 
-        // Construct the backend for the requested window system. Concrete window
-        // types (OpenGLContext, VulkanWindow) call this from their constructors.
-        void createBackend(WindowSystem ws, int width, int height, u32 flags, const char* title);
+        // Construct the backend for the active window system (see getWindowSystem).
+        // Concrete window types (OpenGLContext, VulkanWindow) call this from their
+        // constructors.
+        void createBackend(int width, int height, u32 flags, const char* title);
 
     public:
         enum : u32
@@ -272,13 +272,20 @@ namespace mango
             API_VULKAN      = 0x00040000,
         };
 
-        // ws selects the backend at runtime (Linux); on Windows/macOS it is coerced
-        // to the sole backend. Trailing + defaulted so existing call sites are
-        // unaffected and only code that wants a specific Linux backend passes it.
-        Window(int width, int height, u32 flags = 0, WindowSystem ws = WindowSystem::Default);
+        Window(int width, int height, u32 flags = 0);
         virtual ~Window();
 
-        WindowSystem getWindowSystem() const;
+        // Window system selection is process-global: a single backend is active
+        // for the lifetime of the process (Xlib / Xcb / Wayland on Linux; the sole
+        // platform backend on Windows / macOS). setWindowSystem() is the override
+        // hook; it must be called before the system is first queried (i.e. before
+        // creating any Window or calling vulkan::requiredSurfaceExtensions()), and
+        // warns and is ignored if called too late. getWindowSystem() resolves the
+        // value lazily on first use (honoring the MANGO_WINDOW_SYSTEM environment
+        // variable and auto-detecting the running session) and logs the choice.
+        // Both are thread-safe; the value is resolved exactly once.
+        static void setWindowSystem(WindowSystem ws = WindowSystem::Default);
+        static WindowSystem getWindowSystem();
 
         static int getScreenCount();
         static math::int32x2 getScreenSize(int screen = 0);
