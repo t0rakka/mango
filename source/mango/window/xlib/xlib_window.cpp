@@ -643,6 +643,12 @@ namespace mango
                 x11_icon = NULL;
             }
 
+            if (sync_counter)
+            {
+                XSyncDestroyCounter(dpy, sync_counter);
+                sync_counter = 0;
+            }
+
             XCloseDisplay(dpy);
             display = nullptr;
         }
@@ -720,7 +726,30 @@ namespace mango
         // window close event atoms
         atom_protocols = XInternAtom(dpy, "WM_PROTOCOLS", False);
         atom_delete = XInternAtom(dpy, "WM_DELETE_WINDOW", False);
-        XSetWMProtocols(dpy, win, &atom_delete, 1);
+
+        // Frame synchronization (_NET_WM_SYNC_REQUEST). Only enabled when the X server
+        // has the SYNC extension. A 64-bit counter is created and its id published in
+        // _NET_WM_SYNC_REQUEST_COUNTER; the compositor then sends a sync request before
+        // each resize and waits for us to bump the counter once the matching frame is
+        // drawn, so the window border never shows undefined content during a live resize.
+        atom_sync_request = XInternAtom(dpy, "_NET_WM_SYNC_REQUEST", False);
+        atom_sync_counter = XInternAtom(dpy, "_NET_WM_SYNC_REQUEST_COUNTER", False);
+
+        int sync_event_base, sync_error_base, sync_major = 3, sync_minor = 1;
+        if (XSyncQueryExtension(dpy, &sync_event_base, &sync_error_base) &&
+            XSyncInitialize(dpy, &sync_major, &sync_minor))
+        {
+            XSyncIntToValue(&sync_value, 0);
+            sync_counter = XSyncCreateCounter(dpy, sync_value);
+            long counter_id = long(sync_counter);
+            XChangeProperty(dpy, win, atom_sync_counter, XA_CARDINAL, 32,
+                            PropModeReplace, (unsigned char*)&counter_id, 1);
+            sync_supported = true;
+        }
+
+        // Advertise WM_DELETE_WINDOW, plus _NET_WM_SYNC_REQUEST when supported.
+        Atom protocols[2] = { atom_delete, atom_sync_request };
+        XSetWMProtocols(dpy, win, protocols, sync_supported ? 2 : 1);
 
         // fullscreen toggle atoms
         atom_state = XInternAtom(dpy, "_NET_WM_STATE", False);
@@ -1088,19 +1117,18 @@ namespace mango
 
                     case ConfigureNotify:
                     {
-                        // Filter identical notifications
+                        // Coalesce: record the new size and flag a pending resize. The whole
+                        // queue is drained in this loop, so the latest size wins; onResize()
+                        // and the frame are emitted once, after draining (see below). The frame
+                        // is what bumps the _NET_WM_SYNC counter, so the compositor keeps the
+                        // previous content until our resized frame lands.
                         int width = e.xconfigure.width;
                         int height = e.xconfigure.height;
                         if (width != size[0] || height != size[1])
                         {
                             size[0] = width;
                             size[1] = height;
-
-                            if (!busy)
-                            {
-                                owner->onResize(width, height);
-                                owner->invalidate();
-                            }
+                            resize_pending = true;
                         }
 
                         owner->syncDisplayRefreshRate();
@@ -1225,6 +1253,14 @@ namespace mango
                                 owner->breakEventLoop();
                                 // NOTE: We should destroy the window here since it doesn't exist anymore.
                             }
+                            else if (sync_supported && (Atom)e.xclient.data.l[0] == atom_sync_request)
+                            {
+                                // Store the value the compositor wants the counter set to once
+                                // we have drawn the frame for the upcoming resize. l[2] is the
+                                // low word, l[3] the high word.
+                                XSyncIntsToValue(&sync_value, e.xclient.data.l[2], int(e.xclient.data.l[3]));
+                                sync_pending = true;
+                            }
                         }
 
                         break;
@@ -1269,9 +1305,28 @@ namespace mango
                 } // switch
             }
 
+            // Emit a single resize for the coalesced final size before drawing, so the
+            // frame dispatched below renders at the new extent.
+            if (resize_pending && !busy)
+            {
+                resize_pending = false;
+                owner->onResize(size[0], size[1]);
+                owner->invalidate();
+            }
+
             if (!busy)
             {
                 owner->dispatchFrame();
+
+                // The resized frame has now been submitted/presented; tell the compositor
+                // it may show the new size. Doing this after dispatchFrame() is what keeps
+                // the window border from flashing undefined content during a live resize.
+                if (sync_pending && sync_supported)
+                {
+                    sync_pending = false;
+                    XSyncSetCounter(x11Display(), sync_counter, sync_value);
+                    XFlush(x11Display());
+                }
             }
 
             // Block on the X connection fd until an event arrives or the next frame is

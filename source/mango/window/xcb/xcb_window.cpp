@@ -23,6 +23,7 @@
 #include <xcb/xkb.h>
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_keysyms.h>
+#include <xcb/sync.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include <xcb/randr.h>
 #undef explicit
@@ -485,6 +486,8 @@ namespace mango
         xcb_intern_atom_cookie_t state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
         xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(connection, 0, 24, "_NET_WM_STATE_FULLSCREEN");
         xcb_intern_atom_cookie_t primary_cookie = xcb_intern_atom(connection, 0, 7, "PRIMARY");
+        xcb_intern_atom_cookie_t sync_request_cookie = xcb_intern_atom(connection, 0, 20, "_NET_WM_SYNC_REQUEST");
+        xcb_intern_atom_cookie_t sync_counter_cookie = xcb_intern_atom(connection, 0, 28, "_NET_WM_SYNC_REQUEST_COUNTER");
 
         // XDnD atoms
         xcb_intern_atom_cookie_t xdnd_aware_cookie = xcb_intern_atom(connection, 0, 8, "XdndAware");
@@ -504,6 +507,8 @@ namespace mango
         xcb_intern_atom_reply_t* state_reply = xcb_intern_atom_reply(connection, state_cookie, nullptr);
         xcb_intern_atom_reply_t* fullscreen_reply = xcb_intern_atom_reply(connection, fullscreen_cookie, nullptr);
         xcb_intern_atom_reply_t* primary_reply = xcb_intern_atom_reply(connection, primary_cookie, nullptr);
+        xcb_intern_atom_reply_t* sync_request_reply = xcb_intern_atom_reply(connection, sync_request_cookie, nullptr);
+        xcb_intern_atom_reply_t* sync_counter_reply = xcb_intern_atom_reply(connection, sync_counter_cookie, nullptr);
 
         // XDnD atom replies
         xcb_intern_atom_reply_t* xdnd_aware_reply = xcb_intern_atom_reply(connection, xdnd_aware_cookie, nullptr);
@@ -523,6 +528,8 @@ namespace mango
         atom_state = state_reply->atom;
         atom_fullscreen = fullscreen_reply->atom;
         atom_primary = primary_reply->atom;
+        atom_sync_request = sync_request_reply ? sync_request_reply->atom : 0;
+        atom_sync_counter = sync_counter_reply ? sync_counter_reply->atom : 0;
 
         // Store XDnD atoms
         atom_xdnd_Aware = xdnd_aware_reply->atom;
@@ -542,6 +549,8 @@ namespace mango
         free(state_reply);
         free(fullscreen_reply);
         free(primary_reply);
+        free(sync_request_reply);
+        free(sync_counter_reply);
         free(xdnd_aware_reply);
         free(xdnd_enter_reply);
         free(xdnd_position_reply);
@@ -594,6 +603,12 @@ namespace mango
                 key_symbols = nullptr;
             }
 
+            if (sync_counter)
+            {
+                xcb_sync_destroy_counter(connection, sync_counter);
+                sync_counter = 0;
+            }
+
             xcb_disconnect(connection);
             connection = nullptr;
         }
@@ -637,8 +652,27 @@ namespace mango
                           visualid,
                           value_mask, value_list);
 
-        // Set window protocols
-        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_protocols, XCB_ATOM_ATOM, 32, 1, &atom_delete);
+        // Frame synchronization (_NET_WM_SYNC_REQUEST). Only enabled when the X server
+        // has the SYNC extension and the atoms resolved. A 64-bit counter is created and
+        // its id published in _NET_WM_SYNC_REQUEST_COUNTER; the compositor then sends a
+        // sync request before each resize and waits for us to bump the counter once the
+        // matching frame is drawn.
+        const xcb_query_extension_reply_t* sync_ext = xcb_get_extension_data(connection, &xcb_sync_id);
+        if (sync_ext && sync_ext->present && atom_sync_request && atom_sync_counter)
+        {
+            sync_counter = xcb_generate_id(connection);
+            xcb_sync_int64_t initial = { 0, 0 };
+            xcb_sync_create_counter(connection, sync_counter, initial);
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_sync_counter,
+                                XCB_ATOM_CARDINAL, 32, 1, &sync_counter);
+            sync_value = initial;
+            sync_supported = true;
+        }
+
+        // Set window protocols (WM_DELETE_WINDOW, and _NET_WM_SYNC_REQUEST when supported)
+        xcb_atom_t protocols[2] = { atom_delete, atom_sync_request };
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_protocols, XCB_ATOM_ATOM, 32,
+                            sync_supported ? 2 : 1, protocols);
 
         // Set XDnD version
         uint32_t xdnd_version = 5;
@@ -1081,51 +1115,17 @@ namespace mango
 
                     case XCB_CONFIGURE_NOTIFY:
                     {
+                        // Coalesce: only record the new size here and flag a pending resize.
+                        // The whole event queue is drained in this loop, so the latest size
+                        // wins; onResize() + the frame are emitted once, after draining (see
+                        // below). The frame is what bumps the _NET_WM_SYNC counter, so the
+                        // compositor keeps the previous content until our resized frame lands.
                         xcb_configure_notify_event_t* configure = (xcb_configure_notify_event_t*)event;
                         if (configure->width != size[0] || configure->height != size[1])
                         {
-                            // Set busy flag to prevent multiple resize callbacks
-                            busy = true;
-                            
-                            // Update size
                             size[0] = configure->width;
                             size[1] = configure->height;
-                            
-                            // Check if we have more configure events pending
-                            xcb_generic_event_t* next_event = xcb_poll_for_event(connection);
-                            bool has_more = false;
-                            
-                            if (next_event)
-                            {
-                                if (next_event->response_type == XCB_CONFIGURE_NOTIFY)
-                                {
-                                    has_more = true;
-                                }
-                                free(next_event);
-                            }
-                            
-                            // Only process resize if no more configure events are pending
-                            if (!has_more)
-                            {
-                                // Send Expose event to ensure redraw
-                                xcb_expose_event_t expose = { 0 };
-                                expose.response_type = XCB_EXPOSE;
-                                expose.window = window;
-                                expose.x = 0;
-                                expose.y = 0;
-                                expose.width = configure->width;
-                                expose.height = configure->height;
-                                expose.count = 0;
-                                
-                                // Use XCB_EVENT_MASK_NO_EVENT to prevent event loop from processing this immediately
-                                xcb_send_event(connection, 0, window,
-                                    XCB_EVENT_MASK_NO_EVENT, (char*)&expose);
-                                xcb_flush(connection);
-                                
-                                owner->onResize(configure->width, configure->height);
-                                owner->invalidate();
-                                busy = false;
-                            }
+                            resize_pending = true;
                         }
 
                         owner->syncDisplayRefreshRate();
@@ -1149,6 +1149,15 @@ namespace mango
                             if (client_message->data.data32[0] == atom_delete)
                             {
                                 owner->breakEventLoop();
+                            }
+                            else if (sync_supported && client_message->data.data32[0] == atom_sync_request)
+                            {
+                                // Store the value the compositor wants the counter set to once
+                                // we have drawn the frame for the upcoming resize. data32[2] is
+                                // the low word, data32[3] the high word.
+                                sync_value.lo = client_message->data.data32[2];
+                                sync_value.hi = int32_t(client_message->data.data32[3]);
+                                sync_pending = true;
                             }
                         }
                         else if (client_message->type == atom_xdnd_Enter)
@@ -1257,9 +1266,28 @@ namespace mango
                 free(event);
             }
 
+            // Emit a single resize for the coalesced final size before drawing, so the
+            // frame dispatched below renders at the new extent.
+            if (resize_pending && !busy)
+            {
+                resize_pending = false;
+                owner->onResize(size[0], size[1]);
+                owner->invalidate();
+            }
+
             if (!busy)
             {
                 owner->dispatchFrame();
+
+                // The resized frame has now been submitted/presented; tell the compositor
+                // it may show the new size. Doing this after dispatchFrame() is what keeps
+                // the window border from flashing undefined content during a live resize.
+                if (sync_pending && sync_supported)
+                {
+                    sync_pending = false;
+                    xcb_sync_set_counter(connection, sync_counter, sync_value);
+                    xcb_flush(connection);
+                }
             }
 
             if (!hadEvents)

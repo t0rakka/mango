@@ -19,6 +19,7 @@
 #include <X11/Xresource.h>
 #include <X11/Xutil.h>
 #include <X11/XKBlib.h>
+#include <X11/extensions/sync.h>
 
 namespace mango
 {
@@ -68,6 +69,17 @@ namespace mango
         u64         mouse_time[6];
         bool        is_looping { false };
         bool        fullscreen  { false };
+
+        // _NET_WM_SYNC_REQUEST: lets the compositor hold the resized frame until the
+        // client has drawn it, eliminating the undefined/black border that otherwise
+        // appears while the window grows faster than the swapchain catches up.
+        ::Atom          atom_sync_request { 0 };   // _NET_WM_SYNC_REQUEST
+        ::Atom          atom_sync_counter { 0 };   // _NET_WM_SYNC_REQUEST_COUNTER
+        XSyncCounter    sync_counter { 0 };
+        XSyncValue      sync_value;
+        bool            sync_pending { false };
+        bool            sync_supported { false };
+        bool            resize_pending { false };
 
         XlibBackend();
         ~XlibBackend() override;

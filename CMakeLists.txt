@@ -759,11 +759,13 @@ if (BUILD_OPENGL)
             endif ()
 
             if (ENABLE_XLIB)
-                target_link_libraries(mango PUBLIC X11 Xrandr)
+                # Xext provides XSync (_NET_WM_SYNC_REQUEST frame synchronization).
+                target_link_libraries(mango PUBLIC X11 Xext Xrandr)
             endif ()
 
             if (ENABLE_XCB)
-                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xcb-glx xkbcommon)
+                # xcb-sync provides the SYNC counter (_NET_WM_SYNC_REQUEST frame sync).
+                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-sync xcb-xkb xcb-keysyms xcb-icccm xcb-randr xcb-glx xkbcommon)
             endif ()
 
             if (ENABLE_WAYLAND)
@@ -838,11 +840,13 @@ if (BUILD_VULKAN)
             target_link_libraries(mango PUBLIC vulkan)
 
             if (ENABLE_XLIB)
-                target_link_libraries(mango PUBLIC X11 Xrandr)
+                # Xext provides XSync (_NET_WM_SYNC_REQUEST frame synchronization).
+                target_link_libraries(mango PUBLIC X11 Xext Xrandr)
             endif ()
 
             if (ENABLE_XCB)
-                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon)
+                # xcb-sync provides the SYNC counter (_NET_WM_SYNC_REQUEST frame sync).
+                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-sync xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon)
             endif ()
 
             if (ENABLE_WAYLAND)

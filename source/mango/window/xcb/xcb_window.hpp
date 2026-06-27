@@ -20,6 +20,7 @@
 #include <xcb/xkb.h>
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_keysyms.h>
+#include <xcb/sync.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #undef explicit
 
@@ -73,6 +74,17 @@ namespace mango
         u64 mouse_time[6];
         bool is_looping { false };
         bool fullscreen { false };
+
+        // _NET_WM_SYNC_REQUEST: lets the compositor hold the resized frame until the
+        // client has drawn it, eliminating the undefined/black border that otherwise
+        // appears while the window grows faster than the swapchain catches up.
+        xcb_atom_t atom_sync_request { 0 };   // _NET_WM_SYNC_REQUEST
+        xcb_atom_t atom_sync_counter { 0 };   // _NET_WM_SYNC_REQUEST_COUNTER
+        xcb_sync_counter_t sync_counter { 0 };
+        xcb_sync_int64_t sync_value { 0, 0 };
+        bool sync_pending { false };
+        bool sync_supported { false };
+        bool resize_pending { false };
 
         xcb_key_symbols_t* key_symbols;
 
