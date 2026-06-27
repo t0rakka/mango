@@ -662,6 +662,16 @@ if (APPLE)
     target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
 endif ()
 
+# Linux/ELF: glslang, SPIRV and SPIRV-Tools are only available as static archives
+# on most distributions, so they get baked into libmango.so. Keep their ~1700
+# symbols out of the dynamic symbol table (they are private implementation detail,
+# not part of mango's ABI) and strip the local symbol table from Release builds.
+# This trims the library without changing what consumers can link against.
+if (UNIX AND NOT APPLE)
+    target_link_options(mango PRIVATE "LINKER:--exclude-libs,ALL")
+    target_link_options(mango PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
+endif ()
+
 if (BUILD_OPENGL)
     target_compile_definitions(mango PUBLIC MANGO_ENABLE_OPENGL)
 endif ()
@@ -723,7 +733,23 @@ if (BUILD_OPENGL)
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
             # Linux: link the union of every enabled backend's GL dependencies.
-            message("    OpenGL: [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND} EGL=${ENABLE_EGL}]")
+            set(s_gl_backends "")
+            if (ENABLE_XLIB)
+                list(APPEND s_gl_backends XLIB)
+            endif ()
+            if (ENABLE_XCB)
+                list(APPEND s_gl_backends XCB)
+            endif ()
+            if (ENABLE_WAYLAND)
+                list(APPEND s_gl_backends WAYLAND)
+            endif ()
+            if (ENABLE_EGL)
+                list(APPEND s_gl_backends EGL)
+            endif ()
+            if (s_gl_backends)
+                list(JOIN s_gl_backends ", " s_gl_backends_str)
+                message("    OpenGL: ${s_gl_backends_str}")
+            endif ()
 
             target_link_libraries(mango PUBLIC GL)
 
@@ -794,7 +820,20 @@ if (BUILD_VULKAN)
             target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
         else ()
             # Linux: link the union of every enabled backend's Vulkan dependencies.
-            message("    Vulkan: [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND}]")
+            set(s_vk_backends "")
+            if (ENABLE_XLIB)
+                list(APPEND s_vk_backends XLIB)
+            endif ()
+            if (ENABLE_XCB)
+                list(APPEND s_vk_backends XCB)
+            endif ()
+            if (ENABLE_WAYLAND)
+                list(APPEND s_vk_backends WAYLAND)
+            endif ()
+            if (s_vk_backends)
+                list(JOIN s_vk_backends ", " s_vk_backends_str)
+                message("    Vulkan: ${s_vk_backends_str}")
+            endif ()
 
             target_link_libraries(mango PUBLIC vulkan)
 
