@@ -730,7 +730,7 @@ public:
         for (size_t i = 0; i < queueFamilyProperties.size(); ++i)
         {
             const VkQueueFamilyProperties& properties = queueFamilyProperties[i];
-            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i), *this);
+            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i));
             bool graphics = properties.queueFlags & VK_QUEUE_GRAPHICS_BIT;
 
             if (graphics && presentationSupport)
@@ -1024,7 +1024,7 @@ int mangoMain(const mango::CommandLine& commands)
     instanceExtensionProperties.print();
 
     std::vector<const char*> enabledLayers;// = { "VK_LAYER_KHRONOS_validation" };
-    std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
+    std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions(WindowSystem::Default);
 
     if (instanceExtensionProperties.contains(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME))
     {

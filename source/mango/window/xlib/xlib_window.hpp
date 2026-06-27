@@ -5,8 +5,9 @@
 #pragma once
 
 #include <mango/window/window.hpp>
+#include "../window_backend.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+#if defined(MANGO_ENABLE_XLIB)
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -22,8 +23,16 @@
 namespace mango
 {
 
-    struct WindowContext : WindowHandle
+    // Concrete Xlib backend. Distinct class name (vs XcbBackend / WaylandBackend)
+    // so all three Linux backends can be linked into one binary without ODR clash;
+    // the native Xlib headers live only in this and the GLX-Xlib translation unit.
+    struct XlibBackend : WindowBackend
     {
+        // native handle (formerly in the public WindowHandle)
+        void*           display { nullptr };
+        unsigned long   window { 0 };
+        unsigned long   visualid { 0 };
+
         // window data
         ::Colormap  x11_colormap { 0 };
         ::Visual*   x11_visual { nullptr };
@@ -58,11 +67,10 @@ namespace mango
         int         size[2] = { 0, 0 };
         u64         mouse_time[6];
         bool        is_looping { false };
-        bool        busy { false };
         bool        fullscreen  { false };
 
-        WindowContext();
-        ~WindowContext();
+        XlibBackend();
+        ~XlibBackend() override;
 
         ::Display* x11Display() const { return static_cast<::Display*>(display); }
         ::Window x11Window() const { return static_cast<::Window>(window); }
@@ -71,11 +79,34 @@ namespace mango
         operator ::Window () const { return x11Window(); }
 
         bool init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title);
-        void toggleFullscreen();
-        bool isFullscreen() const;
-        math::int32x2 getWindowSize() const;
+
+        // WindowBackend interface
+        void setWindowPosition(int x, int y) override;
+        void setWindowSize(int width, int height) override;
+        void setTitle(const std::string& title) override;
+        void setVisible(bool enable) override;
+        math::int32x2 getWindowSize() const override;
+        math::int32x2 getCursorPosition() const override;
+        double getDisplayRefreshRate() const override;
+        void toggleFullscreen() override;
+        bool isFullscreen() const override;
+        bool isKeyPressed(Keycode code) const override;
+        void runEventLoop() override;
+        void wakeEventLoop() override;
+
+#if defined(MANGO_ENABLE_VULKAN)
+        VkSurfaceKHR createVulkanSurface(VkInstance instance) override;
+        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex) override;
+#endif
+
+#if defined(MANGO_ENABLE_EGL)
+        // Creates the X11 window and returns its XID packed into a void* for the
+        // shared EGL TU. eglNativeDisplay() inherits the base nullptr, mapping to
+        // EGL_DEFAULT_DISPLAY (the X11 platform), preserving the original behavior.
+        void* eglNativeWindow(int width, int height, u32 flags) override;
+#endif
     };
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_XLIB)
+#endif // defined(MANGO_ENABLE_XLIB)

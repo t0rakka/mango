@@ -55,16 +55,22 @@
 
 #endif
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB) || defined(MANGO_WINDOW_SYSTEM_XCB)
+#if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB) || defined(MANGO_ENABLE_WAYLAND)
 
     // -----------------------------------------------------------------------
-    // GLX | EGL
+    // GLX | EGL (Linux: backends coexist, context API chosen at runtime)
     // -----------------------------------------------------------------------
 
-    #if defined(MANGO_ENABLE_EGL)
-        #define MANGO_OPENGL_CONTEXT_EGL
-    #else
+    // GLX serves the X11 backends (Xlib/Xcb); EGL serves Wayland and any X11
+    // backend explicitly requesting it. Both context macros may be defined at
+    // once; createOpenGLContext() picks the implementation from the window's
+    // runtime WindowSystem.
+    #if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
         #define MANGO_OPENGL_CONTEXT_GLX
+    #endif
+
+    #if defined(MANGO_ENABLE_EGL) || defined(MANGO_ENABLE_WAYLAND)
+        #define MANGO_OPENGL_CONTEXT_EGL
     #endif
 
     #define MANGO_OPENGL_FRAMEBUFFER
@@ -80,25 +86,6 @@
     // required by the X11/XCB context implementations, so they are included
     // directly in those translation files and deliberately kept out of this
     // public header.
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-    // -----------------------------------------------------------------------
-    // EGL
-    // -----------------------------------------------------------------------
-
-    #if defined(MANGO_ENABLE_EGL)
-        #define MANGO_OPENGL_CONTEXT_EGL
-        #define MANGO_OPENGL_FRAMEBUFFER
-    #else
-        #define MANGO_OPENGL_CONTEXT_NONE
-    #endif
-
-    #define GL_GLEXT_PROTOTYPES
-    #include <GL/gl.h>
-    #include <GL/glext.h>
 
 #endif
 
@@ -182,8 +169,8 @@ namespace mango
         void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared);
 
     public:
-        OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
-        OpenGLContext(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
+        OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr, WindowSystem ws = WindowSystem::Default);
+        OpenGLContext(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr, WindowSystem ws = WindowSystem::Default);
         ~OpenGLContext();
 
         bool isExtension(const std::string& name) const;
@@ -224,24 +211,6 @@ namespace mango
             u32 texture_compression_astc_ldr : 1;
             u32 texture_compression_astc_hdr : 1;
         } core;
-
-#if defined(MANGO_OPENGL_CONTEXT_WGL)
-        struct
-        {
-            #define WGL_EXTENSION(Name) u32 Name : 1;
-            #include <mango/opengl/func/wglext.hpp>
-            #undef WGL_EXTENSION
-        } wgl;
-#endif
-
-#if defined(MANGO_OPENGL_CONTEXT_GLX)
-        struct
-        {
-            #define GLX_EXTENSION(Name) u32 Name : 1;
-            #include <mango/opengl/func/glxext.hpp>
-            #undef GLX_EXTENSION
-        } glx;
-#endif
     };
 
 } // namespace mango

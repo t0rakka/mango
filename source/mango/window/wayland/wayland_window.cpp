@@ -2,16 +2,22 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <mango/core/configure.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+#if defined(MANGO_ENABLE_WAYLAND)
+
+#if defined(MANGO_ENABLE_VULKAN)
+    #define VK_USE_PLATFORM_WAYLAND_KHR
+#endif
 
 #include <unistd.h>
 #include <poll.h>
 #include <sys/mman.h>
 #include <cstring>
+#include <cstdint>
 #include <algorithm>
 #include <memory>
 #include <vector>
@@ -150,7 +156,7 @@ namespace
         return mask;
     }
 
-    void setKeyPressed(WindowContext* window, Keycode code, bool pressed)
+    void setKeyPressed(WaylandBackend* window, Keycode code, bool pressed)
     {
         if (!window || code == KEYCODE_NONE)
         {
@@ -164,7 +170,7 @@ namespace
         }
     }
 
-    void clearKeyState(WindowContext* window)
+    void clearKeyState(WaylandBackend* window)
     {
         if (!window)
         {
@@ -181,7 +187,7 @@ namespace
         }
     }
 
-    void applyToplevelStates(WindowContext* window, struct wl_array* states)
+    void applyToplevelStates(WaylandBackend* window, struct wl_array* states)
     {
         if (!window || !window->owner)
         {
@@ -239,7 +245,7 @@ namespace
 
     void xdg_wm_base_ping(void* data, struct xdg_wm_base* xdg_wm_base, uint32_t serial)
     {
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         xdg_wm_base_pong(xdg_wm_base, serial);
         if (window->display)
         {
@@ -254,7 +260,7 @@ namespace
 
     void xdg_surface_configure(void* data, struct xdg_surface* xdg_surface, uint32_t serial)
     {
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         window->syncSurfaceScale();
         window->syncEGLWindow();
         xdg_surface_ack_configure(xdg_surface, serial);
@@ -271,7 +277,7 @@ namespace
     {
         MANGO_UNREFERENCED(xdg_toplevel);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         applyToplevelStates(window, states);
 
         const bool was_visible = window->size[0] > 0 && window->size[1] > 0;
@@ -307,7 +313,7 @@ namespace
     void xdg_toplevel_close(void* data, struct xdg_toplevel* xdg_toplevel)
     {
         MANGO_UNREFERENCED(xdg_toplevel);
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (window->owner)
         {
             window->owner->breakEventLoop();
@@ -327,7 +333,7 @@ namespace
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(surface);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         window->pointer_focused = true;
         window->cursor[0] = wl_fixed_to_int(surface_x);
         window->cursor[1] = wl_fixed_to_int(surface_y);
@@ -339,7 +345,7 @@ namespace
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(surface);
 
-        static_cast<WindowContext*>(data)->pointer_focused = false;
+        static_cast<WaylandBackend*>(data)->pointer_focused = false;
     }
 
     void pointer_motion(void* data, struct wl_pointer* pointer, uint32_t time,
@@ -348,7 +354,7 @@ namespace
         MANGO_UNREFERENCED(pointer);
         MANGO_UNREFERENCED(time);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (!window->owner)
         {
             return;
@@ -366,7 +372,7 @@ namespace
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(time);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (!window->owner)
         {
             return;
@@ -413,7 +419,7 @@ namespace
             return;
         }
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (!window->owner)
         {
             return;
@@ -493,7 +499,7 @@ namespace
     {
         MANGO_UNREFERENCED(keyboard);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (format != WL_KEYBOARD_KEYMAP_FORMAT_XKB_V1)
         {
             close(fd);
@@ -537,7 +543,7 @@ namespace
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(surface);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         window->keyboard_focused = true;
 
         if (!window->xkb_state || !keys)
@@ -564,7 +570,7 @@ namespace
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(surface);
 
-        clearKeyState(static_cast<WindowContext*>(data));
+        clearKeyState(static_cast<WaylandBackend*>(data));
     }
 
     void keyboard_key(void* data, struct wl_keyboard* keyboard, uint32_t serial,
@@ -574,7 +580,7 @@ namespace
         MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(time);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (!window->xkb_state || !window->owner)
         {
             return;
@@ -606,7 +612,7 @@ namespace
         MANGO_UNREFERENCED(keyboard);
         MANGO_UNREFERENCED(serial);
 
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (window->xkb_state)
         {
             xkb_state_update_mask(window->xkb_state, mods_depressed, mods_latched, mods_locked, 0, 0, group);
@@ -633,7 +639,7 @@ namespace
 
     void seat_capabilities(void* data, struct wl_seat* seat, uint32_t caps)
     {
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
 
         if ((caps & WL_SEAT_CAPABILITY_POINTER) && !window->pointer)
         {
@@ -784,7 +790,7 @@ namespace
     void registry_global(void* data, struct wl_registry* registry,
                          uint32_t name, const char* interface, uint32_t version)
     {
-        WindowContext* window = static_cast<WindowContext*>(data);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
 
         if (std::strcmp(interface, "wl_compositor") == 0)
         {
@@ -849,10 +855,10 @@ namespace mango
     using namespace mango::math;
 
     // -----------------------------------------------------------------------
-    // WindowContext
+    // WaylandBackend
     // -----------------------------------------------------------------------
 
-    WindowContext::WindowContext(int width, int height, u32 flags)
+    WaylandBackend::WaylandBackend(int width, int height, u32 flags)
     {
         MANGO_UNREFERENCED(flags);
 
@@ -886,7 +892,7 @@ namespace mango
         }
     }
 
-    WindowContext::~WindowContext()
+    WaylandBackend::~WaylandBackend()
     {
         if (xdg_toplevel) xdg_toplevel_destroy(xdg_toplevel);
         if (xdg_surface) xdg_surface_destroy(xdg_surface);
@@ -910,7 +916,7 @@ namespace mango
         if (xkb_context) xkb_context_unref(xkb_context);
     }
 
-    void WindowContext::toggleFullscreen()
+    void WaylandBackend::toggleFullscreen()
     {
         if (!xdg_toplevel)
         {
@@ -931,17 +937,17 @@ namespace mango
         requestRefresh();
     }
 
-    bool WindowContext::isFullscreen() const
+    bool WaylandBackend::isFullscreen() const
     {
         return fullscreen;
     }
 
-    void WindowContext::requestRefresh()
+    void WaylandBackend::requestRefresh()
     {
         needs_redraw = true;
     }
 
-    int32x2 WindowContext::getWindowSize() const
+    int32x2 WaylandBackend::getWindowSize() const
     {
         if (size[0] > 0 && size[1] > 0)
         {
@@ -958,7 +964,7 @@ namespace mango
         return int32x2(size[0], size[1]);
     }
 
-    bool WindowContext::createWaylandWindow(int width, int height, const char* title)
+    bool WaylandBackend::createWaylandWindow(int width, int height, const char* title)
     {
         if (!compositor || !xdg_wm_base)
         {
@@ -1010,7 +1016,7 @@ namespace mango
         return true;
     }
 
-    void WindowContext::syncSurfaceScale()
+    void WaylandBackend::syncSurfaceScale()
     {
         const int32_t scale = getPrimaryBufferScale();
         if (!surface || scale <= 0 || buffer_scale == scale)
@@ -1022,7 +1028,7 @@ namespace mango
         wl_surface_set_buffer_scale(surface, buffer_scale);
     }
 
-    void WindowContext::syncEGLWindow()
+    void WaylandBackend::syncEGLWindow()
     {
 #if defined(MANGO_ENABLE_EGL)
         if (!egl_window || size[0] <= 0 || size[1] <= 0)
@@ -1044,7 +1050,7 @@ namespace mango
 #endif
     }
 
-    void WindowContext::dispatchPendingResize()
+    void WaylandBackend::dispatchPendingResize()
     {
         if (!owner || busy || !pending_resize)
         {
@@ -1064,7 +1070,7 @@ namespace mango
         owner->invalidate();
     }
 
-    void WindowContext::processEvents()
+    void WaylandBackend::processEvents()
     {
         while (wl_display_prepare_read(display) != 0)
         {
@@ -1085,18 +1091,25 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // Window
+    // WaylandBackend factory
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height, u32 flags)
+    std::unique_ptr<WindowBackend> createWaylandBackend(Window* window, int width, int height, u32 flags, const char* title)
     {
-        m_window_context = std::make_unique<WindowContext>(width, height, flags);
-        m_window_context->owner = this;
+        MANGO_UNREFERENCED(title);
+        auto backend = std::make_unique<WaylandBackend>(width, height, flags);
+        backend->owner = window;
+        return backend;
     }
 
-    Window::~Window()
-    {
-    }
+    // -----------------------------------------------------------------------
+    // Window (static, screen queries)
+    // -----------------------------------------------------------------------
+
+#if !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB)
+
+    // Provided by the X11 backends when present; defined here only when the build
+    // has neither Xlib nor Xcb, so the single Window::getScreen* definition is unique.
 
     int Window::getScreenCount()
     {
@@ -1114,70 +1127,61 @@ namespace mango
         return int32x2(output.width, output.height);
     }
 
-    Window::operator WindowHandle () const
-    {
-        return *m_window_context;
-    }
+#endif // !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB)
 
-    Window::operator WindowContext* () const
-    {
-        return m_window_context.get();
-    }
+    // -----------------------------------------------------------------------
+    // WaylandBackend (window operations + event loop)
+    // -----------------------------------------------------------------------
 
-    void Window::setWindowPosition(int x, int y)
+    void WaylandBackend::setWindowPosition(int x, int y)
     {
         MANGO_UNREFERENCED(x);
         MANGO_UNREFERENCED(y);
     }
 
-    void Window::setWindowSize(int width, int height)
+    void WaylandBackend::setWindowSize(int width, int height)
     {
         if (width <= 0 || height <= 0)
         {
             return;
         }
 
-        m_window_context->size[0] = width;
-        m_window_context->size[1] = height;
-        m_window_context->pending_resize = true;
-        m_window_context->syncEGLWindow();
-        m_window_context->requestRefresh();
+        size[0] = width;
+        size[1] = height;
+        pending_resize = true;
+        syncEGLWindow();
+        requestRefresh();
     }
 
-    void Window::setTitle(const std::string& title)
+    void WaylandBackend::setTitle(const std::string& title)
     {
-        if (m_window_context->xdg_toplevel && m_window_context->display)
+        if (xdg_toplevel && display)
         {
-            xdg_toplevel_set_title(m_window_context->xdg_toplevel, title.c_str());
-            wl_display_flush(m_window_context->display);
+            xdg_toplevel_set_title(xdg_toplevel, title.c_str());
+            wl_display_flush(display);
         }
     }
 
-    void Window::setVisible(bool enable)
+    void WaylandBackend::setVisible(bool enable)
     {
-        if (!m_window_context->surface || !m_window_context->display)
+        if (!surface || !display)
         {
             return;
         }
 
         if (enable)
         {
-            wl_surface_commit(m_window_context->surface);
-            wl_display_flush(m_window_context->display);
+            wl_surface_commit(surface);
+            wl_display_flush(display);
         }
     }
 
-    int32x2 Window::getWindowSize() const
+    int32x2 WaylandBackend::getCursorPosition() const
     {
-        return m_window_context->getWindowSize();
+        return int32x2(cursor[0], cursor[1]);
     }
 
-    int32x2 Window::getCursorPosition() const
-    {
-        return int32x2(m_window_context->cursor[0], m_window_context->cursor[1]);
-    }
-
-    bool Window::isKeyPressed(Keycode code) const
+    bool WaylandBackend::isKeyPressed(Keycode code) const
     {
         switch (code)
         {
@@ -1191,7 +1195,7 @@ namespace mango
                 break;
         }
 
-        if (!m_window_context->keyboard_focused)
+        if (!keyboard_focused)
         {
             return false;
         }
@@ -1202,15 +1206,15 @@ namespace mango
             return false;
         }
 
-        return m_window_context->key_pressed[idx];
+        return key_pressed[idx];
     }
 
-    double Window::getDisplayRefreshRate() const
+    double WaylandBackend::getDisplayRefreshRate() const
     {
         return queryWaylandRefreshRate();
     }
 
-    void Window::wakeEventLoop()
+    void WaylandBackend::wakeEventLoop()
     {
         // The loop blocks in poll() on the Wayland display fd. Same-thread state changes
         // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
@@ -1218,35 +1222,35 @@ namespace mango
         // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
-    void Window::runEventLoop()
+    void WaylandBackend::runEventLoop()
     {
-        m_window_context->processEvents();
-        m_window_context->syncSurfaceScale();
-        m_window_context->syncEGLWindow();
-        syncDisplayRefreshRate();
+        processEvents();
+        syncSurfaceScale();
+        syncEGLWindow();
+        owner->syncDisplayRefreshRate();
 
-        if (!m_window_context->busy)
+        if (!busy)
         {
-            m_window_context->dispatchPendingResize();
+            dispatchPendingResize();
         }
 
-        while (isRunning())
+        while (owner->isRunning())
         {
             // Dispatch anything already queued without blocking.
-            wl_display_dispatch_pending(m_window_context->display);
-            syncDisplayRefreshRate();
+            wl_display_dispatch_pending(display);
+            owner->syncDisplayRefreshRate();
 
-            if (m_window_context->pending_resize && !m_window_context->busy)
+            if (pending_resize && !busy)
             {
-                m_window_context->dispatchPendingResize();
+                dispatchPendingResize();
             }
 
-            if (!m_window_context->busy)
+            if (!busy)
             {
-                dispatchFrame();
+                owner->dispatchFrame();
             }
 
-            if (!isRunning())
+            if (!owner->isRunning())
             {
                 break;
             }
@@ -1256,86 +1260,103 @@ namespace mango
             // read_events (the canonical Wayland pattern). An idle (WAIT_INFINITE) wait
             // is capped so a cross-thread state change is observed within the cap; a
             // pending deadline (animation) is waited exactly so it fires on time.
-            wl_display* display = m_window_context->display;
+            wl_display* wl_disp = display;
 
-            while (wl_display_prepare_read(display) != 0)
+            while (wl_display_prepare_read(wl_disp) != 0)
             {
-                wl_display_dispatch_pending(display);
+                wl_display_dispatch_pending(wl_disp);
             }
 
-            wl_display_flush(display);
+            wl_display_flush(wl_disp);
 
-            const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
             const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
 
-            struct pollfd pfd = { wl_display_get_fd(display), POLLIN, 0 };
+            struct pollfd pfd = { wl_display_get_fd(wl_disp), POLLIN, 0 };
             if (::poll(&pfd, 1, wait_ms) > 0 && (pfd.revents & POLLIN))
             {
-                if (wl_display_read_events(display) < 0)
+                if (wl_display_read_events(wl_disp) < 0)
                 {
-                    breakEventLoop();
+                    owner->breakEventLoop();
                 }
             }
             else
             {
                 // timeout (frame due) or error: abandon the read we announced
-                wl_display_cancel_read(display);
+                wl_display_cancel_read(wl_disp);
             }
         }
     }
 
-    void Window::onMinimize()
+#if defined(MANGO_ENABLE_VULKAN)
+
+    VkSurfaceKHR WaylandBackend::createVulkanSurface(VkInstance instance)
     {
+        VkWaylandSurfaceCreateInfoKHR createInfo;
+
+        createInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
+        createInfo.pNext = nullptr;
+        createInfo.flags = 0;
+        createInfo.display = display;
+        createInfo.surface = surface;
+
+        VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
+        VkResult result = vkCreateWaylandSurfaceKHR(instance, &createInfo, nullptr, &vk_surface);
+        if (result != VK_SUCCESS)
+        {
+            MANGO_EXCEPTION("[WaylandBackend] vkCreateWaylandSurfaceKHR() failed.");
+        }
+
+        return vk_surface;
     }
 
-    void Window::onMaximize()
+    bool WaylandBackend::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
     {
+        VkBool32 support = vkGetPhysicalDeviceWaylandPresentationSupportKHR(
+            physicalDevice, queueFamilyIndex, display);
+        return support == VK_TRUE;
     }
 
-    void Window::onKeyPress(Keycode code, u32 mask)
+#endif // defined(MANGO_ENABLE_VULKAN)
+
+#if defined(MANGO_ENABLE_EGL)
+
+    void* WaylandBackend::eglNativeDisplay()
     {
-        MANGO_UNREFERENCED(code);
-        MANGO_UNREFERENCED(mask);
+        return display;
     }
 
-    void Window::onKeyRelease(Keycode code)
+    void* WaylandBackend::eglNativeWindow(int width, int height, u32 flags)
     {
-        MANGO_UNREFERENCED(code);
+        MANGO_UNREFERENCED(flags);
+
+        if (!surface)
+        {
+            return nullptr;
+        }
+
+        const int egl_width = std::max(1, size[0] > 0 ? size[0] : width);
+        const int egl_height = std::max(1, size[1] > 0 ? size[1] : height);
+
+        egl_window = wl_egl_window_create(surface, egl_width, egl_height);
+        return egl_window;
     }
 
-    void Window::onMouseMove(int x, int y)
+    void WaylandBackend::eglPresent()
     {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
+        // The first present (right after the EGL surface is created) needs a
+        // roundtrip so the compositor processes the initial attach; subsequent
+        // frames only resync the egl-window size to match a resize.
+        const bool first = (egl_synced_size[0] == 0 && egl_synced_size[1] == 0);
+        if (first && display)
+        {
+            wl_display_roundtrip(display);
+        }
+        syncEGLWindow();
     }
 
-    void Window::onMouseClick(int x, int y, MouseButton button, int count)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-        MANGO_UNREFERENCED(button);
-        MANGO_UNREFERENCED(count);
-    }
-
-    using namespace mango::filesystem;
-
-    void Window::onDropFiles(const FileIndex& index)
-    {
-        MANGO_UNREFERENCED(index);
-    }
-
-    void Window::onClose()
-    {
-    }
-
-    void Window::onShow()
-    {
-    }
-
-    void Window::onHide()
-    {
-    }
+#endif // defined(MANGO_ENABLE_EGL)
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+#endif // defined(MANGO_ENABLE_WAYLAND)

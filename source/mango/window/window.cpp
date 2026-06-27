@@ -4,6 +4,8 @@
 */
 #include <mango/window/window.hpp>
 #include <mango/core/timer.hpp>
+#include <mango/core/exception.hpp>
+#include "window_backend.hpp"
 
 namespace mango
 {
@@ -125,26 +127,101 @@ namespace mango
     }
 
     // ------------------------------------------------------------------------------
-    // Window
+    // Window facade
     // ------------------------------------------------------------------------------
+
+    Window::Window(int width, int height, u32 flags, WindowSystem ws)
+    {
+        createBackend(ws, width, height, flags, "Mango");
+    }
+
+    Window::~Window()
+    {
+        // m_backend destroyed by unique_ptr
+    }
+
+    void Window::createBackend(WindowSystem ws, int width, int height, u32 flags, const char* title)
+    {
+        m_window_system = resolveWindowSystem(ws);
+        m_backend = createWindowBackend(m_window_system, this, width, height, flags, title);
+        if (!m_backend)
+        {
+            MANGO_EXCEPTION("[Window] Creating window backend failed.");
+        }
+    }
+
+    WindowSystem Window::getWindowSystem() const
+    {
+        return m_window_system;
+    }
+
+    void Window::setWindowPosition(int x, int y)
+    {
+        m_backend->setWindowPosition(x, y);
+    }
+
+    void Window::setWindowSize(int width, int height)
+    {
+        m_backend->setWindowSize(width, height);
+    }
+
+    void Window::setTitle(const std::string& title)
+    {
+        m_backend->setTitle(title);
+    }
+
+    void Window::setVisible(bool enable)
+    {
+        m_backend->setVisible(enable);
+    }
+
+    math::int32x2 Window::getWindowSize() const
+    {
+        return m_backend->getWindowSize();
+    }
+
+    math::int32x2 Window::getCursorPosition() const
+    {
+        return m_backend->getCursorPosition();
+    }
+
+    double Window::getDisplayRefreshRate() const
+    {
+        return m_backend->getDisplayRefreshRate();
+    }
+
+    void Window::toggleFullscreen()
+    {
+        m_backend->toggleFullscreen();
+    }
+
+    bool Window::isFullscreen() const
+    {
+        return m_backend->isFullscreen();
+    }
+
+    bool Window::isKeyPressed(Keycode code) const
+    {
+        return m_backend->isKeyPressed(code);
+    }
 
     void Window::enterEventLoop(const EventLoopConfig& config)
     {
         m_event_loop.reset(config);
         syncDisplayRefreshRate();
-        runEventLoop();
+        m_backend->runEventLoop();
     }
 
     void Window::invalidate()
     {
         m_event_loop.invalidate();
-        wakeEventLoop();
+        m_backend->wakeEventLoop();
     }
 
     void Window::requestFrameAt(u64 time_us)
     {
         m_event_loop.next_frame_deadline_us = time_us;
-        wakeEventLoop();
+        m_backend->wakeEventLoop();
     }
 
     void Window::requestFrameIn(double seconds)
@@ -172,7 +249,7 @@ namespace mango
     void Window::breakEventLoop()
     {
         m_event_loop.running = false;
-        wakeEventLoop();
+        m_backend->wakeEventLoop();
     }
 
     const EventLoopConfig& Window::getEventLoopConfig() const
@@ -277,15 +354,6 @@ namespace mango
         }
     }
 
-    void Window::waitForNextIteration()
-    {
-        const u32 timeout = m_event_loop.config.pollTimeoutMs;
-        if (timeout > 0)
-        {
-            Sleep::ms(timeout);
-        }
-    }
-
     void Window::onFrame(const FrameInfo& info)
     {
         MANGO_UNREFERENCED(info);
@@ -296,6 +364,133 @@ namespace mango
         MANGO_UNREFERENCED(width);
         MANGO_UNREFERENCED(height);
         invalidate();
+    }
+
+    void Window::onMinimize()
+    {
+    }
+
+    void Window::onMaximize()
+    {
+    }
+
+    void Window::onKeyPress(Keycode code, u32 mask)
+    {
+        MANGO_UNREFERENCED(code);
+        MANGO_UNREFERENCED(mask);
+    }
+
+    void Window::onKeyRelease(Keycode code)
+    {
+        MANGO_UNREFERENCED(code);
+    }
+
+    void Window::onMouseMove(int x, int y)
+    {
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+    }
+
+    void Window::onMouseClick(int x, int y, MouseButton button, int count)
+    {
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+        MANGO_UNREFERENCED(button);
+        MANGO_UNREFERENCED(count);
+    }
+
+    void Window::onDropFiles(const filesystem::FileIndex& index)
+    {
+        MANGO_UNREFERENCED(index);
+    }
+
+    void Window::onClose()
+    {
+    }
+
+    void Window::onShow()
+    {
+    }
+
+    void Window::onHide()
+    {
+    }
+
+    // ------------------------------------------------------------------------------
+    // Backend factory dispatch
+    // ------------------------------------------------------------------------------
+
+    WindowSystem resolveWindowSystem(WindowSystem ws)
+    {
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+        MANGO_UNREFERENCED(ws);
+        return WindowSystem::Win32;
+#elif defined(MANGO_WINDOW_SYSTEM_COCOA)
+        MANGO_UNREFERENCED(ws);
+        return WindowSystem::Cocoa;
+#else
+        // Linux: pick the requested backend, resolving Default to a sensible
+        // available choice. Honor only backends actually compiled in.
+        switch (ws)
+        {
+#if defined(MANGO_ENABLE_XLIB)
+            case WindowSystem::Xlib:
+                return WindowSystem::Xlib;
+#endif
+#if defined(MANGO_ENABLE_XCB)
+            case WindowSystem::Xcb:
+                return WindowSystem::Xcb;
+#endif
+#if defined(MANGO_ENABLE_WAYLAND)
+            case WindowSystem::Wayland:
+                return WindowSystem::Wayland;
+#endif
+            default:
+                break;
+        }
+
+        // Default / unavailable request -> first compiled-in backend.
+#if defined(MANGO_ENABLE_XLIB)
+        return WindowSystem::Xlib;
+#elif defined(MANGO_ENABLE_XCB)
+        return WindowSystem::Xcb;
+#elif defined(MANGO_ENABLE_WAYLAND)
+        return WindowSystem::Wayland;
+#else
+        return WindowSystem::Default;
+#endif
+#endif
+    }
+
+    std::unique_ptr<WindowBackend> createWindowBackend(WindowSystem ws, Window* window,
+        int width, int height, u32 flags, const char* title)
+    {
+#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+        MANGO_UNREFERENCED(ws);
+        return createWin32Backend(window, width, height, flags, title);
+#elif defined(MANGO_WINDOW_SYSTEM_COCOA)
+        MANGO_UNREFERENCED(ws);
+        return createCocoaBackend(window, width, height, flags, title);
+#else
+        switch (ws)
+        {
+#if defined(MANGO_ENABLE_XLIB)
+            case WindowSystem::Xlib:
+                return createXlibBackend(window, width, height, flags, title);
+#endif
+#if defined(MANGO_ENABLE_XCB)
+            case WindowSystem::Xcb:
+                return createXcbBackend(window, width, height, flags, title);
+#endif
+#if defined(MANGO_ENABLE_WAYLAND)
+            case WindowSystem::Wayland:
+                return createWaylandBackend(window, width, height, flags, title);
+#endif
+            default:
+                break;
+        }
+        return nullptr;
+#endif
     }
 
 } // namespace mango

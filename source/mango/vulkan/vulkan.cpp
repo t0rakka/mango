@@ -7,230 +7,63 @@
 #include <mango/core/print.hpp>
 #include <cstring>
 
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
-    #define VK_USE_PLATFORM_WIN32_KHR
-    #include "../window/win32/win32_window.hpp"
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-    #define VK_USE_PLATFORM_XLIB_KHR
-    #include "../window/xlib/xlib_window.hpp"
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-    #define VK_USE_PLATFORM_XCB_KHR
-    #include "../window/xcb/xcb_window.hpp"
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-    #define VK_USE_PLATFORM_WAYLAND_KHR
-    #include "../window/wayland/wayland_window.hpp"
-#endif
-
 #include <mango/vulkan/vulkan.hpp>
-
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
-    #include "../window/cocoa/cocoa_window.hpp"
-    #include <vulkan/vulkan_metal.h>
-#endif
+#include "../window/window_backend.hpp"
 
 namespace mango::vulkan
 {
 
     // ------------------------------------------------------------------------------
-    // VK_KHR_win32_surface
+    // requiredSurfaceExtensions()
     // ------------------------------------------------------------------------------
 
+    // The actual surface creation (and presentation support query) lives behind
+    // WindowBackend virtuals, so the native window-system headers (xcb, wayland,
+    // Xlib, ...) never have to coexist in this translation unit. Only the surface
+    // extension names are selected here, keyed on the window system.
+
+    std::vector<const char*> requiredSurfaceExtensions(WindowSystem ws)
+    {
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
-
-    std::vector<const char*> requiredSurfaceExtensions()
-    {
+        MANGO_UNREFERENCED(ws);
         return { "VK_KHR_surface", "VK_KHR_win32_surface" };
-    }
-
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
-    {
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-            .hinstance = ::GetModuleHandle(NULL),
-            .hwnd = handle.hwnd
-        };
-
-        VkResult result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkCreateWin32SurfaceKHR : {}", getString(result));
-        }
-
-        return surface;
-    }
-
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, uint32_t queueFamilyIndex, const WindowHandle& handle)
-    {
-        MANGO_UNREFERENCED(handle);
-        return vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
-    }
-
-#endif
-
-    // ------------------------------------------------------------------------------
-    // VK_KHR_xlib_surface
-    // ------------------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-
-    std::vector<const char*> requiredSurfaceExtensions()
-    {
-        return { "VK_KHR_surface", "VK_KHR_xlib_surface" };
-    }
-
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
-    {
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-        VkXlibSurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR,
-            .dpy = static_cast<Display*>(handle.display),
-            .window = static_cast<::Window>(handle.window)
-        };
-
-        VkResult result = vkCreateXlibSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkCreateXlibSurfaceKHR : {}", getString(result));
-        }
-
-        return surface;
-    }
-
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
-    {
-        return vkGetPhysicalDeviceXlibPresentationSupportKHR(physicalDevice, queueFamilyIndex,
-            static_cast<Display*>(handle.display), static_cast<VisualID>(handle.visualid));
-    }
-
-#endif
-
-    // ------------------------------------------------------------------------------
-    // VK_KHR_xcb_surface
-    // ------------------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-    std::vector<const char*> requiredSurfaceExtensions()
-    {
-        return { "VK_KHR_surface", "VK_KHR_xcb_surface" };
-    }
-
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
-    {
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-        VkXcbSurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR,
-            .connection = handle.connection,
-            .window = handle.window
-        };
-
-        VkResult result = vkCreateXcbSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkCreateXcbSurfaceKHR : {}", getString(result));
-        }
-
-        return surface;
-    }
-
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
-    {
-        return vkGetPhysicalDeviceXcbPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.connection, handle.visualid);
-    }
-
-#endif
-
-    // ------------------------------------------------------------------------------
-    // VK_KHR_wayland_surface
-    // ------------------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-    std::vector<const char*> requiredSurfaceExtensions()
-    {
-        return { "VK_KHR_surface", "VK_KHR_wayland_surface" };
-    }
-
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
-    {
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-        VkWaylandSurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR,
-            .display = handle.display,
-            .surface = handle.surface,
-        };
-
-        VkResult result = vkCreateWaylandSurfaceKHR(instance, &surfaceCreateInfo, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkCreateWaylandSurfaceKHR : {}", getString(result));
-        }
-
-        return surface;
-    }
-
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
-    {
-
-        return vkGetPhysicalDeviceWaylandPresentationSupportKHR(physicalDevice, queueFamilyIndex, handle.display);
-    }
-
-#endif
-
-    // ------------------------------------------------------------------------------
-    // VK_EXT_metal_surface
-    // ------------------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
-
-    std::vector<const char*> requiredSurfaceExtensions()
-    {
+#elif defined(MANGO_WINDOW_SYSTEM_COCOA)
+        MANGO_UNREFERENCED(ws);
         return { "VK_KHR_surface", "VK_EXT_metal_surface" };
-    }
+#else
+        // Linux: the backend is selected at runtime, and the instance is created
+        // before the window exists. For a specific request return just that
+        // backend's surface extension; for Default enable every compiled-in
+        // backend's extension so one instance can serve any runtime choice.
+        std::vector<const char*> extensions = { "VK_KHR_surface" };
 
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle)
-    {
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-        VkMetalSurfaceCreateInfoEXT surfaceCreateInfo =
+        switch (ws)
         {
-            .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
-            .pLayer = static_cast<const CAMetalLayer*>(handle.layer),
-        };
-
-        VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkCreateMetalSurfaceEXT : {}", getString(result));
+            case WindowSystem::Xlib:
+                extensions.push_back("VK_KHR_xlib_surface");
+                break;
+            case WindowSystem::Xcb:
+                extensions.push_back("VK_KHR_xcb_surface");
+                break;
+            case WindowSystem::Wayland:
+                extensions.push_back("VK_KHR_wayland_surface");
+                break;
+            default:
+#if defined(MANGO_ENABLE_XLIB)
+                extensions.push_back("VK_KHR_xlib_surface");
+#endif
+#if defined(MANGO_ENABLE_XCB)
+                extensions.push_back("VK_KHR_xcb_surface");
+#endif
+#if defined(MANGO_ENABLE_WAYLAND)
+                extensions.push_back("VK_KHR_wayland_surface");
+#endif
+                break;
         }
 
-        return surface;
-    }
-
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle)
-    {
-        MANGO_UNREFERENCED(physicalDevice);
-        MANGO_UNREFERENCED(queueFamilyIndex);
-        MANGO_UNREFERENCED(handle);
-        return true;
-    }
-
+        return extensions;
 #endif
+    }
 
     // ------------------------------------------------------------------------------
     // ExtensionProperties
@@ -384,12 +217,12 @@ namespace mango::vulkan
     // VulkanWindow
     // ------------------------------------------------------------------------------
 
-    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
-        : Window(width, height, flags | Window::API_VULKAN)
+    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags, WindowSystem ws)
+        : Window(width, height, flags | Window::API_VULKAN, ws)
         , m_instance(instance)
         , m_surface(VK_NULL_HANDLE)
     {
-        m_surface = createSurface(m_instance, *m_window_context);
+        m_surface = m_backend->createVulkanSurface(m_instance);
         if (!m_surface)
         {
             MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
@@ -404,14 +237,9 @@ namespace mango::vulkan
         }
     }
 
-    void VulkanWindow::toggleFullscreen()
+    bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
     {
-        m_window_context->toggleFullscreen();
-    }
-
-    bool VulkanWindow::isFullscreen() const
-    {
-        return m_window_context->isFullscreen();
+        return m_backend->getPresentationSupport(physicalDevice, queueFamilyIndex);
     }
 
     // ------------------------------------------------------------------------------

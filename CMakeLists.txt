@@ -15,12 +15,17 @@ OPTION(BUILD_VULKAN         "Build Vulkan support"                      OFF)
 OPTION(BUILD_IMPORT3D       "Build Import3D support"                    OFF)
 OPTION(BUILD_EXAMPLES       "Build examples"                            OFF)
 
-# Window system selection
-set(WINDOW_SYSTEM "xlib" CACHE STRING "Window system to use (xlib, xcb, wayland)")
-set_property(CACHE WINDOW_SYSTEM PROPERTY STRINGS xlib xcb wayland)
+# Window system backends (Linux). All compiled and linked together so the active
+# backend is chosen at runtime via the WindowSystem enum; toggle one off to drop
+# it from the binary (and its link-time dependency).
+OPTION(ENABLE_XLIB          "Build the Xlib window backend (Linux)"     ON)
+OPTION(ENABLE_XCB           "Build the Xcb window backend (Linux)"      ON)
+OPTION(ENABLE_WAYLAND       "Build the Wayland window backend (Linux)"  ON)
 
-# Select EGL for context management for OpenGL
-OPTION(ENABLE_EGL           "Use EGL for OpenGL context management"    OFF)
+# EGL is used for the Wayland GL context and, optionally, for the X11 backends.
+# It is enabled by default on Linux so Wayland GL always works; the GLX path
+# remains available for X11 regardless.
+OPTION(ENABLE_EGL           "Use EGL for OpenGL context management"     ON)
 
 OPTION(LIBRARY_BZIP2        "Enable BZIP2 compression support"          ON)
 OPTION(LIBRARY_LZ4          "Enable LZ4 compression support"            ON)
@@ -272,33 +277,6 @@ message("Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 set(MANGO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/mango")
 set(MANGO_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango")
 
-function(select_window_system_sources system)
-    if (${system} STREQUAL "xlib")
-        set(WINDOW_SOURCES
-            ${MANGO_SOURCE_DIR}/window/window.cpp
-            ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
-            ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
-            PARENT_SCOPE
-        )
-    elseif (${system} STREQUAL "xcb")
-        set(WINDOW_SOURCES
-            ${MANGO_SOURCE_DIR}/window/window.cpp
-            ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
-            ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
-            PARENT_SCOPE
-        )
-    elseif (${system} STREQUAL "wayland")
-        set(WINDOW_SOURCES
-            ${MANGO_SOURCE_DIR}/window/window.cpp
-            ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
-            ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
-            PARENT_SCOPE
-        )
-    else ()
-        message(FATAL_ERROR "Unsupported window system: ${system}")
-    endif ()
-endfunction()
-
 if (BUILD_OPENGL OR BUILD_VULKAN)
 
     if (NOT EMSCRIPTEN)
@@ -325,9 +303,31 @@ if (BUILD_OPENGL OR BUILD_VULKAN)
 
     elseif (NOT EMSCRIPTEN)
 
-        select_window_system_sources(${WINDOW_SYSTEM})
+        # Linux: compile every enabled backend together; the active one is chosen
+        # at runtime. Each backend keeps its native headers in its own TU.
+        set(WINDOW_SOURCES ${MANGO_SOURCE_DIR}/window/window.cpp)
 
-        if (WINDOW_SYSTEM STREQUAL "wayland")
+        if (ENABLE_XLIB)
+            list(APPEND WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xlib/xlib_window.cpp
+            )
+        endif ()
+
+        if (ENABLE_XCB)
+            list(APPEND WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.hpp
+                ${MANGO_SOURCE_DIR}/window/xcb/xcb_window.cpp
+            )
+        endif ()
+
+        if (ENABLE_WAYLAND)
+            list(APPEND WINDOW_SOURCES
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
+                ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
+            )
+
+            # Always generate the xdg-shell protocol glue for the Wayland backend.
             find_package(PkgConfig REQUIRED)
             pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
             pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
@@ -673,13 +673,17 @@ if (BUILD_VULKAN)
     endif ()
 endif ()
 
-# Window system selection affects OpenGLContext layout in public headers.
+# Enabled window-system backends (Linux). These are PUBLIC because they affect
+# the OpenGL/Vulkan configuration selected in the public headers, and multiple
+# may be set at once (runtime selection).
 if (NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN)
-    if (WINDOW_SYSTEM STREQUAL "xlib")
+    if (ENABLE_XLIB)
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
-    elseif (WINDOW_SYSTEM STREQUAL "xcb")
+    endif ()
+    if (ENABLE_XCB)
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XCB")
-    elseif (WINDOW_SYSTEM STREQUAL "wayland")
+    endif ()
+    if (ENABLE_WAYLAND)
         target_compile_definitions(mango PUBLIC "MANGO_ENABLE_WAYLAND")
     endif ()
 endif ()
@@ -714,34 +718,38 @@ if (BUILD_OPENGL)
             message("    OpenGL: WIN32")
             target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
         else ()
-            if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_link_libraries(mango PUBLIC X11 GL ${OPENGL_glx_LIBRARY} Xrandr)
-                if (ENABLE_EGL)
-                    message("    OpenGL: EGL | XLIB")
-                    target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
-                    target_link_libraries(mango PUBLIC EGL)
-                else ()
-                    message("    OpenGL: GLX | XLIB")
-                endif ()
-            elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_link_libraries(mango PUBLIC xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon xcb-glx GL ${OPENGL_glx_LIBRARY})
-                if (ENABLE_EGL)
-                    message("    OpenGL: EGL | XCB")
-                    target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
-                    target_link_libraries(mango PUBLIC EGL)
-                else ()
-                    message("    OpenGL: GLX | XCB")
-                endif ()
-            elseif (WINDOW_SYSTEM STREQUAL "wayland")
-                message("    OpenGL: EGL | Wayland")
-                target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
+            # Linux: link the union of every enabled backend's GL dependencies.
+            message("    OpenGL: runtime [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND} EGL=${ENABLE_EGL}]")
+
+            target_link_libraries(mango PUBLIC GL)
+
+            if (ENABLE_XLIB OR ENABLE_XCB)
+                # GLX serves the X11 backends.
+                target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
+            endif ()
+
+            if (ENABLE_XLIB)
+                target_link_libraries(mango PUBLIC X11 Xrandr)
+            endif ()
+
+            if (ENABLE_XCB)
+                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xcb-glx xkbcommon)
+            endif ()
+
+            if (ENABLE_WAYLAND)
                 find_package(PkgConfig REQUIRED)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
                 pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
                 target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-                target_link_libraries(mango PUBLIC EGL GL wayland-client wayland-egl xkbcommon)
-            endif()
+                target_link_libraries(mango PUBLIC wayland-client wayland-egl xkbcommon)
+            endif ()
+
+            # EGL: required by Wayland GL, optional for the X11 backends.
+            if (ENABLE_EGL OR ENABLE_WAYLAND)
+                target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
+                target_link_libraries(mango PUBLIC EGL)
+            endif ()
         endif ()
     endif ()
 endif ()
@@ -781,20 +789,26 @@ if (BUILD_VULKAN)
             target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
             target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
         else ()
-            if (WINDOW_SYSTEM STREQUAL "xlib")
-                target_link_libraries(mango PUBLIC X11 Xrandr vulkan)
-                message("    Vulkan: XLIB")
-            elseif (WINDOW_SYSTEM STREQUAL "xcb")
-                target_link_libraries(mango PUBLIC vulkan xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon)
-                message("    Vulkan: XCB")
-            elseif (WINDOW_SYSTEM STREQUAL "wayland")
-                message("    Vulkan: Wayland")
+            # Linux: link the union of every enabled backend's Vulkan dependencies.
+            message("    Vulkan: runtime [XLIB=${ENABLE_XLIB} XCB=${ENABLE_XCB} WAYLAND=${ENABLE_WAYLAND}]")
+
+            target_link_libraries(mango PUBLIC vulkan)
+
+            if (ENABLE_XLIB)
+                target_link_libraries(mango PUBLIC X11 Xrandr)
+            endif ()
+
+            if (ENABLE_XCB)
+                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon)
+            endif ()
+
+            if (ENABLE_WAYLAND)
                 find_package(PkgConfig REQUIRED)
                 pkg_check_modules(WAYLAND REQUIRED wayland-client)
                 pkg_check_modules(XKB REQUIRED xkbcommon)
                 target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-                target_link_libraries(mango PUBLIC vulkan wayland-client xkbcommon)
-            endif()
+                target_link_libraries(mango PUBLIC wayland-client xkbcommon)
+            endif ()
         endif ()
     endif ()
 endif ()

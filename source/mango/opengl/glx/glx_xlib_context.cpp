@@ -7,7 +7,7 @@
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+#if defined(MANGO_ENABLE_XLIB)
 
 #include "../../window/xlib/xlib_window.hpp"
 #define GLX_GLXEXT_PROTOTYPES
@@ -39,10 +39,10 @@ namespace mango
         GLXContext context { 0 };
         bool fullscreen { false };
 
-        WindowContext* window;
+        XlibBackend* window;
 
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
-            : window(*theContext)
+            : window(static_cast<XlibBackend*>(theContext->backend()))
         {
             Display* display = window->x11Display();
             int screen = DefaultScreen(display);
@@ -193,7 +193,7 @@ namespace mango
         }
     };
 
-    OpenGLContextHandle* createOpenGLContextGLX(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContextHandle* createOpenGLContextGLX_Xlib(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
     {
         auto* context = new OpenGLContextGLX(parent, width, height, flags, configPtr, shared);
         return context;
@@ -201,4 +201,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_XLIB)
+#endif // defined(MANGO_ENABLE_XLIB)

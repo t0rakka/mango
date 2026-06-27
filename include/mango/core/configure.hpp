@@ -155,14 +155,13 @@
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Linux"
 
-    #if defined(MANGO_ENABLE_XLIB)
-        #define MANGO_WINDOW_SYSTEM_XLIB
-    #elif defined(MANGO_ENABLE_XCB)
-        #define MANGO_WINDOW_SYSTEM_XCB
-    #elif defined(MANGO_ENABLE_WAYLAND)
-        #define MANGO_WINDOW_SYSTEM_WAYLAND
-    #else
-        #define MANGO_WINDOW_SYSTEM_XLIB
+    // Runtime window-system selection: the Xlib, Xcb and Wayland backends are
+    // compiled and linked together and chosen at runtime via WindowSystem. The
+    // MANGO_ENABLE_* toggles (set by CMake) decide which backends exist in the
+    // binary; multiple may be enabled simultaneously. If none were requested,
+    // default to Xlib so the library always has at least one backend.
+    #if !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB) && !defined(MANGO_ENABLE_WAYLAND)
+        #define MANGO_ENABLE_XLIB
     #endif
 
     #include <stdint.h>
@@ -207,7 +206,7 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-    #define MANGO_WINDOW_SYSTEM_XLIB
+    #define MANGO_ENABLE_XLIB
 
 #elif defined (__EMSCRIPTEN__)
 

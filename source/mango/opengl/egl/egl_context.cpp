@@ -13,19 +13,18 @@
 
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-#include "../../window/xlib/xlib_window.hpp"
-#endif
+#include "../../window/window_backend.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-#include "../../window/xcb/xcb_window.hpp"
-#endif
+// This translation unit serves every Linux backend (xlib / xcb / wayland), so it
+// must not pull in any backend-specific native window header. Force EGL's native
+// handle types to be opaque (void*/integer) instead of the X11 or Wayland types,
+// and exchange the real handles with the backend through WindowBackend's
+// eglNativeDisplay()/eglNativeWindow() hooks.
+#define MESA_EGL_NO_X11_HEADERS
+#define EGL_NO_X11
+#define USE_OZONE
 
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-#include "../../window/wayland/wayland_window.hpp"
-#include <wayland-egl.h>
-#endif
-
+#include <cstdint>
 #include <EGL/egl.h>
 #include <EGL/eglext.h>
 
@@ -175,18 +174,17 @@ namespace mango
         EGLContext egl_context = EGL_NO_CONTEXT;
         EGLSurface egl_surface = EGL_NO_SURFACE;
 
-        WindowContext* window;
+        WindowBackend* window;
 
         OpenGLContextEGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-            : window(*theContext)
+            : window(theContext->backend())
         {
-
-            //egl_display = eglGetDisplay((EGLNativeDisplayType)window->display);
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-            egl_display = eglGetDisplay(reinterpret_cast<EGLNativeDisplayType>(window->display));
-#else
-            egl_display = eglGetDisplay(EGL_DEFAULT_DISPLAY);
-#endif
+            // Native display: nullptr selects EGL_DEFAULT_DISPLAY (X11); Wayland
+            // hands back its wl_display.
+            void* native_display = window->eglNativeDisplay();
+            egl_display = eglGetDisplay(native_display
+                ? reinterpret_cast<EGLNativeDisplayType>(native_display)
+                : EGL_DEFAULT_DISPLAY);
             if (egl_display == EGL_NO_DISPLAY)
             {
                 shutdown();
@@ -227,16 +225,19 @@ namespace mango
             EGLConfig eglConfig = nullptr;
             bool srgb_surface = false;
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-
-            if (!window->init(0, 0, nullptr, width, height, flags, "OpenGL|ES"))
+            // Ask the backend to create the OS window (X11) or wl_egl_window
+            // (Wayland) and return the EGLNativeWindowType packed into a void*.
+            void* native = window->eglNativeWindow(width, height, flags);
+            if (!native)
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
+                MANGO_EXCEPTION("[OpenGLContextEGL] native window creation failed.");
             }
 
+            EGLNativeWindowType native_window = (EGLNativeWindowType)(std::uintptr_t)native;
+
             {
-                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs, *window);
+                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs, native_window);
                 if (!choice.config)
                 {
                     shutdown();
@@ -245,61 +246,6 @@ namespace mango
                 eglConfig = choice.config;
                 srgb_surface = choice.srgb;
             }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-            if (!window->init(width, height, flags, "OpenGL|ES"))
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] createWindow() failed.");
-            }
-
-            {
-                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs, *window);
-                if (!choice.config)
-                {
-                    shutdown();
-                    MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
-                }
-                eglConfig = choice.config;
-                srgb_surface = choice.srgb;
-            }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-            if (!window->surface)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] Wayland surface is not ready.");
-            }
-
-            const int egl_width = std::max(1, window->size[0] > 0 ? window->size[0] : width);
-            const int egl_height = std::max(1, window->size[1] > 0 ? window->size[1] : height);
-
-            window->egl_window = wl_egl_window_create(window->surface, egl_width, egl_height);
-            if (!window->egl_window)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] wl_egl_window_create() failed.");
-            }
-
-            {
-                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs,
-                    static_cast<EGLNativeWindowType>(window->egl_window));
-                if (!choice.config)
-                {
-                    shutdown();
-                    MANGO_EXCEPTION("[OpenGLContextEGL] eglChooseConfig() failed.");
-                }
-                eglConfig = choice.config;
-                srgb_surface = choice.srgb;
-            }
-
-#endif
 
             egl_context = eglCreateContext(egl_display, eglConfig, shared_context, contextAttribs);
             if (egl_context == EGL_NO_CONTEXT)
@@ -310,42 +256,15 @@ namespace mango
 
             printLine("[EGL] eglCreateContext() : OK");
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-
-            egl_surface = createEGLWindowSurface(egl_display, eglConfig, *window, srgb_surface);
+            egl_surface = createEGLWindowSurface(egl_display, eglConfig, native_window, srgb_surface);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
             }
 
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-            egl_surface = createEGLWindowSurface(egl_display, eglConfig, *window, srgb_surface);
-            if (egl_surface == EGL_NO_SURFACE)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
-            }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-            egl_surface = createEGLWindowSurface(egl_display, eglConfig,
-                static_cast<EGLNativeWindowType>(window->egl_window), srgb_surface);
-            if (egl_surface == EGL_NO_SURFACE)
-            {
-                shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
-            }
-
-            wl_display_roundtrip(window->display);
-            window->syncEGLWindow();
-
-#endif
+            // Wayland needs a roundtrip + egl-window resync once the surface exists.
+            window->eglPresent();
 
             if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
             {
@@ -384,9 +303,7 @@ namespace mango
 
         void swapBuffers() override
         {
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-            window->syncEGLWindow();
-#endif
+            window->eglPresent();
             eglSwapBuffers(egl_display, egl_surface);
         }
 
@@ -394,8 +311,6 @@ namespace mango
         {
             eglSwapInterval(egl_display, interval);
         }
-
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
 
         void toggleFullscreen() override
         {
@@ -409,38 +324,6 @@ namespace mango
             window->busy = false;
             eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
         }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-    void toggleFullscreen() override
-    {
-        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        window->busy = true;
-
-        window->toggleFullscreen();
-
-        window->busy = false;
-        eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-    }
-
-#endif
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-    void toggleFullscreen() override
-    {
-        eglMakeCurrent(egl_display, EGL_NO_SURFACE, EGL_NO_SURFACE, EGL_NO_CONTEXT);
-        window->busy = true;
-
-        window->toggleFullscreen();
-
-        window->busy = false;
-        eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context);
-    }
-
-#endif
 
         bool isFullscreen() const override
         {

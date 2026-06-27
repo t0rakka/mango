@@ -6,9 +6,18 @@
 #include <sstream>
 #include <chrono>
 #include <thread>
+#include <mango/core/configure.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
+#include <mango/core/exception.hpp>
 #include <mango/window/window.hpp>
+
+// Define the Vulkan platform before window_backend.hpp pulls in <vulkan/vulkan.h>,
+// so VkWin32SurfaceCreateInfoKHR and friends are available in this TU only.
+#if defined(MANGO_ENABLE_VULKAN)
+    #define VK_USE_PLATFORM_WIN32_KHR
+#endif
+
 #include "win32_window.hpp"
 
 #if defined(MANGO_WINDOW_SYSTEM_WIN32)
@@ -774,21 +783,29 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // Window
+    // Win32Backend factory
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height, u32 flags)
+    std::unique_ptr<WindowBackend> createWin32Backend(Window* window, int width, int height, u32 flags, const char* title)
     {
-        m_window_context = std::make_unique<WindowContext>(width, height, flags);
+        auto backend = std::make_unique<WindowContext>(width, height, flags);
+        backend->owner = window;
 
         // register listener window
-        LONG_PTR userdata = reinterpret_cast<LONG_PTR>(this);
-        ::SetWindowLongPtr(m_window_context->hwnd, GWLP_USERDATA, userdata);
+        LONG_PTR userdata = reinterpret_cast<LONG_PTR>(window);
+        ::SetWindowLongPtr(backend->hwnd, GWLP_USERDATA, userdata);
+
+        if (title)
+        {
+            backend->setTitle(title);
+        }
+
+        return backend;
     }
 
-    Window::~Window()
-    {
-    }
+    // -----------------------------------------------------------------------
+    // Window (static, screen queries)
+    // -----------------------------------------------------------------------
 
     int Window::getScreenCount()
     {
@@ -809,65 +826,59 @@ namespace mango
         return screens[index].resolution;
     }
 
-    Window::operator WindowHandle () const
+    // -----------------------------------------------------------------------
+    // WindowContext (Win32Backend)
+    // -----------------------------------------------------------------------
+
+    void WindowContext::setWindowPosition(int x, int y)
     {
-        return *m_window_context;
+        ::SetWindowPos(hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
     }
 
-    Window::operator WindowContext* () const
+    void WindowContext::setWindowSize(int width, int height)
     {
-        return m_window_context.get();
+        RECT r { 0, 0, width - 1, height - 1 };
+        ::AdjustWindowRect(&r, (DWORD)GWL_STYLE, FALSE);
+
+        width = r.right - r.left + 1;
+        height = r.bottom - r.top + 1;
+
+        ::SetWindowPos(hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
     }
 
-    void Window::setWindowPosition(int x, int y)
-    {
-        ::SetWindowPos(m_window_context->hwnd, HWND_TOP, x, y, 0, 0, SWP_NOSIZE | SWP_NOZORDER);
-    }
-
-    void Window::setWindowSize(int width, int height)
-    {
-        RECT rect { 0, 0, width - 1, height - 1 };
-        ::AdjustWindowRect(&rect, (DWORD)GWL_STYLE, FALSE);
-
-        width = rect.right - rect.left + 1;
-        height = rect.bottom - rect.top + 1;
-
-        ::SetWindowPos(m_window_context->hwnd, HWND_TOP, 0, 0, width, height, SWP_NOMOVE | SWP_NOZORDER);
-    }
-
-    void Window::setTitle(const std::string& title)
+    void WindowContext::setTitle(const std::string& title)
     {
         std::wstring name = mango::u16_fromBytes(title);
-        ::SetWindowTextW(m_window_context->hwnd, name.c_str());
+        ::SetWindowTextW(hwnd, name.c_str());
     }
 
-    void Window::setVisible(bool enable)
+    void WindowContext::setVisible(bool enable)
     {
         int command = enable ? SW_SHOWNORMAL : SW_HIDE;
-        ::ShowWindow(m_window_context->hwnd, command);
+        ::ShowWindow(hwnd, command);
     }
 
-    int32x2 Window::getWindowSize() const
+    int32x2 WindowContext::getWindowSize() const
     {
-        RECT rect;
-        ::GetClientRect(m_window_context->hwnd, &rect);
-        return int32x2(rect.right - rect.left, rect.bottom - rect.top);
+        RECT r;
+        ::GetClientRect(hwnd, &r);
+        return int32x2(r.right - r.left, r.bottom - r.top);
     }
 
-    int32x2 Window::getCursorPosition() const
+    int32x2 WindowContext::getCursorPosition() const
     {
         POINT p;
         ::GetCursorPos(&p);
-        ::ScreenToClient(m_window_context->hwnd, &p);
+        ::ScreenToClient(hwnd, &p);
         return int32x2(int(p.x), int(p.y));
     }
 
-    bool Window::isKeyPressed(Keycode code) const
+    bool WindowContext::isKeyPressed(Keycode code) const
     {
         bool pressed = false;
 
         HWND active = ::GetActiveWindow();
-        if (m_window_context->hwnd == active)
+        if (hwnd == active)
         {
             int v = enumToVirtual(code);
             pressed = (::GetAsyncKeyState(v) & 0x8000) != 0;
@@ -876,27 +887,27 @@ namespace mango
         return pressed;
     }
 
-    double Window::getDisplayRefreshRate() const
+    double WindowContext::getDisplayRefreshRate() const
     {
-        return queryWin32RefreshRate(m_window_context->hwnd);
+        return queryWin32RefreshRate(hwnd);
     }
 
-    void Window::wakeEventLoop()
+    void WindowContext::wakeEventLoop()
     {
         // Post a no-op message so a loop blocked in MsgWaitForMultipleObjectsEx
         // returns at once. PostMessage is thread-safe, so a cross-thread invalidate /
         // requestFrame / breakEventLoop is observed immediately.
-        ::PostMessage(m_window_context->hwnd, WM_NULL, 0, 0);
+        ::PostMessage(hwnd, WM_NULL, 0, 0);
     }
 
-    void Window::runEventLoop()
+    void WindowContext::runEventLoop()
     {
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        syncDisplayRefreshRate();
+        owner->syncDisplayRefreshRate();
 
-        while (isRunning())
+        while (owner->isRunning())
         {
             // Drain all pending messages. A NULL filter also delivers thread messages
             // (e.g. WM_QUIT); DispatchMessage routes each to the window procedure.
@@ -904,7 +915,7 @@ namespace mango
             {
                 if (msg.message == WM_QUIT)
                 {
-                    breakEventLoop();
+                    owner->breakEventLoop();
                     break;
                 }
 
@@ -912,14 +923,14 @@ namespace mango
                 ::DispatchMessage(&msg);
             }
 
-            if (!isRunning())
+            if (!owner->isRunning())
             {
                 break;
             }
 
-            dispatchFrame();
+            owner->dispatchFrame();
 
-            if (!isRunning())
+            if (!owner->isRunning())
             {
                 break;
             }
@@ -928,7 +939,7 @@ namespace mango
             // instead of busy-polling with Sleep(). This is what drops idle CPU to ~0%:
             // when nothing is scheduled the loop sleeps (INFINITE) until real input
             // arrives or wakeEventLoop() posts a message.
-            const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
             if (timeout != 0)
             {
                 const DWORD wait = (timeout == EventLoopState::WAIT_INFINITE)
@@ -940,55 +951,34 @@ namespace mango
         }
     }
 
-    void Window::onMinimize()
+#if defined(MANGO_ENABLE_VULKAN)
+
+    VkSurfaceKHR WindowContext::createVulkanSurface(VkInstance instance)
     {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
+            .hinstance = ::GetModuleHandle(NULL),
+            .hwnd = hwnd
+        };
+
+        VkResult result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
+        if (result != VK_SUCCESS)
+        {
+            MANGO_EXCEPTION("[WindowContext] vkCreateWin32SurfaceKHR failed.");
+        }
+
+        return surface;
     }
 
-    void Window::onMaximize()
+    bool WindowContext::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
     {
+        return vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
     }
 
-    void Window::onKeyPress(Keycode code, u32 mask)
-    {
-        MANGO_UNREFERENCED(code);
-        MANGO_UNREFERENCED(mask);
-    }
-
-    void Window::onKeyRelease(Keycode code)
-    {
-        MANGO_UNREFERENCED(code);
-    }
-
-    void Window::onMouseMove(int x, int y)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-    }
-
-    void Window::onMouseClick(int x, int y, MouseButton button, int count)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-        MANGO_UNREFERENCED(button);
-        MANGO_UNREFERENCED(count);
-    }
-
-    void Window::onDropFiles(const filesystem::FileIndex& index)
-    {
-        MANGO_UNREFERENCED(index);
-    }
-
-    void Window::onClose()
-    {
-    }
-
-    void Window::onShow()
-    {
-    }
-
-    void Window::onHide()
-    {
-    }
+#endif // defined(MANGO_ENABLE_VULKAN)
 
 } // namespace mango
 

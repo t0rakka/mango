@@ -7,7 +7,7 @@
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
+#if defined(MANGO_ENABLE_XCB)
 
 #define explicit explicit_
 #include <xcb/xcb.h>
@@ -39,10 +39,10 @@ namespace mango
     {
         GLXContext context { 0 };
         Display* display { nullptr };
-        WindowContext* window;
+        XcbBackend* window;
 
         OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
-            : window(*theContext)
+            : window(static_cast<XcbBackend*>(theContext->backend()))
         {
             display = XOpenDisplay(NULL);
             int screen = DefaultScreen(display);
@@ -209,7 +209,7 @@ namespace mango
         }
     };
 
-    OpenGLContextHandle* createOpenGLContextGLX(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContextHandle* createOpenGLContextGLX_Xcb(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
     {
         auto* context = new OpenGLContextGLX(parent, width, height, flags, configPtr, shared);
         return context;
@@ -217,4 +217,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_XCB)
+#endif // defined(MANGO_ENABLE_XCB)

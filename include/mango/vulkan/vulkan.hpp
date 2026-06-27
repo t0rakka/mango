@@ -124,7 +124,7 @@ namespace mango::vulkan
         VkSurfaceKHR m_surface;
 
     public:
-        VulkanWindow(VkInstance instance, int width, int height, u32 flags);
+        VulkanWindow(VkInstance instance, int width, int height, u32 flags, WindowSystem ws = WindowSystem::Default);
         ~VulkanWindow();
 
         operator VkInstance () const
@@ -132,16 +132,16 @@ namespace mango::vulkan
             return m_instance;
         }
 
-        void toggleFullscreen() override;
-        bool isFullscreen() const override;
+        // Whether the selected backend's surface supports presentation on the
+        // given queue family. Forwards to the active window backend.
+        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex);
     };
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
 
-    VkSurfaceKHR createSurface(VkInstance instance, const WindowHandle& handle);
-    bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex, const WindowHandle& handle);
-
-    std::vector<const char*> requiredSurfaceExtensions();
+    // Surface extensions required before any window/surface exists; keyed on the
+    // window system that will be used (resolve WindowSystem::Default first).
+    std::vector<const char*> requiredSurfaceExtensions(WindowSystem ws);
     std::vector<const char*> requiredDeviceExtensions();
 
     std::vector<VkLayerProperties>       getInstanceLayerProperties();

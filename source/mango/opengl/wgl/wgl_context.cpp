@@ -53,7 +53,7 @@ namespace mango
         WindowContext* window;
 
         OpenGLContextWGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
-            : window(*theContext)
+            : window(static_cast<WindowContext*>(theContext->backend()))
         {
             MANGO_UNREFERENCED(flags);
             OpenGLContextWGL* shared = reinterpret_cast<OpenGLContextWGL*>(theShared);

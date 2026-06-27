@@ -46,22 +46,8 @@ namespace mango
     using namespace mango::image;
 
     // -----------------------------------------------------------------------
-    // Window
+    // Window (static, screen queries)
     // -----------------------------------------------------------------------
-
-    Window::Window(int width, int height, u32 flags)
-    {
-        m_window_context = std::make_unique<WindowContext>();
-
-        if (!m_window_context->init(this, width, height, flags, "Mango"))
-        {
-            MANGO_EXCEPTION("[Window] Creating window failed.");
-        }
-    }
-
-    Window::~Window()
-    {
-    }
 
     int Window::getScreenCount()
     {
@@ -78,37 +64,42 @@ namespace mango
         return math::int32x2(w, h);
     }
 
-    Window::operator WindowHandle () const
+    // -----------------------------------------------------------------------
+    // WindowContext (CocoaBackend)
+    // -----------------------------------------------------------------------
+
+    std::unique_ptr<WindowBackend> createCocoaBackend(Window* window, int width, int height, u32 flags, const char* title)
     {
-        return *m_window_context;
+        auto backend = std::make_unique<WindowContext>();
+        backend->owner = window;
+        if (!backend->init(window, width, height, flags, title))
+        {
+            return nullptr;
+        }
+        return backend;
     }
 
-    Window::operator WindowContext* () const
+    void WindowContext::setWindowPosition(int x, int y)
     {
-        return m_window_context.get();
-    }
-
-    void Window::setWindowPosition(int x, int y)
-    {
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         [win setFrameTopLeftPoint:NSMakePoint(x, y)];
     }
 
-    void Window::setWindowSize(int width, int height)
+    void WindowContext::setWindowSize(int width, int height)
     {
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         [win setContentSize:NSMakeSize(width, height)];
     }
 
-    void Window::setTitle(const std::string& title)
+    void WindowContext::setTitle(const std::string& title)
     {
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         [win setTitle:[NSString stringWithUTF8String:title.c_str()]];
     }
 
-    void Window::setVisible(bool enable)
+    void WindowContext::setVisible(bool enable)
     {
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         if (enable)
         {
             [win makeKeyAndOrderFront:nil];
@@ -119,28 +110,28 @@ namespace mango
         }
     }
 
-    math::int32x2 Window::getWindowSize() const
+    math::int32x2 WindowContext::getWindowSize() const
     {
-        if (m_window_context->content_view)
+        if (content_view)
         {
-            return m_window_context->getContentSize();
+            return getContentSize();
         }
 
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         NSRect rect = [[win contentView] frame];
         rect = [[win contentView] convertRectToBacking:rect];
         return math::int32x2(int(rect.size.width), int(rect.size.height));
     }
 
-    math::int32x2 Window::getCursorPosition() const
+    math::int32x2 WindowContext::getCursorPosition() const
     {
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         NSRect rect = [[win contentView] frame];
         NSPoint point = [win mouseLocationOutsideOfEventStream];
         return math::int32x2(int(point.x), int(rect.size.height - point.y - 1));
     }
 
-    bool Window::isKeyPressed(Keycode code) const
+    bool WindowContext::isKeyPressed(Keycode code) const
     {
         switch (code)
         {
@@ -155,13 +146,13 @@ namespace mango
         }
 
         const int keyIndex = int(code);
-        u32 state = m_window_context->keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
+        u32 state = keystate[keyIndex >> 5] & (1 << (keyIndex & 31));
         return state != 0;
     }
 
-    double Window::getDisplayRefreshRate() const
+    double WindowContext::getDisplayRefreshRate() const
     {
-        NSWindow* win = (__bridge NSWindow*)m_window_context->ns_window;
+        NSWindow* win = (__bridge NSWindow*)ns_window;
         if (!win)
         {
             return 0.0;
@@ -198,7 +189,7 @@ namespace mango
         return 0.0;
     }
 
-    void Window::wakeEventLoop()
+    void WindowContext::wakeEventLoop()
     {
         // Post a no-op event so a loop blocked in nextEventMatchingMask returns at
         // once. postEvent:atStart: is safe to call from any thread, so a cross-thread
@@ -218,14 +209,14 @@ namespace mango
         }
     }
 
-    void Window::runEventLoop()
+    void WindowContext::runEventLoop()
     {
-        syncDisplayRefreshRate();
+        owner->syncDisplayRefreshRate();
 
-        while (isRunning())
+        while (owner->isRunning())
         {
             // How long we may block before the next frame is due.
-            const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
 
             NSDate* deadline;
             if (timeout == 0)
@@ -260,56 +251,8 @@ namespace mango
                          dequeue:YES];
             }
 
-            dispatchFrame();
+            owner->dispatchFrame();
         }
-    }
-
-    void Window::onMinimize()
-    {
-    }
-    void Window::onMaximize()
-    {
-    }
-
-    void Window::onKeyPress(Keycode code, u32 mask)
-    {
-        MANGO_UNREFERENCED(code); MANGO_UNREFERENCED(mask);
-    }
-
-    void Window::onKeyRelease(Keycode code)
-    {
-        MANGO_UNREFERENCED(code); 
-    }
-
-    void Window::onMouseMove(int x, int y)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-    }
-
-    void Window::onMouseClick(int x, int y, MouseButton button, int count)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-        MANGO_UNREFERENCED(button);
-        MANGO_UNREFERENCED(count);
-    }
-
-    void Window::onDropFiles(const filesystem::FileIndex& index)
-    {
-        MANGO_UNREFERENCED(index);
-    }
-
-    void Window::onClose()
-    {
-    }
-
-    void Window::onShow()
-    {
-    }
-
-    void Window::onHide()
-    {
     }
 
 } // namespace mango

@@ -2,15 +2,21 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <mango/core/configure.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/timer.hpp>
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
+#if defined(MANGO_ENABLE_XLIB)
+
+#if defined(MANGO_ENABLE_VULKAN)
+    #define VK_USE_PLATFORM_XLIB_KHR
+#endif
 
 #include "xlib_window.hpp"
 
+#include <cstdint>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -601,19 +607,19 @@ namespace mango
     using namespace mango::image;
 
     // -----------------------------------------------------------------------
-    // WindowContext
+    // XlibBackend
     // -----------------------------------------------------------------------
 
-    WindowContext::WindowContext()
+    XlibBackend::XlibBackend()
     {
         display = XOpenDisplay(NULL);
         if (!display)
         {
-            MANGO_EXCEPTION("[WindowContext] XOpenDisplay() failed.");
+            MANGO_EXCEPTION("[XlibBackend] XOpenDisplay() failed.");
         }
     }
 
-    WindowContext::~WindowContext()
+    XlibBackend::~XlibBackend()
     {
         Display* dpy = x11Display();
         if (dpy)
@@ -642,7 +648,7 @@ namespace mango
         }
     }
 
-    bool WindowContext::init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title)
+    bool XlibBackend::init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title)
     {
         Display* dpy = x11Display();
         if (!dpy)
@@ -753,7 +759,7 @@ namespace mango
         return true;
     }
 
-    void WindowContext::toggleFullscreen()
+    void XlibBackend::toggleFullscreen()
     {
         Display* dpy = x11Display();
         ::Window win = x11Window();
@@ -800,12 +806,12 @@ namespace mango
         fullscreen = !fullscreen;
     }
 
-    bool WindowContext::isFullscreen() const
+    bool XlibBackend::isFullscreen() const
     {
         return fullscreen;
     }
 
-    math::int32x2 WindowContext::getWindowSize() const
+    math::int32x2 XlibBackend::getWindowSize() const
     {
         XWindowAttributes attributes;
         XGetWindowAttributes(x11Display(), x11Window(), &attributes);
@@ -813,31 +819,35 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // Window
+    // XlibBackend factory
     // -----------------------------------------------------------------------
 
-    Window::Window(int width, int height, u32 flags)
+    std::unique_ptr<WindowBackend> createXlibBackend(Window* window, int width, int height, u32 flags, const char* title)
     {
-        m_window_context = std::make_unique<WindowContext>();
+        auto backend = std::make_unique<XlibBackend>();
+        backend->owner = window;
 
-        if (flags & API_OPENGL)
+        if (flags & Window::API_OPENGL)
         {
-            // GLX and EGL must to choose a visual before creating the window
+            // GLX and EGL must choose a visual before creating the window;
+            // the GL context creation calls init() once the visual is known.
         }
         else
         {
-            int screen = DefaultScreen(m_window_context->x11Display());
-            int depth = DefaultDepth(m_window_context->x11Display(), screen);
-            if (!m_window_context->init(screen, depth, nullptr, width, height, flags, "XLIB Window"))
+            int screen = DefaultScreen(backend->x11Display());
+            int depth = DefaultDepth(backend->x11Display(), screen);
+            if (!backend->init(screen, depth, nullptr, width, height, flags, title))
             {
-                MANGO_EXCEPTION("[Window] Creating window failed.");
+                return nullptr;
             }
         }
+
+        return backend;
     }
 
-    Window::~Window()
-    {
-    }
+    // -----------------------------------------------------------------------
+    // Window (static, screen queries)
+    // -----------------------------------------------------------------------
 
     int Window::getScreenCount()
     {
@@ -877,52 +887,41 @@ namespace mango
         return int32x2(width, height);
     }
 
-    Window::operator WindowHandle () const
+    // -----------------------------------------------------------------------
+    // XlibBackend (window operations + event loop)
+    // -----------------------------------------------------------------------
+
+    void XlibBackend::setWindowPosition(int x, int y)
     {
-        return *m_window_context;
+        XMoveWindow(x11Display(), x11Window(), x, y);
     }
 
-    Window::operator WindowContext* () const
+    void XlibBackend::setWindowSize(int width, int height)
     {
-        return m_window_context.get();
+        XResizeWindow(x11Display(), x11Window(), width, height);
     }
 
-    void Window::setWindowPosition(int x, int y)
+    void XlibBackend::setTitle(const std::string& title)
     {
-        XMoveWindow(m_window_context->x11Display(), m_window_context->x11Window(), x, y);
+        XStoreName(x11Display(), x11Window(), title.c_str());
+        XMapWindow(x11Display(), x11Window());
     }
 
-    void Window::setWindowSize(int width, int height)
-    {
-        XResizeWindow(m_window_context->x11Display(), m_window_context->x11Window(), width, height);
-    }
-
-    void Window::setTitle(const std::string& title)
-    {
-        XStoreName(m_window_context->x11Display(), m_window_context->x11Window(), title.c_str());
-        XMapWindow(m_window_context->x11Display(), m_window_context->x11Window());
-    }
-
-    void Window::setVisible(bool enable)
+    void XlibBackend::setVisible(bool enable)
     {
         if (enable)
         {
-            XMapRaised(m_window_context->x11Display(), m_window_context->x11Window());
-            XFlush(m_window_context->x11Display());
+            XMapRaised(x11Display(), x11Window());
+            XFlush(x11Display());
         }
         else
         {
-            XUnmapWindow(m_window_context->x11Display(), m_window_context->x11Window());
-            XFlush(m_window_context->x11Display());
+            XUnmapWindow(x11Display(), x11Window());
+            XFlush(x11Display());
         }
     }
 
-    int32x2 Window::getWindowSize() const
-    {
-        return m_window_context->getWindowSize();
-    }
-
-    int32x2 Window::getCursorPosition() const
+    int32x2 XlibBackend::getCursorPosition() const
     {
         ::Window root;
         ::Window child;
@@ -930,12 +929,12 @@ namespace mango
         int child_x, child_y;
         unsigned int mask;
 
-        XQueryPointer(m_window_context->x11Display(), m_window_context->x11Window(), &root, &child,
+        XQueryPointer(x11Display(), x11Window(), &root, &child,
                       &root_x, &root_y, &child_x, &child_y, &mask);
         return int32x2(child_x, child_y);
     }
 
-    bool Window::isKeyPressed(Keycode code) const
+    bool XlibBackend::isKeyPressed(Keycode code) const
     {
         switch (code)
         {
@@ -954,16 +953,16 @@ namespace mango
         // get window with input focus
         ::Window focused;
         int temp;
-        XGetInputFocus(m_window_context->x11Display(), &focused, &temp);
+        XGetInputFocus(x11Display(), &focused, &temp);
 
         // only report keys for our window when it has input focus
-        if (m_window_context->x11Window() == focused)
+        if (x11Window() == focused)
         {
             char keys[32];
-            XQueryKeymap(m_window_context->x11Display(), keys);
+            XQueryKeymap(x11Display(), keys);
 
             KeySym symbol = translateKeycodeToSymbol(code);
-            int keyidx = XKeysymToKeycode(m_window_context->x11Display(), symbol);
+            int keyidx = XKeysymToKeycode(x11Display(), symbol);
 
             if (keyidx >=0 && keyidx < 255)
             {
@@ -974,12 +973,12 @@ namespace mango
         return pressed;
     }
 
-    double Window::getDisplayRefreshRate() const
+    double XlibBackend::getDisplayRefreshRate() const
     {
-        return queryXlibRefreshRate(m_window_context->x11Display(), m_window_context->x11Window());
+        return queryXlibRefreshRate(x11Display(), x11Window());
     }
 
-    void Window::wakeEventLoop()
+    void XlibBackend::wakeEventLoop()
     {
         // The loop blocks in poll() on the X connection fd. Same-thread state changes
         // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
@@ -987,21 +986,21 @@ namespace mango
         // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
-    void Window::runEventLoop()
+    void XlibBackend::runEventLoop()
     {
         for (int i = 0; i < 6; ++i)
         {
-            m_window_context->mouse_time[i] = 0;
+            mouse_time[i] = 0;
         }
 
-        syncDisplayRefreshRate();
+        owner->syncDisplayRefreshRate();
 
-        while (isRunning())
+        while (owner->isRunning())
         {
-            while (XPending(m_window_context->x11Display()) > 0)
+            while (XPending(x11Display()) > 0)
             {
                 XEvent e;
-                XNextEvent(m_window_context->x11Display(), &e);
+                XNextEvent(x11Display(), &e);
 
                 switch (e.type)
                 {
@@ -1019,11 +1018,11 @@ namespace mango
                             {
                                 // Simulate double click
                                 u32 time = Time::ms();
-                                if (time - m_window_context->mouse_time[button] < 300)
+                                if (time - mouse_time[button] < 300)
                                 {
                                     count = 2;
                                 }
-                                m_window_context->mouse_time[button] = time;
+                                mouse_time[button] = time;
                                 break;
                             }
 
@@ -1036,25 +1035,25 @@ namespace mango
                                 break;
                         }
 
-                        onMouseClick(e.xbutton.x, e.xbutton.y, button, count);
+                        owner->onMouseClick(e.xbutton.x, e.xbutton.y, button, count);
                         break;
                     }
 
                     case ButtonRelease:
                     {
                         MouseButton button = translateButton(e.xbutton.button);
-                        onMouseClick(e.xbutton.x, e.xbutton.y, button, 0);
+                        owner->onMouseClick(e.xbutton.x, e.xbutton.y, button, 0);
                         break;
                     }
 
                     case MotionNotify:
-                        onMouseMove(e.xmotion.x, e.xmotion.y);
+                        owner->onMouseMove(e.xmotion.x, e.xmotion.y);
                         break;
 
                     case KeyPress:
                     {
                         u32 mask = translateKeyMask(e.xkey.state);
-                        onKeyPress(translateEventToKeycode(&e), mask);
+                        owner->onKeyPress(translateEventToKeycode(&e), mask);
                         break;
                     }
 
@@ -1062,24 +1061,24 @@ namespace mango
                     {
                         bool is_repeat = false;
 
-                        if (XEventsQueued(m_window_context->x11Display(), QueuedAfterReading))
+                        if (XEventsQueued(x11Display(), QueuedAfterReading))
                         {
                             XEvent next;
-                            XPeekEvent(m_window_context->x11Display(), &next);
+                            XPeekEvent(x11Display(), &next);
 
                             if (next.type == KeyPress &&
                                 next.xkey.time == e.xkey.time &&
                                 next.xkey.keycode == e.xkey.keycode)
                             {
                                 // delete repeated KeyPress event
-                                XNextEvent(m_window_context->x11Display(), &e);
+                                XNextEvent(x11Display(), &e);
                                 is_repeat = true;
                             }
                         }
 
                         if (!is_repeat)
                         {
-                            onKeyRelease(translateEventToKeycode(&e));
+                            owner->onKeyRelease(translateEventToKeycode(&e));
                         }
                         break;
                     }
@@ -1089,26 +1088,26 @@ namespace mango
                         // Filter identical notifications
                         int width = e.xconfigure.width;
                         int height = e.xconfigure.height;
-                        if (width != m_window_context->size[0] || height != m_window_context->size[1])
+                        if (width != size[0] || height != size[1])
                         {
-                            m_window_context->size[0] = width;
-                            m_window_context->size[1] = height;
+                            size[0] = width;
+                            size[1] = height;
 
-                            if (!m_window_context->busy)
+                            if (!busy)
                             {
-                                onResize(width, height);
-                                invalidate();
+                                owner->onResize(width, height);
+                                owner->invalidate();
                             }
                         }
 
-                        syncDisplayRefreshRate();
+                        owner->syncDisplayRefreshRate();
                         break;
                     }
 
                     case Expose:
-                        if (!m_window_context->busy)
+                        if (!busy)
                         {
-                            invalidate();
+                            owner->invalidate();
                         }
                         break;
 
@@ -1121,62 +1120,62 @@ namespace mango
 
 #if 0
                         // debugging
-                        char* name = XGetAtomName(m_window_context->x11Display(), type);
+                        char* name = XGetAtomName(x11Display(), type);
                         printf("ClientMessage: %s\n", name);
                         XFree(name);
 #endif
 
-                        if (type == m_window_context->atom_xdnd_Enter)
+                        if (type == atom_xdnd_Enter)
                         {
                             bool use_list = e.xclient.data.l[1] & 1;
-                            m_window_context->xdnd_source = e.xclient.data.l[0];
-                            m_window_context->xdnd_version = (e.xclient.data.l[1] >> 24);
+                            xdnd_source = e.xclient.data.l[0];
+                            xdnd_version = (e.xclient.data.l[1] >> 24);
                             if (use_list)
                             {
                                 // fetch conversion targets
                                 x11Prop p;
-                                ReadProperty(&p, m_window_context->x11Display(), m_window_context->xdnd_source, m_window_context->atom_xdnd_TypeList);
+                                ReadProperty(&p, x11Display(), xdnd_source, atom_xdnd_TypeList);
                                 // pick one
-                                m_window_context->atom_xdnd_req = PickTarget(m_window_context->x11Display(), (Atom*)p.data, p.count);
+                                atom_xdnd_req = PickTarget(x11Display(), (Atom*)p.data, p.count);
                                 XFree(p.data);
                             }
                             else
                             {
                                 // pick from list of three
-                                m_window_context->atom_xdnd_req = PickTargetFromAtoms(m_window_context->x11Display(),
+                                atom_xdnd_req = PickTargetFromAtoms(x11Display(),
                                     e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
                             }
                         }
-                        else if (type == m_window_context->atom_xdnd_Position)
+                        else if (type == atom_xdnd_Position)
                         {
                             XClientMessageEvent m = { 0 };
 
                             m.type = ClientMessage;
                             m.display = e.xclient.display;
                             m.window = e.xclient.data.l[0];
-                            m.message_type = m_window_context->atom_xdnd_Status;
+                            m.message_type = atom_xdnd_Status;
                             m.format=32;
-                            m.data.l[0] = m_window_context->x11Window();
-                            m.data.l[1] = (m_window_context->atom_xdnd_req != None);
+                            m.data.l[0] = x11Window();
+                            m.data.l[1] = (atom_xdnd_req != None);
                             m.data.l[2] = 0; // specify an empty rectangle
                             m.data.l[3] = 0;
-                            m.data.l[4] = m_window_context->atom_xdnd_ActionCopy; // we only accept copying anyway
+                            m.data.l[4] = atom_xdnd_ActionCopy; // we only accept copying anyway
 
-                            XSendEvent(m_window_context->x11Display(), e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
-                            XFlush(m_window_context->x11Display());
+                            XSendEvent(x11Display(), e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
+                            XFlush(x11Display());
                         }
-                        else if (type == m_window_context->atom_xdnd_Status)
+                        else if (type == atom_xdnd_Status)
                         {
                         }
-                        else if (type == m_window_context->atom_xdnd_TypeList)
+                        else if (type == atom_xdnd_TypeList)
                         {
                         }
-                        else if (type == m_window_context->atom_xdnd_ActionCopy)
+                        else if (type == atom_xdnd_ActionCopy)
                         {
                         }
-                        else if (type == m_window_context->atom_xdnd_Drop)
+                        else if (type == atom_xdnd_Drop)
                         {
-                            if (m_window_context->atom_xdnd_req == None)
+                            if (atom_xdnd_req == None)
                             {
                                 // respond to empty request
                                 XClientMessageEvent m = { 0 };
@@ -1184,43 +1183,43 @@ namespace mango
                                 m.type = ClientMessage;
                                 m.display = e.xclient.display;
                                 m.window = e.xclient.data.l[0];
-                                m.message_type = m_window_context->atom_xdnd_Finished;
+                                m.message_type = atom_xdnd_Finished;
                                 m.format = 32;
-                                m.data.l[0] = m_window_context->x11Window();
+                                m.data.l[0] = x11Window();
                                 m.data.l[1] = 0;
                                 m.data.l[2] = None; // failed
-                                XSendEvent(m_window_context->x11Display(), e.xclient.data.l[0],
+                                XSendEvent(x11Display(), e.xclient.data.l[0],
                                     False, NoEventMask, (XEvent*)&m);
                             }
                             else
                             {
                                 // convert
-                                if (m_window_context->xdnd_version >= 1)
+                                if (xdnd_version >= 1)
                                 {
-                                    XConvertSelection(m_window_context->x11Display(), m_window_context->atom_xdnd_Selection, m_window_context->atom_xdnd_req, 
-                                                      m_window_context->atom_primary, m_window_context->x11Window(), e.xclient.data.l[2]);
+                                    XConvertSelection(x11Display(), atom_xdnd_Selection, atom_xdnd_req, 
+                                                      atom_primary, x11Window(), e.xclient.data.l[2]);
                                 }
                                 else
                                 {
-                                    XConvertSelection(m_window_context->x11Display(), m_window_context->atom_xdnd_Selection, m_window_context->atom_xdnd_req, 
-                                                      m_window_context->atom_primary, m_window_context->x11Window(), CurrentTime);
+                                    XConvertSelection(x11Display(), atom_xdnd_Selection, atom_xdnd_req, 
+                                                      atom_primary, x11Window(), CurrentTime);
                                 }
                             }
                         }
-                        else if (type == m_window_context->atom_xdnd_Finished)
+                        else if (type == atom_xdnd_Finished)
                         {
                         }
-                        else if (type == m_window_context->atom_xdnd_Selection)
+                        else if (type == atom_xdnd_Selection)
                         {
                         }
-                        else if (type == m_window_context->atom_xdnd_Leave)
+                        else if (type == atom_xdnd_Leave)
                         {
                         }
-                        else if (type == m_window_context->atom_protocols)
+                        else if (type == atom_protocols)
                         {
-                            if ((Atom)e.xclient.data.l[0] == m_window_context->atom_delete)
+                            if ((Atom)e.xclient.data.l[0] == atom_delete)
                             {
-                                breakEventLoop();
+                                owner->breakEventLoop();
                                 // NOTE: We should destroy the window here since it doesn't exist anymore.
                             }
                         }
@@ -1231,15 +1230,15 @@ namespace mango
                     case SelectionNotify:
                     {
                         Atom target = e.xselection.target;
-                        if (target == m_window_context->atom_xdnd_req)
+                        if (target == atom_xdnd_req)
                         {
                             // read data
                             x11Prop p;
-                            ReadProperty(&p, m_window_context->x11Display(), m_window_context->x11Window(), m_window_context->atom_primary);
+                            ReadProperty(&p, x11Display(), x11Window(), atom_primary);
 
                             if (p.format == 8)
                             {
-                                dispatchOnDrop(this, p);
+                                dispatchOnDrop(owner, p);
                             }
 
                             XFree(p.data);
@@ -1248,15 +1247,15 @@ namespace mango
                             XClientMessageEvent m = { 0 };
 
                             m.type = ClientMessage;
-                            m.display = m_window_context->x11Display();
-                            m.window = m_window_context->xdnd_source;
-                            m.message_type = m_window_context->atom_xdnd_Finished;
+                            m.display = x11Display();
+                            m.window = xdnd_source;
+                            m.message_type = atom_xdnd_Finished;
                             m.format = 32;
-                            m.data.l[0] = m_window_context->x11Window();
+                            m.data.l[0] = x11Window();
                             m.data.l[1] = 1;
-                            m.data.l[2] = m_window_context->atom_xdnd_ActionCopy;
-                            XSendEvent(m_window_context->x11Display(), m_window_context->xdnd_source, False, NoEventMask, (XEvent*)&m);
-                            XSync(m_window_context->x11Display(), False);
+                            m.data.l[2] = atom_xdnd_ActionCopy;
+                            XSendEvent(x11Display(), xdnd_source, False, NoEventMask, (XEvent*)&m);
+                            XSync(x11Display(), False);
                         }
 
                         break;
@@ -1267,78 +1266,75 @@ namespace mango
                 } // switch
             }
 
-            if (!m_window_context->busy)
+            if (!busy)
             {
-                dispatchFrame();
+                owner->dispatchFrame();
             }
 
             // Block on the X connection fd until an event arrives or the next frame is
             // due, instead of busy-polling. An idle (WAIT_INFINITE) wait is capped so a
             // cross-thread state change is still observed within the cap; a pending
             // deadline (animation) is waited exactly, so a timed frame fires on time.
-            if (XPending(m_window_context->x11Display()) == 0)
+            if (XPending(x11Display()) == 0)
             {
-                const u32 timeout = m_event_loop.computeWaitTimeoutMs(Time::us());
+                const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
                 if (timeout != 0)
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
-                    struct pollfd pfd = { ConnectionNumber(m_window_context->x11Display()), POLLIN, 0 };
+                    struct pollfd pfd = { ConnectionNumber(x11Display()), POLLIN, 0 };
                     ::poll(&pfd, 1, wait_ms);
                 }
             }
         }
     }
 
-    void Window::onMinimize()
+#if defined(MANGO_ENABLE_VULKAN)
+
+    VkSurfaceKHR XlibBackend::createVulkanSurface(VkInstance instance)
     {
+        VkXlibSurfaceCreateInfoKHR createInfo;
+
+        createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
+        createInfo.pNext = nullptr;
+        createInfo.flags = 0;
+        createInfo.dpy = x11Display();
+        createInfo.window = x11Window();
+
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+        VkResult result = vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &surface);
+        if (result != VK_SUCCESS)
+        {
+            MANGO_EXCEPTION("[XlibBackend] vkCreateXlibSurfaceKHR() failed.");
+        }
+
+        return surface;
     }
 
-    void Window::onMaximize()
+    bool XlibBackend::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
     {
+        VisualID visualid = x11VisualID();
+        VkBool32 support = vkGetPhysicalDeviceXlibPresentationSupportKHR(
+            physicalDevice, queueFamilyIndex, x11Display(), visualid);
+        return support == VK_TRUE;
     }
 
-    void Window::onKeyPress(Keycode code, u32 mask)
+#endif // defined(MANGO_ENABLE_VULKAN)
+
+#if defined(MANGO_ENABLE_EGL)
+
+    void* XlibBackend::eglNativeWindow(int width, int height, u32 flags)
     {
-        MANGO_UNREFERENCED(code);
-        MANGO_UNREFERENCED(mask);
+        // Create a default X11 window (EGL chooses the visual itself).
+        if (!init(0, 0, nullptr, width, height, flags, "OpenGL|ES"))
+        {
+            return nullptr;
+        }
+
+        return reinterpret_cast<void*>(static_cast<std::uintptr_t>(window));
     }
 
-    void Window::onKeyRelease(Keycode code)
-    {
-        MANGO_UNREFERENCED(code);
-    }
-
-    void Window::onMouseMove(int x, int y)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-    }
-
-    void Window::onMouseClick(int x, int y, MouseButton button, int count)
-    {
-        MANGO_UNREFERENCED(x);
-        MANGO_UNREFERENCED(y);
-        MANGO_UNREFERENCED(button);
-        MANGO_UNREFERENCED(count);
-    }
-
-    void Window::onDropFiles(const FileIndex& index)
-    {
-        MANGO_UNREFERENCED(index);
-    }
-
-    void Window::onClose()
-    {
-    }
-
-    void Window::onShow()
-    {
-    }
-
-    void Window::onHide()
-    {
-    }
+#endif // defined(MANGO_ENABLE_EGL)
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_XLIB)
+#endif // defined(MANGO_ENABLE_XLIB)

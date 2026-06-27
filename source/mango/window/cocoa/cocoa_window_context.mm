@@ -10,6 +10,10 @@
 
 #import <QuartzCore/QuartzCore.h>
 
+#if defined(MANGO_ENABLE_VULKAN)
+#include <vulkan/vulkan_metal.h>
+#endif
+
 namespace mango
 {
 
@@ -178,6 +182,37 @@ namespace mango
 
         return false;
     }
+
+#if defined(MANGO_ENABLE_VULKAN)
+
+    VkSurfaceKHR WindowContext::createVulkanSurface(VkInstance instance)
+    {
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkMetalSurfaceCreateInfoEXT surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+            .pLayer = static_cast<const CAMetalLayer*>(layer),
+        };
+
+        VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, &surface);
+        if (result != VK_SUCCESS)
+        {
+            // getString lives in the vulkan namespace; keep this self-contained.
+            MANGO_EXCEPTION("[WindowContext] vkCreateMetalSurfaceEXT failed.");
+        }
+
+        return surface;
+    }
+
+    bool WindowContext::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
+    {
+        MANGO_UNREFERENCED(physicalDevice);
+        MANGO_UNREFERENCED(queueFamilyIndex);
+        return true;
+    }
+
+#endif // defined(MANGO_ENABLE_VULKAN)
 
     math::int32x2 WindowContext::getContentSize() const
     {
