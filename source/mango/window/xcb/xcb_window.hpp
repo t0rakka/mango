@@ -5,8 +5,9 @@
 #pragma once
 
 #include <mango/window/window.hpp>
+#include "../window_backend.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
+#if defined(MANGO_ENABLE_XCB)
 
 #include <unistd.h>
 #include <mango/math/math.hpp>
@@ -19,14 +20,24 @@
 #include <xcb/xkb.h>
 #include <xcb/xcb_icccm.h>
 #include <xcb/xcb_keysyms.h>
+#include <xcb/sync.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #undef explicit
 
 namespace mango
 {
 
-    struct WindowContext : WindowHandle
+    // Concrete XCB backend. Distinct class name (vs XlibBackend / WaylandBackend)
+    // so all three Linux backends can be linked into one binary without ODR clash;
+    // the native xcb headers (and the "#define explicit explicit_" hack) live only
+    // in this and the GLX-XCB translation unit.
+    struct XcbBackend : WindowBackend
     {
+        // native handle (formerly in the public WindowHandle)
+        xcb_connection_t*   connection { nullptr };
+        xcb_window_t        window { 0 };
+        xcb_visualid_t      visualid { 0 };
+
         // window data
         xcb_window_t root { 0 };
         xcb_colormap_t colormap { 0 };
@@ -62,22 +73,55 @@ namespace mango
         int size[2] = { 0, 0 };
         u64 mouse_time[6];
         bool is_looping { false };
-        bool busy { false };
         bool fullscreen { false };
+
+        // _NET_WM_SYNC_REQUEST: lets the compositor hold the resized frame until the
+        // client has drawn it, eliminating the undefined/black border that otherwise
+        // appears while the window grows faster than the swapchain catches up.
+        xcb_atom_t atom_sync_request { 0 };   // _NET_WM_SYNC_REQUEST
+        xcb_atom_t atom_sync_counter { 0 };   // _NET_WM_SYNC_REQUEST_COUNTER
+        xcb_sync_counter_t sync_counter { 0 };
+        xcb_sync_int64_t sync_value { 0, 0 };
+        bool sync_pending { false };
+        bool sync_supported { false };
+        bool resize_pending { false };
 
         xcb_key_symbols_t* key_symbols;
 
-        WindowContext();
-        ~WindowContext();
+        XcbBackend();
+        ~XcbBackend() override;
 
         operator xcb_window_t () const { return window; }
 
         bool init(int width, int height, u32 flags, const char* title);
-        void toggleFullscreen();
-        bool isFullscreen() const;
-        math::int32x2 getWindowSize() const;
+
+        // WindowBackend interface
+        void setWindowPosition(int x, int y) override;
+        void setWindowSize(int width, int height) override;
+        void setTitle(const std::string& title) override;
+        void setVisible(bool enable) override;
+        math::int32x2 getWindowSize() const override;
+        math::int32x2 getCursorPosition() const override;
+        double getDisplayRefreshRate() const override;
+        void toggleFullscreen() override;
+        bool isFullscreen() const override;
+        bool isKeyPressed(Keycode code) const override;
+        void runEventLoop() override;
+        void wakeEventLoop() override;
+
+#if defined(MANGO_ENABLE_VULKAN)
+        VkSurfaceKHR createVulkanSurface(VkInstance instance) override;
+        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex) override;
+#endif
+
+#if defined(MANGO_ENABLE_EGL)
+        // Creates the XCB window and returns its XID packed into a void* for the
+        // shared EGL TU. eglNativeDisplay() inherits the base nullptr, mapping to
+        // EGL_DEFAULT_DISPLAY (the X11 platform), preserving the original behavior.
+        void* eglNativeWindow(int width, int height, u32 flags) override;
+#endif
     };
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_XCB)
+#endif // defined(MANGO_ENABLE_XCB)

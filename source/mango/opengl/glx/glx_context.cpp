@@ -7,7 +7,7 @@
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#if defined(MANGO_WINDOW_SYSTEM_XLIB) || defined(MANGO_WINDOW_SYSTEM_XCB)
+#if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
 
 #define GLX_GLXEXT_PROTOTYPES
 #include <GL/glx.h>
@@ -293,4 +293,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_XLIB) || defined(MANGO_WINDOW_SYSTEM_XCB)
+#endif // defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)

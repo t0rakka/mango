@@ -5,7 +5,7 @@
 #include "cocoa_input.hpp"
 #include "cocoa_window.h"
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
 // -----------------------------------------------------------------------
 // CocoaWindowDelegate
@@ -47,7 +47,7 @@
     NSWindow* window = [notification object];
     NSRect frame = [window contentRectForFrameRect:[window frame]];
 
-    mango::WindowContext* context = mangoWindow->operator mango::WindowContext*();
+    mango::WindowContext* context = static_cast<mango::WindowContext*>(mangoWindow->backend());
     mango::cocoa::dispatchResize(mangoWindow, context, contentView, frame);
 }
 
@@ -72,7 +72,7 @@
         }
 
         NSRect frame = [nsWindow contentRectForFrameRect:[nsWindow frame]];
-        mango::WindowContext* context = window->operator mango::WindowContext*();
+        mango::WindowContext* context = static_cast<mango::WindowContext*>(window->backend());
         mango::cocoa::dispatchResize(window, context, view, frame);
     });
 }
@@ -131,4 +131,4 @@ namespace mango::cocoa
 
 } // namespace mango::cocoa
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)
+#endif // defined(MANGO_ENABLE_COCOA)

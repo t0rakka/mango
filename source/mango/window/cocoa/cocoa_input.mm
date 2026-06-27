@@ -4,7 +4,7 @@
 */
 #include "cocoa_input.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
+#if defined(MANGO_ENABLE_COCOA)
 
 #import <Cocoa/Cocoa.h>
 #include <mango/filesystem/filesystem.hpp>
@@ -212,4 +212,4 @@ namespace mango::cocoa
 
 } // namespace mango::cocoa
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA)
+#endif // defined(MANGO_ENABLE_COCOA)

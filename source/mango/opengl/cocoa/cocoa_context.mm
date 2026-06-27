@@ -8,7 +8,7 @@
 #include <mango/opengl/opengl.hpp>
 #include "../../window/cocoa/cocoa_window.hpp"
 
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+#if defined(MANGO_ENABLE_OPENGL)
 
 #include "CustomOpenGLView.h"
 
@@ -21,7 +21,7 @@ namespace mango
         id ctx = nil;
 
         OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* theShared)
-            : window_context(*theContext)
+            : window_context(static_cast<WindowContext*>(theContext->backend()))
         {
             NSWindow* win = (__bridge NSWindow*)window_context->ns_window;
             NSRect frame = [win frame];
@@ -159,4 +159,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_ENABLE_OPENGL)

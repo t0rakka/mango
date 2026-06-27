@@ -3,8 +3,9 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/window/window.hpp>
+#include "../window_backend.hpp"
 
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+#if defined(MANGO_ENABLE_WAYLAND)
 
 #include <mango/math/math.hpp>
 
@@ -20,9 +21,15 @@ namespace mango
 
     class Window;
 
-    struct WindowContext : WindowHandle
+    // Concrete Wayland backend. Distinct class name (vs XlibBackend / XcbBackend)
+    // so all three Linux backends can be linked into one binary without ODR clash;
+    // the native wayland-client headers live only in this translation unit (the
+    // shared EGL TU reaches the wl_egl_window via the eglNative* hooks).
+    struct WaylandBackend : WindowBackend
     {
-        Window* owner = nullptr;
+        // native handle (formerly in the public WindowHandle)
+        struct wl_display* display = nullptr;
+        struct wl_surface* surface = nullptr;
 
         // Wayland core objects
         struct wl_registry* registry = nullptr;
@@ -55,7 +62,6 @@ namespace mango
 
         // Window state
         bool is_looping = false;
-        bool busy = false;
         bool configured = false;
         bool needs_redraw = false;
         bool pending_resize = false;
@@ -66,12 +72,33 @@ namespace mango
         uint32_t mouse_time[6] = {};
         bool fullscreen = false;
 
-        WindowContext(int width, int height, u32 flags);
-        ~WindowContext();
+        WaylandBackend(int width, int height, u32 flags);
+        ~WaylandBackend() override;
 
-        void toggleFullscreen();
-        bool isFullscreen() const;
-        math::int32x2 getWindowSize() const;
+        // WindowBackend interface
+        void setWindowPosition(int x, int y) override;
+        void setWindowSize(int width, int height) override;
+        void setTitle(const std::string& title) override;
+        void setVisible(bool enable) override;
+        math::int32x2 getWindowSize() const override;
+        math::int32x2 getCursorPosition() const override;
+        double getDisplayRefreshRate() const override;
+        void toggleFullscreen() override;
+        bool isFullscreen() const override;
+        bool isKeyPressed(Keycode code) const override;
+        void runEventLoop() override;
+        void wakeEventLoop() override;
+
+#if defined(MANGO_ENABLE_VULKAN)
+        VkSurfaceKHR createVulkanSurface(VkInstance instance) override;
+        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex) override;
+#endif
+
+#if defined(MANGO_ENABLE_EGL)
+        void* eglNativeDisplay() override;
+        void* eglNativeWindow(int width, int height, u32 flags) override;
+        void eglPresent() override;
+#endif
 
         bool createWaylandWindow(int width, int height, const char* title);
         void syncSurfaceScale();
@@ -83,4 +110,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_WINDOW_SYSTEM_WAYLAND)
+#endif // defined(MANGO_ENABLE_WAYLAND)

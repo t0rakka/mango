@@ -5,7 +5,7 @@
 #include "cocoa_input.hpp"
 #include "cocoa_window.h"
 
-#if defined(MANGO_WINDOW_SYSTEM_COCOA) && defined(MANGO_ENABLE_VULKAN)
+#if defined(MANGO_ENABLE_COCOA) && defined(MANGO_ENABLE_VULKAN)
 
 #import <QuartzCore/QuartzCore.h>
 
@@ -130,4 +130,4 @@
 
 @end
 
-#endif // defined(MANGO_WINDOW_SYSTEM_COCOA) && defined(MANGO_ENABLE_VULKAN)
+#endif // defined(MANGO_ENABLE_COCOA) && defined(MANGO_ENABLE_VULKAN)

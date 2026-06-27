@@ -2,7 +2,9 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+#include <mango/core/configure.hpp>
+
+#if defined(MANGO_ENABLE_OPENGL)
 
 #include "CustomOpenGLView.h"
 #include "../../window/cocoa/cocoa_input.hpp"
@@ -136,4 +138,4 @@
 
 @end
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_ENABLE_OPENGL)

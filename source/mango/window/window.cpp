@@ -2,11 +2,135 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <cstdlib>
+#include <string>
+#include <mutex>
 #include <mango/window/window.hpp>
 #include <mango/core/timer.hpp>
+#include <mango/core/exception.hpp>
+#include <mango/core/print.hpp>
+#include <mango/core/string.hpp>
+#include "window_backend.hpp"
 
 namespace mango
 {
+
+    // ------------------------------------------------------------------------------
+    // Window system selection helpers
+    // ------------------------------------------------------------------------------
+
+    std::string_view getString(WindowSystem ws)
+    {
+        switch (ws)
+        {
+            case WindowSystem::Win32:   return "Win32";
+            case WindowSystem::Cocoa:   return "Cocoa";
+            case WindowSystem::Xlib:    return "Xlib";
+            case WindowSystem::Xcb:     return "Xcb";
+            case WindowSystem::Wayland: return "Wayland";
+            case WindowSystem::Default: return "Default";
+        }
+        return "UNDEFINED";
+    }
+
+    namespace
+    {
+
+        // Process-global active window system. g_window_system holds the current
+        // selection (Default == not chosen yet); g_window_system_locked becomes
+        // true once the value has been handed out, after which overrides are
+        // refused (the resolved value has already driven instance/surface setup).
+        // The mutex keeps the value, the lock flag and the one-time resolve/log
+        // consistent across threads (the value and flag must move together).
+        std::mutex g_window_system_mutex;
+        WindowSystem g_window_system = WindowSystem::Default;
+        bool g_window_system_locked = false;
+
+#if !defined(MANGO_ENABLE_WIN32) && !defined(MANGO_ENABLE_COCOA)
+
+        // Linux: a backend is "available" when its support is compiled into the
+        // binary. The preferred fallback order is Wayland > Xlib > Xcb.
+
+        bool isWindowSystemAvailable(WindowSystem ws)
+        {
+            switch (ws)
+            {
+#if defined(MANGO_ENABLE_WAYLAND)
+                case WindowSystem::Wayland: return true;
+#endif
+#if defined(MANGO_ENABLE_XLIB)
+                case WindowSystem::Xlib:    return true;
+#endif
+#if defined(MANGO_ENABLE_XCB)
+                case WindowSystem::Xcb:     return true;
+#endif
+                default:                    return false;
+            }
+        }
+
+        WindowSystem firstAvailableWindowSystem()
+        {
+#if defined(MANGO_ENABLE_WAYLAND)
+            return WindowSystem::Wayland;
+#elif defined(MANGO_ENABLE_XLIB)
+            return WindowSystem::Xlib;
+#elif defined(MANGO_ENABLE_XCB)
+            return WindowSystem::Xcb;
+#else
+            return WindowSystem::Default;
+#endif
+        }
+
+        WindowSystem autoDetectWindowSystem()
+        {
+            // 1. Explicit override (forcing a backend, e.g. for testing):
+            //    MANGO_WINDOW_SYSTEM = wayland | xlib | x11 | xcb
+            if (const char* env = std::getenv("MANGO_WINDOW_SYSTEM"))
+            {
+                std::string value = toLower(env);
+
+                WindowSystem requested = WindowSystem::Default;
+                if (value == "wayland")
+                    requested = WindowSystem::Wayland;
+                else if (value == "xlib" || value == "x11")
+                    requested = WindowSystem::Xlib;
+                else if (value == "xcb")
+                    requested = WindowSystem::Xcb;
+
+                if (requested != WindowSystem::Default && isWindowSystemAvailable(requested))
+                {
+                    return requested;
+                }
+
+                printLine(Print::Warning,
+                    "[Window] MANGO_WINDOW_SYSTEM=\"{}\" ignored (unknown or not compiled in).", env);
+            }
+
+            // 2. Auto-detect from the running session (preferred order Wayland > X).
+#if defined(MANGO_ENABLE_WAYLAND)
+            if (const char* display = std::getenv("WAYLAND_DISPLAY"); display && *display)
+            {
+                return WindowSystem::Wayland;
+            }
+#endif
+#if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
+            if (const char* display = std::getenv("DISPLAY"); display && *display)
+            {
+#if defined(MANGO_ENABLE_XLIB)
+                return WindowSystem::Xlib;
+#else
+                return WindowSystem::Xcb;
+#endif
+            }
+#endif
+
+            // 3. Nothing detected: first available in preferred order.
+            return firstAvailableWindowSystem();
+        }
+
+#endif // !MANGO_ENABLE_WIN32 && !MANGO_ENABLE_COCOA
+
+    } // namespace
 
     // ------------------------------------------------------------------------------
     // EventLoopState
@@ -125,26 +249,129 @@ namespace mango
     }
 
     // ------------------------------------------------------------------------------
-    // Window
+    // Window facade
     // ------------------------------------------------------------------------------
+
+    Window::Window(int width, int height, u32 flags)
+    {
+        createBackend(width, height, flags, "Mango");
+    }
+
+    Window::~Window()
+    {
+        // m_backend destroyed by unique_ptr
+    }
+
+    void Window::setWindowSystem(WindowSystem ws)
+    {
+        std::lock_guard<std::mutex> guard(g_window_system_mutex);
+
+        if (g_window_system_locked)
+        {
+            printLine(Print::Warning,
+                "[Window] setWindowSystem() ignored: the window system is already in use ({}). "
+                "Call it before creating any window or querying surface extensions.",
+                getString(g_window_system));
+            return;
+        }
+
+        g_window_system = resolveWindowSystem(ws);
+        printLine("WindowSystem: {}", getString(g_window_system));
+    }
+
+    WindowSystem Window::getWindowSystem()
+    {
+        std::lock_guard<std::mutex> guard(g_window_system_mutex);
+
+        if (!g_window_system_locked)
+        {
+            if (g_window_system == WindowSystem::Default)
+            {
+                // No explicit override; resolve now (env + auto-detect) and log.
+                g_window_system = resolveWindowSystem(WindowSystem::Default);
+                printLine("WindowSystem: {}", getString(g_window_system));
+            }
+            g_window_system_locked = true;
+        }
+        return g_window_system;
+    }
+
+    void Window::createBackend(int width, int height, u32 flags, const char* title)
+    {
+        m_backend = createWindowBackend(getWindowSystem(), this, width, height, flags, title);
+        if (!m_backend)
+        {
+            MANGO_EXCEPTION("[Window] Creating window backend failed.");
+        }
+    }
+
+    void Window::setWindowPosition(int x, int y)
+    {
+        m_backend->setWindowPosition(x, y);
+    }
+
+    void Window::setWindowSize(int width, int height)
+    {
+        m_backend->setWindowSize(width, height);
+    }
+
+    void Window::setTitle(const std::string& title)
+    {
+        m_backend->setTitle(title);
+    }
+
+    void Window::setVisible(bool enable)
+    {
+        m_backend->setVisible(enable);
+    }
+
+    math::int32x2 Window::getWindowSize() const
+    {
+        return m_backend->getWindowSize();
+    }
+
+    math::int32x2 Window::getCursorPosition() const
+    {
+        return m_backend->getCursorPosition();
+    }
+
+    double Window::getDisplayRefreshRate() const
+    {
+        return m_backend->getDisplayRefreshRate();
+    }
+
+    void Window::toggleFullscreen()
+    {
+        m_backend->toggleFullscreen();
+    }
+
+    bool Window::isFullscreen() const
+    {
+        return m_backend->isFullscreen();
+    }
+
+    bool Window::isKeyPressed(Keycode code) const
+    {
+        return m_backend->isKeyPressed(code);
+    }
 
     void Window::enterEventLoop(const EventLoopConfig& config)
     {
         m_event_loop.reset(config);
         syncDisplayRefreshRate();
-        runEventLoop();
+        m_backend->runEventLoop();
     }
 
     void Window::invalidate()
     {
         m_event_loop.invalidate();
-        wakeEventLoop();
+        m_backend->wakeEventLoop();
     }
 
     void Window::requestFrameAt(u64 time_us)
     {
         m_event_loop.next_frame_deadline_us = time_us;
-        wakeEventLoop();
+        m_backend->wakeEventLoop();
     }
 
     void Window::requestFrameIn(double seconds)
@@ -172,7 +399,7 @@ namespace mango
     void Window::breakEventLoop()
     {
         m_event_loop.running = false;
-        wakeEventLoop();
+        m_backend->wakeEventLoop();
     }
 
     const EventLoopConfig& Window::getEventLoopConfig() const
@@ -277,15 +504,6 @@ namespace mango
         }
     }
 
-    void Window::waitForNextIteration()
-    {
-        const u32 timeout = m_event_loop.config.pollTimeoutMs;
-        if (timeout > 0)
-        {
-            Sleep::ms(timeout);
-        }
-    }
-
     void Window::onFrame(const FrameInfo& info)
     {
         MANGO_UNREFERENCED(info);
@@ -296,6 +514,117 @@ namespace mango
         MANGO_UNREFERENCED(width);
         MANGO_UNREFERENCED(height);
         invalidate();
+    }
+
+    void Window::onMinimize()
+    {
+    }
+
+    void Window::onMaximize()
+    {
+    }
+
+    void Window::onKeyPress(Keycode code, u32 mask)
+    {
+        MANGO_UNREFERENCED(code);
+        MANGO_UNREFERENCED(mask);
+    }
+
+    void Window::onKeyRelease(Keycode code)
+    {
+        MANGO_UNREFERENCED(code);
+    }
+
+    void Window::onMouseMove(int x, int y)
+    {
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+    }
+
+    void Window::onMouseClick(int x, int y, MouseButton button, int count)
+    {
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+        MANGO_UNREFERENCED(button);
+        MANGO_UNREFERENCED(count);
+    }
+
+    void Window::onDropFiles(const filesystem::FileIndex& index)
+    {
+        MANGO_UNREFERENCED(index);
+    }
+
+    void Window::onClose()
+    {
+    }
+
+    void Window::onShow()
+    {
+    }
+
+    void Window::onHide()
+    {
+    }
+
+    // ------------------------------------------------------------------------------
+    // Backend factory dispatch
+    // ------------------------------------------------------------------------------
+
+    WindowSystem resolveWindowSystem(WindowSystem ws)
+    {
+#if defined(MANGO_ENABLE_WIN32)
+        MANGO_UNREFERENCED(ws);
+        return WindowSystem::Win32;
+#elif defined(MANGO_ENABLE_COCOA)
+        MANGO_UNREFERENCED(ws);
+        return WindowSystem::Cocoa;
+#else
+        // Linux: Default runs env-override + auto-detection. An explicit request is
+        // honored when its backend is compiled in, otherwise we fall back to the
+        // preferred order (Wayland > Xlib > Xcb).
+        if (ws == WindowSystem::Default)
+        {
+            return autoDetectWindowSystem();
+        }
+
+        if (isWindowSystemAvailable(ws))
+        {
+            return ws;
+        }
+
+        return firstAvailableWindowSystem();
+#endif
+    }
+
+    std::unique_ptr<WindowBackend> createWindowBackend(WindowSystem ws, Window* window,
+        int width, int height, u32 flags, const char* title)
+    {
+#if defined(MANGO_ENABLE_WIN32)
+        MANGO_UNREFERENCED(ws);
+        return createWin32Backend(window, width, height, flags, title);
+#elif defined(MANGO_ENABLE_COCOA)
+        MANGO_UNREFERENCED(ws);
+        return createCocoaBackend(window, width, height, flags, title);
+#else
+        switch (ws)
+        {
+#if defined(MANGO_ENABLE_XLIB)
+            case WindowSystem::Xlib:
+                return createXlibBackend(window, width, height, flags, title);
+#endif
+#if defined(MANGO_ENABLE_XCB)
+            case WindowSystem::Xcb:
+                return createXcbBackend(window, width, height, flags, title);
+#endif
+#if defined(MANGO_ENABLE_WAYLAND)
+            case WindowSystem::Wayland:
+                return createWaylandBackend(window, width, height, flags, title);
+#endif
+            default:
+                break;
+        }
+        return nullptr;
+#endif
     }
 
 } // namespace mango

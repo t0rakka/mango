@@ -730,7 +730,7 @@ public:
         for (size_t i = 0; i < queueFamilyProperties.size(); ++i)
         {
             const VkQueueFamilyProperties& properties = queueFamilyProperties[i];
-            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i), *this);
+            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i));
             bool graphics = properties.queueFlags & VK_QUEUE_GRAPHICS_BIT;
 
             if (graphics && presentationSupport)
@@ -1016,7 +1016,8 @@ int mangoMain(const mango::CommandLine& commands)
 {
     MANGO_UNREFERENCED(commands);
 
-    printEnable(Print::Info, true);
+    //printEnable(Print::Info, true);
+    //Window::setWindowSystem(WindowSystem::Xcb);
 
     InstanceExtensionProperties instanceExtensionProperties;
 

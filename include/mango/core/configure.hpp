@@ -33,35 +33,30 @@
     // Microsoft XBOX
     #define MANGO_PLATFORM_XBOX
     #define MANGO_PLATFORM_NAME "Xbox"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif (defined(_XBOX_VER) && (_XBOX_VER >= 200)) || defined(_XENON)
 
     // Microsoft XBOX 360
     #define MANGO_PLATFORM_XBOX360
     #define MANGO_PLATFORM_NAME "Xbox 360"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(_DURANGO)
 
     // Microsoft XBOX ONE
     #define MANGO_PLATFORM_XBOXONE
     #define MANGO_PLATFORM_NAME "Xbox One"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(__CELLOS_LV2__)
 
     // SONY Playstation 3
     #define MANGO_PLATFORM_PS3
     #define MANGO_PLATFORM_NAME "Playstation 3"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(__ORBIS__)
 
     // SONY Playstation 4
     #define MANGO_PLATFORM_PS4
     #define MANGO_PLATFORM_NAME "Playstation 4"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
 #elif defined(__CYGWIN__)
 
@@ -69,7 +64,6 @@
     #define MANGO_PLATFORM_CYGWIN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Cygwin"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <stdint.h>
     #include <malloc.h>
@@ -80,7 +74,7 @@
     #define MANGO_PLATFORM_MINGW
     #define MANGO_PLATFORM_WINDOWS
     #define MANGO_PLATFORM_NAME "MinGW"
-    #define MANGO_WINDOW_SYSTEM_WIN32
+    #define MANGO_ENABLE_WIN32
 
     #ifndef NOMINMAX
     #define NOMINMAX
@@ -98,7 +92,7 @@
     // Microsoft Windows
     #define MANGO_PLATFORM_WINDOWS
     #define MANGO_PLATFORM_NAME "Windows"
-    #define MANGO_WINDOW_SYSTEM_WIN32
+    #define MANGO_ENABLE_WIN32
 
     #ifndef NOMINMAX
     #define NOMINMAX
@@ -120,7 +114,6 @@
         #define MANGO_PLATFORM_IOS
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "iOS"
-        #define MANGO_WINDOW_SYSTEM_NONE
 
     #else
 
@@ -129,10 +122,8 @@
         #define MANGO_PLATFORM_UNIX
         #define MANGO_PLATFORM_NAME "macOS"
 
-        #if defined(__ppc__)
-            #define MANGO_WINDOW_SYSTEM_NONE
-        #else
-            #define MANGO_WINDOW_SYSTEM_COCOA
+        #if !defined(__ppc__)
+            #define MANGO_ENABLE_COCOA
         #endif
 
     #endif
@@ -143,7 +134,6 @@
     #define MANGO_PLATFORM_ANDROID
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Android"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <stdint.h>
     #include <malloc.h>
@@ -155,14 +145,13 @@
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Linux"
 
-    #if defined(MANGO_ENABLE_XLIB)
-        #define MANGO_WINDOW_SYSTEM_XLIB
-    #elif defined(MANGO_ENABLE_XCB)
-        #define MANGO_WINDOW_SYSTEM_XCB
-    #elif defined(MANGO_ENABLE_WAYLAND)
-        #define MANGO_WINDOW_SYSTEM_WAYLAND
-    #else
-        #define MANGO_WINDOW_SYSTEM_XLIB
+    // Runtime window-system selection: the Xlib, Xcb and Wayland backends are
+    // compiled and linked together and chosen at runtime via WindowSystem. The
+    // MANGO_ENABLE_* toggles (set by CMake) decide which backends exist in the
+    // binary; multiple may be enabled simultaneously. If none were requested,
+    // default to Xlib so the library always has at least one backend.
+    #if !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB) && !defined(MANGO_ENABLE_WAYLAND)
+        #define MANGO_ENABLE_XLIB
     #endif
 
     #include <stdint.h>
@@ -174,7 +163,6 @@
     #define MANGO_PLATFORM_BSD
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "BSD"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <inttypes.h>
     #include <malloc.h>
@@ -185,7 +173,6 @@
     #define MANGO_PLATFORM_SUN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SUN"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <inttypes.h>
     #include <malloc.h>
@@ -196,7 +183,6 @@
     #define MANGO_PLATFORM_HPUX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "HPUX"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <inttypes.h>
     #include <malloc.h>
@@ -207,7 +193,7 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-    #define MANGO_WINDOW_SYSTEM_XLIB
+    #define MANGO_ENABLE_XLIB
 
 #elif defined (__EMSCRIPTEN__)
 
@@ -215,7 +201,6 @@
     #define MANGO_PLATFORM_EMSCRIPTEN
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "EMSCRIPTEN"
-    #define MANGO_WINDOW_SYSTEM_NONE
 
     #include <emscripten.h>
 
@@ -224,6 +209,33 @@
     // unsupported
     #error "Platform not supported."
 
+#endif
+
+// -----------------------------------------------------------------------
+// window system
+// -----------------------------------------------------------------------
+
+// A window-system backend is identified by its own MANGO_ENABLE_<BACKEND> macro.
+// They are mutually exclusive across platforms: WIN32 (Windows) and COCOA (macOS)
+// are set above from the platform, while XLIB / XCB / WAYLAND are set only on
+// Linux by CMake. On Linux those three may coexist in one build, the active one
+// chosen at runtime. These are capability/selection flags: they say which
+// backend(s) this build *could* use.
+//
+// The window subsystem exists only to host an OpenGL or Vulkan surface, so it is
+// what actually drives the need for a window; the backend is just the default
+// vehicle. CMake mirrors this by compiling the window translation units only for
+// BUILD_OPENGL / BUILD_VULKAN. MANGO_ENABLE_WINDOW is therefore the roll-up
+// "windowing is active": a graphics API needs a window AND a backend exists to
+// provide one. The window / OpenGL / Vulkan public headers and their translation
+// units are inert without it.
+#if (defined(MANGO_ENABLE_OPENGL) || defined(MANGO_ENABLE_VULKAN)) && \
+    (defined(MANGO_ENABLE_WIN32)  || \
+     defined(MANGO_ENABLE_COCOA)  || \
+     defined(MANGO_ENABLE_XLIB)   || \
+     defined(MANGO_ENABLE_XCB)    || \
+     defined(MANGO_ENABLE_WAYLAND))
+    #define MANGO_ENABLE_WINDOW
 #endif
 
 // -----------------------------------------------------------------------

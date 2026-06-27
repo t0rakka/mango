@@ -5,122 +5,43 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
+#include <memory>
 #include <mango/math/math.hpp>
 #include <mango/image/surface.hpp>
 #include <mango/filesystem/filesystem.hpp>
 
-// -----------------------------------------------------------------------
-// MANGO_WINDOW_SYSTEM_WIN32
-// -----------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_WIN32)
+#if defined(MANGO_ENABLE_WINDOW)
 
 namespace mango
 {
 
-    struct WindowHandle
+    // -----------------------------------------------------------------------
+    // WindowSystem
+    // -----------------------------------------------------------------------
+
+    // The window system is chosen at runtime. On Windows and macOS there is
+    // exactly one valid backend, so the value is coerced to it. On Linux the
+    // Xlib, Xcb and Wayland backends all coexist in the binary and the value
+    // selects which one is instantiated.
+    enum class WindowSystem
     {
-        HWND hwnd;
+        Default,   // resolve to the platform's native/default backend
+        Win32,
+        Cocoa,
+        Xlib,
+        Xcb,
+        Wayland,
     };
 
-} // namespace mango
+    std::string_view getString(WindowSystem ws);
 
-#endif
-
-// -----------------------------------------------------------------------
-// MANGO_WINDOW_SYSTEM_COCOA
-// -----------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_COCOA)
-
-namespace mango
-{
-
-    struct WindowHandle
-    {
-        void* layer { nullptr }; // CAMetalLayer*, set when created with API_VULKAN
-    };
-
-} // namespace mango
-
-#endif
-
-// -----------------------------------------------------------------------
-// MANGO_WINDOW_SYSTEM_XLIB
-// -----------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_XLIB)
-
-namespace mango
-{
-
-    namespace xlib
-    {
-        using Display = void*;
-        using Window = unsigned long;
-        using VisualID = unsigned long;
-    }
-
-    struct WindowHandle
-    {
-        xlib::Display display { nullptr };
-        xlib::Window window { 0 };
-        xlib::VisualID visualid { 0 };
-    };
-
-} // namespace mango
-
-#endif
-
-// -----------------------------------------------------------------------
-// MANGO_WINDOW_SYSTEM_XCB
-// -----------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_XCB)
-
-    #include <xcb/xcb.h>
-
-namespace mango
-{
-
-    struct WindowHandle
-    {
-        xcb_connection_t* connection { nullptr };
-        xcb_window_t window { 0 };
-        xcb_visualid_t visualid { 0 };
-    };
-
-} // namespace mango
-
-#endif
-
-// -----------------------------------------------------------------------
-// MANGO_WINDOW_SYSTEM_WAYLAND
-// -----------------------------------------------------------------------
-
-#if defined(MANGO_WINDOW_SYSTEM_WAYLAND)
-
-    #include <wayland-client.h>
-    #include <wayland-client-protocol.h>
-
-namespace mango
-{
-
-    struct WindowHandle
-    {
-        wl_display* display { nullptr };
-        wl_surface* surface { nullptr };
-    };
-
-} // namespace mango
-
-#endif
-
-#if !defined(MANGO_WINDOW_SYSTEM_NONE)
-
-namespace mango
-{
+    // The per-window-system implementation (OS window + event loop + native
+    // surface creation). Opaque to the public API: native types (HWND, xcb,
+    // wl_display, Display, CAMetalLayer) never leak into this header. Defined
+    // internally per backend; see source/mango/window/window_backend.hpp.
+    struct WindowBackend;
 
     enum Keycode
     {
@@ -334,18 +255,13 @@ namespace mango
     class Window : public NonCopyable
     {
     protected:
-        std::unique_ptr<struct WindowContext> m_window_context;
+        std::unique_ptr<WindowBackend> m_backend;
         EventLoopState m_event_loop;
 
-        void waitForNextIteration();
-
-        virtual void runEventLoop();
-
-        // Unblock a loop that is sleeping on the OS event queue. Platform-specific:
-        // posts a no-op event so a state change (invalidate / requestFrame /
-        // breakEventLoop) is observed immediately, even from another thread. Lets the
-        // idle wait block indefinitely instead of polling on a timeout.
-        void wakeEventLoop();
+        // Construct the backend for the active window system (see getWindowSystem).
+        // Concrete window types (OpenGLContext, VulkanWindow) call this from their
+        // constructors.
+        void createBackend(int width, int height, u32 flags, const char* title);
 
     public:
         enum : u32
@@ -359,11 +275,25 @@ namespace mango
         Window(int width, int height, u32 flags = 0);
         virtual ~Window();
 
+        // Window system selection is process-global: a single backend is active
+        // for the lifetime of the process (Xlib / Xcb / Wayland on Linux; the sole
+        // platform backend on Windows / macOS). setWindowSystem() is the override
+        // hook; it must be called before the system is first queried (i.e. before
+        // creating any Window or calling vulkan::requiredSurfaceExtensions()), and
+        // warns and is ignored if called too late. getWindowSystem() resolves the
+        // value lazily on first use (honoring the MANGO_WINDOW_SYSTEM environment
+        // variable and auto-detecting the running session) and logs the choice.
+        // Both are thread-safe; the value is resolved exactly once.
+        static void setWindowSystem(WindowSystem ws = WindowSystem::Default);
+        static WindowSystem getWindowSystem();
+
         static int getScreenCount();
         static math::int32x2 getScreenSize(int screen = 0);
 
-        operator WindowHandle () const;
-        operator struct WindowContext* () const;
+        // Internal: the active backend. Used by the graphics layers (OpenGL/Vulkan)
+        // and the platform event loop; not part of the stable public surface.
+        WindowBackend* backend() const { return m_backend.get(); }
+        EventLoopState& eventLoop() { return m_event_loop; }
 
         void setWindowPosition(int x, int y);
         void setWindowSize(int width, int height);
@@ -375,8 +305,8 @@ namespace mango
 
         virtual double getDisplayRefreshRate() const;
 
-        virtual void toggleFullscreen() = 0;
-        virtual bool isFullscreen() const = 0;
+        virtual void toggleFullscreen();
+        virtual bool isFullscreen() const;
 
         bool isKeyPressed(Keycode code) const;
 
@@ -414,4 +344,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // !defined(MANGO_WINDOW_SYSTEM_NONE)
+#endif // defined(MANGO_ENABLE_WINDOW)

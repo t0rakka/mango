@@ -7,7 +7,7 @@
 #include <mango/core/system.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#ifndef MANGO_OPENGL_CONTEXT_NONE
+#if defined(MANGO_ENABLE_OPENGL)
 
 namespace
 {
@@ -199,65 +199,14 @@ namespace mango
         }
     }
 
-#if defined(MANGO_OPENGL_CONTEXT_WGL)
-
-    static
-    void init_wgl(OpenGLContext& context)
-    {
-        const char* names[] =
-        {
-#define WGL_EXTENSION(Name) "WGL_"#Name,
-#include <mango/opengl/func/wglext.hpp>
-#undef WGL_EXTENSION
-        };
-
-        u32* mask = reinterpret_cast<u32*>(&context.wgl);
-        std::memset(mask, 0, sizeof(context.wgl));
-
-        for (size_t i = 0; i < std::size(names); ++i)
-        {
-            if (context.isExtension(names[i]))
-            {
-                mask[i / 32] |= (1 << (i % 32));
-            }
-        }
-    }
-
-#endif
-
-#if defined(MANGO_OPENGL_CONTEXT_GLX)
-
-    static
-    void init_glx(OpenGLContext& context)
-    {
-        const char* names[] =
-        {
-#define GLX_EXTENSION(Name) "GLX_"#Name,
-#include <mango/opengl/func/glxext.hpp>
-#undef GLX_EXTENSION
-        };
-
-        u32* mask = reinterpret_cast<u32*>(&context.glx);
-        std::memset(mask, 0, sizeof(context.glx));
-
-        for (size_t i = 0; i < std::size(names); ++i)
-        {
-            if (context.isExtension(names[i]))
-            {
-                mask[i / 32] |= (1 << (i % 32));
-            }
-        }
-    }
-
-#endif
-
     // -----------------------------------------------------------------------
     // context creation
     // -----------------------------------------------------------------------
 
     OpenGLContextHandle* createOpenGLContextWGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
     OpenGLContextHandle* createOpenGLContextCocoa(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
-    OpenGLContextHandle* createOpenGLContextGLX(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    OpenGLContextHandle* createOpenGLContextGLX_Xlib(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    OpenGLContextHandle* createOpenGLContextGLX_Xcb(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
     OpenGLContextHandle* createOpenGLContextEGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
 
     using CreateContext = OpenGLContextHandle* (*)(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
@@ -275,15 +224,31 @@ namespace mango
         create = createOpenGLContextCocoa;
 #endif
 
-#if defined(MANGO_OPENGL_CONTEXT_GLX)
-        create = createOpenGLContextGLX;
-#endif
+#if defined(MANGO_OPENGL_CONTEXT_GLX) || defined(MANGO_OPENGL_CONTEXT_EGL)
+        // Linux: the X11/Wayland backends coexist; pick the GL context
+        // implementation from the window's runtime WindowSystem. EGL is used for
+        // Wayland and whenever the caller requests it explicitly (OpenGLContext::EGL).
+        const WindowSystem ws = Window::getWindowSystem();
 
-#if defined(MANGO_OPENGL_CONTEXT_EGL)
-        if ((flags & OpenGLContext::EGL) || !create)
+    #if defined(MANGO_ENABLE_XLIB)
+        if (ws == WindowSystem::Xlib)
+        {
+            create = createOpenGLContextGLX_Xlib;
+        }
+    #endif
+    #if defined(MANGO_ENABLE_XCB)
+        if (ws == WindowSystem::Xcb)
+        {
+            create = createOpenGLContextGLX_Xcb;
+        }
+    #endif
+
+    #if defined(MANGO_OPENGL_CONTEXT_EGL)
+        if (ws == WindowSystem::Wayland || (flags & OpenGLContext::EGL) || !create)
         {
             create = createOpenGLContextEGL;
         }
+    #endif
 #endif
 
         OpenGLContextHandle* context = nullptr;
@@ -422,14 +387,6 @@ namespace mango
     {
         init_ext(*this);
         init_core(*this, m_version);
-
-#if defined(MANGO_OPENGL_CONTEXT_WGL)
-        init_wgl(*this);
-#endif
-
-#if defined(MANGO_OPENGL_CONTEXT_GLX)
-        init_glx(*this);
-#endif
 
         int gl_version = 0;
         int gles_version = 0;
@@ -770,4 +727,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // MANGO_OPENGL_CONTEXT_NONE
+#endif // defined(MANGO_ENABLE_OPENGL)
