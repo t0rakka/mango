@@ -668,6 +668,10 @@ endif ()
 
 if (BUILD_VULKAN)
     target_compile_definitions(mango PUBLIC MANGO_ENABLE_VULKAN)
+    # Vulkan Memory Allocator (vendored, header-only). Private: the implementation
+    # is compiled in allocator.cpp and the public allocator.hpp only forward-declares
+    # the VMA handles, so this header is not exposed to mango consumers.
+    target_include_directories(mango PRIVATE "${EXTERNAL_SOURCE_DIR}/vma")
     if (APPLE)
         target_compile_definitions(mango PRIVATE VK_USE_PLATFORM_METAL_EXT)
     endif ()
