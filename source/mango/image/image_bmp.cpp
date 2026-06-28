@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <map>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
@@ -172,6 +173,14 @@ namespace
                     break;
 
                 case BIC_JPEG:
+                    // In an OS/2 v2 header (size 64) compression code 4 means RLE24, which
+                    // is decoded later; only the Windows BI_JPEG meaning is unsupported.
+                    if (headerSize == 64)
+                    {
+                        break;
+                    }
+                    [[fallthrough]];
+
                 case BIC_PNG:
                 case BIC_CMYK:
                 case BIC_CMYKRLE8:
@@ -830,6 +839,236 @@ namespace
         }
     }
 
+    // ------------------------------------------------------------
+    // OS/2 Huffman 1D (CCITT Group 3 one-dimensional, "modified Huffman")
+    // ------------------------------------------------------------
+
+    struct HuffCode
+    {
+        int run;        // run length, or -2 for EOL
+        u16 code;       // code bits (right aligned)
+        u8 length;      // number of valid bits
+    };
+
+    // CCITT T.4 white run-length codes (terminating 0..63, then makeup 64..1728)
+    static const HuffCode g_white_codes[] =
+    {
+        {  0, 0x35, 8 }, {  1, 0x07, 6 }, {  2, 0x07, 4 }, {  3, 0x08, 4 },
+        {  4, 0x0b, 4 }, {  5, 0x0c, 4 }, {  6, 0x0e, 4 }, {  7, 0x0f, 4 },
+        {  8, 0x13, 5 }, {  9, 0x14, 5 }, { 10, 0x07, 5 }, { 11, 0x08, 5 },
+        { 12, 0x08, 6 }, { 13, 0x03, 6 }, { 14, 0x34, 6 }, { 15, 0x35, 6 },
+        { 16, 0x2a, 6 }, { 17, 0x2b, 6 }, { 18, 0x27, 7 }, { 19, 0x0c, 7 },
+        { 20, 0x08, 7 }, { 21, 0x17, 7 }, { 22, 0x03, 7 }, { 23, 0x04, 7 },
+        { 24, 0x28, 7 }, { 25, 0x2b, 7 }, { 26, 0x13, 7 }, { 27, 0x24, 7 },
+        { 28, 0x18, 7 }, { 29, 0x02, 8 }, { 30, 0x03, 8 }, { 31, 0x1a, 8 },
+        { 32, 0x1b, 8 }, { 33, 0x12, 8 }, { 34, 0x13, 8 }, { 35, 0x14, 8 },
+        { 36, 0x15, 8 }, { 37, 0x16, 8 }, { 38, 0x17, 8 }, { 39, 0x28, 8 },
+        { 40, 0x29, 8 }, { 41, 0x2a, 8 }, { 42, 0x2b, 8 }, { 43, 0x2c, 8 },
+        { 44, 0x2d, 8 }, { 45, 0x04, 8 }, { 46, 0x05, 8 }, { 47, 0x0a, 8 },
+        { 48, 0x0b, 8 }, { 49, 0x52, 8 }, { 50, 0x53, 8 }, { 51, 0x54, 8 },
+        { 52, 0x55, 8 }, { 53, 0x24, 8 }, { 54, 0x25, 8 }, { 55, 0x58, 8 },
+        { 56, 0x59, 8 }, { 57, 0x5a, 8 }, { 58, 0x5b, 8 }, { 59, 0x4a, 8 },
+        { 60, 0x4b, 8 }, { 61, 0x32, 8 }, { 62, 0x33, 8 }, { 63, 0x34, 8 },
+        { 64, 0x1b, 5 }, { 128, 0x12, 5 }, { 192, 0x17, 6 }, { 256, 0x37, 7 },
+        { 320, 0x36, 8 }, { 384, 0x37, 8 }, { 448, 0x64, 8 }, { 512, 0x65, 8 },
+        { 576, 0x68, 8 }, { 640, 0x67, 8 }, { 704, 0xcc, 9 }, { 768, 0xcd, 9 },
+        { 832, 0xd2, 9 }, { 896, 0xd3, 9 }, { 960, 0xd4, 9 }, { 1024, 0xd5, 9 },
+        { 1088, 0xd6, 9 }, { 1152, 0xd7, 9 }, { 1216, 0xd8, 9 }, { 1280, 0xd9, 9 },
+        { 1344, 0xda, 9 }, { 1408, 0xdb, 9 }, { 1472, 0x98, 9 }, { 1536, 0x99, 9 },
+        { 1600, 0x9a, 9 }, { 1664, 0x18, 6 }, { 1728, 0x9b, 9 },
+    };
+
+    // CCITT T.4 black run-length codes (terminating 0..63, then makeup 64..1728)
+    static const HuffCode g_black_codes[] =
+    {
+        {  0, 0x37, 10 }, {  1, 0x02, 3 }, {  2, 0x03, 2 }, {  3, 0x02, 2 },
+        {  4, 0x03, 3 }, {  5, 0x03, 4 }, {  6, 0x02, 4 }, {  7, 0x03, 5 },
+        {  8, 0x05, 6 }, {  9, 0x04, 6 }, { 10, 0x04, 7 }, { 11, 0x05, 7 },
+        { 12, 0x07, 7 }, { 13, 0x04, 8 }, { 14, 0x07, 8 }, { 15, 0x18, 9 },
+        { 16, 0x17, 10 }, { 17, 0x18, 10 }, { 18, 0x08, 10 }, { 19, 0x67, 11 },
+        { 20, 0x68, 11 }, { 21, 0x6c, 11 }, { 22, 0x37, 11 }, { 23, 0x28, 11 },
+        { 24, 0x17, 11 }, { 25, 0x18, 11 }, { 26, 0xca, 12 }, { 27, 0xcb, 12 },
+        { 28, 0xcc, 12 }, { 29, 0xcd, 12 }, { 30, 0x68, 12 }, { 31, 0x69, 12 },
+        { 32, 0x6a, 12 }, { 33, 0x6b, 12 }, { 34, 0xd2, 12 }, { 35, 0xd3, 12 },
+        { 36, 0xd4, 12 }, { 37, 0xd5, 12 }, { 38, 0xd6, 12 }, { 39, 0xd7, 12 },
+        { 40, 0x6c, 12 }, { 41, 0x6d, 12 }, { 42, 0xda, 12 }, { 43, 0xdb, 12 },
+        { 44, 0x54, 12 }, { 45, 0x55, 12 }, { 46, 0x56, 12 }, { 47, 0x57, 12 },
+        { 48, 0x64, 12 }, { 49, 0x65, 12 }, { 50, 0x52, 12 }, { 51, 0x53, 12 },
+        { 52, 0x24, 12 }, { 53, 0x37, 12 }, { 54, 0x38, 12 }, { 55, 0x27, 12 },
+        { 56, 0x28, 12 }, { 57, 0x58, 12 }, { 58, 0x59, 12 }, { 59, 0x2b, 12 },
+        { 60, 0x2c, 12 }, { 61, 0x5a, 12 }, { 62, 0x66, 12 }, { 63, 0x67, 12 },
+        { 64, 0x0f, 10 }, { 128, 0xc8, 12 }, { 192, 0xc9, 12 }, { 256, 0x5b, 12 },
+        { 320, 0x33, 12 }, { 384, 0x34, 12 }, { 448, 0x35, 12 }, { 512, 0x6c, 13 },
+        { 576, 0x6d, 13 }, { 640, 0x4a, 13 }, { 704, 0x4b, 13 }, { 768, 0x4c, 13 },
+        { 832, 0x4d, 13 }, { 896, 0x72, 13 }, { 960, 0x73, 13 }, { 1024, 0x74, 13 },
+        { 1088, 0x75, 13 }, { 1152, 0x76, 13 }, { 1216, 0x77, 13 }, { 1280, 0x52, 13 },
+        { 1344, 0x53, 13 }, { 1408, 0x54, 13 }, { 1472, 0x55, 13 }, { 1536, 0x5a, 13 },
+        { 1600, 0x5b, 13 }, { 1664, 0x64, 13 }, { 1728, 0x65, 13 },
+    };
+
+    // Extended makeup codes (1792..2560) and EOL, shared by both colors
+    static const HuffCode g_shared_codes[] =
+    {
+        { 1792, 0x08, 11 }, { 1856, 0x0c, 11 }, { 1920, 0x0d, 11 },
+        { 1984, 0x12, 12 }, { 2048, 0x13, 12 }, { 2112, 0x14, 12 },
+        { 2176, 0x15, 12 }, { 2240, 0x16, 12 }, { 2304, 0x17, 12 },
+        { 2368, 0x1c, 12 }, { 2432, 0x1d, 12 }, { 2496, 0x1e, 12 },
+        { 2560, 0x1f, 12 },
+        { -2, 0x01, 12 }, // EOL
+    };
+
+    struct HuffTable
+    {
+        // map (length << 16) | code -> run (or -2 for EOL)
+        std::map<u32, int> table;
+
+        void add(const HuffCode* codes, size_t count)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                u32 key = (u32(codes[i].length) << 16) | codes[i].code;
+                table[key] = codes[i].run;
+            }
+        }
+    };
+
+    struct HuffBitReader
+    {
+        const u8* p;
+        const u8* end;
+        u32 buffer = 0;
+        int count = 0;
+
+        HuffBitReader(ConstMemory memory)
+            : p(memory.address)
+            , end(memory.end())
+        {
+        }
+
+        // returns -1 at end of data
+        int getbit()
+        {
+            if (!count)
+            {
+                if (p >= end)
+                    return -1;
+                buffer = *p++;
+                count = 8;
+            }
+            --count;
+            return (buffer >> count) & 1;
+        }
+    };
+
+    // Decode one run-length code; returns the run (>= 0), -2 for EOL, or -1 on error/eof.
+    static int huffMatch(HuffBitReader& br, const HuffTable& table)
+    {
+        u32 code = 0;
+        for (int length = 1; length <= 14; ++length)
+        {
+            int bit = br.getbit();
+            if (bit < 0)
+                return -1;
+
+            code = (code << 1) | u32(bit);
+
+            auto it = table.table.find((u32(length) << 16) | code);
+            if (it != table.table.end())
+                return it->second;
+        }
+
+        return -1;
+    }
+
+    bool readHuffman1D(const Surface& surface, const BitmapHeader& header, ConstMemory memory)
+    {
+        static HuffTable white;
+        static HuffTable black;
+        static bool initialized = false;
+        if (!initialized)
+        {
+            white.add(g_white_codes, std::size(g_white_codes));
+            white.add(g_shared_codes, std::size(g_shared_codes));
+            black.add(g_black_codes, std::size(g_black_codes));
+            black.add(g_shared_codes, std::size(g_shared_codes));
+            initialized = true;
+        }
+
+        const int width = header.width;
+        const int height = header.height;
+
+        HuffBitReader br(memory);
+
+        for (int y = 0; y < height; ++y)
+        {
+            u8* image = surface.address<u8>(0, y);
+
+            int x = 0;
+            int color = 0; // each line starts with a white run
+
+            while (x < width)
+            {
+                int run = 0;
+                bool terminating = false;
+                bool endLine = false;
+
+                // accumulate makeup codes until a terminating code (< 64) is read
+                for (;;)
+                {
+                    int value = huffMatch(br, color ? black : white);
+
+                    if (value == -2)
+                    {
+                        // EOL is a scanline separator. Each line is preceded by an EOL
+                        // (and lines may be padded with extra EOLs); skip it while still
+                        // at the start of the line, otherwise it terminates the line.
+                        if (run == 0 && x == 0 && color == 0)
+                        {
+                            continue;
+                        }
+
+                        endLine = true;
+                        break;
+                    }
+
+                    if (value < 0)
+                    {
+                        // out of data: tolerate truncation once something was produced
+                        return x > 0 || y > 0;
+                    }
+
+                    run += value;
+
+                    if (value < 64)
+                    {
+                        terminating = true;
+                        break;
+                    }
+                }
+
+                if (endLine || !terminating)
+                {
+                    break;
+                }
+
+                if (run > width - x)
+                {
+                    run = width - x;
+                }
+
+                if (color)
+                {
+                    std::memset(image + x, 1, run);
+                }
+
+                x += run;
+                color ^= 1;
+            }
+        }
+
+        return true;
+    }
+
     void readIndexed(Surface& surface, const BitmapHeader& header, size_t bytesPerScan, ConstMemory memory)
     {
         const u8* data = memory.address;
@@ -965,13 +1204,28 @@ namespace
         {
             if (header.compression == BIC_BITFIELDS)
             {
-                header.setError("[ImageDecoder.BMP] Unsupported compression (OS/2 Huffman).");
+                // OS/2 compression code 3 is CCITT G3 1-D ("Huffman 1D"), not bitfields.
+                // It is always 1 bit per pixel; decode run-lengths into palette indices.
+                Bitmap temp(header.width, header.height, LuminanceFormat(8, Format::UNORM, 8, 0));
+                std::memset(temp.image, 0, size_t(temp.width) * temp.height);
+                if (!readHuffman1D(temp, header, data))
+                {
+                    header.setError("[ImageDecoder.BMP] Huffman 1D decoding failed.");
+                    return std::move(header);
+                }
+                blitPalette(mirror, temp, palette);
                 return std::move(header);
             }
 
             if (header.compression == BIC_JPEG)
             {
-                readRLE24(mirror, header, data);
+                // OS/2 RLE24: decode into a private BGR24 buffer, then blit/convert into the
+                // caller's surface (readRLE24 writes raw BGR triplets and cannot target an
+                // arbitrary destination format directly).
+                Bitmap temp(header.width, header.height, Format(24, Format::UNORM, Format::BGR, 8, 8, 8, 0));
+                std::memset(temp.image, 0, size_t(temp.width) * temp.height * 3);
+                readRLE24(temp, header, data);
+                mirror.blit(0, 0, temp);
                 return std::move(header);
             }
         }

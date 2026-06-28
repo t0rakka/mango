@@ -59,7 +59,8 @@ namespace
             p += 84;
             colormap  = p.read32(); // 0: NORMAL, 1: DITHERED, 2: SCREEN, 3: COLORMAP
 
-            if (bpc != 1 || colormap != 0)
+            // bpc is the bytes-per-channel: 1 (8-bit) and 2 (16-bit) are both valid
+            if ((bpc != 1 && bpc != 2) || colormap != 0)
             {
                 header.setError("[ImageDecoder.SGI] Incorrect channel / colormap.");
                 return;
@@ -72,25 +73,33 @@ namespace
                 return;
             }
 
-            // select color format
+            // select color format (8 or 16 bits per channel, 1..4 channels)
             Format format;
-            switch (zsize)
+            if (bpc == 1)
             {
-                case 1:
-                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
-                    break;
-                case 2:
-                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
-                    break;
-                case 3:
-                    format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
-                    break;
-                case 4:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    break;
-                default:
-                    header.setError("[ImageDecoder.SGI] Incorrect color format.");
-                    return;
+                switch (zsize)
+                {
+                    case 1: format = LuminanceFormat(8, Format::UNORM, 8, 0); break;
+                    case 2: format = LuminanceFormat(16, Format::UNORM, 8, 8); break;
+                    case 3: format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
+                    case 4: format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
+                    default:
+                        header.setError("[ImageDecoder.SGI] Incorrect color format.");
+                        return;
+                }
+            }
+            else
+            {
+                switch (zsize)
+                {
+                    case 1: format = LuminanceFormat(16, Format::UNORM, 16, 0); break;
+                    case 2: format = LuminanceFormat(32, Format::UNORM, 16, 16); break;
+                    case 3: format = Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0); break;
+                    case 4: format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16); break;
+                    default:
+                        header.setError("[ImageDecoder.SGI] Incorrect color format.");
+                        return;
+                }
             }
 
             header.width   = xsize;
@@ -102,6 +111,22 @@ namespace
             header.compression = TextureCompression::NONE;
         }
     };
+
+    // Big-endian sample load for the channel sample type (u8 for bpc==1, u16 for bpc==2).
+    template <typename T>
+    static inline T sgi_load(const u8* p);
+
+    template <>
+    inline u8 sgi_load<u8>(const u8* p)
+    {
+        return p[0];
+    }
+
+    template <>
+    inline u16 sgi_load<u16>(const u8* p)
+    {
+        return u16((u16(p[0]) << 8) | p[1]);
+    }
 
     // ------------------------------------------------------------
     // ImageDecoder
@@ -123,14 +148,18 @@ namespace
         {
         }
 
+        // T is the channel sample type: u8 (bpc == 1) or u16 (bpc == 2). Samples are stored
+        // big-endian; the destination surface holds them in host order, channel-interleaved.
+        template <typename T>
         bool decode_uncompressed(const Surface& s)
         {
-            int width = m_sgi_header.xsize;
-            int height = m_sgi_header.ysize;
-            int channels = m_sgi_header.zsize;
+            const int width = m_sgi_header.xsize;
+            const int height = m_sgi_header.ysize;
+            const int channels = m_sgi_header.zsize;
+            constexpr size_t bpc = sizeof(T);
 
             // All channel planes are stored contiguously after the 512-byte header.
-            const size_t needed = size_t(width) * size_t(height) * size_t(channels);
+            const size_t needed = size_t(width) * size_t(height) * size_t(channels) * bpc;
             if (m_memory.size < 512 + needed)
             {
                 return false;
@@ -143,14 +172,14 @@ namespace
                 for (int y = 0; y < height; ++y)
                 {
                     int scanline = (height - 1) - y; // mirror vertically
-                    u8* dest = s.address<u8>(0, scanline) + channel;
+                    T* dest = reinterpret_cast<T*>(s.address<u8>(0, scanline)) + channel;
 
-                    int offset = (y + channel * height) * width;
-                    const u8* src = data + offset;
+                    const u8* src = data + (size_t(y) + size_t(channel) * height) * width * bpc;
 
                     for (int x = 0; x < width; ++x)
                     {
-                        *dest = src[x];
+                        *dest = sgi_load<T>(src);
+                        src += bpc;
                         dest += channels;
                     }
                 }
@@ -159,11 +188,13 @@ namespace
             return true;
         }
 
+        template <typename T>
         bool decode_rle(const Surface& s)
         {
             const int width = m_sgi_header.xsize;
             const int height = m_sgi_header.ysize;
             const int channels = m_sgi_header.zsize;
+            constexpr size_t bpc = sizeof(T);
 
             const u8* data = m_memory.address;
 
@@ -195,7 +226,7 @@ namespace
                 for (int y = 0; y < height; ++y)
                 {
                     int scanline = (height - 1) - y; // mirror vertically
-                    u8* dest = s.address<u8>(0, scanline) + channel;
+                    T* dest = reinterpret_cast<T*>(s.address<u8>(0, scanline)) + channel;
 
                     const size_t index = size_t(y) + size_t(channel) * size_t(height);
                     const u32 offset = offsets[index];
@@ -215,8 +246,14 @@ namespace
 
                     while (src < end && x < width)
                     {
-                        u8 pixel = *src++;
-                        int count = pixel & 0x7f;
+                        // the control word is one sample wide (low 8 bits hold flag + count)
+                        if (size_t(end - src) < bpc)
+                            break;
+
+                        T control = sgi_load<T>(src);
+                        src += bpc;
+
+                        int count = control & 0x7f;
                         if (!count)
                             break;
 
@@ -226,33 +263,36 @@ namespace
                             count = width - x;
                         }
 
-                        if (pixel & 0x80)
+                        if (control & 0x80)
                         {
-                            // literal run: consumes 'count' source bytes
-                            if (src + count > end)
+                            // literal run: consumes 'count' source samples
+                            if (size_t(end - src) < size_t(count) * bpc)
                             {
                                 return false;
                             }
 
                             while (count--)
                             {
-                                *dest = *src++;
+                                *dest = sgi_load<T>(src);
+                                src += bpc;
                                 dest += channels;
                                 ++x;
                             }
                         }
                         else
                         {
-                            // replicate run: consumes a single source byte
-                            if (src >= end)
+                            // replicate run: consumes a single source sample
+                            if (size_t(end - src) < bpc)
                             {
                                 return false;
                             }
 
-                            pixel = *src++;
+                            T value = sgi_load<T>(src);
+                            src += bpc;
+
                             while (count--)
                             {
-                                *dest = pixel;
+                                *dest = value;
                                 dest += channels;
                                 ++x;
                             }
@@ -281,15 +321,18 @@ namespace
 
             DecodeTargetBitmap target(dest, m_sgi_header.xsize, m_sgi_header.ysize, header.format);
 
+            const bool wide = m_sgi_header.bpc == 2;
             bool ok = false;
 
             switch (m_sgi_header.encoding)
             {
                 case 0:
-                    ok = decode_uncompressed(target);
+                    ok = wide ? decode_uncompressed<u16>(target)
+                              : decode_uncompressed<u8>(target);
                     break;
                 case 1:
-                    ok = decode_rle(target);
+                    ok = wide ? decode_rle<u16>(target)
+                              : decode_rle<u8>(target);
                     break;
                 default:
                     status.setError("[ImageDecoder.SGI] Unsupported encoding ({}).", m_sgi_header.encoding);

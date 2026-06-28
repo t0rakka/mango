@@ -355,7 +355,77 @@ namespace
         }
     };
 
-    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
+    // Old-style Radiance: a flat stream of 4-byte RGBE pixels with a simple run-length where
+    // a pixel of (1,1,1,n) repeats the previous pixel n << rshift times (rshift grows by 8
+    // for consecutive run records, allowing runs longer than 255; it resets on a real pixel).
+    void hdr_decode_old(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
+    {
+        const int width = surface.width;
+        const int height = surface.height;
+
+        float pr = 0.0f, pg = 0.0f, pb = 0.0f; // previous pixel (carried across the stream)
+
+        for (int y = 0; y < height; ++y)
+        {
+            float* image = surface.address<float>(0, y);
+
+            int rshift = 0;
+            int x = 0;
+
+            while (x < width)
+            {
+                if (data + 4 > data_end)
+                {
+                    status.setError("[ImageDecoder.HDR] Truncated rgbe stream.");
+                    return;
+                }
+
+                u8 r = data[0];
+                u8 g = data[1];
+                u8 b = data[2];
+                u8 e = data[3];
+                data += 4;
+
+                if (r == 1 && g == 1 && b == 1)
+                {
+                    // repeat the previous pixel; clamp the run to the rest of the scanline
+                    size_t count = size_t(e) << rshift;
+                    if (count > size_t(width - x))
+                    {
+                        count = size_t(width - x);
+                    }
+
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        image[x * 4 + 0] = pr;
+                        image[x * 4 + 1] = pg;
+                        image[x * 4 + 2] = pb;
+                        image[x * 4 + 3] = 1.0f;
+                        ++x;
+                    }
+
+                    rshift += 8;
+                }
+                else
+                {
+                    float scale = getScale(e);
+                    pr = r * scale;
+                    pg = g * scale;
+                    pb = b * scale;
+
+                    image[x * 4 + 0] = pr;
+                    image[x * 4 + 1] = pg;
+                    image[x * 4 + 2] = pb;
+                    image[x * 4 + 3] = 1.0f;
+
+                    rshift = 0;
+                    ++x;
+                }
+            }
+        }
+    }
+
+    void hdr_decode_rle(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
     {
         Buffer buffer(surface.width * 4);
 
@@ -453,6 +523,26 @@ namespace
                 image[3] = 1.0f;
                 image += 4;
             }
+        }
+    }
+
+    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
+    {
+        // New-style adaptive RLE is only used when a scanline begins with the 2,2,len_hi,len_lo
+        // marker (and the width is in [8, 0x7fff]). Anything else is the old flat/RLE format.
+        const int width = surface.width;
+
+        bool newrle = width >= 8 && width < 0x8000 && data + 4 <= data_end &&
+                      data[0] == 2 && data[1] == 2 &&
+                      ((data[2] << 8) | data[3]) == width;
+
+        if (newrle)
+        {
+            hdr_decode_rle(status, surface, data, data_end);
+        }
+        else
+        {
+            hdr_decode_old(status, surface, data, data_end);
         }
     }
 

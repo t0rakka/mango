@@ -181,102 +181,84 @@ namespace
                 maxvalue = 255;
                 is_float = true;
             }
-            else if (!std::strncmp(p, "P7\n", 3))
+            else if (!std::strncmp(p, "P7", 2) && (p[2] == '\n' || p[2] == '\r'))
             {
-                char type[100];
+                // PAM: the header is a set of "TOKEN value" lines in any order, terminated
+                // by ENDHDR. Comments (#...) and blank lines are ignored. The previous code
+                // assumed a fixed WIDTH/HEIGHT/DEPTH/MAXVAL/TUPLTYPE order, which rejected
+                // perfectly valid files that reorder or omit fields.
 
-                p = nextLine(p, end);
-                if (!p)
+                // Parse a non-negative integer from [s, e); returns -1 when none is present.
+                auto parseInt = [](const char* s, const char* e) -> int
                 {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "WIDTH %i", &width) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect WIDTH.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "HEIGHT %i", &height) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect HEIGHT.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "DEPTH %i", &channels) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect DEPTH.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "MAXVAL %i", &maxvalue) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect MAXVAL.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "TUPLTYPE %99s", type) > 0)
-                {
-                    printLine(Print::Info, "  tupltype: {}", type);
-                    /*
-                    if (!strncmp(type, "BLACKANDWHITE_ALPHA", strlen("BLACKANDWHITE_ALPHA")))
+                    while (s < e && !std::isdigit((unsigned char)*s))
+                        ++s;
+                    if (s >= e)
+                        return -1;
+                    long v = 0;
+                    while (s < e && std::isdigit((unsigned char)*s))
                     {
-                        ++header.channels;
+                        v = v * 10 + (*s - '0');
+                        if (v > 0x7fffffff)
+                            v = 0x7fffffff;
+                        ++s;
                     }
-                    else if (!strncmp(type, "GRAYSCALE_ALPHA", strlen("GRAYSCALE_ALPHA")))
-                    {
-                        ++header.channels;
-                    }
-                    else if (!strncmp(type, "RGB_ALPHA", strlen("RGB_ALPHA")))
-                    {
-                        ++header.channels;
-                    }
-                    else
-                    {
-                        // custom type
-                    }
-                    */
-                }
+                    return int(v);
+                };
 
-                p = nextLine(p, end);
-                if (!p)
+                p = nextLine(p, end); // skip the "P7" magic line
+
+                bool endhdr = false;
+
+                while (p && p < end)
                 {
-                    setDataError();
-                    return;
+                    const char* line = p;
+                    p = nextLine(p, end);
+                    const char* lineEnd = p ? p : end;
+
+                    // skip leading whitespace
+                    while (line < lineEnd && (*line == ' ' || *line == '\t'))
+                        ++line;
+
+                    // ignore blank lines and comments
+                    if (line >= lineEnd || *line == '\n' || *line == '\r' || *line == '#')
+                        continue;
+
+                    const size_t avail = size_t(lineEnd - line);
+
+                    if (avail >= 6 && !std::strncmp(line, "ENDHDR", 6))
+                    {
+                        endhdr = true;
+                        break;
+                    }
+                    else if (avail >= 5 && !std::strncmp(line, "WIDTH", 5))
+                    {
+                        width = parseInt(line + 5, lineEnd);
+                    }
+                    else if (avail >= 6 && !std::strncmp(line, "HEIGHT", 6))
+                    {
+                        height = parseInt(line + 6, lineEnd);
+                    }
+                    else if (avail >= 5 && !std::strncmp(line, "DEPTH", 5))
+                    {
+                        channels = parseInt(line + 5, lineEnd);
+                    }
+                    else if (avail >= 6 && !std::strncmp(line, "MAXVAL", 6))
+                    {
+                        maxvalue = parseInt(line + 6, lineEnd);
+                    }
+                    // TUPLTYPE is informational; the channel count comes from DEPTH
                 }
 
-                if (std::strncmp(p, "ENDHDR", 6))
+                if (!endhdr)
                 {
                     header.setError("[ImageDecoder.PNM] Incorrect ENDHDR.");
+                    return;
+                }
+
+                if (!p)
+                {
+                    setDataError();
                     return;
                 }
             }

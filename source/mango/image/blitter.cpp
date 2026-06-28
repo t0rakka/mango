@@ -1672,6 +1672,87 @@ namespace
         }
     }
 
+    // Generic UNORM <- UNORM converter for component layouts the fixed-size (<= 32 bit) fast
+    // paths above do not cover, e.g. 48-bit RGB16 or 64-bit RGBA16 destinations. Each pixel is
+    // treated as a little-endian integer up to 64 bits wide. Without this fallback such
+    // conversions silently resolved to convert_none, leaving the destination zeroed.
+    void convert_generic_unorm_unorm(const Blitter& blitter, const Blitter::Rect& rect)
+    {
+        const Format& sf = blitter.sourceFormat;
+        const Format& df = blitter.destFormat;
+
+        const int srcBytes = sf.bytes();
+        const int dstBytes = df.bytes();
+
+        struct Component
+        {
+            u64 srcMask = 0;
+            u32 srcShift = 0;
+            u32 dstShift = 0;
+            float scale = 0.0f;
+            bool present = false;
+        } component[4];
+
+        u64 alphaFill = 0;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if (!df.size[i])
+                continue;
+
+            if (sf.size[i])
+            {
+                Component& c = component[i];
+                c.present = true;
+                c.srcMask = (u64(1) << sf.size[i]) - 1;
+                c.srcShift = sf.offset[i];
+                c.dstShift = df.offset[i];
+                const u64 dstMax = (u64(1) << df.size[i]) - 1;
+                c.scale = float(dstMax) / float(c.srcMask);
+            }
+            else if (i == 3)
+            {
+                // destination has alpha but the source does not: default alpha to 1.0
+                alphaFill |= ((u64(1) << df.size[i]) - 1) << df.offset[i];
+            }
+        }
+
+        for (int y = 0; y < rect.height; ++y)
+        {
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* d = rect.dest.address + rect.dest.stride * y;
+
+            for (int x = 0; x < rect.width; ++x)
+            {
+                u64 sv = 0;
+                for (int b = 0; b < srcBytes; ++b)
+                {
+                    sv |= u64(s[b]) << (b * 8);
+                }
+
+                u64 dv = alphaFill;
+                for (int i = 0; i < 4; ++i)
+                {
+                    const Component& c = component[i];
+                    if (!c.present)
+                        continue;
+
+                    const u64 value = (sv >> c.srcShift) & c.srcMask;
+                    const u64 scaled = u64(value * c.scale + 0.5f);
+                    dv |= scaled << c.dstShift;
+                }
+
+                for (int b = 0; b < dstBytes; ++b)
+                {
+                    d[b] = u8(dv >> (b * 8));
+                }
+
+                s += srcBytes;
+                d += dstBytes;
+            }
+        }
+    }
+
     Blitter::RectFunc get_rect_convert(const Format& dest, const Format& source)
     {
         int destBits = modeBits(dest);
@@ -1825,6 +1906,14 @@ namespace
                 case MAKE_MODEMASK(BITS_FP64, BITS_FP32): func = convert_template_fp_fp<float64, float32>; break;
                 case MAKE_MODEMASK(BITS_FP64, BITS_FP64): func = convert_template_fp_fp<float64, float64>; break;
             }
+        }
+
+        // Fixed-size fast paths only cover pixels up to 32 bits; fall back to the generic
+        // component converter for wider UNORM layouts (e.g. RGB16/RGBA16) instead of leaving
+        // the conversion as a silent no-op.
+        if (func == convert_none && dest.type == Format::UNORM && source.type == Format::UNORM)
+        {
+            func = convert_generic_unorm_unorm;
         }
 
         return func;
