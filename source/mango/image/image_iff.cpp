@@ -350,6 +350,225 @@ namespace
         }
     }
 
+    // PCHG (Palette Change): per-scanline palette modifications layered on top of the base
+    // CMAP. Supports the uncompressed and Huffman-compressed variants and both the 12-bit
+    // (OCS / SmallLineChanges) and 32-bit (BigLineChanges) change records. The algorithm
+    // mirrors the reference implementation in RECOIL.
+    struct PchgState
+    {
+        const u8* content = nullptr;
+        size_t length = 0;
+        size_t offset = 0;          // read cursor into the change data / compressed stream
+
+        bool compressed = false;
+        bool ocs = true;            // 12-bit OCS records vs 32-bit records
+        u32 startLine = 0;
+        int lineCount = 0;
+        std::vector<u8> haveChange; // bitmask: which lines carry changes
+
+        // Huffman state
+        size_t treeOffset = 0;
+        size_t treeLastOffset = 0;
+        int bits = 0;               // MSB-first bit register (with sentinel)
+
+        int readBit()
+        {
+            if ((bits & 127) == 0)
+            {
+                if (offset >= length)
+                    return -1;
+                bits = (content[offset++] << 1) | 1;
+            }
+            else
+            {
+                bits <<= 1;
+            }
+            return (bits >> 8) & 1;
+        }
+
+        int readHuffman()
+        {
+            size_t o = treeLastOffset;
+            for ( ; ; )
+            {
+                int bit = readBit();
+                if (bit == 0)
+                {
+                    o -= 2;
+                    if (o < treeOffset)
+                        return -1;
+                    if ((content[o] & 129) == 1)
+                        return content[o + 1];
+                }
+                else if (bit == 1)
+                {
+                    if (o + 1 >= length)
+                        return -1;
+                    int hi = content[o];
+                    int lo = content[o + 1];
+                    if (hi < 128)
+                        return lo;
+                    o += s32((hi - 256) << 8 | lo);
+                    if (o < treeOffset || o > treeLastOffset)
+                        return -1;
+                }
+                else
+                {
+                    return -1;
+                }
+            }
+        }
+
+        int readByteRaw()
+        {
+            if (offset >= length)
+                return -1;
+            return content[offset++];
+        }
+
+        int unpackByte()
+        {
+            return compressed ? readHuffman() : readByteRaw();
+        }
+
+        bool init(ConstMemory memory)
+        {
+            content = memory.address;
+            length = memory.size;
+
+            if (length < 20 || content[0] != 0)
+                return false;
+
+            switch (content[3] & 3)
+            {
+                case 1: ocs = true;  break; // SmallLineChanges (12-bit)
+                case 2: ocs = false; break; // BigLineChanges (32-bit)
+                default: return false;
+            }
+
+            startLine = u32(content[4] << 8 | content[5]); // unsigned: negative start disables
+            lineCount = content[6] << 8 | content[7];
+
+            const int haveLen = ((lineCount + 31) >> 5) << 2;
+            haveChange.resize(haveLen);
+
+            switch (content[1])
+            {
+                case 0: // uncompressed
+                {
+                    offset = 20;
+                    if (offset + size_t(haveLen) > length)
+                        return false;
+                    std::memcpy(haveChange.data(), content + offset, haveLen);
+                    offset += haveLen;
+                    compressed = false;
+                    break;
+                }
+
+                case 1: // Huffman
+                {
+                    treeOffset = 28;
+                    if (treeOffset > length)
+                        return false;
+
+                    u32 treeLength = bigEndian::uload32(content + 20);
+                    if (treeLength < 2 || treeLength > 1022)
+                        return false;
+
+                    offset = treeOffset + treeLength;
+                    if (offset > length)
+                        return false;
+
+                    treeLastOffset = offset - 2;
+
+                    for (int i = 0; i < haveLen; ++i)
+                    {
+                        int b = readHuffman();
+                        if (b < 0)
+                            return false;
+                        haveChange[i] = u8(b);
+                    }
+                    compressed = true;
+                    break;
+                }
+
+                default:
+                    return false;
+            }
+
+            return true;
+        }
+
+        void setOcsColors(Palette& pal, int base, int count)
+        {
+            while (--count >= 0)
+            {
+                int rr = unpackByte();
+                if (rr < 0)
+                    return;
+                int gb = unpackByte();
+                if (gb < 0)
+                    return;
+
+                int reg = base + (rr >> 4);
+                if (reg < int(pal.size))
+                {
+                    pal[reg] = Color((rr & 15) * 17, ((gb >> 4) & 15) * 17, (gb & 15) * 17, 0xff);
+                }
+            }
+        }
+
+        // Apply this scanline's cumulative palette changes. Must be called for every line in
+        // order (0 .. height-1) so the change stream stays in sync.
+        void applyLine(int y, Palette& pal)
+        {
+            int yy = y - int(startLine);
+            if (yy < 0 || yy >= lineCount)
+                return;
+
+            if (((haveChange[yy >> 3] >> (~yy & 7)) & 1) == 0)
+                return;
+
+            int count = unpackByte();
+            if (count < 0)
+                return;
+            int count2 = unpackByte();
+            if (count2 < 0)
+                return;
+
+            if (ocs)
+            {
+                setOcsColors(pal, 0, count);
+                setOcsColors(pal, 16, count2);
+            }
+            else
+            {
+                int n = count << 8 | count2;
+                while (--n >= 0)
+                {
+                    if (unpackByte() != 0)
+                        return;
+                    int c = unpackByte();
+                    if (c < 0)
+                        return;
+                    if (unpackByte() < 0) // alpha (ignored)
+                        return;
+                    int r = unpackByte();
+                    if (r < 0)
+                        return;
+                    int b = unpackByte();
+                    if (b < 0)
+                        return;
+                    int g = unpackByte();
+                    if (g < 0)
+                        return;
+                    if (c < int(pal.size))
+                        pal[c] = Color(r, g, b, 0xff);
+                }
+            }
+        }
+    };
+
     static
     void copy(const Surface& surface, const u8* buffer)
     {
@@ -534,6 +753,10 @@ namespace
         // SHAM (Sliced HAM): per-scanline 16-colour palettes
         bool m_sham = false;
         std::vector<Palette> m_sham_palettes;
+
+        // PCHG (Palette Change): per-scanline palette modifications
+        bool m_pchg_present = false;
+        ConstMemory m_pchg;
 
         ConstMemory m_body;
 
@@ -731,6 +954,14 @@ namespace
                         break;
                     }
 
+                    case u32_mask_rev('P','C','H','G'):
+                    {
+                        m_pchg = ConstMemory(p, payload);
+                        m_pchg_present = true;
+                        printLine(Print::Info, "  pchg: {} bytes", payload);
+                        break;
+                    }
+
                     case u32_mask_rev('B','O','D','Y'):
                     {
                         m_body = ConstMemory(p, payload);
@@ -753,6 +984,12 @@ namespace
             }
 
             resolveFormat();
+
+            // PCHG modifies the palette per scanline, so the output must be true colour.
+            if (m_pchg_present && !m_ham && header.success)
+            {
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            }
         }
 
         void resolveFormat()
@@ -922,6 +1159,47 @@ namespace
             {
                 p2c_ham(target, buffer, m_bmhd.nplanes, &m_palette, 1, 0);
             }
+        }
+
+        // PCHG render: convert planar data to indices, then resolve each scanline through a
+        // running palette that accumulates the per-line PCHG changes. Output is true colour.
+        bool renderPchg(const Surface& dest, const u8* buffer, int xsize, int ysize)
+        {
+            // planar -> 8-bit indices
+            Bitmap indexed(xsize, ysize, IndexedFormat(8));
+            p2c_raw(indexed, buffer, m_bmhd.nplanes, m_bmhd.masking);
+
+            // running palette seeded from the base CMAP
+            Palette pal;
+            pal.size = 256;
+            for (int i = 0; i < 256; ++i)
+            {
+                pal[i] = (i < int(m_palette.size)) ? m_palette[i] : Color(0, 0, 0, 0xff);
+            }
+
+            PchgState pchg;
+            bool ok = pchg.init(m_pchg);
+
+            DecodeTargetBitmap target(dest, xsize, ysize, header.format);
+
+            for (int y = 0; y < ysize; ++y)
+            {
+                if (ok)
+                {
+                    pchg.applyLine(y, pal);
+                }
+
+                const u8* idx = indexed.address<u8>(0, y);
+                Color* d = target.address<Color>(0, y);
+                for (int x = 0; x < xsize; ++x)
+                {
+                    d[x] = pal[idx[x]];
+                }
+            }
+
+            bool direct = target.isDirect();
+            target.resolve();
+            return direct;
         }
 
         // Render an interleaved (ILBM-layout) bitplane buffer to the decode target using the
@@ -1156,6 +1434,13 @@ namespace
             if (m_bmhd.masking == 2 && m_bmhd.transparent < m_palette.size)
             {
                 m_palette[m_bmhd.transparent].a = 0;
+            }
+
+            // PCHG: per-scanline palette changes resolved to true colour
+            if (m_pchg_present && !m_ham && !is_pbm)
+            {
+                status.direct = renderPchg(dest, buffer, xsize, ysize);
+                return status;
             }
 
             DecodeTargetBitmap target(dest, xsize, ysize, header.format, m_palette);
