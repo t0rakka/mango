@@ -13,6 +13,8 @@
 // - https://1fish2.github.io/IFF/IFF%20docs%20with%20Commodore%20revisions/ILBM.pdf
 // - IFF ANIM (delta-compressed animation): http://www.textfiles.com/programming/FORMATS/anim7.txt
 //   ANIM op 5 ("Byte Vertical Delta Compression") is the most common method.
+// - HAM-E (Black Belt Systems): a 4-plane hires ILBM reinterpreted by an external decoder,
+//   programmed via "magic cookie" trigger scanlines. Decode mirrors RECOIL's HAM-E support.
 
 namespace
 {
@@ -348,6 +350,53 @@ namespace
 
             workptr += lineskip * nplanes;
         }
+    }
+
+    // HAM-E (Black Belt Systems) is a "black box" that sits between the Amiga and the
+    // display and reinterprets a plain 4-bitplane hires ILBM. Two hires pixels combine into
+    // one 8-bit HAM-E byte, so the visible image is half as wide. The hardware reads the
+    // IRGB colour lines (not the bitplane indices), so the real HAM-E nibble is recovered
+    // from the CMAP colour each index maps to, exactly as the reference decoder in RECOIL.
+    //
+    // A scanline whose first eight HAM-E bytes match the "magic cookie" is a trigger line:
+    // it programs 64 colour registers (mode 20 = register / 256-colour, mode 24 = HAM) and
+    // is itself displayed as black. Consecutive trigger lines fill successive register banks.
+    // Interlaced sources duplicate the trigger lines per field, so even/odd scanlines keep
+    // independent register sets.
+    static inline
+    int hameNibble(const u8* line, int rowbytes, int nplanes, int px, const Palette& palette)
+    {
+        int idx = 0;
+        const int byte = px >> 3;
+        const int bit = 7 - (px & 7);
+        for (int p = 0; p < nplanes; ++p)
+        {
+            idx |= ((line[p * rowbytes + byte] >> bit) & 1) << p;
+        }
+        if (idx >= int(palette.size))
+            idx = int(palette.size) - 1;
+        const Color c = palette[idx];
+        return ((c.r >> 7) & 1) << 3 | ((c.g >> 7) & 1) << 2 | ((c.b >> 7) & 1) << 1 | ((c.b >> 4) & 1);
+    }
+
+    static inline
+    int hameByte(const u8* line, int rowbytes, int nplanes, int x, const Palette& palette)
+    {
+        return (hameNibble(line, rowbytes, nplanes, 2 * x + 0, palette) << 4)
+             | (hameNibble(line, rowbytes, nplanes, 2 * x + 1, palette) << 0);
+    }
+
+    static
+    bool isHameCookie(const u8* line, int rowbytes, int nplanes, const Palette& palette, int& mode)
+    {
+        static const u8 MAGIC[7] = { 162, 245, 132, 220, 109, 176, 127 };
+        for (int i = 0; i < 7; ++i)
+        {
+            if (hameByte(line, rowbytes, nplanes, i, palette) != MAGIC[i])
+                return false;
+        }
+        mode = hameByte(line, rowbytes, nplanes, 7, palette);
+        return mode == 20 || mode == 24; // 20: register (256 colours), 24: HAM
     }
 
     // PCHG (Palette Change): per-scanline palette modifications layered on top of the base
@@ -746,9 +795,14 @@ namespace
 
         Signature m_signature;
         ChunkBMHD m_bmhd;
+        u32 m_camg = 0;
         bool m_ham = false;
         bool m_ehb = false;
         Palette m_palette;
+
+        // HAM-E (Black Belt Systems): trigger-line programmed 4-plane hires ILBM
+        bool m_hame = false;
+        bool m_hame_lace = false;
 
         // SHAM (Sliced HAM): per-scanline 16-colour palettes
         bool m_sham = false;
@@ -892,6 +946,7 @@ namespace
                         if (payload >= 4)
                         {
                             u32 v = p.read32();
+                            m_camg = v;
                             m_ham = (v & 0x0800) != 0;
                             m_ehb = (v & 0x0080) != 0;
                             printLine(Print::Info, "  ham: {}", m_ham);
@@ -985,9 +1040,52 @@ namespace
 
             resolveFormat();
 
+            // HAM-E reinterprets a 4-plane hires ILBM; detection needs the unpacked BODY.
+            detectHame();
+
             // PCHG modifies the palette per scanline, so the output must be true colour.
-            if (m_pchg_present && !m_ham && header.success)
+            if (m_pchg_present && !m_ham && !m_hame && header.success)
             {
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            }
+        }
+
+        // Probe the first scanline for the HAM-E magic cookie. When present the output is
+        // true colour and half the stored width (two hires pixels per HAM-E byte).
+        void detectHame()
+        {
+            if (m_signature != SIGNATURE_IFF)
+                return;
+            if (m_ham || m_ehb)
+                return;
+            if (m_bmhd.nplanes != 4 || m_bmhd.masking == 1)
+                return;
+            if (m_bmhd.xsize < 400 || m_palette.size < 16)
+                return;
+            if (!m_body.address)
+                return;
+
+            const int planar_w = m_bmhd.xsize;
+            const int rowbytes = ((planar_w + 15) >> 4) << 1;
+            const size_t scan = size_t(rowbytes) * m_bmhd.nplanes;
+
+            // unpack only the first scanline for the cookie probe
+            std::vector<u8> first(scan, 0);
+            if (m_bmhd.compression == 1)
+            {
+                unpack(Memory(first.data(), scan), m_body);
+            }
+            else
+            {
+                std::memcpy(first.data(), m_body.address, std::min<size_t>(scan, m_body.size));
+            }
+
+            int mode = 0;
+            if (isHameCookie(first.data(), rowbytes, m_bmhd.nplanes, m_palette, mode))
+            {
+                m_hame = true;
+                m_hame_lace = (m_camg & 0x0004) != 0; // interlaced: per-field register sets
+                header.width = planar_w / 2;
                 header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
         }
@@ -1202,6 +1300,92 @@ namespace
             return direct;
         }
 
+        // HAM-E render: walk scanlines top-to-bottom, programming colour registers from
+        // trigger lines and resolving every other line through the current register set in
+        // either register (256-colour) or HAM mode. Output is true colour, half width.
+        bool renderHame(const Surface& dest, const u8* buffer)
+        {
+            const int planar_w = m_bmhd.xsize;
+            const int height = m_bmhd.ysize;
+            const int nplanes = m_bmhd.nplanes;
+            const int rowbytes = ((planar_w + 15) >> 4) << 1;
+            const size_t scan = size_t(rowbytes) * nplanes;
+            const int out_w = planar_w / 2;
+            const bool lace = m_hame_lace;
+
+            // per-field register banks (interlaced sources keep even/odd sets separate)
+            u32 reg[2][256] = { { 0 }, { 0 } };
+            int regfill[2] = { 0, 0 };
+            bool hammode = false;
+
+            DecodeTargetBitmap target(dest, out_w, height, header.format);
+
+            for (int y = 0; y < height; ++y)
+            {
+                const u8* line = buffer + size_t(y) * scan;
+                const int s = lace ? (y & 1) : 0;
+
+                Color* dst = target.address<Color>(0, y);
+
+                int mode = 0;
+                if (isHameCookie(line, rowbytes, nplanes, m_palette, mode))
+                {
+                    const int off = regfill[s];
+                    for (int c = 0; c < 64; ++c)
+                    {
+                        const int o = 8 + c * 3;
+                        u32 r = hameByte(line, rowbytes, nplanes, o + 0, m_palette);
+                        u32 g = hameByte(line, rowbytes, nplanes, o + 1, m_palette);
+                        u32 b = hameByte(line, rowbytes, nplanes, o + 2, m_palette);
+                        reg[s][(off + c) & 255] = (r << 16) | (g << 8) | b;
+                    }
+                    regfill[s] = (regfill[s] + 64) & 255;
+                    hammode = (mode == 24);
+
+                    // trigger lines are displayed as black
+                    for (int x = 0; x < out_w; ++x)
+                    {
+                        dst[x] = Color(0, 0, 0, 0xff);
+                    }
+                    continue;
+                }
+
+                int bank = 0;
+                u32 rgb = 0;
+                const u32* palette = reg[s];
+
+                for (int x = 0; x < out_w; ++x)
+                {
+                    const int c = hameByte(line, rowbytes, nplanes, x, m_palette);
+
+                    if (hammode)
+                    {
+                        switch (c >> 6)
+                        {
+                            case 0:
+                                if (c < 60)
+                                    rgb = palette[(bank + c) & 255];
+                                else
+                                    bank = (c - 60) << 6; // 60..63 select register bank 0..3
+                                break;
+                            case 1: rgb = ((c & 63) <<  2) | (rgb & 0xffff00); break; // blue
+                            case 2: rgb = ((c & 63) << 18) | (rgb & 0x00ffff); break; // red
+                            default: rgb = ((c & 63) << 10) | (rgb & 0xff00ff); break; // green
+                        }
+                    }
+                    else
+                    {
+                        rgb = palette[c];
+                    }
+
+                    dst[x] = Color((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, 0xff);
+                }
+            }
+
+            target.resolve();
+            return target.isDirect();
+        }
+
         // Render an interleaved (ILBM-layout) bitplane buffer to the decode target using the
         // current palette / colour mode. Shared by the ANIM frame path.
         void renderPlanar(const Surface& dest, const u8* buffer)
@@ -1413,6 +1597,13 @@ namespace
                     status.setError("[ImageDecoder.IFF] Truncated image data.");
                     return status;
                 }
+            }
+
+            // HAM-E reinterprets the planar buffer entirely (true colour, half width)
+            if (m_hame)
+            {
+                status.direct = renderHame(dest, buffer);
+                return status;
             }
 
             // fix ehb palette

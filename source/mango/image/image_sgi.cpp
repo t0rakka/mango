@@ -65,6 +65,13 @@ namespace
                 return;
             }
 
+            // a zero dimension yields an empty surface and no decodable body
+            if (!xsize || !ysize)
+            {
+                header.setError("[ImageDecoder.SGI] Invalid image dimensions ({} x {}).", xsize, ysize);
+                return;
+            }
+
             // select color format
             Format format;
             switch (zsize)

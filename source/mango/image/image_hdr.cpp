@@ -164,46 +164,6 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // encoder
-    // ------------------------------------------------------------
-
-    /*
-    struct rgbe
-    {
-        u8 r, g, b, e;
-    };
-
-    rgbe create_rgbe(float r, float g, float b)
-    {
-        float maxf = r > g ? r : g;
-        maxf = maxf > b ? maxf : b;
-    
-        rgbe color;
-
-        if (maxf <= 1e-32f)
-        {
-            color.r = 0;
-            color.g = 0;
-            color.b = 0;
-            color.e = 0;
-        }
-        else
-        {
-            int exponent;
-            std::frexpf(maxf, &exponent);
-            float scale = std::ldexpf(1.0f, 8 - exponent);
-
-            color.r = u8(r * scale);
-            color.g = u8(g * scale);
-            color.b = u8(b * scale);
-            color.e = u8(exponent + 128);
-        }
-
-        return color;
-    }
-    */
-
-    // ------------------------------------------------------------
     // decoder
     // ------------------------------------------------------------
 
@@ -371,6 +331,25 @@ namespace
             header.linear  = true;
             header.color.transfer = TransferFunction::Linear; // Radiance RGBE is linear radiance
             header.compression = TextureCompression::NONE;
+
+            // A PRIMARIES line carries exact CIE 1931 chromaticities; expose them (and a
+            // named primaries set when they match a known one). Without it, the sRGB/BT.709
+            // default is kept, which matches the common interpretation of untagged Radiance.
+            if (chromaticity.enable)
+            {
+                ColorInfo& ci = header.color;
+                ci.has_chromaticities = true;
+                ci.white = { chromaticity.white.x, chromaticity.white.y };
+                ci.red   = { chromaticity.red.x,   chromaticity.red.y };
+                ci.green = { chromaticity.green.x, chromaticity.green.y };
+                ci.blue  = { chromaticity.blue.x,  chromaticity.blue.y };
+
+                ColorPrimaries named = identifyPrimaries(ci.white, ci.red, ci.green, ci.blue);
+                if (named != ColorPrimaries::Unspecified)
+                {
+                    ci.primaries = named;
+                }
+            }
 
             return data;
         }

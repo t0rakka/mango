@@ -60,6 +60,13 @@ namespace
             int width = p.read16();
             int height = p.read16();
 
+            // a zero dimension yields an empty surface and no decodable body
+            if (width < 1 || height < 1)
+            {
+                header.setError("[ImageDecoder.PIC] Invalid image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             header.width   = width;
             header.height  = height;
             header.depth   = 0;

@@ -133,6 +133,26 @@ namespace
             m_pkm_header.read(p);
             m_data = ConstMemory(memory.address + 16, memory.size - 16);
             header = m_pkm_header.header;
+
+            if (header.success)
+            {
+                // dimensions are block-aligned ("extended") and must be non-zero
+                if (!m_pkm_header.extended_width || !m_pkm_header.extended_height)
+                {
+                    header.setError("[ImageDecoder.PKM] Incorrect image dimensions.");
+                    return;
+                }
+
+                // the payload must cover the whole block grid; a truncated file would
+                // otherwise let the block decompressor read past the end of the buffer
+                TextureCompression info(header.compression);
+                u64 required = info.getBlockBytes(m_pkm_header.extended_width, m_pkm_header.extended_height);
+                if (m_data.size < required)
+                {
+                    header.setError("[ImageDecoder.PKM] Truncated image data.");
+                    return;
+                }
+            }
         }
 
         ~Interface()
