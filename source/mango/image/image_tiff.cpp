@@ -1433,6 +1433,22 @@ namespace
             header.compression = TextureCompression::NONE;
             header.premultiplied = m_context.associated_alpha;
 
+            // Forward the ICC profile at header() time (decode() also sets it). Color space:
+            // integer RGB/grayscale TIFF is sRGB by convention (the default); floating-point
+            // samples carry linear scene data. An embedded ICC profile defines it exactly.
+            icc = m_context.icc_profile;
+
+            if (m_context.icc_profile.size)
+            {
+                header.color.primaries = ColorPrimaries::Unspecified;
+                header.color.transfer = TransferFunction::Unspecified;
+            }
+            else if (header.format.isFloat())
+            {
+                header.linear = true;
+                header.color.transfer = TransferFunction::Linear;
+            }
+
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 

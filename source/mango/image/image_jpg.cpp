@@ -27,6 +27,14 @@ namespace
             header = m_parser.header;
             icc = m_parser.icc_buffer;
             exif = m_parser.exif_memory;
+
+            // JPEG is sRGB by convention (the default). When an ICC profile is embedded it
+            // defines the color space exactly, so defer to it.
+            if (icc.size)
+            {
+                header.color.primaries = ColorPrimaries::Unspecified;
+                header.color.transfer = TransferFunction::Unspecified;
+            }
         }
 
         ~Interface()
