@@ -12,6 +12,10 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
+// References:
+// - https://codebase.c64.org/doku.php?id=base:c64_grafix_files_specs_list_v0.03
+// - http://unusedino.de/ec64/technical/aay/c64/
+
 namespace
 {
     using namespace mango;

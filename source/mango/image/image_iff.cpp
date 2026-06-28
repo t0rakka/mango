@@ -7,6 +7,10 @@
 #include <mango/core/buffer.hpp>
 #include <mango/image/image.hpp>
 
+// References:
+// - https://wiki.amigaos.net/wiki/EA_IFF_85_Standard_for_Interchange_Format_Files
+// - https://1fish2.github.io/IFF/IFF%20docs%20with%20Commodore%20revisions/ILBM.pdf
+
 namespace
 {
     using namespace mango;

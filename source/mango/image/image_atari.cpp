@@ -11,6 +11,10 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
+// References:
+// - https://www.atari-wiki.com/index.php?title=ST_Picture_Formats
+// - https://wiki.multimedia.cx/index.php?title=Degas
+
 namespace
 {
     using namespace mango;
