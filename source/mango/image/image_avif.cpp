@@ -52,6 +52,21 @@ namespace
             std::memset(&m_rgb, 0, sizeof(m_rgb));
 
             avifImage* image = m_decoder->image;
+            if (!image)
+            {
+                header.setError("[ImageDecoder.AVIF] No image after parse.");
+                return;
+            }
+
+            // avifDecoderParse enforces libavif's dimension/size limits, but a malformed
+            // file can still parse to a degenerate 0-sized image; reject it here so we never
+            // allocate or blit a zero/garbage surface.
+            if (!image->width || !image->height)
+            {
+                header.setError("[ImageDecoder.AVIF] Invalid image dimensions ({} x {}).",
+                    image->width, image->height);
+                return;
+            }
 
             icc = ConstMemory(image->icc.data, image->icc.size);
             exif = ConstMemory(image->exif.data, image->exif.size);
@@ -125,6 +140,11 @@ namespace
             }
 
             avifImage* image = m_decoder->image;
+            if (!image)
+            {
+                status.setError("[ImageDecoder.AVIF] No image.");
+                return status;
+            }
 
             if (!m_rgb.pixels)
             {
@@ -132,6 +152,14 @@ namespace
                 if (result != AVIF_RESULT_OK)
                 {
                     status.setError("[ImageDecoder.AVIF] avifDecoderNextImage FAILED.");
+                    return status;
+                }
+
+                // Re-fetch: avifDecoderNextImage may update the active image pointer.
+                image = m_decoder->image;
+                if (!image)
+                {
+                    status.setError("[ImageDecoder.AVIF] No image after decode.");
                     return status;
                 }
 
@@ -156,6 +184,19 @@ namespace
                 image->width, image->height, image->depth, m_rgb.rowBytes);
 
             const int precision = image->depth;
+
+            // The pixel copy below reads packed RGBA from m_rgb. Verify the buffer libavif
+            // produced actually matches our assumptions (4 channels, sufficient stride and
+            // height) so a surprising format/size cannot turn into an out-of-bounds read.
+            const size_t expected_row = size_t(image->width) * 4 * (precision > 8 ? 2 : 1);
+            if (!m_rgb.pixels ||
+                m_rgb.width < image->width ||
+                m_rgb.height < image->height ||
+                m_rgb.rowBytes < expected_row)
+            {
+                status.setError("[ImageDecoder.AVIF] Unexpected RGB buffer geometry.");
+                return status;
+            }
 
             if (precision > 8)
             {

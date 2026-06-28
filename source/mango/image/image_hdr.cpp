@@ -22,34 +22,40 @@ namespace
     std::string_view readline(const u8*& data, const u8* end)
     {
         const u8* p = data;
+        const u8* text_end = data;
 
-        int endsize = 1;
-
-        // scan for endline
-        for ( ; data < end; )
+        // scan for endline, bounded by the end of the buffer (a file without a trailing
+        // newline must not run the pointer past the end)
+        while (p < end)
         {
-            u8 v = *p++;
+            u8 v = *p;
 
             // Unix ("\n")
             if (v == '\n')
+            {
+                ++p;
                 break;
+            }
 
             // MacOS ("\r")
             if (v == '\r')
             {
+                ++p;
+
                 // Windows ("\r\n")
-                if (*p == '\n')
+                if (p < end && *p == '\n')
                 {
-                    ++endsize;
                     ++p;
                 }
 
                 break;
             }
+
+            ++p;
+            text_end = p;
         }
 
-        size_t size = size_t(p - data) - endsize;
-        std::string_view msg(reinterpret_cast<const char*>(data), size);
+        std::string_view msg(reinterpret_cast<const char*>(data), size_t(text_end - data));
 
         data = p;
 
@@ -247,6 +253,8 @@ namespace
                     break;
 
                 std::vector<std::string_view> tokens = tokenize(line);
+                if (tokens.empty())
+                    continue;
 
                 if (tokens[0] == "FORMAT")
                 {
@@ -346,7 +354,9 @@ namespace
                 }
             }
 
-            if (!width || !height)
+            // std::atoi can yield zero or a negative value; reject anything non-positive so
+            // the surface allocation and decode loops below stay well-defined.
+            if (width <= 0 || height <= 0)
             {
                 header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
                 return nullptr;
@@ -366,12 +376,19 @@ namespace
         }
     };
 
-    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data)
+    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
     {
         Buffer buffer(surface.width * 4);
 
         for (int y = 0; y < surface.height; ++y)
         {
+            // every scanline begins with a 4-byte record header
+            if (data + 4 > data_end)
+            {
+                status.setError("[ImageDecoder.HDR] Truncated scanline header.");
+                return;
+            }
+
             if (data[0] != 2 || data[1] != 2 || data[2] & 0x80)
             {
                 status.setError("[ImageDecoder.HDR] Incorrect stream header ({:x} {:x} {:x}).", data[0], data[1], data[2]);
@@ -393,6 +410,12 @@ namespace
 
                 while (dest < end)
                 {
+                    if (data >= data_end)
+                    {
+                        status.setError("[ImageDecoder.HDR] Truncated rle stream.");
+                        return;
+                    }
+
                     int count = *data++;
 
                     if (count > 128)
@@ -401,6 +424,12 @@ namespace
                         if (!count || dest + count > end)
                         {
                             status.setError("[ImageDecoder.HDR] Incorrect rle count ({}).", count);
+                            return;
+                        }
+
+                        if (data >= data_end)
+                        {
+                            status.setError("[ImageDecoder.HDR] Truncated rle stream.");
                             return;
                         }
 
@@ -413,6 +442,12 @@ namespace
                         if (!count || dest + count > end)
                         {
                             status.setError("[ImageDecoder.HDR] Incorrect rle count ({}).", count);
+                            return;
+                        }
+
+                        if (data + count > data_end)
+                        {
+                            status.setError("[ImageDecoder.HDR] Truncated rle stream.");
                             return;
                         }
 
@@ -450,10 +485,12 @@ namespace
     {
         HeaderRAD m_rad_header;
         const u8* m_data;
+        const u8* m_end;
 
         Interface(ConstMemory memory)
         {
             m_data = m_rad_header.parse(memory);
+            m_end = memory.end();
             header = m_rad_header.header;
         }
 
@@ -478,7 +515,7 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
-            hdr_decode(status, target, m_data);
+            hdr_decode(status, target, m_data, m_end);
             if (status)
             {
                 target.resolve();

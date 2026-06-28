@@ -33,6 +33,13 @@ namespace
             if (n > 128)
             {
                 int count = 257 - n;
+
+                // need one source byte; clamp the run to the destination
+                if (s >= s_end)
+                    break;
+                if (count > d_end - d)
+                    count = int(d_end - d);
+
                 s8 value = *s++;
                 std::memset(d, value, count);
                 d += count;
@@ -40,6 +47,13 @@ namespace
             else if (n < 128)
             {
                 int count = n + 1;
+
+                // clamp the literal run to both source and destination
+                if (count > s_end - s)
+                    count = int(s_end - s);
+                if (count > d_end - d)
+                    count = int(d_end - d);
+
                 std::memcpy(d, s, count);
                 s += count;
                 d += count;
@@ -51,13 +65,23 @@ namespace
     void unpack_rgb8(Memory dest, ConstMemory source, u32 pixels)
     {
         u32* ptr = reinterpret_cast<u32*>(dest.address);
-        BigEndianConstPointer p = source.address;
+        const u8* s = source.address;
+        const u8* s_end = source.end();
 
         while (pixels > 0)
         {
-            u32 v = p.read32();
+            if (s + 4 > s_end)
+                break;
+
+            u32 v = bigEndian::uload32(s);
+            s += 4;
+
             u32 color = (v >> 8) | 0xff000000;
             u32 count = v & 0x7f;
+
+            // a run must never write past the destination pixel count
+            if (count > pixels)
+                count = pixels;
 
             for (u32 i = 0; i < count; ++i)
             {
@@ -73,17 +97,36 @@ namespace
     void unpack_rgbn(Memory dest, ConstMemory source, u32 pixels)
     {
         u16* ptr = reinterpret_cast<u16*>(dest.address);
-        BigEndianConstPointer p = source.address;
+        const u8* s = source.address;
+        const u8* s_end = source.end();
 
         while (pixels > 0)
         {
-            u16 v = p.read16();
+            if (s + 2 > s_end)
+                break;
+
+            u16 v = bigEndian::uload16(s);
+            s += 2;
+
             u16 color = (v >> 4) | 0xf000;
-            u16 count = v & 0x07;
+            u32 count = v & 0x07;
             if (!count)
-                count = p.read8();
+            {
+                if (s >= s_end)
+                    break;
+                count = *s++;
+            }
             if (!count)
-                count = p.read16();
+            {
+                if (s + 2 > s_end)
+                    break;
+                count = bigEndian::uload16(s);
+                s += 2;
+            }
+
+            // a run must never write past the destination pixel count
+            if (count > pixels)
+                count = pixels;
 
             for (u32 i = 0; i < count; ++i)
             {
@@ -418,7 +461,14 @@ namespace
         void parse()
         {
             const u8* data = m_memory.address;
-            const u8* end = m_memory.address + m_memory.size - 12;
+            const u8* memory_end = m_memory.end();
+
+            // need the 12-byte FORM/type signature at minimum
+            if (m_memory.size < 12)
+            {
+                header.setError("[ImageDecoder.IFF] Not enough data.");
+                return;
+            }
 
             data = readSignature(data);
             if (!data)
@@ -427,8 +477,8 @@ namespace
                 return;
             }
 
-            // chunk reader
-            while (data < end)
+            // chunk reader: each chunk has an 8-byte header (id + size)
+            while (data + 8 <= memory_end)
             {
                 BigEndianConstPointer p = data;
 
@@ -439,27 +489,38 @@ namespace
                 const char* c = reinterpret_cast<const char*>(p - 8);
                 printLine(Print::Info, "[{}{}{}{}] {} bytes", c[0], c[1], c[2], c[3], size);
 
-                // next chunk
-                data = p + size + (size & 1);
+                // Clamp the declared payload to what is actually present so a corrupt or
+                // oversized chunk size cannot drive any handler past the end of the buffer.
+                const size_t avail = size_t(memory_end - p);
+                const size_t payload = std::min<size_t>(size, avail);
+
+                // next chunk (chunks are padded to an even size)
+                data = p + payload + (payload & 1);
 
                 switch (id)
                 {
                     case u32_mask_rev('B','M','H','D'):
                     {
-                        m_bmhd.parse(p);
+                        if (payload >= 20)
+                        {
+                            m_bmhd.parse(p);
 
-                        header.width  = m_bmhd.xsize;
-                        header.height = m_bmhd.ysize;
+                            header.width  = m_bmhd.xsize;
+                            header.height = m_bmhd.ysize;
+                        }
                         break;
                     }
 
                     case u32_mask_rev('C','A','M','G'):
                     {
-                        u32 v = p.read32();
-                        m_ham = (v & 0x0800) != 0;
-                        m_ehb = (v & 0x0080) != 0;
-                        printLine(Print::Info, "  ham: {}", m_ham);
-                        printLine(Print::Info, "  ehb: {}", m_ehb);
+                        if (payload >= 4)
+                        {
+                            u32 v = p.read32();
+                            m_ham = (v & 0x0800) != 0;
+                            m_ehb = (v & 0x0080) != 0;
+                            printLine(Print::Info, "  ham: {}", m_ham);
+                            printLine(Print::Info, "  ehb: {}", m_ehb);
+                        }
                         break;
                     }
 
@@ -470,8 +531,10 @@ namespace
 
                     case u32_mask_rev('C','M','A','P'):
                     {
-                        m_palette.size = size / 3;
-                        for (u32 i = 0; i < m_palette.size; ++i)
+                        // the palette holds at most 256 entries (Palette::color[256])
+                        u32 colors = std::min<u32>(u32(payload / 3), 256);
+                        m_palette.size = colors;
+                        for (u32 i = 0; i < colors; ++i)
                         {
                             m_palette[i] = Color(p[0], p[1], p[2], 0xff);
                             p += 3;
@@ -483,7 +546,7 @@ namespace
 
                     case u32_mask_rev('B','O','D','Y'):
                     {
-                        m_body = ConstMemory(p, size);
+                        m_body = ConstMemory(p, payload);
                         break;
                     }
 
@@ -575,6 +638,7 @@ namespace
 
             std::unique_ptr<u8[]> allocation;
             const u8* buffer = nullptr;
+            size_t buffer_size = 0;
 
             if (m_bmhd.compression == 1)
             {
@@ -586,10 +650,12 @@ namespace
 
                 unpack(Memory(allocated, bytes), m_body);
                 buffer = allocated;
+                buffer_size = bytes;
             }
             else
             {
                 buffer = p;
+                buffer_size = m_body.size;
             }
 
             if (!buffer)
@@ -600,6 +666,32 @@ namespace
 
             // alignment
             xsize = xsize + (xsize & 1);
+
+            // Verify the decode buffer is large enough for the pixel path that follows so
+            // the planar-to-chunky / copy readers below cannot run past its end.
+            {
+                const size_t plane_bytes = (((size_t(xsize) + 15) & ~size_t(15)) / 8);
+                size_t needed;
+
+                if (m_ham)
+                {
+                    needed = plane_bytes * m_bmhd.nplanes * ysize;
+                }
+                else if (is_pbm)
+                {
+                    needed = size_t(xsize) * ysize;
+                }
+                else
+                {
+                    needed = plane_bytes * (m_bmhd.nplanes + (m_bmhd.masking == 1 ? 1 : 0)) * ysize;
+                }
+
+                if (buffer_size < needed)
+                {
+                    status.setError("[ImageDecoder.IFF] Truncated image data.");
+                    return status;
+                }
+            }
 
             // fix ehb palette
             if (m_ehb && (m_palette.size == 32 || m_palette.size == 64))

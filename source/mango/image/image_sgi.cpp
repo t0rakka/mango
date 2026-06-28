@@ -31,6 +31,14 @@ namespace
 
         HeaderSGI(ConstMemory memory)
         {
+            // The SGI header is 512 bytes and pixel data begins at offset 512; reject any
+            // file too small to contain the header before reading it.
+            if (memory.size < 512)
+            {
+                header.setError("[ImageDecoder.SGI] Incorrect file size.");
+                return;
+            }
+
             BigEndianConstPointer p = memory.address;
 
             u16 magic = p.read16();
@@ -108,11 +116,18 @@ namespace
         {
         }
 
-        void decode_uncompressed(const Surface& s)
+        bool decode_uncompressed(const Surface& s)
         {
             int width = m_sgi_header.xsize;
             int height = m_sgi_header.ysize;
             int channels = m_sgi_header.zsize;
+
+            // All channel planes are stored contiguously after the 512-byte header.
+            const size_t needed = size_t(width) * size_t(height) * size_t(channels);
+            if (m_memory.size < 512 + needed)
+            {
+                return false;
+            }
 
             const u8* data = m_memory.address + 512;
 
@@ -133,29 +148,37 @@ namespace
                     }
                 }
             }
+
+            return true;
         }
 
-        void decode_rle(const Surface& s)
+        bool decode_rle(const Surface& s)
         {
-            int height = m_sgi_header.ysize;
-            int channels = m_sgi_header.zsize;
+            const int width = m_sgi_header.xsize;
+            const int height = m_sgi_header.ysize;
+            const int channels = m_sgi_header.zsize;
 
             const u8* data = m_memory.address;
 
+            // The RLE tables hold 'num' 32-bit offsets followed by 'num' 32-bit lengths,
+            // both indexed by (channel * height + row), located right after the header.
+            const size_t num = size_t(height) * size_t(channels);
+            if (m_memory.size < 512 + num * 8)
+            {
+                return false;
+            }
+
             BigEndianConstPointer p = data + 512;
 
-            // read RLE offset table
-            int num = height * channels;
-
             std::vector<u32> offsets(num);
-            std::vector<s32> sizes(num);
+            std::vector<u32> sizes(num);
 
-            for (int i = 0; i < num; ++i)
+            for (size_t i = 0; i < num; ++i)
             {
                 offsets[i] = p.read32();
             }
 
-            for (int i = 0; i < num; ++i)
+            for (size_t i = 0; i < num; ++i)
             {
                 sizes[i] = p.read32();
             }
@@ -167,38 +190,71 @@ namespace
                     int scanline = (height - 1) - y; // mirror vertically
                     u8* dest = s.address<u8>(0, scanline) + channel;
 
-                    int index = y + channel * height;
-                    int offset = offsets[index];
-                    const u8* src = data + offset;
-                    const u8* end = src + sizes[index];
+                    const size_t index = size_t(y) + size_t(channel) * size_t(height);
+                    const u32 offset = offsets[index];
+                    const u32 size = sizes[index];
 
-                    for (; src < end;)
+                    // The offset/length pair is taken from the file; validate that the row's
+                    // RLE data lies entirely within the buffer before dereferencing it.
+                    if (offset > m_memory.size || size > m_memory.size - offset)
+                    {
+                        return false;
+                    }
+
+                    const u8* src = data + offset;
+                    const u8* end = src + size;
+
+                    int x = 0;
+
+                    while (src < end && x < width)
                     {
                         u8 pixel = *src++;
                         int count = pixel & 0x7f;
                         if (!count)
                             break;
 
+                        // never write past the end of the destination scanline
+                        if (count > width - x)
+                        {
+                            count = width - x;
+                        }
+
                         if (pixel & 0x80)
                         {
+                            // literal run: consumes 'count' source bytes
+                            if (src + count > end)
+                            {
+                                return false;
+                            }
+
                             while (count--)
                             {
                                 *dest = *src++;
                                 dest += channels;
+                                ++x;
                             }
                         }
                         else
                         {
+                            // replicate run: consumes a single source byte
+                            if (src >= end)
+                            {
+                                return false;
+                            }
+
                             pixel = *src++;
                             while (count--)
                             {
                                 *dest = pixel;
                                 dest += channels;
+                                ++x;
                             }
                         }
                     }
                 }
             }
+
+            return true;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -218,14 +274,25 @@ namespace
 
             DecodeTargetBitmap target(dest, m_sgi_header.xsize, m_sgi_header.ysize, header.format);
 
+            bool ok = false;
+
             switch (m_sgi_header.encoding)
             {
                 case 0:
-                    decode_uncompressed(target);
+                    ok = decode_uncompressed(target);
                     break;
                 case 1:
-                    decode_rle(target);
+                    ok = decode_rle(target);
                     break;
+                default:
+                    status.setError("[ImageDecoder.SGI] Unsupported encoding ({}).", m_sgi_header.encoding);
+                    return status;
+            }
+
+            if (!ok)
+            {
+                status.setError("[ImageDecoder.SGI] Truncated or corrupt image data.");
+                return status;
             }
 
             target.resolve();
