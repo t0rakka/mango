@@ -753,6 +753,292 @@ namespace
     }
 
     // ------------------------------------------------------------
+    // ImageDecoder: Spectrum 512 Smooshed (.sps)
+    // ------------------------------------------------------------
+
+    // Smooshed compresses the same 320x199 Spectrum 512 picture as .SPC but
+    // with a different data RLE and a bit-packed colour map. There are two data
+    // layout variants, selected by the LSB of the last colour-map byte:
+    //   1 = SPSLIDEX order (identical to .SPC: plane, scanline, word)
+    //   0 = ANISPEC order  (byte-wide vertical strips: plane, byte-column, scanline)
+
+    void sps_decompress(u8* buffer, int scansize, const u8* input, const u8* input_end)
+    {
+        u8* buffer_end = buffer + scansize;
+
+        while (buffer < buffer_end && input < input_end)
+        {
+            u8 x = *input++;
+
+            if (x <= 127)
+            {
+                // repeat the next byte (x + 3) times
+                if (input >= input_end)
+                    break;
+
+                int n = x + 3;
+                if (n > buffer_end - buffer)
+                    n = int(buffer_end - buffer);
+
+                std::memset(buffer, *input++, n);
+                buffer += n;
+            }
+            else
+            {
+                // (x - 128 + 1) literal bytes
+                int n = x - 127;
+                if (n > input_end - input)
+                    n = int(input_end - input);
+                if (n > buffer_end - buffer)
+                    n = int(buffer_end - buffer);
+
+                std::memcpy(buffer, input, n);
+                input += n;
+                buffer += n;
+            }
+        }
+    }
+
+    // MSB-first bit reader; reads zero-padding once the source is exhausted.
+    struct SmooshBitReader
+    {
+        const u8* p;
+        const u8* end;
+        u32 buffer = 0;
+        int count = 0;
+
+        SmooshBitReader(const u8* begin, const u8* finish)
+            : p(begin)
+            , end(finish)
+        {
+        }
+
+        u32 read(int bits)
+        {
+            while (count < bits)
+            {
+                u8 b = (p < end) ? *p++ : 0;
+                buffer = (buffer << 8) | b;
+                count += 8;
+            }
+            count -= bits;
+            return (buffer >> count) & ((1u << bits) - 1);
+        }
+    };
+
+    struct header_sps
+    {
+        int width = 320;
+        int height = 200;
+        int length_of_data_bit_map = 0;
+        int length_of_color_bit_map = 0;
+
+        std::string error;
+
+        const u8* parse(const u8* data, size_t size)
+        {
+            if (size < 12)
+            {
+                error = "[ImageDecoder.ATARI] Incorrect header size.";
+                return nullptr;
+            }
+
+            BigEndianConstPointer p = data;
+
+            u16 flag = p.read16();
+            if (flag != 0x5350)
+            {
+                error = "[ImageDecoder.ATARI] Incorrect header.";
+                return nullptr;
+            }
+
+            p += 2; // reserved
+            length_of_data_bit_map = p.read32();
+            length_of_color_bit_map = p.read32();
+
+            if (length_of_data_bit_map <= 0 || length_of_color_bit_map <= 0)
+            {
+                error = "[ImageDecoder.ATARI] Incorrect bitmap length.";
+                return nullptr;
+            }
+
+            // the declared data + colour sections must be present (reject truncated files)
+            const size_t required = size_t(12) + size_t(length_of_data_bit_map) + size_t(length_of_color_bit_map);
+            if (required > size)
+            {
+                error = "[ImageDecoder.ATARI] Truncated file.";
+                return nullptr;
+            }
+
+            return p; // points at the compressed data bitmap (offset 12)
+        }
+
+        void decode(const Surface& s, const u8* data, const u8* end)
+        {
+            // section boundaries, clamped to the available data
+            const u8* data_map = data;
+            const u8* data_map_end = data_map + length_of_data_bit_map;
+            if (data_map_end > end)
+                data_map_end = end;
+
+            const u8* color_map = data + length_of_data_bit_map;
+            if (color_map > end)
+                color_map = end;
+            const u8* color_map_end = color_map + length_of_color_bit_map;
+            if (color_map_end > end)
+                color_map_end = end;
+
+            // variant select: LSB of the last colour-map byte.
+            // 1 = SPSLIDEX (SPC order), 0 = ANISPEC (byte-wide vertical strips).
+            // Verified visually against LSB=0 and LSB=1 sample files.
+            int variant = 0;
+            if (color_map_end > color_map)
+                variant = color_map_end[-1] & 1;
+
+            // decompress the data bitmap (199 scanlines x 4 planes x 40 bytes)
+            Buffer databuf(31840, 0);
+            sps_decompress(databuf.data(), 31840, data_map, data_map_end);
+
+            const u8* b = databuf.data();
+            const u8* b_end = b + 31840;
+
+            Buffer bitmap(width * height, 0);
+
+            if (variant == 1)
+            {
+                // SPSLIDEX: plane, scanline, word
+                BigEndianConstPointer p = b;
+
+                for (int i = 0; i < 4; ++i)
+                {
+                    for (int j = 1; j < height; ++j)
+                    {
+                        for (int k = 0; k < 20; ++k)
+                        {
+                            if (p + 2 > b_end)
+                                break;
+
+                            u16 word = p.read16();
+
+                            for (int l = 15; l >= 0; --l)
+                            {
+                                bitmap[j * width + k * 16 + (15 - l)] |= (((word >> l) & 1) << i);
+                            }
+                        }
+                    }
+                }
+            }
+            else
+            {
+                // ANISPEC: plane, byte-column (8 pixels), scanline
+                const u8* q = b;
+
+                for (int plane = 0; plane < 4; ++plane)
+                {
+                    for (int xcol = 0; xcol < 40; ++xcol)
+                    {
+                        for (int j = 1; j < height; ++j)
+                        {
+                            if (q >= b_end)
+                                break;
+
+                            u8 byte = *q++;
+
+                            for (int bit = 0; bit < 8; ++bit)
+                            {
+                                int px = xcol * 8 + bit;
+                                bitmap[j * width + px] |= (((byte >> (7 - bit)) & 1) << plane);
+                            }
+                        }
+                    }
+                }
+            }
+
+            // decompress the bit-packed colour map: 597 records, each a 14-bit
+            // inclusion mask (MSB = entry 1) followed by 9-bit rgb (rrrgggbbb)
+            // entries. Palette entries 0 and 15 are always black.
+            std::vector<Color> palette(16 * 3 * (height - 1), Color(0, 0, 0, 0xff));
+
+            SmooshBitReader br(color_map, color_map_end);
+            const int num_sets = 3 * (height - 1);
+
+            for (int set = 0; set < num_sets; ++set)
+            {
+                u32 mask = br.read(14);
+
+                for (int e = 1; e <= 14; ++e)
+                {
+                    if (mask & (1u << (14 - e)))
+                    {
+                        u32 rgb = br.read(9);
+                        u8 r = (rgb >> 6) & 7;
+                        u8 g = (rgb >> 3) & 7;
+                        u8 b3 = rgb & 7;
+
+                        u16 atari = (u16(r) << 8) | (u16(g) << 4) | u16(b3);
+                        palette[set * 16 + e] = convert_atari_color(atari);
+                    }
+                }
+            }
+
+            // render (Spectrum 512 per-scanline triple palette)
+            std::memset(s.address<u8>(0, 0), 0, width * 4);
+
+            for (int y = 1; y < height; ++y)
+            {
+                Color* image = s.address<Color>(0, y);
+
+                for (int x = 0; x < width; ++x)
+                {
+                    u8 palette_index = bitmap[y * width + x];
+                    palette_index = find_spectrum_palette_index(x, palette_index);
+
+                    int index = (y - 1) * 16 * 3 + palette_index;
+                    image[x] = palette[index];
+                }
+            }
+        }
+    };
+
+    struct InterfaceSPS : Interface
+    {
+        header_sps m_sps_header;
+        const u8* m_data;
+
+        InterfaceSPS(ConstMemory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            m_data = m_sps_header.parse(memory.address, memory.size);
+            if (m_data)
+            {
+                header.width  = m_sps_header.width;
+                header.height = m_sps_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            }
+            else
+            {
+                header.setError(m_sps_header.error);
+            }
+        }
+
+        void decodeImage(const Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            const u8* end = m_memory.end();
+            m_sps_header.decode(s, m_data, end);
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceSPS(ConstMemory memory)
+    {
+        ImageDecodeInterface* x = new InterfaceSPS(memory);
+        return x;
+    }
+
+    // ------------------------------------------------------------
     // ImageDecoder: Crack Art
     // ------------------------------------------------------------
 
@@ -1403,6 +1689,7 @@ namespace mango::image
         // Spectrum 512
         registerImageDecoder(createInterfaceSPU, ".spu");
         registerImageDecoder(createInterfaceSPU, ".spc");
+        registerImageDecoder(createInterfaceSPS, ".sps");
 
         // Crack Art
         registerImageDecoder(createInterfaceCA, ".ca1");
