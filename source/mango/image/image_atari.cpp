@@ -6,6 +6,7 @@
     ATARI decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
 */
 #include <cmath>
+#include <vector>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/system.hpp>
@@ -1121,6 +1122,266 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // ImageDecoder: Tiny (Tiny Stuff)
+    // ------------------------------------------------------------
+
+    // The Tiny screen is the 32000-byte ST screen RAM (16000 words) stored as a
+    // word-oriented RLE over a column-interleaved layout. Each scanline holds W
+    // words (80 for low/medium, 40 for high resolution); a "column" is one word
+    // position taken across every scanline. The columns are emitted in four
+    // interleaved sets { 0,4,8,.. }, { 1,5,9,.. }, { 2,6,10,.. }, { 3,7,11,.. }
+    // to improve the run-length compression of vertically coherent content.
+
+    struct header_tiny
+    {
+        int width = 0;
+        int height = 0;
+        int bitplanes = 0;
+        bool animation = false; // resolution byte was +3 -> colour rotation header present
+
+        std::string error;
+
+        const u8* parse(const u8* data, size_t size)
+        {
+            if (size < 1)
+            {
+                error = "[ImageDecoder.ATARI] Out of data.";
+                return nullptr;
+            }
+
+            u8 resolution = data[0];
+            animation = resolution > 2;
+            u8 mode = animation ? u8(resolution - 3) : resolution;
+
+            if (mode == 0)
+            {
+                width = 320;
+                height = 200;
+                bitplanes = 4;
+            }
+            else if (mode == 1)
+            {
+                width = 640;
+                height = 200;
+                bitplanes = 2;
+            }
+            else if (mode == 2)
+            {
+                width = 640;
+                height = 400;
+                bitplanes = 1;
+            }
+            else
+            {
+                error = "[ImageDecoder.ATARI] Unsupported resolution.";
+                return nullptr;
+            }
+
+            // resolution(1) [+ rotation header(4)] + palette(32) + control_count(2) + data_count(2)
+            const size_t header_bytes = 1 + (animation ? 4 : 0) + 32 + 2 + 2;
+            if (size < header_bytes)
+            {
+                error = "[ImageDecoder.ATARI] Out of data.";
+                return nullptr;
+            }
+
+            return data;
+        }
+
+        void decode(const Surface& s, const u8* data, const u8* end)
+        {
+            BigEndianConstPointer p = data;
+
+            p += 1; // resolution byte (validated in parse)
+
+            // optional colour-animation header (present when resolution byte was +3)
+            if (animation)
+            {
+                p += 4; // limits(1) + direction/speed(1) + duration(2)
+            }
+
+            // palette
+            Palette palette(16);
+            for (int i = 0; i < 16; ++i)
+            {
+                palette[i] = convert_atari_color(p.read16());
+            }
+
+            if (bitplanes == 1)
+            {
+                palette.color[0] = 0xffeeeeee;
+                palette.color[1] = 0xff000000;
+            }
+
+            if (p + 4 > end)
+                return;
+
+            const int num_control = p.read16();
+            const int num_data = p.read16();
+
+            // The control section is followed immediately by the data section.
+            const u8* control = p;
+            const u8* control_end = control + num_control;
+            if (control_end > end)
+                control_end = end;
+
+            const u8* data_words = control + num_control;
+            const u8* data_end = data_words + size_t(num_data) * 2;
+            if (data_end > end)
+                data_end = end;
+            if (data_words > end)
+                data_words = end;
+
+            // Decompress the control/data streams into 16000 screen words.
+            std::vector<u16> expanded(16000, 0);
+            int out = 0;
+
+            BigEndianConstPointer cp = control;
+            BigEndianConstPointer dp = data_words;
+
+            while (out < 16000 && cp < control_end)
+            {
+                s8 x = s8(cp.read8());
+
+                if (x < 0)
+                {
+                    // |x| unique words from the data section
+                    int n = -int(x);
+                    while (n-- > 0 && out < 16000)
+                    {
+                        if (dp + 2 > data_end)
+                            break;
+                        expanded[out++] = dp.read16();
+                    }
+                }
+                else if (x == 0)
+                {
+                    // control word = repeat count for the next data word
+                    if (cp + 2 > control_end)
+                        break;
+                    int count = cp.read16();
+                    if (dp + 2 > data_end)
+                        break;
+                    u16 w = dp.read16();
+                    while (count-- > 0 && out < 16000)
+                        expanded[out++] = w;
+                }
+                else if (x == 1)
+                {
+                    // control word = number of unique words from the data section
+                    if (cp + 2 > control_end)
+                        break;
+                    int count = cp.read16();
+                    while (count-- > 0 && out < 16000)
+                    {
+                        if (dp + 2 > data_end)
+                            break;
+                        expanded[out++] = dp.read16();
+                    }
+                }
+                else
+                {
+                    // x > 1: repeat the next data word x times
+                    int count = x;
+                    if (dp + 2 > data_end)
+                        break;
+                    u16 w = dp.read16();
+                    while (count-- > 0 && out < 16000)
+                        expanded[out++] = w;
+                }
+            }
+
+            // De-interleave the column sets back into linear screen RAM. The
+            // partition is a fixed 80-column x 200-row grid over the 16000-word
+            // buffer for every resolution (the resolution-specific geometry is
+            // applied later by the planar decoder). Verified against high-res
+            // samples: a resolution-dependent grid tiles the image 2x2.
+            const int rows = 200;
+            const int words_per_set = 4000; // 20 columns x 200 rows
+
+            std::vector<u16> screen(16000, 0);
+
+            for (int i = 0; i < 16000; ++i)
+            {
+                const int set = i / words_per_set;
+                const int within = i % words_per_set;
+                const int k = within / rows;
+                const int y = within % rows;
+                const int col = set + 4 * k;
+                screen[y * 80 + col] = expanded[i];
+            }
+
+            // Planar (interleaved bitplane) screen words -> palette indices.
+            Buffer indices_buffer(width * height, 0);
+            const int groups = 16000 / bitplanes;
+
+            for (int i = 0; i < groups; ++i)
+            {
+                u16 word[4] = { 0 };
+
+                for (int j = 0; j < bitplanes; ++j)
+                {
+                    word[j] = screen[i * bitplanes + j];
+                }
+
+                for (int j = 15; j >= 0; --j)
+                {
+                    u8 index = 0;
+
+                    for (int k = 0; k < bitplanes; ++k)
+                    {
+                        index |= (((word[k] >> j) & 1) << k);
+                    }
+
+                    indices_buffer[i * 16 + (15 - j)] = index;
+                }
+            }
+
+            Surface indices(width, height, IndexedFormat(8), width, indices_buffer);
+            indices.palette = &palette;
+            resolve(s, indices);
+        }
+    };
+
+    struct InterfaceTiny : Interface
+    {
+        header_tiny m_tiny_header;
+        const u8* m_data;
+
+        InterfaceTiny(ConstMemory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            m_data = m_tiny_header.parse(memory.address, memory.size);
+            if (m_data)
+            {
+                header.width  = m_tiny_header.width;
+                header.height = m_tiny_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            }
+            else
+            {
+                header.setError(m_tiny_header.error);
+            }
+        }
+
+        void decodeImage(const Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            const u8* end = m_memory.end();
+            m_tiny_header.decode(s, m_data, end);
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceTiny(ConstMemory memory)
+    {
+        ImageDecodeInterface* x = new InterfaceTiny(memory);
+        return x;
+    }
+
 } // namespace
 
 namespace mango::image
@@ -1147,6 +1408,12 @@ namespace mango::image
         registerImageDecoder(createInterfaceCA, ".ca1");
         registerImageDecoder(createInterfaceCA, ".ca2");
         registerImageDecoder(createInterfaceCA, ".ca3");
+
+        // Tiny (Tiny Stuff)
+        registerImageDecoder(createInterfaceTiny, ".tny");
+        registerImageDecoder(createInterfaceTiny, ".tn1");
+        registerImageDecoder(createInterfaceTiny, ".tn2");
+        registerImageDecoder(createInterfaceTiny, ".tn3");
     }
 
 } // namespace mango::image
