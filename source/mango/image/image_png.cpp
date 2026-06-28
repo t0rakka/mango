@@ -1908,46 +1908,6 @@ namespace
         float32x2 blue;
     };
 
-    // Map CICP (ITU-T H.273) code points to mango's ColorInfo enums. The enum values
-    // already mirror the CICP code points, but we validate against the set we recognize
-    // so that unknown / reserved values degrade to Unspecified rather than aliasing.
-
-    ColorPrimaries cicp_to_primaries(u8 value)
-    {
-        switch (value)
-        {
-            case 1:  return ColorPrimaries::BT709;
-            case 4:  return ColorPrimaries::BT470M;
-            case 5:  return ColorPrimaries::BT601_625;
-            case 6:  return ColorPrimaries::BT601_525;
-            case 7:  return ColorPrimaries::BT601_525; // SMPTE 240M (shares 170M primaries)
-            case 9:  return ColorPrimaries::BT2020;
-            case 10: return ColorPrimaries::SMPTE428;
-            case 11: return ColorPrimaries::DCI_P3;
-            case 12: return ColorPrimaries::DisplayP3;
-            default: return ColorPrimaries::Unspecified;
-        }
-    }
-
-    TransferFunction cicp_to_transfer(u8 value)
-    {
-        switch (value)
-        {
-            case 1:  return TransferFunction::BT709;
-            case 4:  return TransferFunction::Gamma22;
-            case 5:  return TransferFunction::Gamma28;
-            case 6:  return TransferFunction::BT709; // BT.601 shares the BT.709 curve
-            case 8:  return TransferFunction::Linear;
-            case 13: return TransferFunction::sRGB;
-            case 14: return TransferFunction::BT709; // BT.2020 10-bit
-            case 15: return TransferFunction::BT709; // BT.2020 12-bit
-            case 16: return TransferFunction::PQ;
-            case 18: return TransferFunction::HLG;
-            default: return TransferFunction::Unspecified;
-        }
-    }
-
-
     struct Frame
     {
         enum Dispose : u8
@@ -2137,8 +2097,8 @@ namespace
             // otherwise defines the color space exactly.
             if (m_has_cicp)
             {
-                color.primaries = cicp_to_primaries(m_cicp_primaries);
-                color.transfer = cicp_to_transfer(m_cicp_transfer);
+                color.primaries = colorPrimariesFromCICP(m_cicp_primaries);
+                color.transfer = transferFunctionFromCICP(m_cicp_transfer);
             }
             else if (m_icc.size())
             {

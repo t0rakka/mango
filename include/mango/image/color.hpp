@@ -191,6 +191,12 @@ namespace mango::image
                                      const ColorPoint& green, const ColorPoint& blue,
                                      float tolerance = 0.001f) noexcept;
 
+    // Translate CICP (ITU-T H.273) code points to the corresponding enum. Unknown or
+    // reserved code points map to Unspecified. Shared by the formats that signal color
+    // with CICP code points (PNG cICP, AVIF, HEIF).
+    ColorPrimaries colorPrimariesFromCICP(u8 code_point) noexcept;
+    TransferFunction transferFunctionFromCICP(u8 code_point) noexcept;
+
     // ------------------------------------------------------------------
     // ColorManager
     // ------------------------------------------------------------------

@@ -68,6 +68,32 @@ namespace
             header.faces   = 0;
             header.format  = format;
             header.compression = TextureCompression::NONE;
+
+            // AVIF signals color with CICP code points (avifColorPrimaries /
+            // avifTransferCharacteristics share the ITU-T H.273 values). An attached ICC
+            // profile, when present, takes precedence and is forwarded separately.
+            ColorInfo& color = header.color;
+            if (image->icc.size)
+            {
+                color.primaries = ColorPrimaries::Unspecified;
+                color.transfer = TransferFunction::Unspecified;
+            }
+            else
+            {
+                ColorPrimaries primaries = colorPrimariesFromCICP(u8(image->colorPrimaries));
+                TransferFunction transfer = transferFunctionFromCICP(u8(image->transferCharacteristics));
+
+                // Keep the sRGB default when the file signals "unspecified".
+                if (primaries != ColorPrimaries::Unspecified)
+                {
+                    color.primaries = primaries;
+                }
+                if (transfer != TransferFunction::Unspecified)
+                {
+                    color.transfer = transfer;
+                }
+            }
+            header.linear = color.isLinear();
         }
 
         ~Interface()
