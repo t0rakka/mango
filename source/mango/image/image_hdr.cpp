@@ -359,6 +359,7 @@ namespace
             header.faces   = 0;
             header.format  = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32, Format::LINEAR);
             header.linear  = true;
+            header.color.transfer = TransferFunction::Linear; // Radiance RGBE is linear radiance
             header.compression = TextureCompression::NONE;
 
             return data;

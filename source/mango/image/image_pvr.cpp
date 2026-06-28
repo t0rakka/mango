@@ -539,9 +539,11 @@ namespace
             {
                 case 0:
                     header.linear = true;
+                    header.color.transfer = TransferFunction::Linear;
                     break;
                 case 1:
                     header.linear = false;
+                    header.color.transfer = TransferFunction::sRGB;
                     break;
                 default:
                     header.setError("[ImageDecoder.PVR] Incorrect colorspace: {}", pvr.colorspace);

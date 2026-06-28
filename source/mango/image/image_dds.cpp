@@ -1050,6 +1050,10 @@ namespace
                 header.format = pixelFormat.format;
                 header.compression = TextureCompression::NONE;
             }
+
+            // Keep the transfer function consistent with the resolved linear flag (DXGI
+            // _SRGB formats and the DDS color-space flag drive header.linear above).
+            header.color.transfer = header.linear ? TransferFunction::Linear : TransferFunction::sRGB;
         }
 
         int getMipmapCount() const

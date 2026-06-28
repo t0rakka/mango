@@ -290,8 +290,12 @@ namespace
             switch (colorspace)
             {
                 case QOI_SRGB:
+                    // sRGB color channels with a linear alpha channel.
+                    header.color.transfer = TransferFunction::sRGB;
                     break;
                 case QOI_LINEAR:
+                    header.linear = true;
+                    header.color.transfer = TransferFunction::Linear;
                     break;
                 default:
                     header.setError("[ImageDecoder.QOI] Incorrect colorspace.");

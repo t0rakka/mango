@@ -12,6 +12,7 @@
 #include <mango/core/memory.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>
+#include <mango/image/color.hpp>
 #include <mango/image/compression.hpp>
 #include <mango/image/exif.hpp>
 
@@ -55,7 +56,14 @@ namespace mango::image
         int     faces = 0;   // cubemap faces
         int     frames = 0;  // animation frame count: 0 = not animated, > 0 = animation (1 is a degenerate animation, aliases with 0)
         bool    premultiplied = false; // alpha is premultiplied
-        bool    linear = false; // linear colorspace (non-linear is sRGB)
+        bool    linear = false; // linear colorspace (non-linear is sRGB); mirrors color.isLinear()
+
+        // Color space signalling (primaries, transfer function, exact chromaticities).
+        // Defaults to sRGB: integer image formats are sRGB by near-universal convention,
+        // so a decoder that does not override this reports sRGB. Linear/HDR/float decoders
+        // set TransferFunction::Linear (and keep 'linear' consistent).
+        ColorInfo color { ColorPrimaries::BT709, TransferFunction::sRGB };
+
         Format  format; // preferred format (fastest available "direct" decoding is possible)
         u32     compression = TextureCompression::NONE;
         u32     supercompression = 0; // mask of supported compression formats

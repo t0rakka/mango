@@ -1709,6 +1709,21 @@ ContextEXR::ContextEXR(ConstMemory memory)
     m_header.format  = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16, Format::LINEAR);
     m_header.linear  = true;
     m_header.compression = TextureCompression::NONE;
+
+    // OpenEXR stores linear (radiometric) RGB. The chromaticities attribute defines the
+    // primaries; it defaults to Rec.709 per the EXR specification when not present.
+    {
+        const Chromaticities& chroma = m_attributes.chromaticities;
+
+        ColorInfo& color = m_header.color;
+        color.transfer = TransferFunction::Linear;
+        color.has_chromaticities = true;
+        color.white = { chroma.white.x, chroma.white.y };
+        color.red   = { chroma.red.x,   chroma.red.y   };
+        color.green = { chroma.green.x, chroma.green.y };
+        color.blue  = { chroma.blue.x,  chroma.blue.y  };
+        color.primaries = identifyPrimaries(color.white, color.red, color.green, color.blue);
+    }
 }
 
 ContextEXR::~ContextEXR()
