@@ -241,8 +241,13 @@ namespace
         }
     }
 
+    // HAM (Hold-And-Modify) planar-to-chunky writer. A scanline's "base" colours come from
+    // palettes[clamp(y >> line_shift)]: standard HAM passes a single palette (num_palettes
+    // == 1), while SHAM (Sliced HAM) supplies one palette per scanline (line_shift 0) or per
+    // two scanlines when interlaced (line_shift 1).
     static
-    void p2c_ham(const Surface& surface, const u8* workptr, int nplanes, const Palette& palette)
+    void p2c_ham(const Surface& surface, const u8* workptr, int nplanes,
+                 const Palette* palettes, int num_palettes, int line_shift)
     {
         bool hamcode2b = (nplanes == 6 || nplanes == 8);
         int ham_shift = 8 - (nplanes - (hamcode2b ? 2 : 1));
@@ -252,6 +257,11 @@ namespace
 
         for (int y = 0; y < surface.height; ++y)
         {
+            int pidx = y >> line_shift;
+            if (pidx >= num_palettes)
+                pidx = num_palettes - 1;
+            const Palette& palette = palettes[pidx];
+
             u32 r = palette[0].r;
             u32 g = palette[0].g;
             u32 b = palette[0].b;
@@ -521,6 +531,10 @@ namespace
         bool m_ehb = false;
         Palette m_palette;
 
+        // SHAM (Sliced HAM): per-scanline 16-colour palettes
+        bool m_sham = false;
+        std::vector<Palette> m_sham_palettes;
+
         ConstMemory m_body;
 
         // IFF ANIM (animation) state
@@ -680,6 +694,40 @@ namespace
                         }
 
                         printLine(Print::Info, "  palette: {} colors", m_palette.size);
+                        break;
+                    }
+
+                    case u32_mask_rev('S','H','A','M'):
+                    {
+                        // Sliced HAM: a version word followed by 16-colour palettes, one per
+                        // scanline (or per two scanlines when interlaced). Colours are Amiga
+                        // 0x0RGB words (4 bits per channel).
+                        if (payload >= 2 + 32)
+                        {
+                            p.read16(); // version
+
+                            size_t count = (payload - 2) / 32;
+                            m_sham_palettes.resize(count);
+
+                            for (size_t i = 0; i < count; ++i)
+                            {
+                                Palette& pal = m_sham_palettes[i];
+                                pal.size = 16;
+                                for (int j = 0; j < 16; ++j)
+                                {
+                                    u16 w = p.read16();
+                                    u32 r = (w >> 8) & 0xf;
+                                    u32 g = (w >> 4) & 0xf;
+                                    u32 b = (w >> 0) & 0xf;
+                                    pal[j] = Color(r * 0x11, g * 0x11, b * 0x11, 0xff);
+                                }
+                            }
+
+                            m_sham = true;
+                            m_ham = true; // SHAM is always HAM
+
+                            printLine(Print::Info, "  sham: {} palettes", count);
+                        }
                         break;
                     }
 
@@ -861,6 +909,21 @@ namespace
             resolveFormat();
         }
 
+        // Dispatch HAM rendering: SHAM supplies per-scanline palettes, plain HAM a single one.
+        void hamWrite(const Surface& target, const u8* buffer)
+        {
+            if (m_sham && !m_sham_palettes.empty())
+            {
+                int num = int(m_sham_palettes.size());
+                int line_shift = (m_bmhd.ysize > num) ? 1 : 0; // interlaced: one palette / 2 lines
+                p2c_ham(target, buffer, m_bmhd.nplanes, m_sham_palettes.data(), num, line_shift);
+            }
+            else
+            {
+                p2c_ham(target, buffer, m_bmhd.nplanes, &m_palette, 1, 0);
+            }
+        }
+
         // Render an interleaved (ILBM-layout) bitplane buffer to the decode target using the
         // current palette / colour mode. Shared by the ANIM frame path.
         void renderPlanar(const Surface& dest, const u8* buffer)
@@ -884,7 +947,7 @@ namespace
 
             if (m_ham)
             {
-                p2c_ham(target, buffer, m_bmhd.nplanes, m_palette);
+                hamWrite(target, buffer);
             }
             else
             {
@@ -1099,7 +1162,7 @@ namespace
 
             if (m_ham)
             {
-                p2c_ham(target, buffer, m_bmhd.nplanes, m_palette);
+                hamWrite(target, buffer);
             }
             else if (is_pbm)
             {
