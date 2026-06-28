@@ -66,12 +66,27 @@ namespace
 
             if (v == escape_char)
             {
+                // escape sequence is two more bytes: count and value
+                if (input + 2 > input_end)
+                {
+                    break;
+                }
+
                 int n = *input++;
                 if (n == 0)
                 {
                     n = 256;
                 }
-                std::memset(buffer, *input++, n);
+
+                u8 value = *input++;
+
+                // clamp the run to the remaining output
+                if (n > buffer_end - buffer)
+                {
+                    n = int(buffer_end - buffer);
+                }
+
+                std::memset(buffer, value, n);
                 buffer += n;
             }
             else
@@ -397,6 +412,12 @@ namespace
 
         const u8* parse(const u8* data, size_t size, u16 format_address, size_t format_size)
         {
+            // need at least the 2-byte load address
+            if (size < 2)
+            {
+                return nullptr;
+            }
+
             LittleEndianConstPointer p = data;
             u16 load_address = p.read16();
 
@@ -456,6 +477,14 @@ namespace
             if (!m_memory.address)
             {
                 status.setError("C64 ImageDecoder - no data.");
+                return status;
+            }
+
+            // A failed/unrecognised header leaves the dimensions at zero (and the derived
+            // decoder's data pointer null); bail out before decodeImage() dereferences it.
+            if (header.width <= 0 || header.height <= 0)
+            {
+                status.setError("[ImageDecoder.C64] Incorrect or unsupported file.");
                 return status;
             }
 
@@ -561,6 +590,11 @@ namespace
         {
             // read header
             const u8* end = memory.end();
+
+            if (memory.size < 4)
+            {
+                return;
+            }
 
             if (end[-1] == 0x0 && end[-2] == 0xc2)
             {
@@ -760,6 +794,11 @@ namespace
             , m_compressed(false)
             , m_escape_char(0)
         {
+            if (memory.size < 2)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -774,7 +813,8 @@ namespace
             }
             else
             {
-                if (load_address == 0x5800)
+                // load address (2) + keyword (13) + escape byte (1)
+                if (load_address == 0x5800 && memory.size >= 16)
                 {
                     u8 keyword[] = "DRAZLACE! 1.0";
                     if (std::memcmp(keyword, p, sizeof(keyword) - 1) == 0)
@@ -833,6 +873,11 @@ namespace
         InterfaceDRZ(ConstMemory memory)
             : Interface(memory)
         {
+            if (memory.size < 2)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -847,7 +892,8 @@ namespace
             }
             else
             {
-                if (load_address == 0x5800)
+                // load address (2) + keyword (13) + escape byte (1)
+                if (load_address == 0x5800 && memory.size >= 16)
                 {
                     u8 keyword[] = "DRAZPAINT 2.0";
                     if (std::memcmp(keyword, p, sizeof(keyword) - 1) == 0)
@@ -905,6 +951,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 3)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -1096,12 +1147,25 @@ namespace
 
             if (v == escape_char)
             {
+                if (input + 2 > input_end)
+                {
+                    break;
+                }
+
                 int n = *input++;
                 if (n == 0)
                 {
                     break;
                 }
-                std::memset(buffer, *input++, n);
+
+                u8 value = *input++;
+
+                if (n > buffer_end - buffer)
+                {
+                    n = int(buffer_end - buffer);
+                }
+
+                std::memset(buffer, value, n);
                 buffer += n;
             }
             else
@@ -1123,6 +1187,11 @@ namespace
             , m_compressed(false)
             , m_escape_char(0)
         {
+            if (memory.size < 2)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -1196,6 +1265,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 2)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -1412,6 +1486,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 3)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -1475,6 +1554,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 2)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -1549,8 +1633,20 @@ namespace
 
             if (v == escape_char)
             {
+                if (input + 2 > input_end)
+                {
+                    break;
+                }
+
                 int n = (*input++) + 1;
-                std::memset(buffer, *input++, n);
+                u8 value = *input++;
+
+                if (n > buffer_end - buffer)
+                {
+                    n = int(buffer_end - buffer);
+                }
+
+                std::memset(buffer, value, n);
                 buffer += n;
             }
             else
@@ -1562,6 +1658,12 @@ namespace
 
     const u8* read_header_pp(header_generic& header, const u8* data, size_t size)
     {
+        // load address (2) + signature bytes (3) + escape byte (1)
+        if (size < 6)
+        {
+            return nullptr;
+        }
+
         LittleEndianConstPointer p = data;
         u16 load_address = p.read16();
 
@@ -1701,6 +1803,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 3)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -2051,6 +2158,12 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            // load address (2) + signature offset 5 + "2059" (4)
+            if (memory.size < 11)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -2119,6 +2232,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 3)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();
@@ -2260,6 +2378,15 @@ namespace
 
         for ( ; buffer < buffer_end && input < input_end; )
         {
+            // the run detection peeks three bytes ahead; fall back to a literal copy
+            // (and let the next iteration's input < input_end check stop us) when those
+            // look-ahead bytes are not present
+            if (input + 4 >= input_end)
+            {
+                *buffer++ = *input++;
+                continue;
+            }
+
             u8 look_ahead1 = *(input + 2);
             u8 look_ahead2 = *(input + 3);
             u8 look_ahead3 = *(input + 4);
@@ -2274,6 +2401,12 @@ namespace
                 {
                     n = 256;
                 }
+
+                if (n > buffer_end - buffer)
+                {
+                    n = int(buffer_end - buffer);
+                }
+
                 std::memset(buffer, v, n);
                 buffer += n;
 
@@ -2296,6 +2429,11 @@ namespace
             : Interface(memory)
             , m_data(nullptr)
         {
+            if (memory.size < 3)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u16 load_address = p.read16();

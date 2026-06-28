@@ -90,13 +90,24 @@ namespace
 
             if (v > 128)
             {
-                const int n = 257 - v;
+                if (input >= input_end)
+                    break;
+
+                int n = 257 - v;
+                if (n > buffer_end - buffer)
+                    n = int(buffer_end - buffer);
+
                 std::memset(buffer, *input++, n);
                 buffer += n;
             }
             else if (v < 128)
             {
-                const int n = v + 1;
+                int n = v + 1;
+                if (n > input_end - input)
+                    n = int(input_end - input);
+                if (n > buffer_end - buffer)
+                    n = int(buffer_end - buffer);
+
                 std::memcpy(buffer, input, n);
                 input += n;
                 buffer += n;
@@ -120,6 +131,13 @@ namespace
 
         const u8* parse(const u8* data, size_t size)
         {
+            // resolution word (2) + 16-entry palette (32) read at decode time
+            if (size < 34)
+            {
+                error = "[ImageDecoder.ATARI] Out of data.";
+                return nullptr;
+            }
+
             BigEndianConstPointer p = data;
 
             u16 resolution_data = p.read16();
@@ -473,13 +491,24 @@ namespace
 
             if (v >= 128)
             {
-                const int n = 258 - v;
+                if (input >= input_end)
+                    break;
+
+                int n = 258 - v;
+                if (n > buffer_end - buffer)
+                    n = int(buffer_end - buffer);
+
                 std::memset(buffer, *input++, n);
                 buffer += n;
             }
             else if (v < 128)
             {
-                const int n = v + 1;
+                int n = v + 1;
+                if (n > input_end - input)
+                    n = int(input_end - input);
+                if (n > buffer_end - buffer)
+                    n = int(buffer_end - buffer);
+
                 std::memcpy(buffer, input, n);
                 input += n;
                 buffer += n;
@@ -585,8 +614,10 @@ namespace
                 p = data + length_of_data_bit_map;
                 end = p + length_of_color_bit_map;
 
+                // palette holds 16 * 3 * (height - 1) entries, written in groups of 16
                 int palette_set = 0;
-                while (p < end)
+                const int max_palette_sets = 3 * (height - 1);
+                while (p + 2 <= end && palette_set < max_palette_sets)
                 {
                     u16 vector = p.read16();
 
@@ -594,6 +625,9 @@ namespace
                     {
                         if (vector & (1 << i))
                         {
+                            if (p + 2 > end)
+                                break;
+
                             int index = (palette_set * 16) + i;
                             u16 palette_color = p.read16();
                             palette[index] = convert_atari_color(palette_color);
@@ -713,14 +747,14 @@ namespace
     // ImageDecoder: Crack Art
     // ------------------------------------------------------------
 
-    void ca_decompress(u8* buffer, const u8* input, const int scansize, const u8 escape_char, const u16 offset)
+    void ca_decompress(u8* buffer, const u8* input, const u8* input_end, const int scansize, const u8 escape_char, const u16 offset)
     {
         u8* buffer_start = buffer;
         u8* buffer_end = buffer + scansize;
 
         int count = scansize;
 
-        while (count > 0)
+        while (count > 0 && input < input_end)
         {
             u8 v = *input++;
             if (v != escape_char)
@@ -737,9 +771,15 @@ namespace
             }
             else
             {
+                if (input >= input_end)
+                    break;
+
                 v = *input++;
                 if (v == 0)
                 {
+                    if (input + 2 > input_end)
+                        break;
+
                     int n = *input++;
                     ++n;
 
@@ -767,6 +807,9 @@ namespace
                 }
                 else if (v == 1)
                 {
+                    if (input + 3 > input_end)
+                        break;
+
                     int n = *input++;
                     n <<= 8;
                     n += *input++;
@@ -797,6 +840,10 @@ namespace
                 else if (v == 2)
                 {
                     int n;
+
+                    if (input >= input_end)
+                        break;
+
                     v = *input++;
 
                     if (v == 0)
@@ -805,6 +852,9 @@ namespace
                     }
                     else
                     {
+                        if (input >= input_end)
+                            break;
+
                         n = v;
                         n <<= 8;
                         n += *input++;
@@ -844,6 +894,9 @@ namespace
                 }
                 else
                 {
+                    if (input >= input_end)
+                        break;
+
                     int n = v;
                     ++n;
 
@@ -884,6 +937,13 @@ namespace
 
         const u8* parse(const u8* data, size_t size)
         {
+            // "CA" magic (2) + compressed flag (1) + resolution (1)
+            if (size < 4)
+            {
+                error = "[ImageDecoder.ATARI] Out of data.";
+                return nullptr;
+            }
+
             BigEndianConstPointer p = data;
 
             if (std::memcmp(p, "CA", 2))
@@ -929,6 +989,15 @@ namespace
                     return nullptr;
                 }
             }
+            else
+            {
+                // header (4) + palette ((1<<bitplanes) colors x 2) + escape/initial/offset (4)
+                if (size < size_t(4 + (1 << bitplanes) * 2 + 4))
+                {
+                    error = "[ImageDecoder.ATARI] Out of data.";
+                    return nullptr;
+                }
+            }
 
             return p;
         }
@@ -955,7 +1024,7 @@ namespace
                 const u16 offset = p.read16() & 0x7fff;
 
                 temp.reset(32000, initial_value);
-                ca_decompress(temp.data(), p, 32000, escape_char, offset);
+                ca_decompress(temp.data(), p, end, 32000, escape_char, offset);
 
                 buffer = temp.data();
                 end = temp.data() + 32000;

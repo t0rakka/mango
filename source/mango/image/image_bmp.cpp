@@ -41,6 +41,16 @@ namespace
 
         FileHeader(ConstMemory memory)
         {
+            magic = 0;
+            filesize = 0;
+            offset = 0;
+
+            // the file header is 14 bytes; leave the fields zeroed if it is not present
+            if (memory.size < 14)
+            {
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
             magic = p.read16();
             filesize = p.read32();
@@ -51,6 +61,9 @@ namespace
 
     struct Header : mango::Status
     {
+        // end of the input buffer, used to bound the (peeking) bitfield mask reads
+        const u8* parseEnd = nullptr;
+
         // HeaderSize
         u32 headerSize = 0;
 
@@ -179,13 +192,20 @@ namespace
             {
                 if (bitsPerPixel == 16 || bitsPerPixel == 32)
                 {
-                    LittleEndianConstPointer x = p;
-                    redMask = x.read32();
-                    greenMask = x.read32();
-                    blueMask = x.read32();
-                    if (compression == BIC_ALPHABITFIELDS)
+                    const int mask_count = (compression == BIC_ALPHABITFIELDS) ? 4 : 3;
+
+                    // these masks are read past the fixed header fields; make sure they
+                    // are actually present in the buffer before peeking at them
+                    if (!parseEnd || (const u8*)p + mask_count * 4 <= parseEnd)
                     {
-                        alphaMask = x.read32();
+                        LittleEndianConstPointer x = p;
+                        redMask = x.read32();
+                        greenMask = x.read32();
+                        blueMask = x.read32();
+                        if (compression == BIC_ALPHABITFIELDS)
+                        {
+                            alphaMask = x.read32();
+                        }
                     }
                 }
             }
@@ -294,12 +314,26 @@ namespace
         BitmapHeader(ConstMemory memory, bool isIcon)
         {
             paletteComponents = 0;
+            parseEnd = memory.end();
+
+            if (memory.size < 4)
+            {
+                setError("[ImageDecoder.BMP] Truncated header.");
+                return;
+            }
 
             LittleEndianConstPointer p = memory.address;
 
             parseHeaderSize(p);
 
             printLine(Print::Info, "  HeaderSize: {}", headerSize);
+
+            // every header variant reads exactly headerSize bytes; make sure they exist
+            if (memory.size < headerSize)
+            {
+                setError("[ImageDecoder.BMP] Truncated header (size {}).", headerSize);
+                return;
+            }
 
             switch (headerSize)
             {
@@ -508,6 +542,7 @@ namespace
 
         const u8* data = memory.address;
         const u32 size = u32(memory.size);
+        const int width = header.width;
 
         int x = 0;
         int y = 0;
@@ -517,12 +552,14 @@ namespace
         {
             u8* image = surface.address<u8>(0, y);
 
-            if (x >= header.width)
+            if (x >= width)
             {
                 x = 0;
             }
 
-            if (offset > size - 2)
+            // NOTE: "offset + k > size" form avoids the unsigned underflow that
+            // "offset > size - k" would suffer when size < k.
+            if (offset + 2 > size)
                 return;
             u8 n = data[offset + 0];
             u8 c = data[offset + 1];
@@ -530,11 +567,13 @@ namespace
 
             if (n > 0)
             {
-                // RLE run
+                // RLE run (clamp writes to the scanline)
                 int ad = 4;
                 while (n--)
                 {
-                    image[x++] = (c >> ad) & 0xf;
+                    if (x < width)
+                        image[x] = (c >> ad) & 0xf;
+                    ++x;
                     ad = 4 - ad;
                 }
             }
@@ -556,7 +595,7 @@ namespace
                     case 2:
                     {
                         // position delta
-                        if (offset > size - 2)
+                        if (offset + 2 > size)
                             return;
                         int dx = data[offset + 0];
                         int dy = data[offset + 1];
@@ -574,19 +613,25 @@ namespace
 
                         while (count-- > 0)
                         {
-                            if (offset > size - 1)
+                            if (offset + 1 > size)
                                 return;
                             u8 s = data[offset++];
-                            image[x++] = s >> 4;
-                            image[x++] = s & 0xf;
+                            if (x < width)
+                                image[x] = s >> 4;
+                            ++x;
+                            if (x < width)
+                                image[x] = s & 0xf;
+                            ++x;
                         }
 
                         if (c & 1)
                         {
-                            if (offset > size - 1)
+                            if (offset + 1 > size)
                                 return;
                             u8 s = data[offset++];
-                            image[x++] = s >> 4;
+                            if (x < width)
+                                image[x] = s >> 4;
+                            ++x;
                         }
 
                         int padding = (offset - offset0) & 1;
@@ -604,6 +649,7 @@ namespace
 
         const u8* data = memory.address;
         const u8* end = memory.end();
+        const int width = header.width;
 
         int x = 0;
         int y = 0;
@@ -612,12 +658,12 @@ namespace
         {
             u8* image = surface.address<u8>(0, y);
 
-            if (x >= header.width)
+            if (x >= width)
             {
                 x = 0;
             }
 
-            if (data > end - 2)
+            if (data + 2 > end)
                 return;
             u8 n = data[0];
             u8 c = data[1];
@@ -625,10 +671,12 @@ namespace
 
             if (n > 0)
             {
-                // RLE run
+                // RLE run (clamp writes to the scanline)
                 while (n--)
                 {
-                    image[x++] = c;
+                    if (x < width)
+                        image[x] = c;
+                    ++x;
                 }
             }
             else
@@ -649,7 +697,7 @@ namespace
                     case 2:
                     {
                         // position delta
-                        if (data > end - 2)
+                        if (data + 2 > end)
                             return;
                         int dx = data[0];
                         int dy = data[1];
@@ -663,10 +711,17 @@ namespace
                     {
                         // linear imagedata
                         size_t bytes = c + (c & 1);
-                        if (data > end - bytes)
+                        if (data + bytes > end)
                             return;
 
-                        std::memcpy(image + x, data, c);
+                        // clamp the copy to the remaining scanline
+                        int copy = c;
+                        if (x < width)
+                        {
+                            if (copy > width - x)
+                                copy = width - x;
+                            std::memcpy(image + x, data, copy);
+                        }
                         x += c;
                         data += bytes;
                         break;
@@ -680,6 +735,7 @@ namespace
     {
         const u8* data = memory.address;
         const u8* end = memory.end();
+        const int width = header.width;
 
         int x = 0;
         int y = 0;
@@ -688,37 +744,40 @@ namespace
         {
             u8* image = surface.address<u8>(0, y);
 
-            if (x >= header.width)
+            if (x >= width)
             {
                 x = 0;
             }
 
-            if (data > end - 1)
+            if (data + 1 > end)
                 return;
             u8 n = data[0];
             ++data;
 
             if (n)
             {
-                if (data > end - 3)
+                if (data + 3 > end)
                     return;
                 u8 r = data[0];
                 u8 g = data[1];
                 u8 b = data[2];
                 data += 3;
 
-                // RLE run
+                // RLE run (clamp writes to the scanline)
                 while (n--)
                 {
-                    image[x * 3 + 0] = b;
-                    image[x * 3 + 1] = g;
-                    image[x * 3 + 2] = r;
+                    if (x < width)
+                    {
+                        image[x * 3 + 0] = b;
+                        image[x * 3 + 1] = g;
+                        image[x * 3 + 2] = r;
+                    }
                     ++x;
                 }
             }
             else
             {
-                if (data > end - 1)
+                if (data + 1 > end)
                     return;
                 n = data[0];
                 ++data;
@@ -739,7 +798,7 @@ namespace
                     case 2:
                     {
                         // position delta
-                        if (data > end - 2)
+                        if (data + 2 > end)
                             return;
                         x += data[0];
                         y += data[1];
@@ -750,13 +809,16 @@ namespace
                     default:
                     {
                         // linear imagedata
-                        if (data > end - n * 3)
+                        if (data + size_t(n) * 3 > end)
                             return;
                         for (int i = 0; i < n; ++i)
                         {
-                            image[x * 3 + 0] = data[2];
-                            image[x * 3 + 1] = data[1];
-                            image[x * 3 + 2] = data[0];
+                            if (x < width)
+                            {
+                                image[x * 3 + 0] = data[2];
+                                image[x * 3 + 1] = data[1];
+                                image[x * 3 + 2] = data[0];
+                            }
                             data += 3;
                             ++x;
                         }
@@ -863,6 +925,20 @@ namespace
             }
 
             palette.size = header.importantColorCount;
+
+            // Clamp the palette to what the buffer actually holds. header.palette points at
+            // memory.address + headerSize, so the available palette bytes are bounded by the
+            // remaining file size; never read (or write past color[256]) more than that.
+            const u8* palette_end = memory.end();
+            u32 max_entries = 0;
+            if (header.palette < palette_end)
+            {
+                max_entries = u32((palette_end - header.palette) / components);
+            }
+            if (palette.size > max_entries)
+            {
+                palette.size = max_entries;
+            }
 
             // read palette
             const u8* p = header.palette;
@@ -1026,6 +1102,13 @@ namespace
 
     const char* parseIco(ImageHeader* imageHeader, const Surface* surface, ConstMemory memory)
     {
+        const u8* pend = memory.end();
+
+        if (memory.size < 6)
+        {
+            return "[ImageDecoder.BMP] Truncated ICO/CUR header.";
+        }
+
         LittleEndianConstPointer p = memory.address;
 
         u32 magic = p.read32();
@@ -1050,6 +1133,12 @@ namespace
 
         for (int i = 0; i < size; ++i)
         {
+            // each directory entry is 16 bytes; stop if it would run past the buffer
+            if ((const u8*)p + 16 > pend)
+            {
+                break;
+            }
+
             int planes = 0;
             int bpp = 0;
 
@@ -1105,9 +1194,16 @@ namespace
 
         ConstMemory block = memory.slice(bestOffset, bestSize);
 
+        // need the 4-byte header size plus a full 40-byte WinBitmapHeader1
+        if (block.size < 40)
+        {
+            return "[ImageDecoder.BMP] Truncated ICO/CUR image block.";
+        }
+
         LittleEndianConstPointer pa = block.address;
 
         Header header;
+        header.parseEnd = block.end();
         header.parseHeaderSize(pa);
         header.WinBitmapHeader1(pa);
 
@@ -1181,6 +1277,12 @@ namespace
             , m_file_header(memory)
         {
             printLine(Print::Info, "magic: {:#x}", m_file_header.magic);
+
+            if (m_memory.size < 14)
+            {
+                header.setError("[ImageDecoder.BMP] Not enough data.");
+                return;
+            }
 
             switch (m_file_header.magic)
             {

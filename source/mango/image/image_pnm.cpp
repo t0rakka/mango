@@ -44,7 +44,7 @@ namespace
             }
 
             char c = *p;
-            if (std::isdigit(c) || c == '-')
+            if (std::isdigit((unsigned char)c) || c == '-')
                 break;
 
             if (c == '#')
@@ -53,9 +53,28 @@ namespace
                 ++p;
         }
 
-        char* n;
-        value = int(std::strtol(p, &n, 10));
-        return n + 1;
+        // Bounded integer parse: the input buffer is not guaranteed to be NUL terminated,
+        // so std::strtol could read past the end. Parse digits explicitly against 'end'.
+        bool negative = false;
+        if (p < end && *p == '-')
+        {
+            negative = true;
+            ++p;
+        }
+
+        long v = 0;
+        while (p < end && std::isdigit((unsigned char)*p))
+        {
+            v = v * 10 + (*p - '0');
+            if (v > 0x7fffffff)
+                v = 0x7fffffff; // clamp, validated against dimensions later
+            ++p;
+        }
+
+        value = int(negative ? -v : v);
+
+        // skip the delimiter (matches the previous strtol-based behavior)
+        return p + 1;
     }
 
     const char* nextLine(const char* p, const char* end)
@@ -116,6 +135,13 @@ namespace
         {
             const char* p = reinterpret_cast<const char *>(memory.address);
             const char* end = reinterpret_cast<const char *>(memory.end());
+
+            // need at least the 3-byte magic before touching the bytes below
+            if (memory.size < 3)
+            {
+                header.setError("[ImageDecoder.PNM] Not enough data.");
+                return;
+            }
 
             printLine(Print::Info, "[Header: {:c}{:c}]", p[0], p[1]);
 
@@ -218,7 +244,7 @@ namespace
                     return;
                 }
 
-                if (std::sscanf(p, "TUPLTYPE %s", type) > 0)
+                if (std::sscanf(p, "TUPLTYPE %99s", type) > 0)
                 {
                     printLine(Print::Info, "  tupltype: {}", type);
                     /*
@@ -312,6 +338,14 @@ namespace
             printLine(Print::Info, "  image: {} x {}, channels: {}", width, height, channels);
             printLine(Print::Info, "  maxvalue: {}", maxvalue);
 
+            // 0x100000 (1M) per dimension is far beyond any sane PNM and keeps width *
+            // channels and the byte totals safely inside int / size_t range below.
+            if (width < 1 || height < 1 || width > 0x100000 || height > 0x100000)
+            {
+                header.setError("[ImageDecoder.PNM] Incorrect image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             if (maxvalue < 1 || maxvalue > 65535)
             {
                 header.setError("[ImageDecoder.PNM] Incorrect maxvalue.");
@@ -382,13 +416,22 @@ namespace
             const char* p = m_pnm_header.data;
             const char* end = reinterpret_cast<const char *>(m_memory.end());
 
+            if (!p || p > end)
+            {
+                return false;
+            }
+
             const int xcount = m_pnm_header.width * m_pnm_header.channels;
+            const int height = m_pnm_header.height;
             int maxvalue = m_pnm_header.maxvalue;
             u8 invert = m_pnm_header.invert;
 
+            // available raw bytes from the start of the pixel data
+            const size_t avail = size_t(end - p);
+
             if (m_pnm_header.is_ascii)
             {
-                for (int y = 0; y < m_pnm_header.height; ++y)
+                for (int y = 0; y < height; ++y)
                 {
                     u8* image = dest.address<u8>(0, y);
 
@@ -401,12 +444,24 @@ namespace
                             return false;
                         }
 
+                        // clamp to [0, maxvalue] so the scaling cannot overflow
+                        if (value < 0)
+                            value = 0;
+                        else if (value > maxvalue)
+                            value = maxvalue;
+
                         image[x] = u8(value * 255 / maxvalue) ^ invert;
                     }
                 }
             }
             else if (m_pnm_header.is_float)
             {
+                // float samples: xcount * height 32-bit values
+                if (avail < size_t(xcount) * size_t(height) * 4)
+                {
+                    return false;
+                }
+
                 if (m_pnm_header.endian < 0)
                 {
                     LittleEndianConstPointer ptr = p;
@@ -440,7 +495,14 @@ namespace
             {
                 if (m_pnm_header.invert)
                 {
-                    for (int y = 0; y < m_pnm_header.height; ++y)
+                    // 1-bit packed data, each scanline byte-aligned
+                    const size_t bytes_per_scan = (size_t(xcount) + 7) / 8;
+                    if (avail < bytes_per_scan * size_t(height))
+                    {
+                        return false;
+                    }
+
+                    for (int y = 0; y < height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
 
@@ -470,7 +532,13 @@ namespace
                 }
                 else if (m_pnm_header.maxvalue <= 255)
                 {
-                    for (int y = 0; y < m_pnm_header.height; ++y)
+                    // one byte per sample
+                    if (avail < size_t(xcount) * size_t(height))
+                    {
+                        return false;
+                    }
+
+                    for (int y = 0; y < height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
                         std::memcpy(image, p, xcount);
@@ -479,9 +547,15 @@ namespace
                 }
                 else
                 {
+                    // two bytes per sample
+                    if (avail < size_t(xcount) * size_t(height) * 2)
+                    {
+                        return false;
+                    }
+
                     BigEndianConstPointer e = p;
 
-                    for (int y = 0; y < m_pnm_header.height; ++y)
+                    for (int y = 0; y < height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
 

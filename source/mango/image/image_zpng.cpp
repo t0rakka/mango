@@ -67,6 +67,12 @@ namespace
             m_buffer.Data = const_cast<u8*>(memory.address);
             m_buffer.Bytes = static_cast<unsigned int>(memory.size);
 
+            if (memory.size < sizeof(zpng_header))
+            {
+                header.setError("[ImageDecoder.ZPNG] Not enough data.");
+                return;
+            }
+
             const zpng_header* zheader = reinterpret_cast<const zpng_header *>(memory.address);
             if (zheader->magic != 0xfbf8)
             {

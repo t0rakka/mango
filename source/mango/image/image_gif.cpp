@@ -58,8 +58,13 @@ namespace
 
                 if (color_table_flag())
                 {
-                    palette = p;
-                    p += color_table_size() * 3;
+                    // only adopt the table if it actually fits in the buffer
+                    const int table_bytes = color_table_size() * 3;
+                    if (p + table_bytes <= end)
+                    {
+                        palette = p;
+                        p += table_bytes;
+                    }
                 }
             }
 
@@ -95,8 +100,13 @@ namespace
 
                 if (color_table_flag())
                 {
-                    palette = p;
-                    p += color_table_size() * 3;
+                    // only adopt the table if it actually fits in the buffer
+                    const int table_bytes = color_table_size() * 3;
+                    if (p + table_bytes <= end)
+                    {
+                        palette = p;
+                        p += table_bytes;
+                    }
                 }
             }
 
@@ -153,6 +163,11 @@ namespace
             u8 suffix;
         } codes[MAX_STACK_SIZE];
 
+        if (src >= src_end)
+        {
+            return nullptr;
+        }
+
         const u8 minimum_codesize = *src++;
         if (minimum_codesize > 12)
         {
@@ -187,6 +202,13 @@ namespace
                 if (!length)
                 {
                     // start compression block
+                    if (src >= src_end)
+                    {
+                        // overflow
+                        src = nullptr;
+                        break;
+                    }
+
                     length = *src++;
                     if (!length)
                     {
@@ -224,10 +246,22 @@ namespace
                 }
                 else if (code == code_eoi)
                 {
-                    // end of information
-                    src += length;
-                    while ((length = *src++) > 0)
+                    // end of information: skip any trailing sub-blocks, bounded by src_end
+                    if (length > src_end - src)
                     {
+                        return src_end;
+                    }
+                    src += length;
+
+                    while (src < src_end)
+                    {
+                        length = *src++;
+                        if (!length)
+                            break;
+                        if (length > src_end - src)
+                        {
+                            return src_end;
+                        }
                         src += length;
                     }
                     return src;
@@ -364,30 +398,40 @@ namespace
     {
         Palette palette;
 
-        if (image_desc.color_table_flag())
-        {
-            // local palette
-            palette.size = image_desc.color_table_size();
+        // Prefer the local color table, fall back to the global one. Either may be absent
+        // (or have been rejected as truncated above), in which case the pointer is null.
+        const u8* table = nullptr;
+        u32 size = 0;
 
-            for (u32 i = 0; i < palette.size; ++i)
+        if (image_desc.color_table_flag() && image_desc.palette)
+        {
+            table = image_desc.palette;
+            size = image_desc.color_table_size();
+        }
+        else if (state.screen_desc.color_table_flag() && state.screen_desc.palette)
+        {
+            table = state.screen_desc.palette;
+            size = state.screen_desc.color_table_size();
+        }
+
+        if (table)
+        {
+            palette.size = size;
+            for (u32 i = 0; i < size; ++i)
             {
-                u32 r = image_desc.palette[i * 3 + 0];
-                u32 g = image_desc.palette[i * 3 + 1];
-                u32 b = image_desc.palette[i * 3 + 2];
+                u32 r = table[i * 3 + 0];
+                u32 g = table[i * 3 + 1];
+                u32 b = table[i * 3 + 2];
                 palette[i] = Color(r, g, b, 0xff);
             }
         }
         else
         {
-            // global palette
-            palette.size = state.screen_desc.color_table_size();
-
-            for (u32 i = 0; i < palette.size; ++i)
+            // No usable color table: synthesize a grayscale ramp so every index stays valid.
+            palette.size = 256;
+            for (u32 i = 0; i < 256; ++i)
             {
-                u32 r = state.screen_desc.palette[i * 3 + 0];
-                u32 g = state.screen_desc.palette[i * 3 + 1];
-                u32 b = state.screen_desc.palette[i * 3 + 2];
-                palette[i] = Color(r, g, b, 0xff);
+                palette[i] = Color(i, i, i, 0xff);
             }
         }
 
@@ -404,11 +448,18 @@ namespace
     // meaningful when a Global Color Table is present), as an opaque rgba value.
     u32 background_color(const gif_state& state)
     {
-        if (state.screen_desc.color_table_flag())
+        const gif_logical_screen_descriptor& sd = state.screen_desc;
+
+        if (sd.color_table_flag() && sd.palette)
         {
-            const u8* gp = state.screen_desc.palette;
-            u32 i = state.screen_desc.background;
-            return Color(gp[i * 3 + 0], gp[i * 3 + 1], gp[i * 3 + 2], 0xff);
+            u32 i = sd.background;
+
+            // the background index must lie inside the global color table
+            if (i < u32(sd.color_table_size()))
+            {
+                const u8* gp = sd.palette;
+                return Color(gp[i * 3 + 0], gp[i * 3 + 1], gp[i * 3 + 2], 0xff);
+            }
         }
 
         return 0;
@@ -418,7 +469,12 @@ namespace
     {
         int width = image_desc.width;
         int height = image_desc.height;
-        int bytes = width * height;
+        size_t bytes = size_t(width) * size_t(height);
+
+        if (!bytes)
+        {
+            return nullptr;
+        }
 
         std::unique_ptr<u8[]> bits(new u8[bytes]);
         const u8* next = lzw_decode(bits.get(), bits.get() + bytes, data, end);
@@ -514,7 +570,12 @@ namespace
 
         const int screen_w = state.screen_desc.width;
         const int screen_h = state.screen_desc.height;
-        const int canvas_size = screen_w * screen_h;
+        const size_t canvas_size = size_t(screen_w) * size_t(screen_h);
+
+        if (!canvas_size)
+        {
+            return nullptr;
+        }
 
         // allocate the persistent canvas (once)
         if (!state.canvas)
@@ -640,28 +701,45 @@ namespace
         MANGO_UNREFERENCED(identifier);
     }
 
-    const u8* read_extension(const u8* p, gif_state& state)
+    const u8* read_extension(const u8* p, const u8* end, gif_state& state)
     {
+        if (p + 2 > end)
+        {
+            return end;
+        }
+
         u8 label = *p++;
         u8 size = *p++;
         printLine(Print::Info, "    label: {:#x}, size: {}", int(label), int(size));
 
-        switch (label)
+        // Only dispatch when the first sub-block is fully present; the handlers read a
+        // fixed number of bytes from it.
+        if (p + size <= end)
         {
-            case PLAIN_TEXT_EXTENSION:
-                break;
-            case GRAPHICS_CONTROL_EXTENSION:
-                read_graphics_control_extension(p, state);
-                break;
-            case COMMENT_EXTENSION:
-                break;
-            case APPLICATION_EXTENSION:
-                read_application_extension(p);
-                break;
+            switch (label)
+            {
+                case PLAIN_TEXT_EXTENSION:
+                    break;
+                case GRAPHICS_CONTROL_EXTENSION:
+                    if (size >= 4)
+                        read_graphics_control_extension(p, state);
+                    break;
+                case COMMENT_EXTENSION:
+                    break;
+                case APPLICATION_EXTENSION:
+                    if (size >= 8)
+                        read_application_extension(p);
+                    break;
+            }
         }
 
-        for ( ; size; )
+        // walk the sub-block chain, bounded by the end of the buffer
+        while (size)
         {
+            if (p + size >= end)
+            {
+                return end;
+            }
             p += size;
             size = *p++;
         }
@@ -706,7 +784,7 @@ namespace
             switch (chunkID)
             {
                 case GIF_EXTENSION:
-                    data = read_extension(data, state);
+                    data = read_extension(data, end, state);
                     break;
 
                 case GIF_IMAGE:

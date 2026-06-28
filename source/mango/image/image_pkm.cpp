@@ -122,6 +122,13 @@ namespace
 
         Interface(ConstMemory memory)
         {
+            // the fixed header is 16 bytes; reading or slicing past it underflows
+            if (memory.size < 16)
+            {
+                header.setError("[ImageDecoder.PKM] Not enough data.");
+                return;
+            }
+
             BigEndianConstPointer p = memory.address;
             m_pkm_header.read(p);
             m_data = ConstMemory(memory.address + 16, memory.size - 16);
