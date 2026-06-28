@@ -252,6 +252,7 @@ namespace
             u32 r = palette[0].r;
             u32 g = palette[0].g;
             u32 b = palette[0].b;
+            u32 a = palette[0].a;
 
             u32 bitmask = 0x80;
             const u8* workptr2 = workptr;
@@ -301,6 +302,7 @@ namespace
                         r = palette[v].r;
                         g = palette[v].g;
                         b = palette[v].b;
+                        a = palette[v].a;
                         break;
 
                     case 1:
@@ -319,7 +321,7 @@ namespace
                 dest[0] = u8(r);
                 dest[1] = u8(g);
                 dest[2] = u8(b);
-                dest[3] = 0xff;
+                dest[3] = u8(a);
                 dest += 4;
 
                 bitmask >>= 1;
@@ -707,6 +709,15 @@ namespace
                     m_palette[i + 32].b = m_palette[i].b >> 1;
                     m_palette[i + 32].a = 0xff;
                 }
+            }
+
+            // masking == 2: the BMHD transparent colour index renders fully
+            // transparent. For palette-based output this propagates through the
+            // attached palette; the HAM writer reads palette alpha in its base
+            // (hold) case so the same entry stays transparent there too.
+            if (m_bmhd.masking == 2 && m_bmhd.transparent < m_palette.size)
+            {
+                m_palette[m_bmhd.transparent].a = 0;
             }
 
             DecodeTargetBitmap target(dest, xsize, ysize, header.format, m_palette);

@@ -118,8 +118,9 @@ namespace
             }
             else
             {
-                // 0x80
-                break;
+                // 0x80: PackBits no-op (skip the control byte and continue),
+                // not an end-of-stream marker.
+                continue;
             }
         }
     }
@@ -191,6 +192,15 @@ namespace
 
             const int words_per_scan = bitplanes == 1 ? 40 : 80;
 
+            // High resolution (640x400) is hardware monochrome; the stored
+            // palette is not used by the display, so force black/white. This
+            // must apply to both compressed (.PC3) and uncompressed (.PI3).
+            if (bitplanes == 1)
+            {
+                palette.color[0] = 0xffeeeeee;
+                palette.color[1] = 0xff000000;
+            }
+
             if (compressed)
             {
                 Buffer buffer(32000);
@@ -219,12 +229,6 @@ namespace
             else
             {
                 const bigEndian::u16* buffer = reinterpret_cast<const bigEndian::u16 *>(data);
-
-                if (bitplanes == 1)
-                {
-                    palette.color[0] = 0xffeeeeee;
-                    palette.color[1] = 0xff000000;
-                }
 
                 for (int y = 0; y < height; ++y)
                 {
@@ -1016,6 +1020,13 @@ namespace
             {
                 u16 palette_color = p.read16();
                 palette[i] = convert_atari_color(palette_color);
+            }
+
+            // High resolution (640x400) is hardware monochrome; force black/white.
+            if (bitplanes == 1)
+            {
+                palette.color[0] = 0xffeeeeee;
+                palette.color[1] = 0xff000000;
             }
 
             Buffer temp;

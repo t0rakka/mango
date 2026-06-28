@@ -2686,7 +2686,7 @@ namespace mango::image
         registerImageDecoder(createInterfaceKOA, ".kla");
 
         // Paint Magic
-        registerImageDecoder(createInterfacePMG, "pmg");
+        registerImageDecoder(createInterfacePMG, ".pmg");
 
         // Pixel Perfect
         registerImageDecoder(createInterfacePP, ".pp");
