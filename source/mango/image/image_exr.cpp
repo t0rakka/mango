@@ -2061,16 +2061,29 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
 {
     const std::vector<Channel>& channels = m_attributes.chlist.channels;
 
-    Buffer temp(dest.size);
+    const int block_width = width;
+    const int block_height = std::max(height, m_scanLinesPerBlock);
+
+    // The unpack loops below fill the per-channel scratch for the full block_height
+    // (rounded up to 4x4 B44 cells), which can exceed dest.size for the last, partial
+    // scanline block (height < m_scanLinesPerBlock). Size the scratch to exactly what
+    // those loops write; the second pass copies only `height` rows back into dest.
+    // (Sizing temp to dest.size here overran the heap by up to one 4x4 cell row.)
+    size_t scratch_size = 0;
+    for (const Channel& channel : channels)
+    {
+        int nx = div_ceil(block_width, channel.xsamples);
+        int ny = div_ceil(block_height, channel.ysamples);
+        scratch_size += size_t(ny) * nx * channel.bytes;
+    }
+
+    Buffer temp(scratch_size);
 
     u8* scratch = temp;
     const u8* in = source.address;
 
     const u8* source_end = source.end();
     const u8* dest_end = dest.end();
-
-    const int block_width = width;
-    const int block_height = std::max(height, m_scanLinesPerBlock);
 
     for (const Channel& channel : channels)
     {
