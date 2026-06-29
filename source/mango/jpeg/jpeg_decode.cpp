@@ -7,6 +7,7 @@
 #include <cstring>
 #include <memory>
 #include <string>
+#include <thread>
 #include <mango/core/endian.hpp>
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/thread.hpp>
@@ -1073,8 +1074,32 @@ namespace mango::image::jpeg
             m_interface->callback = nullptr;
         }
 
-        ImageDecodeStatus base_status = m_base.decode(baseImage, options);
-        ImageDecodeStatus gain_status = m_gainmap->decode(gainImage, options);
+        ImageDecodeStatus base_status;
+        ImageDecodeStatus gain_status;
+
+        if (options.multithread)
+        {
+            // The two streams are completely isolated: separate decoders, scratch
+            // surfaces and source ranges (the only shared state is m_interface, whose
+            // callback is suppressed and whose 'cancelled' flag is read-only here).
+            // Decode them on separate threads so their serial entropy phases overlap
+            // instead of running back to back; each still fans its own blocks out to
+            // the shared thread pool. (We use a dedicated thread rather than enqueuing
+            // onto a ConcurrentQueue because the pool pins a nested queue to a single
+            // worker, which would serialize the gain map's internal decode.)
+            std::thread gainThread([&]
+            {
+                gain_status = m_gainmap->decode(gainImage, options);
+            });
+
+            base_status = m_base.decode(baseImage, options);
+            gainThread.join();
+        }
+        else
+        {
+            base_status = m_base.decode(baseImage, options);
+            gain_status = m_gainmap->decode(gainImage, options);
+        }
 
         if (m_interface)
         {
