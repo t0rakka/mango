@@ -2,6 +2,9 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <algorithm>
+#include <cctype>
+#include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/buffer.hpp>
@@ -629,14 +632,11 @@ void hufFreeDecTable(HufDec *hdecod)
                                 \
         u8 cs = (c >> lc);      \
                                 \
-        /*if (out + cs > oe)    \
-            ;                   \
-        else if (out - 1 < ob)  \
-            ;*/                 \
+        /* clamp the run to the output buffer; corrupt data must not */ \
+        /* read before the start or write past the end */ \
+        u16 s = (out > ob) ? out[-1] : 0; \
                                 \
-        u16 s = out[-1];        \
-                                \
-        while (cs-- > 0)        \
+        while (cs-- > 0 && out < oe) \
             *out++ = s;         \
     }                           \
     else if (out < oe)          \
@@ -698,7 +698,9 @@ void hufDecode(const u64*  hcode, // i : encoding table
             {
                 if (!pl.p)
                 {
-                    //invalidCode(); // wrong code
+                    // wrong code: bail out instead of spinning forever on
+                    // corrupt input (nothing would consume any bits here)
+                    break;
                 }
 
                 //
@@ -731,7 +733,9 @@ void hufDecode(const u64*  hcode, // i : encoding table
 
                 if (j == pl.lit)
                 {
-                    //invalidCode(); // Not found
+                    // not found: bail out to avoid an infinite loop on
+                    // corrupt input (no bits would be consumed otherwise)
+                    break;
                 }
             }
         }
@@ -762,7 +766,8 @@ void hufDecode(const u64*  hcode, // i : encoding table
         }
         else
         {
-            //invalidCode(); // wrong (long) code
+            // wrong (long) code: bail out, otherwise lc never decreases
+            break;
         }
     }
 
@@ -980,6 +985,10 @@ struct Channel
     int bytes = 0;
     int offset = 0;
     Component component = Component::NONE;
+
+    // full channel name (e.g. "R", "diffuse.G"); needed by the DWA decoder
+    // to classify channels (DCT / RLE / lossless) and group RGB CSC sets.
+    std::string name;
 };
 
 struct Layer
@@ -1087,6 +1096,7 @@ void readAttribute<ChannelList>(ChannelList& data, LittleEndianConstPointer p)
 
         Channel channel;
 
+        channel.name = name;
         channel.xsamples = xsamples;
         channel.ysamples = ysamples;
         channel.linear = linear;
@@ -1526,6 +1536,7 @@ struct ContextEXR
     const u8* decompress_b44(Memory dest, ConstMemory source, int width, int height, int ystart);
     const u8* decompress_dwaa(Memory dest, ConstMemory source, int width, int height, int ystart);
     const u8* decompress_dwab(Memory dest, ConstMemory source, int width, int height, int ystart);
+    const u8* decompress_dwa(Memory dest, ConstMemory source, int width, int height, int ystart);
 
     void decodeBlock(Surface surface, ConstMemory memory, int x0, int y0, int x1, int y1);
     void decodeImage(const ImageDecodeOptions& options);
@@ -1694,6 +1705,16 @@ ContextEXR::ContextEXR(ConstMemory memory)
     int width = m_attributes.dataWindow.xmax - m_attributes.dataWindow.xmin + 1;
     int height = m_attributes.dataWindow.ymax - m_attributes.dataWindow.ymin + 1;
     printLine(Print::Info, "Image: {} x {}", width, height);
+
+    // Reject implausible geometry from corrupt headers before it leads to a
+    // huge allocation. The bounds are very generous (256M pixels) so that any
+    // realistic image is accepted.
+    if (width < 1 || height < 1 || width > (1 << 18) || height > (1 << 18) ||
+        u64(width) * u64(height) > (u64(1) << 28))
+    {
+        m_header.setError("[ImageDecoder.EXR] Incorrect dimensions ({} x {}).", width, height);
+        return;
+    }
 
     bool isCubemap = (m_attributes.envmap == 2) && ((height % 6) == 0);
     if (isCubemap)
@@ -2188,28 +2209,988 @@ const u8* ContextEXR::decompress_b44(Memory dest, ConstMemory source, int width,
     return dest;
 }
 
-const u8* ContextEXR::decompress_dwaa(Memory dest, ConstMemory source, int width, int height, int ystart)
+// ----------------------------------------------------------------------------
+// DWAA / DWAB decompression
+// ----------------------------------------------------------------------------
+//
+// DWA is OpenEXR's lossy DCT codec. A compressed block is a small header of
+// counters followed by up to four sub-streams:
+//
+//   - UNKNOWN : channels we don't know how to lossy-compress (zlib only)
+//   - AC      : quantized DCT AC coefficients (RLE + static Huffman or zlib)
+//   - DC      : DCT DC coefficients (zlib, with the standard EXR zip transform)
+//   - RLE     : losslessly stored channels (byte-split + RLE + zlib)
+//
+// Channels are classified by name/type into LOSSY_DCT, RLE or UNKNOWN. R,G,B
+// triples from the same layer are decorrelated with a Y'CbCr (709) transform
+// before the DCT, so they are decoded together. The half-float coefficients
+// live in a perceptually-uniform non-linear space; a 64KiB lookup table maps
+// them back to the linear half values stored in the output.
+//
+// This is a faithful (scalar) port of OpenEXR's DwaCompressor decode path and
+// assumes a little-endian host (as does the rest of this EXR decoder).
+
+namespace
 {
-    MANGO_UNREFERENCED(dest);
-    MANGO_UNREFERENCED(source);
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
+
+    enum : int
+    {
+        DWA_VERSION = 0,
+        DWA_UNKNOWN_UNCOMPRESSED_SIZE,
+        DWA_UNKNOWN_COMPRESSED_SIZE,
+        DWA_AC_COMPRESSED_SIZE,
+        DWA_DC_COMPRESSED_SIZE,
+        DWA_RLE_COMPRESSED_SIZE,
+        DWA_RLE_UNCOMPRESSED_SIZE,
+        DWA_RLE_RAW_SIZE,
+        DWA_AC_UNCOMPRESSED_COUNT,
+        DWA_DC_UNCOMPRESSED_COUNT,
+        DWA_AC_COMPRESSION,
+        DWA_NUM_SIZES_SINGLE
+    };
+
+    enum DwaScheme
+    {
+        DWA_UNKNOWN_SCHEME = 0,
+        DWA_LOSSY_DCT      = 1,
+        DWA_RLE            = 2,
+        DWA_NUM_SCHEMES    = 3
+    };
+
+    enum DwaAcCompression
+    {
+        DWA_STATIC_HUFFMAN = 0,
+        DWA_DEFLATE        = 1
+    };
+
+    inline int dwaPixelTypeSize(DataType type)
+    {
+        switch (type)
+        {
+            case DataType::UINT:  return 4;
+            case DataType::HALF:  return 2;
+            case DataType::FLOAT: return 4;
+            default:              return 0;
+        }
+    }
+
+    // The non-linear -> linear LUT. Built once; identical to the table generated
+    // by OpenEXR's dwaLookups (Xdr is little-endian, so no byte swap is needed).
+    const u16* dwaToLinearTable()
+    {
+        static const std::vector<u16> table = []
+        {
+            std::vector<u16> t(65536);
+            t[0] = 0;
+            const float logBase = float(std::pow(2.7182818, 2.2));
+            for (int i = 1; i < 65536; ++i)
+            {
+                if ((i & 0x7c00) == 0x7c00)
+                {
+                    // NaN / Inf map to 0
+                    t[i] = 0;
+                    continue;
+                }
+
+                float h = float(Half(u16(i)));
+                float sign = h < 0.0f ? -1.0f : 1.0f;
+                float a = std::fabs(h);
+
+                float r = (a <= 1.0f)
+                    ? sign * std::pow(a, 2.2f)
+                    : sign * std::pow(logBase, a - 1.0f);
+
+                t[i] = Half(r).u;
+            }
+            return t;
+        }();
+        return table.data();
+    }
+
+    // Inverse 709 Y'CbCr -> R'G'B', single element and full 8x8 block.
+    inline void dwaCsc709Inverse(float& comp0, float& comp1, float& comp2)
+    {
+        float y  = comp0;
+        float cb = comp1;
+        float cr = comp2;
+
+        comp0 = y + 1.5747f * cr;
+        comp1 = y - 0.1873f * cb - 0.4682f * cr;
+        comp2 = y + 1.8556f * cb;
+    }
+
+    inline void dwaCsc709Inverse64(float* c0, float* c1, float* c2)
+    {
+        for (int i = 0; i < 64; ++i)
+            dwaCsc709Inverse(c0[i], c1[i], c2[i]);
+    }
+
+    // Inverse 8x8 DCT, constant-block (DC only) fast path.
+    inline void dwaDctInverse8x8DcOnly(float* data)
+    {
+        float val = data[0] * 3.535536e-01f * 3.535536e-01f;
+        for (int i = 0; i < 64; ++i)
+            data[i] = val;
+    }
+
+    // Full inverse 8x8 DCT, in-place. 'zeroedRows' is the number of trailing
+    // all-zero rows, which lets us skip work in the row pass.
+    void dwaDctInverse8x8(float* data, int zeroedRows)
+    {
+        static const float a = 0.5f * std::cos(3.14159f / 4.0f);
+        static const float b = 0.5f * std::cos(3.14159f / 16.0f);
+        static const float c = 0.5f * std::cos(3.14159f / 8.0f);
+        static const float d = 0.5f * std::cos(3.0f * 3.14159f / 16.0f);
+        static const float e = 0.5f * std::cos(5.0f * 3.14159f / 16.0f);
+        static const float f = 0.5f * std::cos(3.0f * 3.14159f / 8.0f);
+        static const float g = 0.5f * std::cos(7.0f * 3.14159f / 16.0f);
+
+        float alpha[4], beta[4], theta[4], gamma[4];
+
+        // First pass - rows
+        for (int row = 0; row < 8 - zeroedRows; ++row)
+        {
+            float* rowPtr = data + row * 8;
+
+            alpha[0] = c * rowPtr[2];
+            alpha[1] = f * rowPtr[2];
+            alpha[2] = c * rowPtr[6];
+            alpha[3] = f * rowPtr[6];
+
+            beta[0] = b * rowPtr[1] + d * rowPtr[3] + e * rowPtr[5] + g * rowPtr[7];
+            beta[1] = d * rowPtr[1] - g * rowPtr[3] - b * rowPtr[5] - e * rowPtr[7];
+            beta[2] = e * rowPtr[1] - b * rowPtr[3] + g * rowPtr[5] + d * rowPtr[7];
+            beta[3] = g * rowPtr[1] - e * rowPtr[3] + d * rowPtr[5] - b * rowPtr[7];
+
+            theta[0] = a * (rowPtr[0] + rowPtr[4]);
+            theta[3] = a * (rowPtr[0] - rowPtr[4]);
+            theta[1] = alpha[0] + alpha[3];
+            theta[2] = alpha[1] - alpha[2];
+
+            gamma[0] = theta[0] + theta[1];
+            gamma[1] = theta[3] + theta[2];
+            gamma[2] = theta[3] - theta[2];
+            gamma[3] = theta[0] - theta[1];
+
+            rowPtr[0] = gamma[0] + beta[0];
+            rowPtr[1] = gamma[1] + beta[1];
+            rowPtr[2] = gamma[2] + beta[2];
+            rowPtr[3] = gamma[3] + beta[3];
+            rowPtr[4] = gamma[3] - beta[3];
+            rowPtr[5] = gamma[2] - beta[2];
+            rowPtr[6] = gamma[1] - beta[1];
+            rowPtr[7] = gamma[0] - beta[0];
+        }
+
+        // Second pass - columns
+        for (int column = 0; column < 8; ++column)
+        {
+            alpha[0] = c * data[16 + column];
+            alpha[1] = f * data[16 + column];
+            alpha[2] = c * data[48 + column];
+            alpha[3] = f * data[48 + column];
+
+            beta[0] = b * data[8 + column] + d * data[24 + column] +
+                      e * data[40 + column] + g * data[56 + column];
+            beta[1] = d * data[8 + column] - g * data[24 + column] -
+                      b * data[40 + column] - e * data[56 + column];
+            beta[2] = e * data[8 + column] - b * data[24 + column] +
+                      g * data[40 + column] + d * data[56 + column];
+            beta[3] = g * data[8 + column] - e * data[24 + column] +
+                      d * data[40 + column] - b * data[56 + column];
+
+            theta[0] = a * (data[column] + data[32 + column]);
+            theta[3] = a * (data[column] - data[32 + column]);
+            theta[1] = alpha[0] + alpha[3];
+            theta[2] = alpha[1] - alpha[2];
+
+            gamma[0] = theta[0] + theta[1];
+            gamma[1] = theta[3] + theta[2];
+            gamma[2] = theta[3] - theta[2];
+            gamma[3] = theta[0] - theta[1];
+
+            data[column]      = gamma[0] + beta[0];
+            data[8 + column]  = gamma[1] + beta[1];
+            data[16 + column] = gamma[2] + beta[2];
+            data[24 + column] = gamma[3] + beta[3];
+            data[32 + column] = gamma[3] - beta[3];
+            data[40 + column] = gamma[2] - beta[2];
+            data[48 + column] = gamma[1] - beta[1];
+            data[56 + column] = gamma[0] - beta[0];
+        }
+    }
+
+    // Un-zig-zag a block of 64 half-float coefficients into row-major floats.
+    void dwaFromHalfZigZag(const u16* src, float* dst)
+    {
+        static const int zigzag[64] =
+        {
+             0,  1,  5,  6, 14, 15, 27, 28,
+             2,  4,  7, 13, 16, 26, 29, 42,
+             3,  8, 12, 17, 25, 30, 41, 43,
+             9, 11, 18, 24, 31, 40, 44, 53,
+            10, 19, 23, 32, 39, 45, 52, 54,
+            20, 22, 33, 38, 46, 51, 55, 60,
+            21, 34, 37, 47, 50, 56, 59, 61,
+            35, 36, 48, 49, 57, 58, 62, 63
+        };
+
+        for (int i = 0; i < 64; ++i)
+            dst[i] = float(Half(src[zigzag[i]]));
+    }
+
+    // Un-RLE the packed AC coefficients of one 8x8 block into 'halfZig' (which
+    // must be zeroed). High byte 0xff signals a run of zeros; 0xff00 is "end of
+    // block". Returns the zig-zag index of the last non-zero coefficient, or -1
+    // if the AC stream is exhausted (corrupt data).
+    int dwaUnRleAc(const u16*& cur, const u16* end, u16* halfZig)
+    {
+        int lastNonZero = 0;
+        int dctComp = 1;
+
+        while (dctComp < 64)
+        {
+            if (cur >= end)
+                return -1;
+
+            u16 value = *cur;
+
+            if (value == 0xff00)
+            {
+                // end of block
+                dctComp = 64;
+            }
+            else if ((value >> 8) == 0xff)
+            {
+                // run of zeros (block already zeroed)
+                dctComp += value & 0xff;
+            }
+            else
+            {
+                lastNonZero = dctComp;
+                if (dctComp < 64)
+                    halfZig[dctComp] = value;
+                dctComp++;
+            }
+
+            ++cur;
+        }
+
+        return lastNonZero;
+    }
+
+    // Expand EXR-style RLE (signed run-length) from 'in' into 'out'. Returns the
+    // number of bytes written, or -1 on overflow / truncation.
+    int dwaRleUncompress(int inLength, int maxLength, const s8* in, u8* out)
+    {
+        u8* start = out;
+
+        while (inLength > 0)
+        {
+            if (*in < 0)
+            {
+                int count = -int(*in++);
+                inLength -= count + 1;
+                if ((maxLength -= count) < 0 || inLength < 0)
+                    return -1;
+                std::memcpy(out, in, count);
+                out += count;
+                in += count;
+            }
+            else
+            {
+                int count = int(*in++);
+                inLength -= 2;
+                if ((maxLength -= count + 1) < 0 || inLength < 0)
+                    return -1;
+                std::memset(out, *reinterpret_cast<const u8*>(in), count + 1);
+                out += count + 1;
+                ++in;
+            }
+        }
+
+        return int(out - start);
+    }
+
+    // Decode a group of 1 or 3 LOSSY_DCT channels. The AC and DC cursors are
+    // advanced as coefficients are consumed. Returns false on corrupt input.
+    bool dwaDctDecodeGroup(const std::vector<u8*>* const rows[3], int numComp,
+                           const u16*& acCur, const u16* acEnd, const u16*& dcCur,
+                           const u16* const toLinear[3], const DataType type[3],
+                           int width, int height)
+    {
+        const int numBlocksX = (width  + 7) / 8;
+        const int numBlocksY = (height + 7) / 8;
+        const int numFullBlocksX = width / 8;
+        const int leftoverX = width  - (numBlocksX - 1) * 8;
+        const int leftoverY = height - (numBlocksY - 1) * 8;
+
+        std::vector<u16> rowBlock(size_t(numComp) * numBlocksX * 64);
+        u16* rowBlockComp[3] = { nullptr, nullptr, nullptr };
+        for (int comp = 0; comp < numComp; ++comp)
+            rowBlockComp[comp] = rowBlock.data() + size_t(comp) * numBlocksX * 64;
+
+        // DC values are grouped by component plane.
+        const u16* dc[3] = { nullptr, nullptr, nullptr };
+        for (int comp = 0; comp < numComp; ++comp)
+            dc[comp] = dcCur + size_t(comp) * numBlocksX * numBlocksY;
+
+        u16 halfZig[3][64];
+        float dctData[3][64];
+
+        for (int blocky = 0; blocky < numBlocksY; ++blocky)
+        {
+            const int maxY = (blocky == numBlocksY - 1) ? leftoverY : 8;
+
+            for (int blockx = 0; blockx < numBlocksX; ++blockx)
+            {
+                const int maxX = (blockx == numBlocksX - 1) ? leftoverX : 8;
+
+                bool blockIsConstant = true;
+
+                for (int comp = 0; comp < numComp; ++comp)
+                {
+                    std::memset(halfZig[comp], 0, sizeof(halfZig[comp]));
+                    halfZig[comp][0] = *dc[comp]++;
+
+                    int lastNonZero = dwaUnRleAc(acCur, acEnd, halfZig[comp]);
+                    if (lastNonZero < 0)
+                        return false;
+
+                    if (lastNonZero == 0)
+                    {
+                        // DC only
+                        dctData[comp][0] = float(Half(halfZig[comp][0]));
+                        dwaDctInverse8x8DcOnly(dctData[comp]);
+                    }
+                    else
+                    {
+                        blockIsConstant = false;
+                        dwaFromHalfZigZag(halfZig[comp], dctData[comp]);
+
+                        int zeroedRows = 0;
+                        if (lastNonZero < 2)       zeroedRows = 7;
+                        else if (lastNonZero < 3)  zeroedRows = 6;
+                        else if (lastNonZero < 9)  zeroedRows = 5;
+                        else if (lastNonZero < 10) zeroedRows = 4;
+                        else if (lastNonZero < 20) zeroedRows = 3;
+                        else if (lastNonZero < 21) zeroedRows = 2;
+                        else if (lastNonZero < 35) zeroedRows = 1;
+                        else                       zeroedRows = 0;
+
+                        dwaDctInverse8x8(dctData[comp], zeroedRows);
+                    }
+                }
+
+                if (numComp == 3)
+                {
+                    if (!blockIsConstant)
+                        dwaCsc709Inverse64(dctData[0], dctData[1], dctData[2]);
+                    else
+                        dwaCsc709Inverse(dctData[0][0], dctData[1][0], dctData[2][0]);
+                }
+
+                for (int comp = 0; comp < numComp; ++comp)
+                {
+                    u16* dst = &rowBlockComp[comp][blockx * 64];
+                    if (!blockIsConstant)
+                    {
+                        for (int i = 0; i < 64; ++i)
+                            dst[i] = Half(dctData[comp][i]).u;
+                    }
+                    else
+                    {
+                        u16 v = Half(dctData[comp][0]).u;
+                        for (int i = 0; i < 64; ++i)
+                            dst[i] = v;
+                    }
+                }
+            }
+
+            // Un-block this row of blocks into the output, mapping back to linear.
+            for (int comp = 0; comp < numComp; ++comp)
+            {
+                const u16* lut = toLinear[comp];
+
+                for (int y = 8 * blocky; y < 8 * blocky + maxY; ++y)
+                {
+                    u16* dst = reinterpret_cast<u16*>((*rows[comp])[y]);
+                    const int localRow = (y & 7) * 8;
+
+                    for (int bx = 0; bx < numFullBlocksX; ++bx)
+                    {
+                        const u16* src = &rowBlockComp[comp][bx * 64 + localRow];
+                        if (lut)
+                        {
+                            for (int k = 0; k < 8; ++k)
+                                dst[k] = lut[src[k]];
+                        }
+                        else
+                        {
+                            for (int k = 0; k < 8; ++k)
+                                dst[k] = src[k];
+                        }
+                        dst += 8;
+                    }
+
+                    if (numFullBlocksX != numBlocksX)
+                    {
+                        const u16* src = &rowBlockComp[comp][numFullBlocksX * 64 + localRow];
+                        for (int x = 0; x < leftoverX; ++x)
+                            dst[x] = lut ? lut[src[x]] : src[x];
+                    }
+                }
+            }
+        }
+
+        dcCur += size_t(numComp) * numBlocksX * numBlocksY;
+
+        // FLOAT channels: the data was decoded as half values packed at the
+        // start of each (float-sized) row; expand them in place to float.
+        for (int comp = 0; comp < numComp; ++comp)
+        {
+            if (type[comp] != DataType::FLOAT)
+                continue;
+
+            std::vector<u16> halfRow(width);
+            for (int y = 0; y < height; ++y)
+            {
+                u8* row = (*rows[comp])[y];
+                std::memcpy(halfRow.data(), row, size_t(width) * sizeof(u16));
+                float* dst = reinterpret_cast<float*>(row);
+                for (int x = 0; x < width; ++x)
+                    dst[x] = float(Half(halfRow[x]));
+            }
+        }
+
+        return true;
+    }
+
+    // Channel classification rule.
+    struct DwaRule
+    {
+        std::string suffix;
+        int scheme = DWA_UNKNOWN_SCHEME;
+        DataType type = DataType::NONE;
+        int cscIdx = -1;
+        bool caseInsensitive = false;
+    };
+
+    inline std::string dwaToLower(std::string s)
+    {
+        std::transform(s.begin(), s.end(), s.begin(),
+                       [] (unsigned char c) { return char(std::tolower(c)); });
+        return s;
+    }
+
+    bool dwaRuleMatch(const DwaRule& rule, const std::string& suffix, DataType type)
+    {
+        if (rule.type != type)
+            return false;
+        if (rule.caseInsensitive)
+            return dwaToLower(suffix) == rule.suffix;
+        return suffix == rule.suffix;
+    }
+
+    void dwaInitLegacyRules(std::vector<DwaRule>& rules)
+    {
+        auto add = [&] (const char* s, int sc, DataType t, int csc, bool ci)
+        {
+            DwaRule r;
+            r.suffix = ci ? dwaToLower(s) : s;
+            r.scheme = sc;
+            r.type = t;
+            r.cscIdx = csc;
+            r.caseInsensitive = ci;
+            rules.push_back(r);
+        };
+
+        add("r",     DWA_LOSSY_DCT, DataType::HALF,  0, true);
+        add("r",     DWA_LOSSY_DCT, DataType::FLOAT, 0, true);
+        add("red",   DWA_LOSSY_DCT, DataType::HALF,  0, true);
+        add("red",   DWA_LOSSY_DCT, DataType::FLOAT, 0, true);
+        add("g",     DWA_LOSSY_DCT, DataType::HALF,  1, true);
+        add("g",     DWA_LOSSY_DCT, DataType::FLOAT, 1, true);
+        add("grn",   DWA_LOSSY_DCT, DataType::HALF,  1, true);
+        add("grn",   DWA_LOSSY_DCT, DataType::FLOAT, 1, true);
+        add("green", DWA_LOSSY_DCT, DataType::HALF,  1, true);
+        add("green", DWA_LOSSY_DCT, DataType::FLOAT, 1, true);
+        add("b",     DWA_LOSSY_DCT, DataType::HALF,  2, true);
+        add("b",     DWA_LOSSY_DCT, DataType::FLOAT, 2, true);
+        add("blu",   DWA_LOSSY_DCT, DataType::HALF,  2, true);
+        add("blu",   DWA_LOSSY_DCT, DataType::FLOAT, 2, true);
+        add("blue",  DWA_LOSSY_DCT, DataType::HALF,  2, true);
+        add("blue",  DWA_LOSSY_DCT, DataType::FLOAT, 2, true);
+
+        add("y",     DWA_LOSSY_DCT, DataType::HALF,  -1, true);
+        add("y",     DWA_LOSSY_DCT, DataType::FLOAT, -1, true);
+        add("by",    DWA_LOSSY_DCT, DataType::HALF,  -1, true);
+        add("by",    DWA_LOSSY_DCT, DataType::FLOAT, -1, true);
+        add("ry",    DWA_LOSSY_DCT, DataType::HALF,  -1, true);
+        add("ry",    DWA_LOSSY_DCT, DataType::FLOAT, -1, true);
+        add("a",     DWA_RLE,       DataType::UINT,  -1, true);
+        add("a",     DWA_RLE,       DataType::HALF,  -1, true);
+        add("a",     DWA_RLE,       DataType::FLOAT, -1, true);
+    }
+
+} // namespace
+
+const u8* ContextEXR::decompress_dwa(Memory dest, ConstMemory source, int width, int height, int ystart)
+{
     MANGO_UNREFERENCED(ystart);
 
-    // MANGO TODO
-    return nullptr;
+    const std::vector<Channel>& channels = m_attributes.chlist.channels;
+    const size_t numChan = channels.size();
+    if (numChan == 0)
+        return nullptr;
+
+    const u8* inPtr = source.address;
+    const u64 inSize = source.size;
+
+    const u64 headerBytes = u64(DWA_NUM_SIZES_SINGLE) * sizeof(u64);
+    if (inSize < headerBytes)
+        return nullptr;
+
+    // Header counters (little-endian, matching EXR Xdr).
+    u64 counter[DWA_NUM_SIZES_SINGLE];
+    for (int i = 0; i < DWA_NUM_SIZES_SINGLE; ++i)
+        counter[i] = littleEndian::uload64(inPtr + i * sizeof(u64));
+
+    const u64 version                 = counter[DWA_VERSION];
+    const u64 unknownUncompressedSize = counter[DWA_UNKNOWN_UNCOMPRESSED_SIZE];
+    const u64 unknownCompressedSize   = counter[DWA_UNKNOWN_COMPRESSED_SIZE];
+    const u64 acCompressedSize        = counter[DWA_AC_COMPRESSED_SIZE];
+    const u64 dcCompressedSize        = counter[DWA_DC_COMPRESSED_SIZE];
+    const u64 rleCompressedSize       = counter[DWA_RLE_COMPRESSED_SIZE];
+    const u64 rleUncompressedSize     = counter[DWA_RLE_UNCOMPRESSED_SIZE];
+    const u64 rleRawSize              = counter[DWA_RLE_RAW_SIZE];
+    const u64 totalAcUncompressedCount = counter[DWA_AC_UNCOMPRESSED_COUNT];
+    const u64 totalDcUncompressedCount = counter[DWA_DC_UNCOMPRESSED_COUNT];
+    const u64 acCompression           = counter[DWA_AC_COMPRESSION];
+
+    const u64 compressedSize = unknownCompressedSize + acCompressedSize +
+                               dcCompressedSize + rleCompressedSize;
+
+    if (version > 2)
+        return nullptr;
+
+    const u8* dataPtr = inPtr + headerBytes;
+    u64 dataAvailable = inSize - headerBytes;
+
+    // Channel classification rules.
+    std::vector<DwaRule> rules;
+
+    if (version < 2)
+    {
+        dwaInitLegacyRules(rules);
+    }
+    else
+    {
+        // The rules are embedded at the start of the data block.
+        if (dataAvailable < sizeof(u16))
+            return nullptr;
+
+        u16 ruleSize = littleEndian::uload16(dataPtr);
+        if (ruleSize < sizeof(u16) || ruleSize > dataAvailable)
+            return nullptr;
+
+        const u8* p = dataPtr + sizeof(u16);
+        const u8* ruleEnd = dataPtr + ruleSize;
+
+        while (p < ruleEnd)
+        {
+            DwaRule rule;
+
+            // null-terminated suffix
+            const u8* z = p;
+            while (z < ruleEnd && *z)
+                ++z;
+            if (z >= ruleEnd)
+                return nullptr;
+            rule.suffix.assign(reinterpret_cast<const char*>(p), z - p);
+            p = z + 1;
+
+            if (p + 2 > ruleEnd)
+                return nullptr;
+
+            u8 value = *p++;
+            rule.cscIdx = int(value >> 4) - 1;
+            rule.scheme = (value >> 2) & 3;
+            rule.caseInsensitive = (value & 1) != 0;
+
+            u8 typeValue = *p++;
+            if (rule.cscIdx < -1 || rule.cscIdx >= 3 ||
+                rule.scheme < 0 || rule.scheme >= DWA_NUM_SCHEMES ||
+                typeValue > 2)
+            {
+                return nullptr;
+            }
+            rule.type = DataType(typeValue);
+
+            if (rule.caseInsensitive)
+                rule.suffix = dwaToLower(rule.suffix);
+
+            rules.push_back(rule);
+        }
+
+        dataPtr += ruleSize;
+        dataAvailable -= ruleSize;
+    }
+
+    if (compressedSize > dataAvailable)
+        return nullptr;
+
+    // Per-channel decode state.
+    struct DwaChannel
+    {
+        int scheme = DWA_UNKNOWN_SCHEME;
+        int width = 0;
+        int height = 0;
+        int cscIdx = -1;
+        size_t planarBase = 0; // base offset within RLE or UNKNOWN planar buffer
+    };
+
+    std::vector<DwaChannel> cd(numChan);
+
+    // Classify channels and gather CSC (RGB) groups by layer prefix.
+    struct CscGroup
+    {
+        std::string prefix;
+        int idx[3] = { -1, -1, -1 };
+    };
+    std::vector<CscGroup> groups;
+
+    for (size_t i = 0; i < numChan; ++i)
+    {
+        const std::string& name = channels[i].name;
+        DataType type = channels[i].datatype;
+
+        std::string prefix;
+        std::string suffix = name;
+        size_t dot = name.find_last_of('.');
+        if (dot != std::string::npos)
+        {
+            prefix = name.substr(0, dot);
+            suffix = name.substr(dot + 1);
+        }
+
+        cd[i].scheme = DWA_UNKNOWN_SCHEME;
+        cd[i].cscIdx = -1;
+
+        for (const DwaRule& rule : rules)
+        {
+            if (dwaRuleMatch(rule, suffix, type))
+            {
+                cd[i].scheme = rule.scheme;
+                if (rule.cscIdx >= 0)
+                {
+                    cd[i].cscIdx = rule.cscIdx;
+
+                    CscGroup* group = nullptr;
+                    for (CscGroup& g : groups)
+                        if (g.prefix == prefix) { group = &g; break; }
+                    if (!group)
+                    {
+                        groups.push_back(CscGroup());
+                        groups.back().prefix = prefix;
+                        group = &groups.back();
+                    }
+                    group->idx[rule.cscIdx] = int(i);
+                }
+            }
+        }
+    }
+
+    // Keep group ordering deterministic (sorted by prefix), matching the
+    // encoder which builds CSC sets from a std::map.
+    std::sort(groups.begin(), groups.end(),
+              [] (const CscGroup& a, const CscGroup& b) { return a.prefix < b.prefix; });
+
+    std::vector<CscGroup> cscSets;
+    for (const CscGroup& g : groups)
+    {
+        int r = g.idx[0];
+        int gg = g.idx[1];
+        int b = g.idx[2];
+        if (r < 0 || gg < 0 || b < 0)
+            continue;
+
+        if (channels[r].xsamples != channels[gg].xsamples ||
+            channels[r].xsamples != channels[b].xsamples ||
+            channels[r].ysamples != channels[gg].ysamples ||
+            channels[r].ysamples != channels[b].ysamples)
+        {
+            continue;
+        }
+
+        cscSets.push_back(g);
+    }
+
+    // Per-channel sizes and planar buffer layout.
+    size_t unknownSize = 0;
+    size_t rleSize = 0;
+
+    // Upper bounds (from geometry) on the number of DCT coefficients; used to
+    // reject corrupt headers before allocating buffers from attacker-controlled
+    // counts. Each 8x8 block contributes at most 64 AC symbols and 1 DC value.
+    u64 acBound = 0;
+    u64 dcBound = 0;
+
+    for (size_t i = 0; i < numChan; ++i)
+    {
+        cd[i].width  = div_ceil(width, channels[i].xsamples);
+        cd[i].height = div_ceil(height, channels[i].ysamples);
+
+        if (cd[i].scheme == DWA_LOSSY_DCT)
+        {
+            const u64 blocks = u64((cd[i].width + 7) / 8) * ((cd[i].height + 7) / 8);
+            acBound += blocks * 64;
+            dcBound += blocks;
+            continue;
+        }
+
+        const size_t bytes = size_t(cd[i].width) * cd[i].height * dwaPixelTypeSize(channels[i].datatype);
+
+        if (cd[i].scheme == DWA_RLE)
+        {
+            cd[i].planarBase = rleSize;
+            rleSize += bytes;
+        }
+        else // UNKNOWN
+        {
+            cd[i].planarBase = unknownSize;
+            unknownSize += bytes;
+        }
+    }
+
+    // Sanity-check all uncompressed sizes against the geometry before we trust
+    // them for allocation. This keeps corrupt files from requesting gigabytes.
+    if (totalAcUncompressedCount > acBound ||
+        totalDcUncompressedCount > dcBound ||
+        (unknownCompressedSize > 0 && unknownUncompressedSize != unknownSize) ||
+        (rleRawSize > 0 && rleRawSize != rleSize) ||
+        rleUncompressedSize > u64(rleRawSize) * 2 + 64)
+    {
+        return nullptr;
+    }
+
+    const u8* compressedUnknown = dataPtr;
+    const u8* compressedAc      = compressedUnknown + unknownCompressedSize;
+    const u8* compressedDc      = compressedAc + acCompressedSize;
+    const u8* compressedRle     = compressedDc + dcCompressedSize;
+
+    // Decompress sub-streams.
+
+    std::vector<u8> unknownBuffer;
+    if (unknownCompressedSize > 0)
+    {
+        if (unknownUncompressedSize != unknownSize)
+            return nullptr;
+        unknownBuffer.resize(unknownSize);
+        CompressionStatus s = deflate_zlib::decompress(
+            Memory(unknownBuffer.data(), unknownBuffer.size()),
+            ConstMemory(compressedUnknown, unknownCompressedSize));
+        if (!s || s.size != unknownSize)
+            return nullptr;
+    }
+
+    std::vector<u16> acBuffer;
+    if (acCompressedSize > 0)
+    {
+        acBuffer.resize(totalAcUncompressedCount);
+
+        if (acCompression == DWA_STATIC_HUFFMAN)
+        {
+            if (!hufUncompress(compressedAc, int(acCompressedSize), acBuffer))
+                return nullptr;
+        }
+        else if (acCompression == DWA_DEFLATE)
+        {
+            CompressionStatus s = deflate_zlib::decompress(
+                Memory(reinterpret_cast<u8*>(acBuffer.data()), acBuffer.size() * sizeof(u16)),
+                ConstMemory(compressedAc, acCompressedSize));
+            if (!s || s.size != acBuffer.size() * sizeof(u16))
+                return nullptr;
+        }
+        else
+        {
+            return nullptr;
+        }
+    }
+
+    std::vector<u16> dcBuffer;
+    if (dcCompressedSize > 0)
+    {
+        const size_t dcBytes = totalDcUncompressedCount * sizeof(u16);
+        Buffer temp(dcBytes);
+        CompressionStatus s = deflate_zlib::decompress(
+            Memory(temp.data(), temp.size()),
+            ConstMemory(compressedDc, dcCompressedSize));
+        if (!s || s.size != dcBytes)
+            return nullptr;
+
+        // DC values use the standard EXR zip transform (predictor + reorder).
+        predictor(temp, dcBytes);
+        dcBuffer.resize(totalDcUncompressedCount);
+        deinterleave(reinterpret_cast<u8*>(dcBuffer.data()), temp, dcBytes);
+    }
+    else if (totalDcUncompressedCount != 0)
+    {
+        return nullptr;
+    }
+
+    std::vector<u8> rleBuffer;
+    if (rleRawSize > 0)
+    {
+        if (rleRawSize != rleSize)
+            return nullptr;
+
+        Buffer temp(rleUncompressedSize);
+        CompressionStatus s = deflate_zlib::decompress(
+            Memory(temp.data(), temp.size()),
+            ConstMemory(compressedRle, rleCompressedSize));
+        if (!s || s.size != rleUncompressedSize)
+            return nullptr;
+
+        rleBuffer.resize(rleSize);
+        int n = dwaRleUncompress(int(rleUncompressedSize), int(rleRawSize),
+                                 reinterpret_cast<const s8*>(temp.data()), rleBuffer.data());
+        if (n != int(rleRawSize))
+            return nullptr;
+    }
+
+    // Compute the row pointers into 'dest' (per scanline, per channel).
+    std::vector<std::vector<u8*>> rowPtrs(numChan);
+    {
+        u8* cursor = dest.address;
+        u8* destEnd = dest.address + dest.size;
+
+        for (int y = 0; y < height; ++y)
+        {
+            for (size_t i = 0; i < numChan; ++i)
+            {
+                if (channels[i].ysamples > 1 && (y % channels[i].ysamples) != 0)
+                    continue;
+
+                rowPtrs[i].push_back(cursor);
+                cursor += size_t(cd[i].width) * channels[i].bytes;
+                if (cursor > destEnd)
+                    return nullptr;
+            }
+        }
+    }
+
+    const u16* toLinearTable = dwaToLinearTable();
+    const u16* acCur = acBuffer.empty() ? nullptr : acBuffer.data();
+    const u16* acEnd = acBuffer.empty() ? nullptr : acBuffer.data() + acBuffer.size();
+    const u16* dcCur = dcBuffer.empty() ? nullptr : dcBuffer.data();
+
+    std::vector<bool> decoded(numChan, false);
+
+    // CSC (RGB) groups first.
+    for (const CscGroup& set : cscSets)
+    {
+        int idx[3] = { set.idx[0], set.idx[1], set.idx[2] };
+
+        for (int k = 0; k < 3; ++k)
+            if (cd[idx[k]].scheme != DWA_LOSSY_DCT)
+                return nullptr;
+
+        const std::vector<u8*>* rows[3] =
+        {
+            &rowPtrs[idx[0]], &rowPtrs[idx[1]], &rowPtrs[idx[2]]
+        };
+        const u16* toLinear[3] = { toLinearTable, toLinearTable, toLinearTable };
+        DataType type[3] =
+        {
+            channels[idx[0]].datatype, channels[idx[1]].datatype, channels[idx[2]].datatype
+        };
+
+        if (!dwaDctDecodeGroup(rows, 3, acCur, acEnd, dcCur, toLinear, type,
+                               cd[idx[0]].width, cd[idx[0]].height))
+        {
+            return nullptr;
+        }
+
+        decoded[idx[0]] = decoded[idx[1]] = decoded[idx[2]] = true;
+    }
+
+    // Remaining channels individually.
+    for (size_t i = 0; i < numChan; ++i)
+    {
+        if (decoded[i])
+            continue;
+
+        const int pixelSize = dwaPixelTypeSize(channels[i].datatype);
+
+        switch (cd[i].scheme)
+        {
+            case DWA_LOSSY_DCT:
+            {
+                const std::vector<u8*>* rows[3] = { &rowPtrs[i], nullptr, nullptr };
+                const u16* toLinear[3] =
+                {
+                    channels[i].linear ? nullptr : toLinearTable, nullptr, nullptr
+                };
+                DataType type[3] = { channels[i].datatype, DataType::NONE, DataType::NONE };
+
+                if (!dwaDctDecodeGroup(rows, 1, acCur, acEnd, dcCur, toLinear, type,
+                                       cd[i].width, cd[i].height))
+                {
+                    return nullptr;
+                }
+                break;
+            }
+
+            case DWA_RLE:
+            {
+                // The data is un-RLE'd but split by byte plane; re-interleave it.
+                const u8* plane[4];
+                for (int byte = 0; byte < pixelSize; ++byte)
+                {
+                    plane[byte] = rleBuffer.data() + cd[i].planarBase +
+                                  size_t(byte) * cd[i].width * cd[i].height;
+                }
+
+                for (int row = 0; row < int(rowPtrs[i].size()); ++row)
+                {
+                    u8* dst = rowPtrs[i][row];
+                    for (int x = 0; x < cd[i].width; ++x)
+                        for (int byte = 0; byte < pixelSize; ++byte)
+                            *dst++ = *plane[byte]++;
+                }
+                break;
+            }
+
+            case DWA_UNKNOWN_SCHEME:
+            default:
+            {
+                const u8* src = unknownBuffer.data() + cd[i].planarBase;
+                const size_t scanline = size_t(cd[i].width) * pixelSize;
+
+                for (int row = 0; row < int(rowPtrs[i].size()); ++row)
+                {
+                    std::memcpy(rowPtrs[i][row], src, scanline);
+                    src += scanline;
+                }
+                break;
+            }
+        }
+
+        decoded[i] = true;
+    }
+
+    return dest.address;
+}
+
+const u8* ContextEXR::decompress_dwaa(Memory dest, ConstMemory source, int width, int height, int ystart)
+{
+    return decompress_dwa(dest, source, width, height, ystart);
 }
 
 const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width, int height, int ystart)
 {
-    MANGO_UNREFERENCED(dest);
-    MANGO_UNREFERENCED(source);
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
-    MANGO_UNREFERENCED(ystart);
-
-    // MANGO TODO
-    return nullptr;
+    return decompress_dwa(dest, source, width, height, ystart);
 }
 
 static inline
@@ -2724,16 +3705,32 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
 
         printLine(Print::Info, "Tiles: {} x {} ({})", xtiles, ytiles, ntiles);
 
+        const u8* base = m_memory.address;
+        const size_t total = m_memory.size;
+
         for (int i = 0; i < ntiles; ++i)
         {
+            // bounds-check the offset table entry itself
+            if (m_pointer + (size_t(i) + 1) * sizeof(u64) > base + total)
+                break;
+
             u64 offset = p.read64();
-            LittleEndianConstPointer ptr = m_memory.address + offset;
+
+            // tile chunk header is 20 bytes (tilex, tiley, xlevel, ylevel, size)
+            if (offset > total || total - offset < 20)
+                continue;
+
+            LittleEndianConstPointer ptr = base + offset;
 
             int tilex = ptr.read32();
             int tiley = ptr.read32();
             int xlevel = ptr.read32();
             int ylevel = ptr.read32();
             u32 size = ptr.read32();
+
+            // make sure the tile payload is within the file
+            if (size > total - offset - 20)
+                continue;
 
             //printLine(Print::Info, "  pos:({},{}) level:({},{}) size: {} bytes", tilex, tiley, xlevel, ylevel, size);
             MANGO_UNREFERENCED(xlevel);
@@ -2775,13 +3772,29 @@ void ContextEXR::decodeImage(const ImageDecodeOptions& options)
 
         printLine(Print::Info, "Blocks: {}", nblocks);
 
+        const u8* base = m_memory.address;
+        const size_t total = m_memory.size;
+
         for (int i = 0; i < nblocks; ++i)
         {
+            // bounds-check the offset table entry itself
+            if (m_pointer + (size_t(i) + 1) * sizeof(u64) > base + total)
+                break;
+
             u64 offset = p.read64();
-            LittleEndianConstPointer ptr = m_memory.address + offset;
+
+            // chunk header is 8 bytes (ystart + size); make sure it fits
+            if (offset > total || total - offset < 8)
+                continue;
+
+            LittleEndianConstPointer ptr = base + offset;
 
             int ystart = ptr.read32();
             u32 size = ptr.read32();
+
+            // make sure the chunk payload is within the file
+            if (size > total - offset - 8)
+                continue;
 
             int x0 = 0;
             int y0 = ystart - m_attributes.dataWindow.ymin;
