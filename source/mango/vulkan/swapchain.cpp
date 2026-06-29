@@ -568,6 +568,12 @@ namespace mango::vulkan
             vkWaitForFences(m_device, u32(m_fences.size()), m_fences.data(), VK_TRUE, UINT64_MAX);
         }
 
+        // Fences only retire the graphics-queue submit; vkQueuePresentKHR may still be
+        // waiting on the per-image render-finished semaphores on the present queue.
+        // Destroying those semaphores here (before the old swapchain is retired) trips
+        // VUID-vkDestroySemaphore-semaphore-05149 on the next resize.
+        vkDeviceWaitIdle(m_device);
+
         VkSwapchainKHR oldSwapchain = m_swapchain;
 
         destroyImageViews();
