@@ -2143,6 +2143,7 @@ namespace
     {
         int m_bpp = 0;
         int m_offset = 0;
+        bool m_cocomax = false;
 
         InterfacePIX(ConstMemory memory)
             : Interface(memory)
@@ -2152,6 +2153,21 @@ namespace
 
             if (size < 16 || std::memcmp(data, "PIXT", 4) != 0 || data[4] != 0)
             {
+                // Not Atari Falcon PIX. The ".pix" extension is also used by Tandy
+                // Color Computer "CoCo Max": a 256x192 monochrome image with the
+                // bitmap stored at offset 5 (32 bytes per row, MSB first).
+                if ((size == 6154 || size == 6155 || size == 6272 || size == 7168) &&
+                    data[0] == 0 && data[1] == 24 && data[2] <= 1 && data[3] == 14 && data[4] == 0)
+                {
+                    m_cocomax = true;
+                    m_bpp = 1;
+                    m_offset = 5;
+                    header.width  = 256;
+                    header.height = 192;
+                    header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    return;
+                }
+
                 header.setError("[ImageDecoder.ATARI] Incorrect PIX identifier.");
                 return;
             }
@@ -2285,6 +2301,16 @@ namespace
             const u8* data = m_memory.address + m_offset;
             const int width = header.width;
             const int height = header.height;
+
+            if (m_cocomax)
+            {
+                // CoCo Max: bit clear = black background, bit set = white.
+                Palette palette(2);
+                palette[0] = Color(0x00, 0x00, 0x00, 0xff);
+                palette[1] = Color(0xff, 0xff, 0xff, 0xff);
+                decodePlanar(s, palette, data, width, height, 1);
+                return;
+            }
 
             switch (m_bpp)
             {
