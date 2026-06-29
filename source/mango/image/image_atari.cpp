@@ -2125,6 +2125,284 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // ImageDecoder: Atari Falcon PIX ("PIXT")
+    // ------------------------------------------------------------
+
+    // The Atari Falcon ".PIX" format (RECOIL: FalconPix). A 14- or 16-byte
+    // header tagged "PIXT" followed by an optional RGB palette and pixels.
+    // The depth byte selects the storage layout:
+    //   1/2/4 bpp : ST word-interleaved bitplanes, preceded by an RGB palette
+    //   8     bpp : chunky indices, preceded by a 256-entry RGB palette
+    //   16    bpp : Falcon true color (RGB565, big-endian)
+    //   24    bpp : packed R8G8B8
+    //   32    bpp : packed X8R8G8B8 (leading pad byte ignored)
+    // Reference: RECOIL_DecodeFalconPix() in recoil.c.
+
+    struct InterfacePIX : Interface
+    {
+        int m_bpp = 0;
+        int m_offset = 0;
+
+        InterfacePIX(ConstMemory memory)
+            : Interface(memory)
+        {
+            const u8* data = memory.address;
+            const size_t size = memory.size;
+
+            if (size < 16 || std::memcmp(data, "PIXT", 4) != 0 || data[4] != 0)
+            {
+                header.setError("[ImageDecoder.ATARI] Incorrect PIX identifier.");
+                return;
+            }
+
+            int offset;
+            switch (data[5])
+            {
+                case 1: offset = 14; break;
+                case 2: offset = 16; break;
+                default:
+                    header.setError("[ImageDecoder.ATARI] Unsupported PIX version ({}).", data[5]);
+                    return;
+            }
+
+            const int flag = data[6];
+            const int bpp = data[7];
+            const int width = (data[8] << 8) | data[9];
+            const int height = (data[10] << 8) | data[11];
+
+            // ST/Falcon bitplanes are stored as 16-pixel words, so the width
+            // must be a multiple of 16 for the row stride to be well defined.
+            if (width < 1 || height < 1 || (width & 15) != 0)
+            {
+                header.setError("[ImageDecoder.ATARI] Invalid PIX dimensions ({} x {}).", width, height);
+                return;
+            }
+
+            const size_t row_words = size_t((width + 15) >> 4); // 16-pixel groups per row
+            size_t required = size_t(offset);
+
+            switch (bpp)
+            {
+                case 1:
+                case 2:
+                case 4:
+                    if (flag != 1)
+                    {
+                        header.setError("[ImageDecoder.ATARI] Unexpected PIX flag ({}).", flag);
+                        return;
+                    }
+                    if (bpp != 1)
+                        required += size_t(3) << bpp;          // RGB palette: (1 << bpp) * 3
+                    required += row_words * 2 * bpp * height;  // interleaved bitplanes
+                    break;
+
+                case 8:
+                    if (flag != 0)
+                    {
+                        header.setError("[ImageDecoder.ATARI] Unexpected PIX flag ({}).", flag);
+                        return;
+                    }
+                    required += 768 + size_t(width) * height;
+                    break;
+
+                case 16:
+                    if (flag != 1)
+                    {
+                        header.setError("[ImageDecoder.ATARI] Unexpected PIX flag ({}).", flag);
+                        return;
+                    }
+                    required += size_t(width) * height * 2;
+                    break;
+
+                case 24:
+                    if (flag != 1)
+                    {
+                        header.setError("[ImageDecoder.ATARI] Unexpected PIX flag ({}).", flag);
+                        return;
+                    }
+                    required += size_t(width) * height * 3;
+                    break;
+
+                case 32:
+                    required += size_t(width) * height * 4;
+                    break;
+
+                default:
+                    header.setError("[ImageDecoder.ATARI] Unsupported PIX depth ({}).", bpp);
+                    return;
+            }
+
+            if (size < required)
+            {
+                header.setError("[ImageDecoder.ATARI] Out of data.");
+                return;
+            }
+
+            m_bpp = bpp;
+            m_offset = offset;
+
+            header.width  = width;
+            header.height = height;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        void decodePlanar(const Surface& s, Palette& palette, const u8* data, int width, int height, int bitplanes)
+        {
+            Buffer tempImage(size_t(width) * height, 0);
+
+            const bigEndian::u16* buffer = reinterpret_cast<const bigEndian::u16*>(data);
+            const int words_per_row = int(((width + 15) >> 4)) * bitplanes;
+
+            for (int y = 0; y < height; ++y)
+            {
+                u8* image = tempImage.data() + size_t(y) * width;
+                const int yoffset = y * words_per_row;
+
+                for (int x = 0; x < width; ++x)
+                {
+                    const int x_offset = 15 - (x & 15);
+                    const int word_offset = (x >> 4) * bitplanes + yoffset;
+
+                    u8 index = 0;
+                    for (int i = 0; i < bitplanes; ++i)
+                    {
+                        u16 v = buffer[word_offset + i];
+                        index |= u8(((v >> x_offset) & 1) << i);
+                    }
+
+                    image[x] = index;
+                }
+            }
+
+            Surface indices(width, height, IndexedFormat(8), width, tempImage);
+            indices.palette = &palette;
+            resolve(s, indices);
+        }
+
+        void decodeImage(const Surface& s) override
+        {
+            const u8* data = m_memory.address + m_offset;
+            const int width = header.width;
+            const int height = header.height;
+
+            switch (m_bpp)
+            {
+                case 1:
+                {
+                    Palette palette(2);
+                    palette[0] = Color(0xff, 0xff, 0xff, 0xff);
+                    palette[1] = Color(0x00, 0x00, 0x00, 0xff);
+                    decodePlanar(s, palette, data, width, height, 1);
+                    break;
+                }
+
+                case 2:
+                case 4:
+                {
+                    const int colors = 1 << m_bpp;
+                    Palette palette(colors);
+                    for (int i = 0; i < colors; ++i)
+                    {
+                        const u8* c = data + i * 3;
+                        palette[i] = Color(c[0], c[1], c[2], 0xff);
+                    }
+                    decodePlanar(s, palette, data + colors * 3, width, height, m_bpp);
+                    break;
+                }
+
+                case 8:
+                {
+                    Palette palette(256);
+                    for (int i = 0; i < 256; ++i)
+                    {
+                        const u8* c = data + i * 3;
+                        palette[i] = Color(c[0], c[1], c[2], 0xff);
+                    }
+
+                    Buffer tempImage(size_t(width) * height);
+                    std::memcpy(tempImage.data(), data + 768, size_t(width) * height);
+
+                    Surface indices(width, height, IndexedFormat(8), width, tempImage);
+                    indices.palette = &palette;
+                    resolve(s, indices);
+                    break;
+                }
+
+                case 16:
+                {
+                    for (int y = 0; y < height; ++y)
+                    {
+                        const u8* src = data + size_t(y) * width * 2;
+                        u8* dst = s.address<u8>(0, y);
+
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const u16 v = (src[0] << 8) | src[1]; // big-endian RGB565
+                            const u8 r = (v >> 11) & 0x1f;
+                            const u8 g = (v >> 5) & 0x3f;
+                            const u8 b = v & 0x1f;
+                            dst[0] = u8((r << 3) | (r >> 2));
+                            dst[1] = u8((g << 2) | (g >> 4));
+                            dst[2] = u8((b << 3) | (b >> 2));
+                            dst[3] = 0xff;
+                            dst += 4;
+                            src += 2;
+                        }
+                    }
+                    break;
+                }
+
+                case 24:
+                {
+                    for (int y = 0; y < height; ++y)
+                    {
+                        const u8* src = data + size_t(y) * width * 3;
+                        u8* dst = s.address<u8>(0, y);
+
+                        for (int x = 0; x < width; ++x)
+                        {
+                            dst[0] = src[0];
+                            dst[1] = src[1];
+                            dst[2] = src[2];
+                            dst[3] = 0xff;
+                            dst += 4;
+                            src += 3;
+                        }
+                    }
+                    break;
+                }
+
+                case 32:
+                {
+                    // Stored as X8R8G8B8; the leading pad byte of each pixel is ignored.
+                    for (int y = 0; y < height; ++y)
+                    {
+                        const u8* src = data + size_t(y) * width * 4;
+                        u8* dst = s.address<u8>(0, y);
+
+                        for (int x = 0; x < width; ++x)
+                        {
+                            dst[0] = src[1];
+                            dst[1] = src[2];
+                            dst[2] = src[3];
+                            dst[3] = 0xff;
+                            dst += 4;
+                            src += 4;
+                        }
+                    }
+                    break;
+                }
+            }
+        }
+    };
+
+    ImageDecodeInterface* createInterfacePIX(ConstMemory memory)
+    {
+        ImageDecodeInterface* x = new InterfacePIX(memory);
+        return x;
+    }
+
 } // namespace
 
 namespace mango::image
@@ -2162,6 +2440,9 @@ namespace mango::image
         // GEM Raster (GEM Bit Image / Extended GEM Bit Image)
         registerImageDecoder(createInterfaceGEM, ".img");
         registerImageDecoder(createInterfaceGEM, ".ximg");
+
+        // Atari Falcon PIX
+        registerImageDecoder(createInterfacePIX, ".pix");
     }
 
 } // namespace mango::image
