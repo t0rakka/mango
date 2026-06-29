@@ -6,6 +6,7 @@
 #include <mango/core/system.hpp>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
+#include <mango/filesystem/filesystem.hpp>
 
 namespace
 {
@@ -252,7 +253,7 @@ namespace mango::image
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
-    ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
+    static ImageDecodeInterface* createDecodeInterface(ConstMemory memory, const std::string& filename)
     {
         // Inspect signature to determine image format
         std::string extension = getImageFormatExtension(memory);
@@ -263,10 +264,91 @@ namespace mango::image
         }
 
         ImageDecoder::CreateDecodeFunc create = g_imageServer.getImageDecoder(extension);
-        if (create)
+        if (!create)
         {
-            ImageDecodeInterface* x = create(memory);
-            x->name = fmt::format("ImageDecoder:{}", filesystem::removePath(filename));
+            return nullptr;
+        }
+
+        ImageDecodeInterface* x = create(memory);
+        x->name = fmt::format("ImageDecoder:{}", filesystem::removePath(filename));
+        x->filename = filename;
+        return x;
+    }
+
+    // Builds a companion-file loader. 'open' maps a relative/absolute sibling name to
+    // a File; the loader probes the requested extension plus upper/lower-case variants
+    // (retro sidecars are inconsistent, e.g. .PL5 vs .pl5) and keeps the opened files
+    // alive for the lifetime of the decoder.
+    template <typename OpenFunc>
+    static std::function<ConstMemory(const std::string&)> makeCompanionLoader(std::string base, OpenFunc open)
+    {
+        auto store = std::make_shared<std::vector<std::unique_ptr<filesystem::File>>>();
+
+        return [store, base, open] (const std::string& extension) -> ConstMemory
+        {
+            const std::string variants [] =
+            {
+                extension, toUpper(extension), toLower(extension)
+            };
+
+            for (const std::string& variant : variants)
+            {
+                try
+                {
+                    std::unique_ptr<filesystem::File> file = open(base + variant);
+                    ConstMemory memory = *file;
+                    if (memory.size)
+                    {
+                        store->push_back(std::move(file));
+                        return memory;
+                    }
+                }
+                catch (...)
+                {
+                    // not found / not accessible: try the next variant
+                }
+            }
+
+            return ConstMemory();
+        };
+    }
+
+    ImageDecoder::ImageDecoder(ConstMemory memory, const std::string& filename)
+    {
+        ImageDecodeInterface* x = createDecodeInterface(memory, filename);
+        if (x)
+        {
+            // Companion sidecars are resolved by re-opening the full virtual path.
+            // This works through mounted archives but re-parses the container chain;
+            // use the Path overload to reuse an already-mounted mapper.
+            if (!filename.empty())
+            {
+                x->acquireCompanion = makeCompanionLoader(filesystem::removeExtension(filename),
+                    [] (const std::string& name)
+                    {
+                        return std::make_unique<filesystem::File>(name);
+                    });
+            }
+
+            m_interface.reset(x);
+        }
+    }
+
+    ImageDecoder::ImageDecoder(ConstMemory memory, const filesystem::Path& path, const std::string& filename)
+    {
+        ImageDecodeInterface* x = createDecodeInterface(memory, filename);
+        if (x)
+        {
+            // Resolve sidecars through the already-mounted Path (lightweight: no
+            // re-parsing of the container chain). The caller guarantees 'path'
+            // outlives this decoder.
+            const filesystem::Path* p = &path;
+            x->acquireCompanion = makeCompanionLoader(filesystem::removeExtension(filename),
+                [p] (const std::string& name)
+                {
+                    return std::make_unique<filesystem::File>(*p, name);
+                });
+
             m_interface.reset(x);
         }
     }

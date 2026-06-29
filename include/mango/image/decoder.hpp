@@ -9,12 +9,18 @@
 #include <atomic>
 #include <memory>
 #include <future>
+#include <functional>
 #include <mango/core/memory.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/image/format.hpp>
 #include <mango/image/color.hpp>
 #include <mango/image/compression.hpp>
 #include <mango/image/exif.hpp>
+
+namespace mango::filesystem
+{
+    class Path;
+} // namespace mango::filesystem
 
 namespace mango::image
 {
@@ -115,6 +121,17 @@ namespace mango::image
         ConstMemory icc;
         ConstMemory exif;
 
+        // Full virtual path of the source image (empty for memory-only sources).
+        std::string filename;
+
+        // Loads a companion / sidecar file located next to the primary image,
+        // identified by a replacement extension (e.g. ".pl5"). Resolves through
+        // the same virtual filesystem (folders and mounted archives) the primary
+        // image came from, and the returned bytes stay valid for the decoder's
+        // lifetime. Returns empty memory when the source is memory-only or the
+        // companion does not exist. May be null - always test before calling.
+        std::function<ConstMemory(const std::string& extension)> acquireCompanion;
+
         ImageDecodeInterface() = default;
         virtual ~ImageDecodeInterface() = default;
 
@@ -125,7 +142,15 @@ namespace mango::image
     class ImageDecoder : protected NonCopyable
     {
     public:
-        ImageDecoder(ConstMemory memory, const std::string& extension);
+        ImageDecoder(ConstMemory memory, const std::string& filename);
+
+        // Companion files (sidecars) are resolved relative to 'path', reusing its
+        // already-mounted mapper. Prefer this overload when the image lives inside
+        // mounted containers (zip/rar/iso, possibly stacked) - it avoids re-parsing
+        // the whole container chain just to read a small sidecar. 'path' must
+        // outlive this decoder. 'filename' is the image name relative to 'path'.
+        ImageDecoder(ConstMemory memory, const filesystem::Path& path, const std::string& filename);
+
         ~ImageDecoder();
 
         bool isDecoder() const;

@@ -340,7 +340,14 @@ namespace
 
                 case Screen::SR5:
                 {
-                    setMsxPalette(palette, MSX2_DEFAULT_PALETTE, 0, 16);
+                    // SR5 stores no palette of its own; the colors live in a sibling
+                    // ".PL5" file (16 entries x 2 bytes). Fall back to the MSX2 default
+                    // palette when the companion is unavailable.
+                    ConstMemory pl5 = acquireCompanion ? acquireCompanion(".pl5") : ConstMemory();
+                    if (pl5.size >= 32)
+                        setMsxPalette(palette, pl5.address, 0, 16);
+                    else
+                        setMsxPalette(palette, MSX2_DEFAULT_PALETTE, 0, 16);
                     decodeNibbles(dest, data + 7, 128, palette);
                     break;
                 }
