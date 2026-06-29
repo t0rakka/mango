@@ -2203,6 +2203,95 @@ namespace
 #endif // defined(MANGO_ENABLE_NEON)
 
     // ----------------------------------------------------------------------------
+    // fp32 <-> fp16 scanline converters (vectorized half conversion + reorder)
+    // ----------------------------------------------------------------------------
+    //
+    // The hardware half<->float conversion (F16C / NEON vcvt, with a portable
+    // fallback) processes four lanes at once and is agnostic to what the lanes
+    // mean. Channel reordering (e.g. RGBA<->BGRA) is therefore just a lane shuffle
+    // in the float domain, leaving a single vector conversion per pixel. The
+    // template indices <X, Y, Z, W> map each DEST lane to the SOURCE lane it reads
+    // (so a plain copy is <0, 1, 2, 3> and an R/B swap is <2, 1, 0, 3>).
+
+    // 4-component <-> 4-component: aligned-agnostic vector load, shuffle, convert.
+
+    template <int X, int Y, int Z, int W>
+    void blit_f32_f16_4(u8* dest, const u8* src, int count)
+    {
+        const float* s = reinterpret_cast<const float*>(src);
+        float16* d = reinterpret_cast<float16*>(dest);
+
+        for (int x = 0; x < count; ++x)
+        {
+            float32x4 v = float32x4::uload(s);
+            v = shuffle<X, Y, Z, W>(v, v);
+            float16x4::ustore(d, float16x4(v));
+            s += 4;
+            d += 4;
+        }
+    }
+
+    template <int X, int Y, int Z, int W>
+    void blit_f16_f32_4(u8* dest, const u8* src, int count)
+    {
+        const float16* s = reinterpret_cast<const float16*>(src);
+        float* d = reinterpret_cast<float*>(dest);
+
+        for (int x = 0; x < count; ++x)
+        {
+            float32x4 v = float32x4(float16x4::uload(s));
+            v = shuffle<X, Y, Z, W>(v, v);
+            float32x4::ustore(d, v);
+            s += 4;
+            d += 4;
+        }
+    }
+
+    // Mixed component counts (3 vs 4): per-pixel gather into a 4-lane vector with a
+    // default alpha of 1.0 when expanding, then a single vector half conversion. SN
+    // / DN are the source / dest component counts.
+
+    template <int SN, int DN, int X, int Y, int Z, int W>
+    void blit_f32_f16_px(u8* dest, const u8* src, int count)
+    {
+        const float* s = reinterpret_cast<const float*>(src);
+        float16* d = reinterpret_cast<float16*>(dest);
+
+        for (int x = 0; x < count; ++x)
+        {
+            const float comp[4] = { s[0], s[1], s[2], SN == 4 ? s[3] : 1.0f };
+            float16x4 h(float32x4(comp[X], comp[Y], comp[Z], comp[W]));
+            const float16* hp = h.data();
+            d[0] = hp[0];
+            d[1] = hp[1];
+            d[2] = hp[2];
+            if (DN == 4)
+                d[3] = hp[3];
+            s += SN;
+            d += DN;
+        }
+    }
+
+    template <int SN, int DN, int X, int Y, int Z, int W>
+    void blit_f16_f32_px(u8* dest, const u8* src, int count)
+    {
+        const float16* s = reinterpret_cast<const float16*>(src);
+        float* d = reinterpret_cast<float*>(dest);
+
+        for (int x = 0; x < count; ++x)
+        {
+            const float comp[4] = { s[0], s[1], s[2], SN == 4 ? float(s[3]) : 1.0f };
+            d[0] = comp[X];
+            d[1] = comp[Y];
+            d[2] = comp[Z];
+            if (DN == 4)
+                d[3] = comp[W];
+            s += SN;
+            d += DN;
+        }
+    }
+
+    // ----------------------------------------------------------------------------
     // custom conversion function lookup
     // ----------------------------------------------------------------------------
 
@@ -3083,38 +3172,96 @@ namespace
         }
     },
 
-    // rgba.f16 <-> rgba.f32
+    // f32 -> f16 (4-component, with optional R/B reorder)
 
     {
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
-        0,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-            float16x4* d = reinterpret_cast<float16x4*>(dest);
-            const float32x4* s = reinterpret_cast<const float32x4*>(src);
-
-            for (int x = 0; x < count; ++x)
-            {
-                d[x] = convert<float16x4>(s[x]);
-            }
-        }
+        0, blit_f32_f16_4<0, 1, 2, 3>
+    },
+    {
+        Format(64, Format::FLOAT16, Format::BGRA, 16, 16, 16, 16),
+        Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32),
+        0, blit_f32_f16_4<0, 1, 2, 3>
+    },
+    {
+        Format(64, Format::FLOAT16, Format::BGRA, 16, 16, 16, 16),
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        0, blit_f32_f16_4<2, 1, 0, 3>
+    },
+    {
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32),
+        0, blit_f32_f16_4<2, 1, 0, 3>
     },
 
+    // f16 -> f32 (4-component, with optional R/B reorder)
+
     {
         Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
         Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
-        0,
-        [] (u8* dest, const u8* src, int count) -> void
-        {
-            float32x4* d = reinterpret_cast<float32x4*>(dest);
-            const float16x4* s = reinterpret_cast<const float16x4*>(src);
+        0, blit_f16_f32_4<0, 1, 2, 3>
+    },
+    {
+        Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32),
+        Format(64, Format::FLOAT16, Format::BGRA, 16, 16, 16, 16),
+        0, blit_f16_f32_4<0, 1, 2, 3>
+    },
+    {
+        Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32),
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        0, blit_f16_f32_4<2, 1, 0, 3>
+    },
+    {
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        Format(64, Format::FLOAT16, Format::BGRA, 16, 16, 16, 16),
+        0, blit_f16_f32_4<2, 1, 0, 3>
+    },
 
-            for (int x = 0; x < count; ++x)
-            {
-                d[x] = convert<float32x4>(s[x]);
-            }
-        }
+    // f32 -> f16 (3-component source expands to 4-component, alpha = 1.0)
+
+    {
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32),
+        0, blit_f32_f16_px<3, 4, 0, 1, 2, 3>
+    },
+    {
+        Format(64, Format::FLOAT16, Format::BGRA, 16, 16, 16, 16),
+        Format(96, Format::FLOAT32, Format::BGR, 32, 32, 32),
+        0, blit_f32_f16_px<3, 4, 0, 1, 2, 3>
+    },
+    {
+        Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
+        Format(96, Format::FLOAT32, Format::BGR, 32, 32, 32),
+        0, blit_f32_f16_px<3, 4, 2, 1, 0, 3>
+    },
+    {
+        Format(64, Format::FLOAT16, Format::BGRA, 16, 16, 16, 16),
+        Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32),
+        0, blit_f32_f16_px<3, 4, 2, 1, 0, 3>
+    },
+
+    // f16 -> f32 (3-component source expands to 4-component, alpha = 1.0)
+
+    {
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        Format(48, Format::FLOAT16, Format::RGB, 16, 16, 16),
+        0, blit_f16_f32_px<3, 4, 0, 1, 2, 3>
+    },
+    {
+        Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32),
+        Format(48, Format::FLOAT16, Format::BGR, 16, 16, 16),
+        0, blit_f16_f32_px<3, 4, 0, 1, 2, 3>
+    },
+    {
+        Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32),
+        Format(48, Format::FLOAT16, Format::BGR, 16, 16, 16),
+        0, blit_f16_f32_px<3, 4, 2, 1, 0, 3>
+    },
+    {
+        Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32),
+        Format(48, Format::FLOAT16, Format::RGB, 16, 16, 16),
+        0, blit_f16_f32_px<3, 4, 2, 1, 0, 3>
     },
 
 #if defined(MANGO_ENABLE_SSE2)
