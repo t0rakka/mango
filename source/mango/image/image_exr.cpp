@@ -3199,9 +3199,6 @@ void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, f
     float r = RY * Y + Y;
     float b = BY * Y + Y;
     float g = (Y - r * yw.x - b * yw.z) / yw.y;
-    r = linear_to_srgb(r);
-    g = linear_to_srgb(g);
-    b = linear_to_srgb(b);
     dest[0] = r;
     dest[1] = g;
     dest[2] = b;
@@ -3448,9 +3445,6 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
                 float32x4 g = convert<float32x4>(float16x4::uload(ptr[1]));
                 float32x4 b = convert<float32x4>(float16x4::uload(ptr[2]));
                 float32x4 a = convert<float32x4>(float16x4::uload(ptr[3]));
-                r = linear_to_srgb(r);
-                g = linear_to_srgb(g);
-                b = linear_to_srgb(b);
 
                 float32x4 color[4];
                 transpose(color, r, g, b, a);
@@ -3475,9 +3469,6 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
                 float32 g = uload16f(ptr[1]);
                 float32 b = uload16f(ptr[2]);
                 float32 a = uload16f(ptr[3]);
-                r = linear_to_srgb(r);
-                g = linear_to_srgb(g);
-                b = linear_to_srgb(b);
 
                 image[0] = r;
                 image[1] = g;
@@ -3528,9 +3519,6 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
                 float32x4 g = float32x4::uload(ptr[1]);
                 float32x4 b = float32x4::uload(ptr[2]);
                 float32x4 a = float32x4::uload(ptr[3]);
-                r = linear_to_srgb(r);
-                g = linear_to_srgb(g);
-                b = linear_to_srgb(b);
 
                 float32x4 color[4];
                 transpose(color, r, g, b, a);
@@ -3555,9 +3543,6 @@ void decodeRGB(Surface surface, const u8* src, const Layer& layer, int x0, int y
                 float32 g = uload32f(ptr[1]);
                 float32 b = uload32f(ptr[2]);
                 float32 a = uload32f(ptr[3]);
-                r = linear_to_srgb(r);
-                g = linear_to_srgb(g);
-                b = linear_to_srgb(b);
 
                 image[0] = r;
                 image[1] = g;
