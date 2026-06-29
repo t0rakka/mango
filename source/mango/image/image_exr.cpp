@@ -778,6 +778,380 @@ void hufDecode(const u64*  hcode, // i : encoding table
 }
 
 //
+// FAST DECODER
+//
+// Canonical Huffman decoder based on 'On the Implementation of Minimum
+// Redundancy Prefix Codes' by Moffat and Turpin, ported from OpenEXR's
+// FastHufDecoder (ImfFastHuf.cpp). It is bitstream-compatible with the
+// reference hufDecode() above, but several times faster: it keeps a 64-bit
+// bit buffer (bulk refill, no per-symbol byte juggling) and resolves all
+// short codes (<= TABLE_LOOKUP_BITS) through a compact, L1-resident table
+// instead of the 256 KB hash table the reference decoder walks.
+//
+// Used only for streams of at least 128 bits; shorter streams fall back to
+// the reference decoder.
+//
+
+class FastHufDecoder
+{
+public:
+    static const int MAX_CODE_LEN = 58;
+    static const int TABLE_LOOKUP_BITS = 12;
+
+    FastHufDecoder() = default;
+
+    ~FastHufDecoder()
+    {
+        delete[] _idToSymbol;
+    }
+
+    FastHufDecoder(const FastHufDecoder&) = delete;
+    FastHufDecoder& operator = (const FastHufDecoder&) = delete;
+
+    // Parse the packed code-length table (advancing 'table') and build the
+    // acceleration tables. Returns false on malformed table data.
+    bool build(const u8*& table, int numBytes, int minSymbol, int maxSymbol, int rleSymbol);
+
+    // Decode 'numDstElems' symbols from the byte-aligned bitstream 'src'
+    // (which holds 'numSrcBits' bits). Returns false on corrupt input.
+    bool decode(const u8* src, int numSrcBits, u16* dst, int numDstElems);
+
+private:
+    static u64 read64(const u8* p)
+    {
+        return bigEndian::uload64(p);
+    }
+
+    static u64 readBits(int numBits, u64& buffer, int& bufferNumBits, const u8*& currByte)
+    {
+        while (bufferNumBits < numBits)
+        {
+            buffer = (buffer << 8) | *currByte++;
+            bufferNumBits += 8;
+        }
+        bufferNumBits -= numBits;
+        return (buffer >> bufferNumBits) & ((u64(1) << numBits) - 1);
+    }
+
+    void refill(u64& buffer, int numBits, u64& bufferBack, int& bufferBackNumBits,
+                const u8*& currByte, int& currBitsLeft)
+    {
+        buffer |= bufferBack >> (64 - numBits);
+
+        if (bufferBackNumBits < numBits)
+        {
+            numBits -= bufferBackNumBits;
+
+            if (currBitsLeft >= 64)
+            {
+                bufferBack = read64(currByte);
+                bufferBackNumBits = 64;
+                currByte += sizeof(u64);
+                currBitsLeft -= 8 * int(sizeof(u64));
+            }
+            else
+            {
+                bufferBack = 0;
+                bufferBackNumBits = 64;
+
+                int shift = 56;
+                while (currBitsLeft > 0)
+                {
+                    bufferBack |= u64(*currByte) << shift;
+                    ++currByte;
+                    shift -= 8;
+                    currBitsLeft -= 8;
+                }
+
+                if (currBitsLeft < 0)
+                    currBitsLeft = 0;
+            }
+
+            buffer |= bufferBack >> (64 - numBits);
+        }
+
+        if (bufferBackNumBits <= numBits)
+            bufferBack = 0;
+        else
+            bufferBack = bufferBack << numBits;
+        bufferBackNumBits -= numBits;
+    }
+
+    bool buildTables(const u64* base, const u64* offset);
+
+    int _rleSymbol = 0;
+    int _numSymbols = 0;
+    int _minCodeLength = 255;
+    int _maxCodeLength = 0;
+    int* _idToSymbol = nullptr;
+
+    u64 _ljBase[MAX_CODE_LEN + 1];
+    u64 _ljOffset[MAX_CODE_LEN + 1];
+
+    int _tableSymbol[1 << TABLE_LOOKUP_BITS];
+    u8  _tableCodeLen[1 << TABLE_LOOKUP_BITS];
+    u64 _tableMin = 0;
+};
+
+bool FastHufDecoder::build(const u8*& table, int numBytes, int minSymbol, int maxSymbol, int rleSymbol)
+{
+    _rleSymbol = rleSymbol;
+
+    std::vector<u64> symbols;
+
+    u64 base[MAX_CODE_LEN + 1];
+    u64 offset[MAX_CODE_LEN + 1];
+    size_t codeCount[MAX_CODE_LEN + 1];
+
+    for (int i = 0; i <= MAX_CODE_LEN; ++i)
+    {
+        codeCount[i] = 0;
+        base[i] = 0xffffffffffffffffULL;
+        offset[i] = 0;
+    }
+
+    const u8* currByte = table;
+    u64 currBits = 0;
+    int currBitCount = 0;
+
+    for (u64 symbol = u64(minSymbol); symbol <= u64(maxSymbol); ++symbol)
+    {
+        if (currByte - table >= numBytes)
+            return false;
+
+        u64 codeLen = readBits(6, currBits, currBitCount, currByte);
+
+        if (codeLen == u64(LONG_ZEROCODE_RUN))
+        {
+            if (currByte - table >= numBytes)
+                return false;
+
+            int runLen = int(readBits(8, currBits, currBitCount, currByte)) + SHORTEST_LONG_RUN;
+            if (symbol + runLen > u64(maxSymbol + 1))
+                return false;
+
+            symbol += runLen - 1;
+        }
+        else if (codeLen >= u64(SHORT_ZEROCODE_RUN))
+        {
+            int runLen = int(codeLen) - SHORT_ZEROCODE_RUN + 2;
+            if (symbol + runLen > u64(maxSymbol + 1))
+                return false;
+
+            symbol += runLen - 1;
+        }
+        else if (codeLen != 0)
+        {
+            symbols.push_back((symbol << 6) | (codeLen & 63));
+
+            if (int(codeLen) < _minCodeLength)
+                _minCodeLength = int(codeLen);
+            if (int(codeLen) > _maxCodeLength)
+                _maxCodeLength = int(codeLen);
+
+            codeCount[codeLen]++;
+        }
+    }
+
+    for (int i = 0; i < MAX_CODE_LEN; ++i)
+        _numSymbols += int(codeCount[i]);
+
+    table = currByte;
+
+    if (_numSymbols == 0 || _maxCodeLength == 0 || _maxCodeLength > MAX_CODE_LEN)
+        return false;
+
+    // Closed-form 'base' (minimum numeric code at each length).
+    {
+        std::vector<double> countTmp(_maxCodeLength + 1, 0.0);
+
+        for (int l = _minCodeLength; l <= _maxCodeLength; ++l)
+            countTmp[l] = double(codeCount[l]) * double(2ll << (_maxCodeLength - l));
+
+        for (int l = _minCodeLength; l <= _maxCodeLength; ++l)
+        {
+            double tmp = 0;
+            for (int k = l + 1; k <= _maxCodeLength; ++k)
+                tmp += countTmp[k];
+            tmp /= double(2ll << (_maxCodeLength - l));
+            base[l] = u64(std::ceil(tmp));
+        }
+    }
+
+    // 'offset' (first id at each length, in sorted-by-length id order).
+    offset[_maxCodeLength] = 0;
+    for (int i = _maxCodeLength - 1; i >= _minCodeLength; --i)
+        offset[i] = offset[i + 1] + codeCount[i + 1];
+
+    _idToSymbol = new int[_numSymbols];
+
+    u64 mapping[MAX_CODE_LEN + 1];
+    for (int i = 0; i <= MAX_CODE_LEN; ++i)
+        mapping[i] = u64(-1);
+    for (int i = _minCodeLength; i <= _maxCodeLength; ++i)
+        mapping[i] = offset[i];
+
+    for (u64 sym : symbols)
+    {
+        int codeLen = int(sym & 63);
+        int symbol = int(sym >> 6);
+
+        if (mapping[codeLen] >= u64(_numSymbols))
+            return false;
+
+        _idToSymbol[mapping[codeLen]] = symbol;
+        mapping[codeLen]++;
+    }
+
+    return buildTables(base, offset);
+}
+
+bool FastHufDecoder::buildTables(const u64* base, const u64* offset)
+{
+    for (int i = 0; i <= MAX_CODE_LEN; ++i)
+    {
+        if (base[i] != 0xffffffffffffffffULL)
+            _ljBase[i] = base[i] << (64 - i);
+        else
+            _ljBase[i] = 0xffffffffffffffffULL;
+    }
+
+    _ljOffset[0] = offset[0] - _ljBase[0];
+    for (int i = 1; i <= MAX_CODE_LEN; ++i)
+        _ljOffset[i] = offset[i] - (_ljBase[i] >> (64 - i));
+
+    for (u64 i = 0; i < (1 << TABLE_LOOKUP_BITS); ++i)
+    {
+        u64 value = i << (64 - TABLE_LOOKUP_BITS);
+
+        _tableSymbol[i] = 0xffff;
+        _tableCodeLen[i] = 0;
+
+        for (int codeLen = _minCodeLength; codeLen <= _maxCodeLength; ++codeLen)
+        {
+            if (_ljBase[codeLen] <= value)
+            {
+                _tableCodeLen[i] = u8(codeLen);
+
+                u64 id = _ljOffset[codeLen] + (value >> (64 - codeLen));
+                if (id < u64(_numSymbols))
+                    _tableSymbol[i] = _idToSymbol[id];
+                else
+                    return false;
+                break;
+            }
+        }
+    }
+
+    int minIdx = TABLE_LOOKUP_BITS;
+    while (minIdx > 0 && _ljBase[minIdx] == 0xffffffffffffffffULL)
+        --minIdx;
+
+    if (minIdx < 0)
+        _tableMin = 0xffffffffffffffffULL;
+    else
+        _tableMin = _ljBase[minIdx];
+
+    return true;
+}
+
+bool FastHufDecoder::decode(const u8* src, int numSrcBits, u16* dst, int numDstElems)
+{
+    if (numSrcBits < 128)
+        return false;
+
+    const u8* currByte = src + 2 * sizeof(u64);
+    int currBitsLeft = numSrcBits - 8 * 2 * int(sizeof(u64));
+
+    u64 buffer = read64(src);
+    int bufferNumBits = 64;
+
+    u64 bufferBack = read64(src + sizeof(u64));
+    int bufferBackNumBits = 64;
+
+    int dstIdx = 0;
+
+    while (dstIdx < numDstElems)
+    {
+        int codeLen;
+        int symbol;
+
+        if (_tableMin <= buffer)
+        {
+            int tableIdx = int(buffer >> (64 - TABLE_LOOKUP_BITS));
+            codeLen = _tableCodeLen[tableIdx];
+            symbol = _tableSymbol[tableIdx];
+
+            if (codeLen == 0)
+                return false; // invalid code
+        }
+        else
+        {
+            if (bufferNumBits < 64)
+            {
+                refill(buffer, 64 - bufferNumBits, bufferBack, bufferBackNumBits,
+                       currByte, currBitsLeft);
+                bufferNumBits = 64;
+            }
+
+            codeLen = TABLE_LOOKUP_BITS + 1;
+            while (codeLen <= _maxCodeLength && _ljBase[codeLen] > buffer)
+                ++codeLen;
+
+            if (codeLen > _maxCodeLength)
+                return false;
+
+            u64 id = _ljOffset[codeLen] + (buffer >> (64 - codeLen));
+            if (id < u64(_numSymbols))
+                symbol = _idToSymbol[id];
+            else
+                return false;
+        }
+
+        buffer = buffer << codeLen;
+        bufferNumBits -= codeLen;
+
+        if (symbol == _rleSymbol)
+        {
+            if (bufferNumBits < 8)
+            {
+                refill(buffer, 64 - bufferNumBits, bufferBack, bufferBackNumBits,
+                       currByte, currBitsLeft);
+                bufferNumBits = 64;
+            }
+
+            int rleCount = int(buffer >> 56);
+
+            if (dstIdx < 1 || rleCount <= 0 || dstIdx + rleCount > numDstElems)
+                return false;
+
+            u16 prev = dst[dstIdx - 1];
+            for (int i = 0; i < rleCount; ++i)
+                dst[dstIdx + i] = prev;
+
+            dstIdx += rleCount;
+
+            buffer = buffer << 8;
+            bufferNumBits -= 8;
+        }
+        else
+        {
+            dst[dstIdx] = u16(symbol);
+            ++dstIdx;
+        }
+
+        if (bufferNumBits < TABLE_LOOKUP_BITS)
+        {
+            refill(buffer, 64 - bufferNumBits, bufferBack, bufferBackNumBits,
+                   currByte, currBitsLeft);
+            bufferNumBits = 64;
+        }
+    }
+
+    return currBitsLeft == 0;
+}
+
+//
 // EXTERNAL INTERFACE
 //
 
@@ -805,16 +1179,35 @@ bool hufUncompress(const u8* compressed, int nCompressed, std::vector<u16>& outp
     compressed += headerSize;
     nCompressed -= headerSize;
 
+    if (nBits > 8 * nCompressed)
+    {
+        return false;
+    }
+
+    // Fast path: the table-accelerated decoder needs the encoding table plus a
+    // bitstream of at least 128 bits. The table is parsed directly from the
+    // packed bytes; on any malformed input we fall back to the reference path.
+    if (nBits > 128 && !output.empty())
+    {
+        const u8* tablePtr = compressed;
+        FastHufDecoder fhd;
+
+        if (fhd.build(tablePtr, nCompressed, im, iM, iM))
+        {
+            const int tableBytes = int(tablePtr - compressed);
+            if (8 * (nCompressed - tableBytes) >= nBits &&
+                fhd.decode(tablePtr, nBits, output.data(), int(output.size())))
+            {
+                return true;
+            }
+        }
+    }
+
     std::vector<u64> freq(HUF_ENCSIZE);
     std::vector<HufDec> hdec(HUF_DECSIZE);
 
     hufClearDecTable(hdec.data());
     hufUnpackEncTable(&compressed, nCompressed, im, iM, freq.data());
-
-    if (nBits > 8 * nCompressed)
-    {
-        return false;
-    }
 
     hufBuildDecTable(freq.data(), im, iM, hdec.data());
     hufDecode(freq.data(), hdec.data(), compressed, nBits, iM, output.size(), output.data());
