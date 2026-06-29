@@ -370,6 +370,14 @@ namespace
             header.faces   = 0;
             header.format  = format;
             header.compression = TextureCompression::NONE;
+
+            if (is_float)
+            {
+                // PFM (Pf/PF) stores linear floating-point samples with no gamma,
+                // like Radiance HDR. The integer PNM variants stay sRGB (the default).
+                header.color.transfer = TransferFunction::Linear;
+                header.linear = true;
+            }
         }
     };
 
