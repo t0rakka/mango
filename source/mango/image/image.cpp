@@ -115,6 +115,7 @@ namespace mango::image
     void registerImageCodecSGI();
     void registerImageCodecPNM();
     void registerImageCodecATARI();
+    void registerImageCodecATARI8();
     void registerImageCodecC64();
     void registerImageCodecMSX();
     void registerImageCodecEXR();
@@ -157,6 +158,7 @@ namespace mango::image
             registerImageCodecSGI();
             registerImageCodecPNM();
             registerImageCodecATARI();
+            registerImageCodecATARI8();
             registerImageCodecC64();
             registerImageCodecMSX();
             registerImageCodecEXR();
