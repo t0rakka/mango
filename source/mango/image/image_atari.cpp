@@ -1668,6 +1668,463 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // ImageDecoder: GEM Raster (IMG) / Extended GEM Bit Image (XIMG)
+    // ------------------------------------------------------------
+
+    // References:
+    // - https://www.fileformat.info/format/gemraster/egff.htm
+    // - http://www.seasip.info/Gem/ff_img.html
+    // - http://fileformats.archiveteam.org/wiki/GEM_Raster
+    //
+    // GEM Raster is the bitmap format of Digital Research GEM (GEM Paint,
+    // Ventura Publisher) and the native bitmap of the Atari ST desktop. The
+    // header is a sequence of big-endian 16-bit words:
+    //
+    //     [0] version       (1, sometimes 2 or 3)
+    //     [1] header words   (8 standard, 9 for Ventura, larger for XIMG palette)
+    //     [2] planes         (1=mono, 2/3/4/8=indexed, 16/24/32=truecolor)
+    //     [3] pattern bytes  (1..8, the run length of a "pattern" code)
+    //     [4] pixel width    (microns; aspect ratio only)
+    //     [5] pixel height   (microns)
+    //     [6] image width    (pixels)
+    //     [7] image height   (scanlines)
+    //
+    // XIMG places the ASCII signature "XIMG" at byte offset 16, followed by a
+    // palette-format word (0 = RGB) and (1 << planes) palette entries of three
+    // words each, every component in the VDI 0..1000 intensity range.
+    //
+    // Pixel data is a single continuous run-length encoded stream. The run state
+    // carries across scanline boundaries; each scanline pulls 'bytesPerLine'
+    // bytes (all planes interleaved, or one plane for STTT) from the stream:
+    //   - solid run     <byte>             : low 7 bits = count, MSB set = 0xff bits
+    //   - literal run    80 <n> <n bytes>  : n uncompressed bytes (n == 0 means 256)
+    //   - pattern run    00 <n> <pattern>  : replay 'pattern_size' bytes n times
+    //   - keep run       00 00 <n>         : n+1 bytes copied from the line above
+    //   - line repeat    00 00 FF <n>      : output the next decoded scanline n times
+    // STTT files store planes plane-major rather than scanline-interleaved. The
+    // algorithm follows RECOIL's GEM/IMG decoder.
+
+    struct GemRleStream
+    {
+        static constexpr int Keep = 0x100;
+
+        const u8* content;
+        size_t length;
+        size_t offset;
+        int pattern_size;
+
+        int repeatCount = 0;
+        int repeatValue = 0;
+        int patternRepeatCount = 0;
+
+        int readByte()
+        {
+            if (offset >= length)
+                return -1;
+            return content[offset++];
+        }
+
+        bool readCommand()
+        {
+            if (patternRepeatCount > 1)
+            {
+                --patternRepeatCount;
+                repeatCount = pattern_size;
+                offset -= repeatCount; // rewind to replay the pattern bytes
+                return true;
+            }
+
+            int b = readByte();
+            switch (b)
+            {
+                case -1:
+                    return false;
+
+                case 0x00:
+                    b = readByte();
+                    if (b < 0)
+                        return false;
+                    if (b == 0x00)
+                    {
+                        // keep run: copy bytes from the line above
+                        b = readByte();
+                        if (b < 0)
+                            return false;
+                        repeatCount = b + 1;
+                        repeatValue = Keep;
+                        return true;
+                    }
+                    // pattern run: replay the next pattern_size bytes b times
+                    patternRepeatCount = b;
+                    repeatCount = pattern_size;
+                    repeatValue = -1;
+                    return true;
+
+                case 0x80:
+                    repeatCount = readByte();
+                    if (repeatCount < 0)
+                        return false;
+                    if (repeatCount == 0)
+                        repeatCount = 256;
+                    repeatValue = -1;
+                    return true;
+
+                default:
+                    repeatCount = b & 0x7f;
+                    repeatValue = (b & 0x80) ? 0xff : 0x00;
+                    return true;
+            }
+        }
+
+        int readRle()
+        {
+            while (repeatCount == 0)
+            {
+                if (!readCommand())
+                    return -1;
+            }
+            --repeatCount;
+            if (repeatValue >= 0)
+                return repeatValue;
+            return readByte();
+        }
+
+        int getLineRepeatCount()
+        {
+            if (repeatCount == 0 &&
+                offset + 4 < length &&
+                content[offset] == 0x00 &&
+                content[offset + 1] == 0x00 &&
+                content[offset + 2] == 0xff)
+            {
+                offset += 4;
+                return content[offset - 1];
+            }
+            return 1;
+        }
+
+        // Unpack 'count' bytes into the (persistent) line buffer. A Keep byte
+        // leaves the previous content untouched (vertical copy from the line above).
+        bool unpackLine(u8* unpacked, int count, int y)
+        {
+            for (int x = 0; x < count; ++x)
+            {
+                int b = readRle();
+                if (b < 0)
+                    return false;
+                if (b != Keep)
+                    unpacked[x] = u8(b);
+                else if (y == 0)
+                    unpacked[x] = 0;
+            }
+            return true;
+        }
+    };
+
+    // XIMG palette color: three big-endian words in the VDI 0..1000 intensity range.
+    Color getStVdiColor(const u8* p)
+    {
+        u8 c[3];
+        for (int i = 0; i < 3; ++i)
+        {
+            int v = (p[i * 2] << 8) | p[i * 2 + 1];
+            c[i] = u8(v < 1000 ? v * 255 / 1000 : 255);
+        }
+        return Color(c[0], c[1], c[2], 255);
+    }
+
+    struct header_gem
+    {
+        int width = 0;
+        int height = 0;
+        int planes = 0;
+        int pattern_size = 0;
+        int header_length = 0; // header size in bytes
+        bool sttt = false;     // plane-major STTT variant
+
+        std::string error;
+
+        bool isXimg(const u8* data, size_t size) const
+        {
+            return size >= 22 &&
+                std::memcmp(data + 16, "XIMG", 4) == 0 &&
+                data[20] == 0 && data[21] == 0;
+        }
+
+        const u8* parse(const u8* data, size_t size)
+        {
+            // The .img extension is heavily overloaded; reject anything that does
+            // not look like a sane GEM raster header instead of decoding garbage.
+            if (size < 17)
+            {
+                error = "[ImageDecoder.GEM] Out of data.";
+                return nullptr;
+            }
+
+            // version: data[0] must be 0, data[1] in 0..3
+            if (data[0] != 0 || data[1] > 3 || data[4] != 0)
+            {
+                error = "[ImageDecoder.GEM] Incorrect header.";
+                return nullptr;
+            }
+
+            header_length = ((data[2] << 8) | data[3]) << 1;
+            planes        = data[5];
+            pattern_size  = (data[6] << 8) | data[7];
+            width         = (data[12] << 8) | data[13];
+            height        = (data[14] << 8) | data[15];
+
+            if (header_length < 16 || size_t(header_length) >= size ||
+                pattern_size < 1 || pattern_size > 8 ||
+                width < 1 || width > 16384 || height < 1 || height > 16384)
+            {
+                error = "[ImageDecoder.GEM] Incorrect header.";
+                return nullptr;
+            }
+
+            // STTT (plane-major) is detected here; palette selection happens later.
+            sttt = (header_length == 54 &&
+                    std::memcmp(data + 16, "STTT", 4) == 0 &&
+                    data[20] == 0 && data[21] == 0x10);
+
+            if (planes < 1 || planes > 8)
+            {
+                // 16/24/32-plane truecolor (TIMG / chunky XIMG) is recognized but
+                // not yet supported; fail cleanly rather than produce wrong colors.
+                error = fmt::format("[ImageDecoder.GEM] Unsupported plane count ({}).", planes);
+                return nullptr;
+            }
+
+            // Plain 3/5/6/7-plane images have no standard palette: only valid via XIMG.
+            if (planes != 1 && planes != 2 && planes != 4 && planes != 8 &&
+                !(header_length == 22 + (6 << planes) && isXimg(data, size)) && !sttt)
+            {
+                error = fmt::format("[ImageDecoder.GEM] Unsupported plane count ({}).", planes);
+                return nullptr;
+            }
+
+            return data;
+        }
+
+        // RECOIL SetDefaultStPalette: VDI default colors (index 0 = white, last = black).
+        void setDefaultStPalette(Palette& palette) const
+        {
+            palette[0] = Color(255, 255, 255, 255);
+            if (planes >= 2)
+            {
+                palette[1] = Color(255, 0, 0, 255);
+                palette[2] = Color(0, 255, 0, 255);
+                if (planes == 4)
+                {
+                    palette[3]  = Color(255, 255,   0, 255);
+                    palette[4]  = Color(  0,   0, 255, 255);
+                    palette[5]  = Color(255,   0, 255, 255);
+                    palette[6]  = Color(  0, 255, 255, 255);
+                    palette[7]  = Color(170, 170, 170, 255);
+                    palette[8]  = Color( 85,  85,  85, 255);
+                    palette[9]  = Color(170,   0,   0, 255);
+                    palette[10] = Color(  0, 170,   0, 255);
+                    palette[11] = Color(170, 170,   0, 255);
+                    palette[12] = Color(  0,   0, 170, 255);
+                    palette[13] = Color(170,   0, 170, 255);
+                    palette[14] = Color(  0, 170, 170, 255);
+                }
+            }
+            palette[(1 << planes) - 1] = Color(0, 0, 0, 255);
+        }
+
+        void buildPalette(Palette& palette, const u8* data, size_t size) const
+        {
+            palette.size = u32(1) << planes;
+
+            if (sttt)
+            {
+                // 16 Atari ST/STE colors at offset 22, remaining entries black.
+                for (u32 i = 0; i < palette.size; ++i)
+                    palette[i] = Color(0, 0, 0, 255);
+                int count = std::min<int>(16, int(palette.size));
+                BigEndianConstPointer p = data + 22;
+                for (int i = 0; i < count; ++i)
+                    palette[i] = convert_atari_color(p.read16());
+                return;
+            }
+
+            if (header_length == 22 + (6 << planes) && isXimg(data, size))
+            {
+                // XIMG: (1 << planes) RGB entries (VDI 0..1000)
+                for (u32 i = 0; i < palette.size; ++i)
+                    palette[i] = getStVdiColor(data + 22 + i * 6);
+                return;
+            }
+
+            if (planes == 8)
+            {
+                if (header_length == 22 && isXimg(data, size))
+                {
+                    // inverted grayscale
+                    for (int c = 0; c < 256; ++c)
+                        palette[c] = Color(u8(255 - c), u8(255 - c), u8(255 - c), 255);
+                }
+                else
+                {
+                    // grayscale, decremented in reverse bit order
+                    int rgb = 0xffffff;
+                    for (int c = 0; c < 256; ++c)
+                    {
+                        palette[c] = Color(u8(rgb >> 16), u8(rgb >> 8), u8(rgb), 255);
+                        for (int mask = 0x808080; ; mask >>= 1)
+                        {
+                            rgb ^= mask;
+                            if ((rgb & mask) == 0)
+                                break;
+                        }
+                    }
+                }
+                return;
+            }
+
+            // HyperPaint stores an ST palette at offset 18.
+            if (header_length == 50 && data[16] == 0 && data[17] == 0x80)
+            {
+                for (u32 i = 0; i < palette.size; ++i)
+                    palette[i] = Color(0, 0, 0, 255);
+                BigEndianConstPointer p = data + 18;
+                int count = std::min<int>(16, int(palette.size));
+                for (int i = 0; i < count; ++i)
+                    palette[i] = convert_atari_color(p.read16());
+                return;
+            }
+
+            setDefaultStPalette(palette);
+        }
+
+        // assemble a palette index from interleaved bitplanes (plane 0 = LSB)
+        u8 getBitplanePixel(const u8* unpacked, int x, int bytes_per_bitplane) const
+        {
+            const int bit = 7 - (x & 7);
+            const int byte_index = x >> 3;
+
+            int c = 0;
+            for (int plane = planes; --plane >= 0; )
+                c = (c << 1) | ((unpacked[byte_index + plane * bytes_per_bitplane] >> bit) & 1);
+
+            return u8(c);
+        }
+
+        void decode(const Surface& s, const u8* data, size_t size) const
+        {
+            const int bytes_per_bitplane = (width + 7) / 8;
+
+            Buffer tempImage(size_t(width) * height, 0);
+
+            GemRleStream rle { data, size, size_t(header_length), pattern_size };
+
+            if (sttt)
+            {
+                // STTT: each plane is decoded separately (plane-major), accumulating
+                // bits into the index image one bitplane at a time.
+                std::vector<u8> unpacked(bytes_per_bitplane, 0);
+
+                for (int plane = 0; plane < planes; ++plane)
+                {
+                    int y = 0;
+                    while (y < height)
+                    {
+                        int repeat = std::min(rle.getLineRepeatCount(), height - y);
+                        if (!rle.unpackLine(unpacked.data(), bytes_per_bitplane, y))
+                            break;
+
+                        // each plane carries its own line-repeat structure, so the
+                        // current bitplane's bit is accumulated into every repeated row
+                        for (int r = 0; r < repeat; ++r)
+                        {
+                            u8* dest = tempImage + size_t(y + r) * width;
+                            for (int x = 0; x < width; ++x)
+                            {
+                                int bit = (unpacked[x >> 3] >> (7 - (x & 7))) & 1;
+                                dest[x] = u8(dest[x] | (bit << plane));
+                            }
+                        }
+
+                        if (repeat < 1)
+                            break;
+                        y += repeat;
+                    }
+                }
+            }
+            else
+            {
+                // Standard GEM: all planes of a scanline are interleaved together.
+                const int bytes_per_line = planes * bytes_per_bitplane;
+                std::vector<u8> unpacked(bytes_per_line, 0);
+
+                int y = 0;
+                while (y < height)
+                {
+                    int repeat = std::min(rle.getLineRepeatCount(), height - y);
+                    if (!rle.unpackLine(unpacked.data(), bytes_per_line, y))
+                        break;
+
+                    u8* dest = tempImage + size_t(y) * width;
+                    for (int x = 0; x < width; ++x)
+                        dest[x] = getBitplanePixel(unpacked.data(), x, bytes_per_bitplane);
+
+                    for (int r = 1; r < repeat; ++r)
+                        std::memcpy(tempImage + size_t(y + r) * width, dest, width);
+
+                    if (repeat < 1)
+                        break;
+                    y += repeat;
+                }
+            }
+
+            Palette palette;
+            buildPalette(palette, data, size);
+
+            Surface indices(width, height, IndexedFormat(8), width, tempImage);
+            indices.palette = &palette;
+            resolve(s, indices);
+        }
+    };
+
+    struct InterfaceGEM : Interface
+    {
+        header_gem m_gem_header;
+        const u8* m_data;
+
+        InterfaceGEM(ConstMemory memory)
+            : Interface(memory)
+            , m_data(nullptr)
+        {
+            m_data = m_gem_header.parse(memory.address, memory.size);
+            if (m_data)
+            {
+                header.width  = m_gem_header.width;
+                header.height = m_gem_header.height;
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            }
+            else
+            {
+                header.setError(m_gem_header.error);
+            }
+        }
+
+        void decodeImage(const Surface& s) override
+        {
+            if (!m_data)
+                return;
+
+            m_gem_header.decode(s, m_memory.address, m_memory.size);
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceGEM(ConstMemory memory)
+    {
+        ImageDecodeInterface* x = new InterfaceGEM(memory);
+        return x;
+    }
+
 } // namespace
 
 namespace mango::image
@@ -1701,6 +2158,10 @@ namespace mango::image
         registerImageDecoder(createInterfaceTiny, ".tn1");
         registerImageDecoder(createInterfaceTiny, ".tn2");
         registerImageDecoder(createInterfaceTiny, ".tn3");
+
+        // GEM Raster (GEM Bit Image / Extended GEM Bit Image)
+        registerImageDecoder(createInterfaceGEM, ".img");
+        registerImageDecoder(createInterfaceGEM, ".ximg");
     }
 
 } // namespace mango::image
