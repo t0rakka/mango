@@ -29,8 +29,10 @@ namespace
             exif = m_parser.exif_memory;
 
             // JPEG is sRGB by convention (the default). When an ICC profile is embedded it
-            // defines the color space exactly, so defer to it.
-            if (icc.size)
+            // defines the color space exactly, so defer to it. The exception is UltraHDR:
+            // the gain map path outputs linear fp16 in explicit primaries, and the embedded
+            // ICC describes the original SDR base, not our linearized result - keep our signalling.
+            if (icc.size && header.color.transfer != TransferFunction::Linear)
             {
                 header.color.primaries = ColorPrimaries::Unspecified;
                 header.color.transfer = TransferFunction::Unspecified;

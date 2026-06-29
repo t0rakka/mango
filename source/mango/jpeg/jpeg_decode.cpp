@@ -3,6 +3,10 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
+#include <algorithm>
+#include <cstring>
+#include <memory>
+#include <string>
 #include <mango/core/endian.hpp>
 #include <mango/core/cpuinfo.hpp>
 #include <mango/core/thread.hpp>
@@ -167,7 +171,7 @@ namespace mango::image::jpeg
             quantTable[i].table = quantTableVector.data() + i * 64;
         }
 
-        m_surface = nullptr;
+        m_sink.surface = nullptr;
 
         if (isJPEG(m_memory))
         {
@@ -184,15 +188,752 @@ namespace mango::image::jpeg
     }
 
     // ----------------------------------------------------------------------------
+    // UltraHDR gain map collapse
+    // ----------------------------------------------------------------------------
+
+    static inline
+    float srgbToLinear(float c)
+    {
+        return c <= 0.04045f ? c / 12.92f : std::pow((c + 0.055f) / 1.055f, 2.4f);
+    }
+
+    void applyGainMap(const Surface& dest, const Surface& base, const Surface& gain,
+                      const GainMapMetadata& metadata, ImageDecodeInterface* interface)
+    {
+        const int width = dest.width;
+        const int height = dest.height;
+
+        // sRGB EOTF: 8-bit base sample -> scene linear
+        float srgbLinear[256];
+        for (int i = 0; i < 256; ++i)
+        {
+            srgbLinear[i] = srgbToLinear(i / 255.0f);
+        }
+
+        // per-channel gain factor LUT (full HDR rendition: display weight = 1)
+        float gainFactor[3][256];
+        for (int c = 0; c < 3; ++c)
+        {
+            const float lo = metadata.gainMapMin[c];
+            const float hi = metadata.gainMapMax[c];
+            const float gamma = metadata.gainMapGamma[c];
+            const float invGamma = gamma != 0.0f ? 1.0f / gamma : 1.0f;
+
+            for (int i = 0; i < 256; ++i)
+            {
+                float g = i / 255.0f;
+                if (gamma != 1.0f)
+                {
+                    g = std::pow(g, invGamma);
+                }
+                const float logBoost = lo * (1.0f - g) + hi * g;
+                gainFactor[c][i] = std::exp2(logBoost);
+            }
+        }
+
+        // when metadata is identical across channels (single-channel gain map)
+        // the map is gray and one sample drives all three channels
+        const bool singleChannel =
+            metadata.gainMapMin[0] == metadata.gainMapMin[1] && metadata.gainMapMin[1] == metadata.gainMapMin[2] &&
+            metadata.gainMapMax[0] == metadata.gainMapMax[1] && metadata.gainMapMax[1] == metadata.gainMapMax[2] &&
+            metadata.gainMapGamma[0] == metadata.gainMapGamma[1] && metadata.gainMapGamma[1] == metadata.gainMapGamma[2];
+
+        // base rendition is the HDR image (gain map recovers SDR); we already want
+        // HDR so pass the base through unchanged. UltraHDR base images are SDR.
+        const bool baseIsHDR = metadata.baseRenditionIsHDR;
+
+        const int gw = gain.width;
+        const int gh = gain.height;
+        const bool sameSize = (gw == width && gh == height);
+        const float scaleX = float(gw) / float(width);
+        const float scaleY = float(gh) / float(height);
+
+        ConcurrentQueue queue("jpeg.ultrahdr");
+
+        const int bandHeight = 64;
+
+        for (int y0 = 0; y0 < height; y0 += bandHeight)
+        {
+            const int y1 = std::min(y0 + bandHeight, height);
+
+            queue.enqueue([&, y0, y1]
+            {
+                if (interface && interface->cancelled)
+                {
+                    return;
+                }
+
+                // bilinear sample of a gain map channel at fractional (fx, fy),
+                // returned in [0, 255]
+                auto sampleGain = [&] (float fx, float fy, int c) -> float
+                {
+                    if (fx < 0.0f) fx = 0.0f;
+                    if (fy < 0.0f) fy = 0.0f;
+                    float maxX = float(gw - 1);
+                    float maxY = float(gh - 1);
+                    if (fx > maxX) fx = maxX;
+                    if (fy > maxY) fy = maxY;
+
+                    const int x0 = int(fx);
+                    const int y0g = int(fy);
+                    const int x1 = std::min(x0 + 1, gw - 1);
+                    const int y1g = std::min(y0g + 1, gh - 1);
+                    const float tx = fx - float(x0);
+                    const float ty = fy - float(y0g);
+
+                    const u8* r0 = gain.address(0, y0g);
+                    const u8* r1 = gain.address(0, y1g);
+                    const float a = float(r0[x0 * 4 + c]);
+                    const float b = float(r0[x1 * 4 + c]);
+                    const float cc = float(r1[x0 * 4 + c]);
+                    const float d = float(r1[x1 * 4 + c]);
+                    const float top = a + (b - a) * tx;
+                    const float bot = cc + (d - cc) * tx;
+                    return top + (bot - top) * ty;
+                };
+
+                // interpolate the gain factor LUT at a fractional 8-bit position
+                auto factorFromSample = [&] (float s255, int c) -> float
+                {
+                    if (s255 < 0.0f) s255 = 0.0f;
+                    if (s255 > 255.0f) s255 = 255.0f;
+                    const int i0 = int(s255);
+                    const int i1 = std::min(i0 + 1, 255);
+                    const float t = s255 - float(i0);
+                    return gainFactor[c][i0] + (gainFactor[c][i1] - gainFactor[c][i0]) * t;
+                };
+
+                for (int y = y0; y < y1; ++y)
+                {
+                    const u8* baseRow = base.address(0, y);
+                    float16* destRow = dest.address<float16>(0, y);
+                    const float fy = sameSize ? float(y) : ((float(y) + 0.5f) * scaleY - 0.5f);
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        const u8* bp = baseRow + x * 4;
+                        const float fx = sameSize ? float(x) : ((float(x) + 0.5f) * scaleX - 0.5f);
+
+                        if (baseIsHDR)
+                        {
+                            destRow[x * 4 + 0] = float16(srgbLinear[bp[0]]);
+                            destRow[x * 4 + 1] = float16(srgbLinear[bp[1]]);
+                            destRow[x * 4 + 2] = float16(srgbLinear[bp[2]]);
+                            destRow[x * 4 + 3] = float16(1.0f);
+                            continue;
+                        }
+
+                        if (singleChannel)
+                        {
+                            const float s = sampleGain(fx, fy, 0);
+                            for (int c = 0; c < 3; ++c)
+                            {
+                                const float lin = srgbLinear[bp[c]];
+                                const float factor = factorFromSample(s, c);
+                                const float hdr = (lin + metadata.offsetSdr[c]) * factor - metadata.offsetHdr[c];
+                                destRow[x * 4 + c] = float16(hdr);
+                            }
+                        }
+                        else
+                        {
+                            for (int c = 0; c < 3; ++c)
+                            {
+                                const float lin = srgbLinear[bp[c]];
+                                const float s = sampleGain(fx, fy, c);
+                                const float factor = factorFromSample(s, c);
+                                const float hdr = (lin + metadata.offsetSdr[c]) * factor - metadata.offsetHdr[c];
+                                destRow[x * 4 + c] = float16(hdr);
+                            }
+                        }
+
+                        destRow[x * 4 + 3] = float16(1.0f);
+                    }
+                }
+
+                if (interface && interface->callback)
+                {
+                    ImageDecodeRect rect { 0, y0, width, y1 - y0, float(y1) / float(height) };
+                    interface->callback(rect);
+                }
+            });
+        }
+
+        queue.wait();
+    }
+
+    void applyAppleGainMap(const Surface& dest, const Surface& base, const Surface& gain,
+                           float headroom, ImageDecodeInterface* interface)
+    {
+        const int width = dest.width;
+        const int height = dest.height;
+
+        // base (Display-P3) sample -> linear; P3 shares the sRGB transfer curve
+        float toLinear[256];
+        for (int i = 0; i < 256; ++i)
+        {
+            toLinear[i] = srgbToLinear(i / 255.0f);
+        }
+
+        // Apple linear-blend reconstruction: L_hdr = L_sdr * (1 + (headroom - 1) * g)
+        const float boost = headroom - 1.0f;
+
+        const int gw = gain.width;
+        const int gh = gain.height;
+        const bool sameSize = (gw == width && gh == height);
+        const float scaleX = float(gw) / float(width);
+        const float scaleY = float(gh) / float(height);
+
+        ConcurrentQueue queue("jpeg.ultrahdr.apple");
+
+        const int bandHeight = 64;
+
+        for (int y0 = 0; y0 < height; y0 += bandHeight)
+        {
+            const int y1 = std::min(y0 + bandHeight, height);
+
+            queue.enqueue([&, y0, y1]
+            {
+                if (interface && interface->cancelled)
+                {
+                    return;
+                }
+
+                // the gain map is single channel (grayscale); sample channel 0
+                auto sampleGain = [&] (float fx, float fy) -> float
+                {
+                    if (fx < 0.0f) fx = 0.0f;
+                    if (fy < 0.0f) fy = 0.0f;
+                    const float maxX = float(gw - 1);
+                    const float maxY = float(gh - 1);
+                    if (fx > maxX) fx = maxX;
+                    if (fy > maxY) fy = maxY;
+
+                    const int x0 = int(fx);
+                    const int y0g = int(fy);
+                    const int x1 = std::min(x0 + 1, gw - 1);
+                    const int y1g = std::min(y0g + 1, gh - 1);
+                    const float tx = fx - float(x0);
+                    const float ty = fy - float(y0g);
+
+                    const u8* r0 = gain.address(0, y0g);
+                    const u8* r1 = gain.address(0, y1g);
+                    const float a = float(r0[x0 * 4]);
+                    const float b = float(r0[x1 * 4]);
+                    const float cc = float(r1[x0 * 4]);
+                    const float d = float(r1[x1 * 4]);
+                    const float top = a + (b - a) * tx;
+                    const float bot = cc + (d - cc) * tx;
+                    return (top + (bot - top) * ty) / 255.0f;
+                };
+
+                for (int y = y0; y < y1; ++y)
+                {
+                    const u8* baseRow = base.address(0, y);
+                    float16* destRow = dest.address<float16>(0, y);
+                    const float fy = sameSize ? float(y) : ((float(y) + 0.5f) * scaleY - 0.5f);
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        const u8* bp = baseRow + x * 4;
+                        const float fx = sameSize ? float(x) : ((float(x) + 0.5f) * scaleX - 0.5f);
+                        const float g = sampleGain(fx, fy);
+                        const float mult = 1.0f + boost * g;
+
+                        destRow[x * 4 + 0] = float16(toLinear[bp[0]] * mult);
+                        destRow[x * 4 + 1] = float16(toLinear[bp[1]] * mult);
+                        destRow[x * 4 + 2] = float16(toLinear[bp[2]] * mult);
+                        destRow[x * 4 + 3] = float16(1.0f);
+                    }
+                }
+
+                if (interface && interface->callback)
+                {
+                    ImageDecodeRect rect { 0, y0, width, y1 - y0, float(y1) / float(height) };
+                    interface->callback(rect);
+                }
+            });
+        }
+
+        queue.wait();
+    }
+
+    // ----------------------------------------------------------------------------
+    // UltraHDR detection helpers
+    // ----------------------------------------------------------------------------
+
+    // Walk markers from the start of a JPEG stream and return the offset just past
+    // the primary image's EOI, correctly skipping APPn/table segments and entropy
+    // byte-stuffing so an embedded thumbnail's EOI is not mistaken for the end.
+    static
+    const u8* findPrimaryEnd(ConstMemory memory)
+    {
+        const u8* p = memory.address;
+        const u8* end = memory.address + memory.size;
+
+        if (p + 2 > end)
+            return end;
+
+        p += 2; // skip SOI
+
+        while (p + 2 <= end)
+        {
+            if (p[0] != 0xff)
+            {
+                ++p;
+                continue;
+            }
+
+            const u8 m = p[1];
+
+            if (m == 0xff)
+            {
+                ++p; // fill byte
+                continue;
+            }
+
+            if (m == 0x01 || (m >= 0xd0 && m <= 0xd7))
+            {
+                p += 2; // TEM / RSTn (standalone)
+                continue;
+            }
+
+            if (m == 0xd9)
+                return p + 2; // EOI
+
+            if (m == 0xd8)
+            {
+                p += 2; // unexpected nested SOI; skip
+                continue;
+            }
+
+            if (p + 4 > end)
+                return end;
+
+            const u32 len = (u32(p[2]) << 8) | p[3];
+
+            if (m == 0xda) // SOS: scan entropy coded data
+            {
+                p = p + 2 + len;
+
+                while (p < end)
+                {
+                    if (p[0] == 0xff)
+                    {
+                        if (p + 1 >= end)
+                            return end;
+
+                        const u8 mm = p[1];
+
+                        if (mm == 0x00 || mm == 0xff || (mm >= 0xd0 && mm <= 0xd7))
+                        {
+                            p += 2; // stuffed byte / fill / RSTn
+                            continue;
+                        }
+
+                        if (mm == 0xd9)
+                            return p + 2; // EOI
+
+                        // another scan or tables between scans
+                        if (p + 4 > end)
+                            return end;
+
+                        const u32 l2 = (u32(p[2]) << 8) | p[3];
+                        p = p + 2 + l2;
+                        continue;
+                    }
+
+                    ++p;
+                }
+
+                return end;
+            }
+
+            p = p + 2 + len;
+        }
+
+        return end;
+    }
+
+    static
+    const u8* findNextSOI(const u8* from, const u8* end)
+    {
+        for (const u8* q = from; q + 2 <= end; ++q)
+        {
+            if (q[0] == 0xff && q[1] == 0xd8)
+                return q;
+        }
+
+        return nullptr;
+    }
+
+    static
+    const u8* findBytes(const u8* p, const u8* end, const char* needle, size_t n)
+    {
+        if (n == 0 || size_t(end - p) < n)
+            return nullptr;
+
+        const u8* last = end - n;
+
+        for (const u8* q = p; q <= last; ++q)
+        {
+            if (q[0] == u8(needle[0]) && !std::memcmp(q, needle, n))
+                return q;
+        }
+
+        return nullptr;
+    }
+
+    // Parse a scalar XMP value, accepting either the attribute form
+    // (prefix:Name="value") or the element form (<prefix:Name>value</...>).
+    static
+    bool parseXmpFloat(const u8* start, const u8* end, const char* token, float& out)
+    {
+        const size_t token_length = std::strlen(token);
+        const u8* p = findBytes(start, end, token, token_length);
+        if (!p)
+            return false;
+
+        p += token_length;
+
+        // skip to the value delimiter
+        while (p < end && *p != '"' && *p != '>')
+            ++p;
+
+        if (p >= end)
+            return false;
+
+        const u8 closing = (*p == '"') ? u8('"') : u8('<');
+        ++p;
+
+        const u8* vstart = p;
+        while (p < end && *p != closing)
+            ++p;
+
+        if (p >= end)
+            return false;
+
+        std::string value(reinterpret_cast<const char*>(vstart), size_t(p - vstart));
+        try
+        {
+            out = std::stof(value);
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    static inline
+    bool xmlIsSpace(u8 c)
+    {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+    }
+
+    static
+    bool toFloat(const u8* s, const u8* e, float& out)
+    {
+        while (s < e && xmlIsSpace(*s))
+            ++s;
+
+        if (s >= e)
+            return false;
+
+        std::string value(reinterpret_cast<const char*>(s), size_t(e - s));
+        try
+        {
+            out = std::stof(value); // tolerates trailing whitespace / markup
+        }
+        catch (...)
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    // Parse a possibly per-channel XMP value into out[3]. Accepts the attribute form
+    // (name="v"), a scalar element (<name>v</name>), and the per-channel rdf:Seq list
+    // (<name><rdf:Seq><rdf:li>r</rdf:li><rdf:li>g</rdf:li><rdf:li>b</rdf:li></rdf:Seq></name>),
+    // which is what Adobe / Lightroom write. A scalar is replicated to all channels.
+    // Returns the number of components found (0 = absent).
+    static
+    int parseXmpVec3(const u8* start, const u8* end, const std::string& name, float out[3])
+    {
+        const u8* p = findBytes(start, end, name.c_str(), name.size());
+        if (!p)
+            return 0;
+
+        p += name.size();
+
+        while (p < end && xmlIsSpace(*p))
+            ++p;
+
+        if (p >= end)
+            return 0;
+
+        if (*p == '=')
+        {
+            // attribute form: ="value" (or ='value')
+            ++p;
+            while (p < end && *p != '"' && *p != '\'')
+                ++p;
+            if (p >= end)
+                return 0;
+
+            const u8 quote = *p++;
+            const u8* v = p;
+            while (p < end && *p != quote)
+                ++p;
+            if (p >= end)
+                return 0;
+
+            float f;
+            if (!toFloat(v, p, f))
+                return 0;
+
+            out[0] = out[1] = out[2] = f;
+            return 1;
+        }
+
+        if (*p != '>')
+            return 0;
+
+        ++p;
+
+        // bound the element by its closing tag
+        const std::string closeTag = "</" + name + ">";
+        const u8* close = findBytes(p, end, closeTag.c_str(), closeTag.size());
+        const u8* region_end = close ? close : end;
+
+        // per-channel rdf:Seq list
+        int n = 0;
+        const u8* q = p;
+        while (n < 3)
+        {
+            const u8* li = findBytes(q, region_end, "<rdf:li>", 8);
+            if (!li)
+                break;
+            li += 8;
+
+            const u8* li_end = findBytes(li, region_end, "</rdf:li>", 9);
+            if (!li_end)
+                break;
+
+            float f;
+            if (toFloat(li, li_end, f))
+                out[n++] = f;
+
+            q = li_end + 9;
+        }
+
+        if (n == 0)
+        {
+            // scalar element text
+            float f;
+            if (!toFloat(p, region_end, f))
+                return 0;
+
+            out[0] = out[1] = out[2] = f;
+            return 1;
+        }
+
+        // replicate trailing channel if fewer than three were present
+        for (int i = n; i < 3; ++i)
+            out[i] = out[n - 1];
+
+        return n;
+    }
+
+    // Read a single SRATIONAL/RATIONAL tag from the Apple MakerNote ("Apple iOS"
+    // big-endian IFD; value offsets are relative to the MakerNote start).
+    static
+    bool readAppleMakerRational(const u8* maker, const u8* end, u16 wanted, float& out)
+    {
+        if (maker + 16 > end)
+            return false;
+
+        // layout: "Apple iOS\0\0\x01" (12 bytes), byte order (2), IFD count (2), entries
+        const bool big = maker[12] == 'M';
+
+        auto read16 = [big] (const u8* q) -> u16
+        {
+            return big ? bigEndian::uload16(q) : littleEndian::uload16(q);
+        };
+        auto read32 = [big] (const u8* q) -> u32
+        {
+            return big ? bigEndian::uload32(q) : littleEndian::uload32(q);
+        };
+
+        const u16 count = read16(maker + 14);
+        const u8* entry = maker + 16;
+
+        for (u16 i = 0; i < count; ++i, entry += 12)
+        {
+            if (entry + 12 > end)
+                break;
+
+            const u16 tag = read16(entry);
+            if (tag != wanted)
+                continue;
+
+            const u32 offset = read32(entry + 8);
+            const u8* value = maker + offset;
+            if (value + 8 > end)
+                return false;
+
+            const s32 numerator = s32(read32(value));
+            const s32 denominator = s32(read32(value + 4));
+            if (denominator == 0)
+                return false;
+
+            out = float(numerator) / float(denominator);
+            return true;
+        }
+
+        return false;
+    }
+
+    // Derive the Apple HDR headroom (linear ratio) from MakerNote keys 33 and 48,
+    // used when the "new" XMP HDRGainMapHeadroom is absent (older captures).
+    static
+    bool appleHeadroomFromMakerNote(const u8* start, const u8* end, float& headroom)
+    {
+        const u8 magic[] = { 'A', 'p', 'p', 'l', 'e', ' ', 'i', 'O', 'S', 0, 0, 0x01 };
+        const u8* maker = findBytes(start, end, reinterpret_cast<const char*>(magic), sizeof(magic));
+        if (!maker)
+            return false;
+
+        float maker33 = 0.0f;
+        float maker48 = 0.0f;
+        if (!readAppleMakerRational(maker, end, 33, maker33))
+            return false;
+        readAppleMakerRational(maker, end, 48, maker48); // optional; defaults to 0
+
+        float stops;
+        if (maker33 < 1.0f)
+        {
+            stops = (maker48 <= 0.01f) ? (-20.0f * maker48 + 1.601f)
+                                       : (-0.101f * maker48 + 1.601f);
+        }
+        else
+        {
+            stops = (maker48 <= 0.01f) ? (-70.0f * maker48 + 3.0f)
+                                       : (-0.303f * maker48 + 2.303f);
+        }
+
+        if (stops < 0.0f)
+            stops = 0.0f;
+
+        headroom = std::exp2(stops);
+        return true;
+    }
+
+    // Identify the RGB primaries of an embedded ICC profile by matching its
+    // RGB-to-PCS matrix (the rXYZ/gXYZ/bXYZ tags, D50-adapted) against the known
+    // color spaces. The matrix is a reliable discriminator even when the profile
+    // 'desc' is empty, which is common for camera-generated UltraHDR captures.
+    // Returns Unspecified when there is no profile or no confident match.
+    static
+    ColorPrimaries primariesFromICC(const u8* data, size_t size)
+    {
+        if (!data || size < 132)
+            return ColorPrimaries::Unspecified;
+
+        auto u32be = [] (const u8* p) -> u32
+        {
+            return (u32(p[0]) << 24) | (u32(p[1]) << 16) | (u32(p[2]) << 8) | u32(p[3]);
+        };
+
+        auto s15f16 = [] (const u8* p) -> float
+        {
+            return float(s32(u32(p[0]) << 24 | u32(p[1]) << 16 | u32(p[2]) << 8 | u32(p[3]))) / 65536.0f;
+        };
+
+        const u32 ntags = u32be(data + 128);
+        if (size_t(ntags) > (size - 132) / 12)
+            return ColorPrimaries::Unspecified;
+
+        auto findTag = [&] (const char* sig) -> const u8*
+        {
+            const u8* table = data + 132;
+            for (u32 i = 0; i < ntags; ++i)
+            {
+                const u8* entry = table + i * 12;
+                if (!std::memcmp(entry, sig, 4))
+                {
+                    const u32 off = u32be(entry + 4);
+                    const u32 sz = u32be(entry + 8);
+                    if (sz >= 20 && off <= size && sz <= size - off)
+                        return data + off;
+                }
+            }
+            return nullptr;
+        };
+
+        const u8* r = findTag("rXYZ");
+        const u8* g = findTag("gXYZ");
+        const u8* b = findTag("bXYZ");
+        if (!r || !g || !b)
+            return ColorPrimaries::Unspecified;
+
+        // XYZType: signature (4) + reserved (4) + XYZNumber (3 x s15Fixed16)
+        const float m[9] =
+        {
+            s15f16(r + 8), s15f16(r + 12), s15f16(r + 16),
+            s15f16(g + 8), s15f16(g + 12), s15f16(g + 16),
+            s15f16(b + 8), s15f16(b + 12), s15f16(b + 16),
+        };
+
+        struct Reference
+        {
+            ColorPrimaries primaries;
+            float m[9];
+        };
+
+        static const Reference references[] =
+        {
+            { ColorPrimaries::BT709,     { 0.4360f, 0.2225f,  0.0139f, 0.3851f, 0.7169f, 0.0971f, 0.1431f, 0.0606f, 0.7139f } },
+            { ColorPrimaries::DisplayP3, { 0.5151f, 0.2412f, -0.0011f, 0.2920f, 0.6922f, 0.0419f, 0.1571f, 0.0666f, 0.7845f } },
+            { ColorPrimaries::BT2020,    { 0.6734f, 0.2789f, -0.0019f, 0.1656f, 0.6757f, 0.0299f, 0.1250f, 0.0454f, 0.7967f } },
+            { ColorPrimaries::AdobeRGB,  { 0.6097f, 0.3111f,  0.0195f, 0.2052f, 0.6257f, 0.0609f, 0.1492f, 0.0632f, 0.7446f } },
+        };
+
+        ColorPrimaries best = ColorPrimaries::Unspecified;
+        float best_dist = 0.005f; // sum of squared component differences
+
+        for (const Reference& ref : references)
+        {
+            float dist = 0.0f;
+            for (int i = 0; i < 9; ++i)
+            {
+                const float diff = m[i] - ref.m[i];
+                dist += diff * diff;
+            }
+
+            if (dist < best_dist)
+            {
+                best_dist = dist;
+                best = ref.primaries;
+            }
+        }
+
+        return best;
+    }
+
+    // ----------------------------------------------------------------------------
     // Parser
     // ----------------------------------------------------------------------------
 
     Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory, u32 flags)
-        : m_base(interface, memory, flags)
+        : m_interface(interface)
+        , m_base(interface, memory, flags)
         , header(m_base.header)
         , exif_memory(m_base.exif_memory)
         , icc_buffer(m_base.icc_buffer)
     {
+        detectUltraHDR(memory);
     }
 
     Parser::~Parser()
@@ -201,11 +942,208 @@ namespace mango::image::jpeg
 
     void Parser::setMemory(ConstMemory memory)
     {
+        m_gainmap_kind = GainMapKind::None;
+        m_gainmap.reset();
         m_base.setMemory(memory);
+        detectUltraHDR(memory);
+    }
+
+    void Parser::detectUltraHDR(ConstMemory memory)
+    {
+        if (!m_base.header)
+            return;
+
+        const u8* fstart = memory.address;
+        const u8* fend = memory.address + memory.size;
+
+        // both conventions append the gain map as a second JPEG after the primary
+        // image; bail cheaply for ordinary single-image files
+        const u8* primaryEnd = findPrimaryEnd(memory);
+        const u8* soi = findNextSOI(primaryEnd, fend);
+        if (!soi)
+            return;
+
+        // require a recognized gain map signal to avoid false positives on generic
+        // multi-picture (MPF) JPEGs that carry an unrelated second image
+        const bool isoSignal =
+            findBytes(fstart, fend, "hdr-gain-map", 12) ||
+            findBytes(fstart, fend, "hdrgm:", 6);
+        const bool appleSignal =
+            findBytes(fstart, fend, "aux:hdrgainmap", 14) ||
+            findBytes(fstart, fend, "HDRGainMap:", 11);
+
+        if (!isoSignal && !appleSignal)
+            return;
+
+        ConstMemory gainMemory(soi, size_t(fend - soi));
+
+        auto gm = std::make_unique<StreamDecoder>(m_interface, gainMemory, 0);
+        if (!gm->header)
+            return;
+
+        if (isoSignal)
+        {
+            // ISO 21496-1 / Adobe "hdrgm": gather metadata (writers place it in the
+            // base or gain map XMP); absent fields keep their spec defaults. The
+            // gain map shaping values may be per-channel (Adobe rdf:Seq lists).
+            GainMapMetadata meta;
+            float v3[3];
+
+            auto copy3 = [] (float (&dst)[3], const float src[3])
+            {
+                dst[0] = src[0];
+                dst[1] = src[1];
+                dst[2] = src[2];
+            };
+
+            if (parseXmpVec3(fstart, fend, "hdrgm:GainMapMin", v3)) copy3(meta.gainMapMin, v3);
+            if (parseXmpVec3(fstart, fend, "hdrgm:GainMapMax", v3)) copy3(meta.gainMapMax, v3);
+            if (parseXmpVec3(fstart, fend, "hdrgm:Gamma", v3)) copy3(meta.gainMapGamma, v3);
+            if (parseXmpVec3(fstart, fend, "hdrgm:OffsetSDR", v3)) copy3(meta.offsetSdr, v3);
+            if (parseXmpVec3(fstart, fend, "hdrgm:OffsetHDR", v3)) copy3(meta.offsetHdr, v3);
+            if (parseXmpVec3(fstart, fend, "hdrgm:HDRCapacityMin", v3)) meta.hdrCapacityMin = v3[0];
+            if (parseXmpVec3(fstart, fend, "hdrgm:HDRCapacityMax", v3)) meta.hdrCapacityMax = v3[0];
+
+            const u8* base_is_hdr = findBytes(fstart, fend, "BaseRenditionIsHDR", 18);
+            if (base_is_hdr)
+            {
+                const u8* tail = std::min(base_is_hdr + 64, fend);
+                meta.baseRenditionIsHDR = findBytes(base_is_hdr, tail, "True", 4) != nullptr;
+            }
+
+            m_gainmap = std::move(gm);
+            m_gainmap_meta = meta;
+            m_gainmap_kind = GainMapKind::ISO;
+
+            // result is scene-linear in the base image's primaries; honor the base
+            // ICC when present (e.g. Samsung tags Display-P3), default to Rec.709.
+            // Conversion to the client's working space is left to linearize().
+            ColorPrimaries primaries = primariesFromICC(icc_buffer.data(), icc_buffer.size());
+            if (primaries == ColorPrimaries::Unspecified)
+                primaries = ColorPrimaries::BT709;
+
+            header.format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+            header.color = ColorInfo { primaries, TransferFunction::Linear };
+            header.linear = true;
+        }
+        else
+        {
+            // Apple HDRGainMap: prefer the explicit XMP headroom, fall back to the
+            // MakerNote-derived value used by older captures
+            float headroom = 0.0f;
+            bool found = parseXmpFloat(fstart, fend, "HDRGainMap:HDRGainMapHeadroom", headroom);
+            if (!found)
+            {
+                found = appleHeadroomFromMakerNote(fstart, fend, headroom);
+            }
+
+            // without a usable headroom there is nothing to reconstruct
+            if (!found || headroom <= 1.0f)
+                return;
+
+            m_gainmap = std::move(gm);
+            m_apple_headroom = headroom;
+            m_gainmap_kind = GainMapKind::Apple;
+
+            // result is scene-linear in the file's native (Display-P3) primaries;
+            // any conversion is left to the client (ColorInfo carries the signalling)
+            header.format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+            header.color = ColorInfo { ColorPrimaries::DisplayP3, TransferFunction::Linear };
+            header.linear = true;
+        }
+    }
+
+    ImageDecodeStatus Parser::decodeUltraHDR(const Surface& target, const ImageDecodeOptions& options)
+    {
+        ImageDecodeStatus status;
+
+        const int width = m_base.header.width;
+        const int height = m_base.header.height;
+
+        const Format rgba8(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        Bitmap baseImage(width, height, rgba8);
+        Bitmap gainImage(m_gainmap->header.width, m_gainmap->header.height, rgba8);
+
+        // decode both streams into known RGBA8 scratch surfaces; suppress the
+        // client callback during this intermediate work (cancellation still works)
+        ImageDecodeCallback saved;
+        if (m_interface)
+        {
+            saved = m_interface->callback;
+            m_interface->callback = nullptr;
+        }
+
+        ImageDecodeStatus base_status = m_base.decode(baseImage, options);
+        ImageDecodeStatus gain_status = m_gainmap->decode(gainImage, options);
+
+        if (m_interface)
+        {
+            m_interface->callback = saved;
+        }
+
+        if (!base_status)
+        {
+            status.setError(base_status.info);
+            return status;
+        }
+
+        if (!gain_status)
+        {
+            status.setError(gain_status.info);
+            return status;
+        }
+
+        const Format f16(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+
+        const bool passthrough =
+            target.format == f16 && target.width >= width && target.height >= height;
+
+        std::unique_ptr<Bitmap> scratch;
+        const Surface* sink = &target;
+        if (!passthrough)
+        {
+            scratch = std::make_unique<Bitmap>(width, height, f16);
+            sink = scratch.get();
+        }
+
+        ImageDecodeInterface* collapseInterface = passthrough ? m_interface : nullptr;
+
+        if (m_gainmap_kind == GainMapKind::Apple)
+        {
+            applyAppleGainMap(*sink, baseImage, gainImage, m_apple_headroom, collapseInterface);
+        }
+        else
+        {
+            applyGainMap(*sink, baseImage, gainImage, m_gainmap_meta, collapseInterface);
+        }
+
+        if (passthrough)
+        {
+            status.direct = true;
+        }
+        else
+        {
+            target.blit(0, 0, *sink);
+
+            if (m_interface && m_interface->callback)
+            {
+                ImageDecodeRect rect { 0, 0, width, height, 1.0f };
+                m_interface->callback(rect);
+            }
+
+            status.direct = false;
+        }
+
+        return status;
     }
 
     ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
     {
+        if (m_gainmap_kind != GainMapKind::None)
+        {
+            return decodeUltraHDR(target, options);
+        }
+
         return m_base.decode(target, options);
     }
 
@@ -1942,8 +2880,10 @@ namespace mango::image::jpeg
         }
 
         // set decoding target surface
-        m_target = &target;
-        m_surface = &target;
+        m_sink.interface = m_interface;
+        m_sink.target = &target;
+        m_sink.surface = &target;
+        m_sink.direct = m_decode_status.direct;
         m_request_blitting = false;
 
         std::unique_ptr<Bitmap> temp;
@@ -1952,7 +2892,7 @@ namespace mango::image::jpeg
         {
             // create a temporary decoding target
             temp = std::make_unique<Bitmap>(m_aligned_width, m_aligned_height, sf.format);
-            m_surface = temp.get();
+            m_sink.surface = temp.get();
         }
 
         // decoding
@@ -2049,8 +2989,8 @@ namespace mango::image::jpeg
             previousDC = decodeState.arithmetic.last_dc_value;
         }
 
-        const int xsize = m_surface->width;
-        const int ysize = m_surface->height;
+        const int xsize = m_sink.surface->width;
+        const int ysize = m_sink.surface->height;
         const int xlast = xsize - 1;
         const int n_components = decodeState.comps_in_scan;
 
@@ -2072,7 +3012,7 @@ namespace mango::image::jpeg
                 break;
             }
 
-            u8* image = m_surface->address<u8>(0, y);
+            u8* image = m_sink.surface->address<u8>(0, y);
 
             for (int x = 0; x < xsize; ++x)
             {
@@ -2160,15 +3100,15 @@ namespace mango::image::jpeg
             // standard jpeg with DRI marker present
             // ---------------------------------------------------------------
 
-            const size_t stride = m_surface->stride;
-            const size_t bytes_per_pixel = m_surface->format.bytes();
+            const size_t stride = m_sink.surface->stride;
+            const size_t bytes_per_pixel = m_sink.surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
             const int N = 8;
 
             AlignedStorage<s16> data(JPEG_MAX_SAMPLES_IN_MCU);
 
-            u8* image = m_surface->image;
+            u8* image = m_sink.surface->image;
 
             int restart_counter = 0;
 
@@ -2298,13 +3238,13 @@ namespace mango::image::jpeg
             // custom mango encoded file (APP14:'Mango1' chunk present)
             // -----------------------------------------------------------------
 
-            const size_t stride = m_surface->stride;
-            const size_t bytes_per_pixel = m_surface->format.bytes();
+            const size_t stride = m_sink.surface->stride;
+            const size_t bytes_per_pixel = m_sink.surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
 
             const u8* p = decodeState.buffer.ptr;
-            u8* image = m_surface->image;
+            u8* image = m_sink.surface->image;
 
             const u32* offsets = m_restart_offsets.data();
 
@@ -2395,12 +3335,12 @@ namespace mango::image::jpeg
 
             const u8* p = decodeState.buffer.ptr;
 
-            const size_t stride = m_surface->stride;
-            const size_t bytes_per_pixel = m_surface->format.bytes();
+            const size_t stride = m_sink.surface->stride;
+            const size_t bytes_per_pixel = m_sink.surface->format.bytes();
             const size_t xstride = bytes_per_pixel * xblock;
             const size_t ystride = stride * yblock;
 
-            u8* image = m_surface->image;
+            u8* image = m_sink.surface->image;
 
             // Precompute constants
             const int xmcu_last = xmcu - 1;
@@ -2809,12 +3749,12 @@ namespace mango::image::jpeg
 
     void StreamDecoder::process_range(int y0, int y1, const s16* data)
     {
-        const size_t stride = m_surface->stride;
-        const size_t bytes_per_pixel = m_surface->format.bytes();
+        const size_t stride = m_sink.surface->stride;
+        const size_t bytes_per_pixel = m_sink.surface->format.bytes();
         const size_t xstride = bytes_per_pixel * xblock;
         const size_t ystride = stride * yblock;
 
-        u8* image = m_surface->image;
+        u8* image = m_sink.surface->image;
 
         const int mcu_data_size = blocks_in_mcu * 64;
 
@@ -2866,7 +3806,7 @@ namespace mango::image::jpeg
         {
             u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
-            const int bytes_per_scan = width * m_surface->format.bytes();
+            const int bytes_per_scan = width * m_sink.surface->format.bytes();
             const int block_stride = xblock * 4;
             u8* src = temp;
 
@@ -2889,17 +3829,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::blit_and_update(const ImageDecodeRect& rect, bool force_blit)
     {
-        if (!m_decode_status.direct || force_blit)
-        {
-            // color conversion and clipping
-            Surface source(*m_surface, rect.x, rect.y, rect.width, rect.height);
-            m_target->blit(rect.x, rect.y, source);
-        }
-
-        if (m_interface->callback)
-        {
-            m_interface->callback(rect);
-        }
+        m_sink.finalize(rect, force_blit);
     }
 
 } // namespace mango::image::jpeg

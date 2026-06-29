@@ -6,6 +6,7 @@
 
 #include <vector>
 #include <string>
+#include <memory>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
@@ -352,6 +353,84 @@ namespace mango::image::jpeg
     };
 
     // ----------------------------------------------------------------------------
+    // BlitSink
+    // ----------------------------------------------------------------------------
+    //
+    // BlitSink is the engine's output binding: it owns the working surface a
+    // StreamDecoder writes MCUs into and knows how to deliver a finished band to
+    // the caller (an optional blit when the working surface is not the target,
+    // plus the progress callback). Decoupling this from the entropy/IDCT state is
+    // what lets one stream target the caller surface while another targets a
+    // private scratch buffer (e.g. an UltraHDR gain map).
+
+    struct BlitSink
+    {
+        const Surface* target = nullptr;   // caller destination surface
+        const Surface* surface = nullptr;  // working (MCU-aligned) surface; may alias target
+        bool direct = true;                // when true, writes land directly in target
+        ImageDecodeInterface* interface = nullptr;
+
+        void finalize(const ImageDecodeRect& rect, bool force_blit = false) const
+        {
+            if (!direct || force_blit)
+            {
+                Surface source(*surface, rect.x, rect.y, rect.width, rect.height);
+                target->blit(rect.x, rect.y, source);
+            }
+
+            if (interface && interface->callback)
+            {
+                interface->callback(rect);
+            }
+        }
+    };
+
+    // ----------------------------------------------------------------------------
+    // GainMapMetadata
+    // ----------------------------------------------------------------------------
+    //
+    // ISO 21496-1 / Adobe "hdrgm" gain map parameters used to reconstruct an HDR
+    // rendition from an SDR base image and a gain map. All boost/capacity values
+    // live in the log2 domain. Arrays are per channel (R, G, B); single-channel
+    // metadata is replicated into all three on parse. Defaults match the spec so
+    // an absent field still produces a sane result.
+
+    struct GainMapMetadata
+    {
+        float gainMapMin[3]   = { 0.0f, 0.0f, 0.0f };                       // log2
+        float gainMapMax[3]   = { 1.0f, 1.0f, 1.0f };                       // log2
+        float gainMapGamma[3] = { 1.0f, 1.0f, 1.0f };
+        float offsetSdr[3]    = { 1.0f / 64.0f, 1.0f / 64.0f, 1.0f / 64.0f };
+        float offsetHdr[3]    = { 1.0f / 64.0f, 1.0f / 64.0f, 1.0f / 64.0f };
+        float hdrCapacityMin  = 0.0f;                                       // log2
+        float hdrCapacityMax  = 1.0f;                                       // log2
+        bool  baseRenditionIsHDR = false;
+    };
+
+    // Which gain map convention a file uses. The reconstruction math and the
+    // color space the result lives in differ between them.
+    enum class GainMapKind
+    {
+        None,
+        ISO,    // ISO 21496-1 / Adobe "hdrgm" (Android UltraHDR). Output: Rec.709 linear.
+        Apple,  // Apple HDRGainMap (urn:com:apple:photo:2020:aux:hdrgainmap). Output: Display-P3 linear.
+    };
+
+    // Collapse an SDR base image and its gain map into a scene-linear fp16 HDR
+    // image. 'dest' must be FLOAT16 RGBA sized to the base image; 'base' and
+    // 'gain' are UNORM RGBA8 (gain may be a smaller resolution and is sampled
+    // bilinearly). The result is in the base image's own primaries (the decoder
+    // signals these via ColorInfo; any conversion is left to the client).
+
+    // ISO 21496-1 / Adobe per-channel log-boost reconstruction (display weight = 1).
+    void applyGainMap(const Surface& dest, const Surface& base, const Surface& gain,
+                      const GainMapMetadata& metadata, ImageDecodeInterface* interface);
+
+    // Apple HDRGainMap reconstruction: linear blend toward 'headroom' (linear ratio).
+    void applyAppleGainMap(const Surface& dest, const Surface& base, const Surface& gain,
+                           float headroom, ImageDecodeInterface* interface);
+
+    // ----------------------------------------------------------------------------
     // StreamDecoder
     // ----------------------------------------------------------------------------
     //
@@ -392,8 +471,7 @@ namespace mango::image::jpeg
 
         ImageDecodeStatus m_decode_status;
 
-        const Surface* m_target = nullptr;  // caller surface
-        const Surface* m_surface = nullptr; // temporary color conversion/clipping surface
+        BlitSink m_sink;                    // output binding (working surface + delivery)
         bool m_request_blitting = false;
 
         int m_aligned_width;
@@ -497,7 +575,18 @@ namespace mango::image::jpeg
     class Parser
     {
     protected:
+        ImageDecodeInterface* m_interface = nullptr;
         StreamDecoder m_base;
+
+        // UltraHDR: optional second stream (the gain map) decoded alongside the
+        // base image and collapsed into a single fp16 HDR surface.
+        GainMapKind m_gainmap_kind = GainMapKind::None;
+        std::unique_ptr<StreamDecoder> m_gainmap;
+        GainMapMetadata m_gainmap_meta;   // ISO path
+        float m_apple_headroom = 1.0f;    // Apple path (linear ratio)
+
+        void detectUltraHDR(ConstMemory memory);
+        ImageDecodeStatus decodeUltraHDR(const Surface& target, const ImageDecodeOptions& options);
 
     public:
         ImageHeader& header;
