@@ -849,6 +849,15 @@ namespace
             header.faces   = 0;
             header.format  = format;
             header.compression = TextureCompression::NONE;
+
+            // JPEG 2000 enumerated color spaces (sRGB / grayscale / sYCC) are all sRGB
+            // transfer, which is the default. An embedded ICC profile, when present, defines
+            // the color space exactly and is forwarded above.
+            if (m_image->icc_profile_len)
+            {
+                header.color.primaries = ColorPrimaries::Unspecified;
+                header.color.transfer = TransferFunction::Unspecified;
+            }
         }
 
         ~Interface()

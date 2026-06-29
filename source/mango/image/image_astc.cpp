@@ -103,6 +103,7 @@ namespace
             TextureCompression info(compression);
             header.format = info.format;
             header.linear = info.isLinear();
+            header.color.transfer = header.linear ? TransferFunction::Linear : TransferFunction::sRGB;
             header.compression = compression;
         }
     };

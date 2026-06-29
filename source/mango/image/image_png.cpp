@@ -32,8 +32,9 @@
 // https://wiki.mozilla.org/APNG_Specification
 // https://datatracker.ietf.org/doc/html/rfc1951
 
-// MANGO TODO HDR support: "cICP", "iCCN"
+// HDR color signalling: "cICP" (CICP code points) is parsed and forwarded via ImageHeader::color.
 // https://github.com/w3c/ColorWeb-CG/blob/master/hdr-in-png-requirements.md#cicp-chunk
+// MANGO TODO: "mDCV"/"cLLI" mastering-display & content-light metadata for HDR tone mapping
 
 namespace fpng
 {
@@ -1991,6 +1992,7 @@ namespace
 
         // cHRM
         Chromaticity m_chromaticity;
+        bool m_has_chromaticity = false;
 
         // gAMA
         float m_gamma = 0.0f;
@@ -2000,6 +2002,13 @@ namespace
 
         // sRGB
         u8 m_srgb_render_intent = 0xff;
+
+        // cICP (Coding-Independent Code Points, ITU-T H.273)
+        bool m_has_cicp = false;
+        u8 m_cicp_primaries = 2; // unspecified
+        u8 m_cicp_transfer = 2;  // unspecified
+        u8 m_cicp_matrix = 0;
+        u8 m_cicp_full_range = 1;
 
         // acTL
         u32 m_number_of_frames = 0;
@@ -2033,6 +2042,7 @@ namespace
         void read_gAMA(BigEndianConstPointer p, u32 size);
         void read_sBIT(BigEndianConstPointer p, u32 size);
         void read_sRGB(BigEndianConstPointer p, u32 size);
+        void read_cICP(BigEndianConstPointer p, u32 size);
         void read_acTL(BigEndianConstPointer p, u32 size);
         void read_fcTL(BigEndianConstPointer p, u32 size);
         void read_fdAT(BigEndianConstPointer p, u32 size);
@@ -2078,6 +2088,64 @@ namespace
         {
         }
 
+        void resolveColorInfo()
+        {
+            ColorInfo& color = m_header.color;
+
+            // Precedence (per PNG color-chunk rules): cICP > iCCP > sRGB > cHRM/gAMA >
+            // default. cICP is the modern authoritative HDR signalling; an ICC profile
+            // otherwise defines the color space exactly.
+            if (m_has_cicp)
+            {
+                color.primaries = colorPrimariesFromCICP(m_cicp_primaries);
+                color.transfer = transferFunctionFromCICP(m_cicp_transfer);
+            }
+            else if (m_icc.size())
+            {
+                // The forwarded ICC profile defines the color space; report Unspecified so
+                // clients rely on the profile rather than the (default sRGB) named values.
+                color.primaries = ColorPrimaries::Unspecified;
+                color.transfer = TransferFunction::Unspecified;
+            }
+            else if (m_srgb_render_intent != 0xff)
+            {
+                // sRGB chunk: standard sRGB primaries and transfer function.
+                color.primaries = ColorPrimaries::BT709;
+                color.transfer = TransferFunction::sRGB;
+            }
+            else if (m_has_chromaticity || m_gamma > 0.0f)
+            {
+                // Explicit cHRM / gAMA. Forward exact values; also try to name the primaries.
+                if (m_has_chromaticity)
+                {
+                    color.has_chromaticities = true;
+                    color.white = { m_chromaticity.white.x, m_chromaticity.white.y };
+                    color.red   = { m_chromaticity.red.x,   m_chromaticity.red.y   };
+                    color.green = { m_chromaticity.green.x, m_chromaticity.green.y };
+                    color.blue  = { m_chromaticity.blue.x,  m_chromaticity.blue.y  };
+                    color.primaries = identifyPrimaries(color.white, color.red, color.green, color.blue);
+                }
+
+                if (m_gamma > 0.0f)
+                {
+                    // PNG gAMA stores the encoding gamma (file-value exponent that maps to a
+                    // linear intensity). Forward it verbatim and mark the transfer function
+                    // Unspecified so clients linearize with the gamma rather than the sRGB
+                    // piecewise curve.
+                    color.gamma = m_gamma;
+                    color.transfer = TransferFunction::Unspecified;
+                }
+                else
+                {
+                    // cHRM without gAMA: sRGB transfer is the conventional assumption.
+                    color.transfer = TransferFunction::sRGB;
+                }
+            }
+            // else: no color signalling at all -> keep the sRGB default (PNG convention).
+
+            m_header.linear = color.isLinear();
+        }
+
         const ImageHeader& getHeader()
         {
             if (m_header.success)
@@ -2089,6 +2157,8 @@ namespace
                 m_header.faces   = 0;
                 m_header.frames  = m_number_of_frames; // APNG frame count (0 when not animated)
                 m_header.compression = TextureCompression::NONE;
+
+                resolveColorInfo();
 
                 u16 flags = 0;
 
@@ -2180,6 +2250,62 @@ namespace
 
             // make the animation frame count available from the header (APNG)
             scanAnimationControl();
+
+            // make color space signalling available from the header
+            scanColorChunks();
+        }
+
+        void scanColorChunks()
+        {
+            // Pre-scan the ancillary color chunks (all of which must appear before the
+            // first IDAT) so the color space description is available from header() without
+            // having to run the full decode. Does not disturb the decode parsing position.
+            BigEndianConstPointer p = m_pointer;
+
+            for ( ; p < m_end - 8; )
+            {
+                const u32 size = p.read32();
+                const u32 id = p.read32();
+
+                if (id == u32_mask_rev('I', 'D', 'A', 'T') || id == u32_mask_rev('I', 'E', 'N', 'D'))
+                {
+                    return;
+                }
+
+                if (p + size + 4 > m_end)
+                {
+                    return;
+                }
+
+                switch (id)
+                {
+                    case u32_mask_rev('g', 'A', 'M', 'A'):
+                        read_gAMA(p, size);
+                        break;
+
+                    case u32_mask_rev('s', 'R', 'G', 'B'):
+                        read_sRGB(p, size);
+                        break;
+
+                    case u32_mask_rev('c', 'H', 'R', 'M'):
+                        read_cHRM(p, size);
+                        break;
+
+                    case u32_mask_rev('c', 'I', 'C', 'P'):
+                        read_cICP(p, size);
+                        break;
+
+                    case u32_mask_rev('i', 'C', 'C', 'P'):
+                        read_iCCP(p, size);
+                        break;
+
+                    default:
+                        break;
+                }
+
+                p += size;
+                p += sizeof(u32); // skip crc
+            }
         }
 
         void scanAnimationControl()
@@ -2459,6 +2585,7 @@ namespace
         m_chromaticity.green.y = p.read32() / scale;
         m_chromaticity.blue.x  = p.read32() / scale;
         m_chromaticity.blue.y  = p.read32() / scale;
+        m_has_chromaticity = true;
     }
 
     void ParserPNG::read_gAMA(BigEndianConstPointer p, u32 size)
@@ -2495,6 +2622,26 @@ namespace
         }
 
         m_srgb_render_intent = p[0];
+    }
+
+    void ParserPNG::read_cICP(BigEndianConstPointer p, u32 size)
+    {
+        if (size != 4)
+        {
+            setError("Incorrect cICP chunk size.");
+            return;
+        }
+
+        m_cicp_primaries   = p[0];
+        m_cicp_transfer    = p[1];
+        m_cicp_matrix      = p[2];
+        m_cicp_full_range  = p[3];
+        m_has_cicp = true;
+
+        printLine(Print::Info, "  primaries: {}", m_cicp_primaries);
+        printLine(Print::Info, "  transfer:  {}", m_cicp_transfer);
+        printLine(Print::Info, "  matrix:    {}", m_cicp_matrix);
+        printLine(Print::Info, "  range:     {}", m_cicp_full_range);
     }
 
     void ParserPNG::read_acTL(BigEndianConstPointer p, u32 size)
@@ -2548,6 +2695,13 @@ namespace
         Compression method: 1 byte (0=deflate)
         Compressed profile: n bytes
         */
+        // The header pre-scan reads iCCP so the profile is available from header(); skip
+        // the (potentially multi-megabyte) re-decompression when decode() parses it again.
+        if (m_icc.size())
+        {
+            return;
+        }
+
         const char* name = reinterpret_cast<const char*>(&p[0]);
         size_t name_len = stringLength(name, size);
         if (name_len == size)
@@ -2682,6 +2836,10 @@ namespace
 
                 case u32_mask_rev('c', 'H', 'R', 'M'):
                     read_cHRM(p, size);
+                    break;
+
+                case u32_mask_rev('c', 'I', 'C', 'P'):
+                    read_cICP(p, size);
                     break;
 
                 case u32_mask_rev('I', 'D', 'A', 'T'):

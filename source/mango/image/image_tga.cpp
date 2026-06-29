@@ -56,8 +56,17 @@ namespace
 
         std::string error;
 
-        const u8* parse(LittleEndianConstPointer p)
+        const u8* parse(ConstMemory memory)
         {
+            // The fixed TGA header is 18 bytes; reject anything shorter before reading.
+            if (memory.size < 18)
+            {
+                error = "[ImageDecoder.TGA] Truncated header.";
+                return nullptr;
+            }
+
+            LittleEndianConstPointer p = memory.address;
+
             id_length        = p.read8();
             colormap_type    = p.read8();
             image_type       = p.read8();
@@ -141,7 +150,13 @@ namespace
             }
             */
 
-            // skip idfield
+            // skip idfield (bounded against the end of the buffer)
+            if (memory.address + 18 + id_length > memory.end())
+            {
+                error = "[ImageDecoder.TGA] Truncated id field.";
+                return nullptr;
+            }
+
             p += id_length;
 
             return p;
@@ -306,7 +321,7 @@ namespace
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
-            m_pointer = m_targa_header.parse(memory.address);
+            m_pointer = m_targa_header.parse(memory);
             if (m_pointer)
             {
                 header.width   = m_targa_header.width;
@@ -342,6 +357,7 @@ namespace
             }
 
             LittleEndianConstPointer p = m_pointer;
+            const u8* const memory_end = m_memory.end();
 
             Palette palette;
 
@@ -366,6 +382,34 @@ namespace
                     // read palette
                     u32 origin = u32(m_targa_header.colormap_origin);
                     u32 length = u32(m_targa_header.colormap_length);
+
+                    // The palette stores at most 256 entries; reject an out-of-range range
+                    // so the writes below cannot overflow Palette::color[256].
+                    if (origin + length > 256)
+                    {
+                        status.setError("[ImageDecoder.TGA] Invalid colormap range (origin: {}, length: {}).", origin, length);
+                        return status;
+                    }
+
+                    // Verify the colormap data actually fits in the file.
+                    u32 entry_bytes = 0;
+                    switch (m_targa_header.colormap_bits)
+                    {
+                        case 15:
+                        case 16: entry_bytes = 2; break;
+                        case 24: entry_bytes = 3; break;
+                        case 32: entry_bytes = 4; break;
+                        default:
+                            status.setError("[ImageDecoder.TGA] Invalid colormap bits ({}).", m_targa_header.colormap_bits);
+                            return status;
+                    }
+
+                    const u8* colormap_data = p;
+                    if (colormap_data + size_t(length) * entry_bytes > memory_end)
+                    {
+                        status.setError("[ImageDecoder.TGA] Truncated colormap.");
+                        return status;
+                    }
 
                     palette.size = origin + length;
 
@@ -439,6 +483,12 @@ namespace
             }
             else
             {
+                if (data + bytes_per_image > end)
+                {
+                    status.setError("[ImageDecoder.TGA] Truncated image data.");
+                    return status;
+                }
+
                 target.blit(0, 0, Surface(width, height, format, bytes_per_scan, data));
             }
 

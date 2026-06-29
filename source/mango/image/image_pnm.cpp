@@ -44,7 +44,7 @@ namespace
             }
 
             char c = *p;
-            if (std::isdigit(c) || c == '-')
+            if (std::isdigit((unsigned char)c) || c == '-')
                 break;
 
             if (c == '#')
@@ -53,9 +53,28 @@ namespace
                 ++p;
         }
 
-        char* n;
-        value = int(std::strtol(p, &n, 10));
-        return n + 1;
+        // Bounded integer parse: the input buffer is not guaranteed to be NUL terminated,
+        // so std::strtol could read past the end. Parse digits explicitly against 'end'.
+        bool negative = false;
+        if (p < end && *p == '-')
+        {
+            negative = true;
+            ++p;
+        }
+
+        long v = 0;
+        while (p < end && std::isdigit((unsigned char)*p))
+        {
+            v = v * 10 + (*p - '0');
+            if (v > 0x7fffffff)
+                v = 0x7fffffff; // clamp, validated against dimensions later
+            ++p;
+        }
+
+        value = int(negative ? -v : v);
+
+        // skip the delimiter (matches the previous strtol-based behavior)
+        return p + 1;
     }
 
     const char* nextLine(const char* p, const char* end)
@@ -117,6 +136,13 @@ namespace
             const char* p = reinterpret_cast<const char *>(memory.address);
             const char* end = reinterpret_cast<const char *>(memory.end());
 
+            // need at least the 3-byte magic before touching the bytes below
+            if (memory.size < 3)
+            {
+                header.setError("[ImageDecoder.PNM] Not enough data.");
+                return;
+            }
+
             printLine(Print::Info, "[Header: {:c}{:c}]", p[0], p[1]);
 
             if (!std::strncmp(p, "Pf\n", 3))
@@ -155,102 +181,84 @@ namespace
                 maxvalue = 255;
                 is_float = true;
             }
-            else if (!std::strncmp(p, "P7\n", 3))
+            else if (!std::strncmp(p, "P7", 2) && (p[2] == '\n' || p[2] == '\r'))
             {
-                char type[100];
+                // PAM: the header is a set of "TOKEN value" lines in any order, terminated
+                // by ENDHDR. Comments (#...) and blank lines are ignored. The previous code
+                // assumed a fixed WIDTH/HEIGHT/DEPTH/MAXVAL/TUPLTYPE order, which rejected
+                // perfectly valid files that reorder or omit fields.
 
-                p = nextLine(p, end);
-                if (!p)
+                // Parse a non-negative integer from [s, e); returns -1 when none is present.
+                auto parseInt = [](const char* s, const char* e) -> int
                 {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "WIDTH %i", &width) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect WIDTH.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "HEIGHT %i", &height) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect HEIGHT.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "DEPTH %i", &channels) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect DEPTH.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "MAXVAL %i", &maxvalue) < 1)
-                {
-                    header.setError("[ImageDecoder.PNM] Incorrect MAXVAL.");
-                    return;
-                }
-
-                p = nextLine(p, end);
-                if (!p)
-                {
-                    setDataError();
-                    return;
-                }
-
-                if (std::sscanf(p, "TUPLTYPE %s", type) > 0)
-                {
-                    printLine(Print::Info, "  tupltype: {}", type);
-                    /*
-                    if (!strncmp(type, "BLACKANDWHITE_ALPHA", strlen("BLACKANDWHITE_ALPHA")))
+                    while (s < e && !std::isdigit((unsigned char)*s))
+                        ++s;
+                    if (s >= e)
+                        return -1;
+                    long v = 0;
+                    while (s < e && std::isdigit((unsigned char)*s))
                     {
-                        ++header.channels;
+                        v = v * 10 + (*s - '0');
+                        if (v > 0x7fffffff)
+                            v = 0x7fffffff;
+                        ++s;
                     }
-                    else if (!strncmp(type, "GRAYSCALE_ALPHA", strlen("GRAYSCALE_ALPHA")))
-                    {
-                        ++header.channels;
-                    }
-                    else if (!strncmp(type, "RGB_ALPHA", strlen("RGB_ALPHA")))
-                    {
-                        ++header.channels;
-                    }
-                    else
-                    {
-                        // custom type
-                    }
-                    */
-                }
+                    return int(v);
+                };
 
-                p = nextLine(p, end);
-                if (!p)
+                p = nextLine(p, end); // skip the "P7" magic line
+
+                bool endhdr = false;
+
+                while (p && p < end)
                 {
-                    setDataError();
-                    return;
+                    const char* line = p;
+                    p = nextLine(p, end);
+                    const char* lineEnd = p ? p : end;
+
+                    // skip leading whitespace
+                    while (line < lineEnd && (*line == ' ' || *line == '\t'))
+                        ++line;
+
+                    // ignore blank lines and comments
+                    if (line >= lineEnd || *line == '\n' || *line == '\r' || *line == '#')
+                        continue;
+
+                    const size_t avail = size_t(lineEnd - line);
+
+                    if (avail >= 6 && !std::strncmp(line, "ENDHDR", 6))
+                    {
+                        endhdr = true;
+                        break;
+                    }
+                    else if (avail >= 5 && !std::strncmp(line, "WIDTH", 5))
+                    {
+                        width = parseInt(line + 5, lineEnd);
+                    }
+                    else if (avail >= 6 && !std::strncmp(line, "HEIGHT", 6))
+                    {
+                        height = parseInt(line + 6, lineEnd);
+                    }
+                    else if (avail >= 5 && !std::strncmp(line, "DEPTH", 5))
+                    {
+                        channels = parseInt(line + 5, lineEnd);
+                    }
+                    else if (avail >= 6 && !std::strncmp(line, "MAXVAL", 6))
+                    {
+                        maxvalue = parseInt(line + 6, lineEnd);
+                    }
+                    // TUPLTYPE is informational; the channel count comes from DEPTH
                 }
 
-                if (std::strncmp(p, "ENDHDR", 6))
+                if (!endhdr)
                 {
                     header.setError("[ImageDecoder.PNM] Incorrect ENDHDR.");
+                    return;
+                }
+
+                if (!p)
+                {
+                    setDataError();
                     return;
                 }
             }
@@ -312,6 +320,14 @@ namespace
             printLine(Print::Info, "  image: {} x {}, channels: {}", width, height, channels);
             printLine(Print::Info, "  maxvalue: {}", maxvalue);
 
+            // 0x100000 (1M) per dimension is far beyond any sane PNM and keeps width *
+            // channels and the byte totals safely inside int / size_t range below.
+            if (width < 1 || height < 1 || width > 0x100000 || height > 0x100000)
+            {
+                header.setError("[ImageDecoder.PNM] Incorrect image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             if (maxvalue < 1 || maxvalue > 65535)
             {
                 header.setError("[ImageDecoder.PNM] Incorrect maxvalue.");
@@ -354,6 +370,14 @@ namespace
             header.faces   = 0;
             header.format  = format;
             header.compression = TextureCompression::NONE;
+
+            if (is_float)
+            {
+                // PFM (Pf/PF) stores linear floating-point samples with no gamma,
+                // like Radiance HDR. The integer PNM variants stay sRGB (the default).
+                header.color.transfer = TransferFunction::Linear;
+                header.linear = true;
+            }
         }
     };
 
@@ -382,13 +406,22 @@ namespace
             const char* p = m_pnm_header.data;
             const char* end = reinterpret_cast<const char *>(m_memory.end());
 
+            if (!p || p > end)
+            {
+                return false;
+            }
+
             const int xcount = m_pnm_header.width * m_pnm_header.channels;
+            const int height = m_pnm_header.height;
             int maxvalue = m_pnm_header.maxvalue;
             u8 invert = m_pnm_header.invert;
 
+            // available raw bytes from the start of the pixel data
+            const size_t avail = size_t(end - p);
+
             if (m_pnm_header.is_ascii)
             {
-                for (int y = 0; y < m_pnm_header.height; ++y)
+                for (int y = 0; y < height; ++y)
                 {
                     u8* image = dest.address<u8>(0, y);
 
@@ -401,12 +434,24 @@ namespace
                             return false;
                         }
 
+                        // clamp to [0, maxvalue] so the scaling cannot overflow
+                        if (value < 0)
+                            value = 0;
+                        else if (value > maxvalue)
+                            value = maxvalue;
+
                         image[x] = u8(value * 255 / maxvalue) ^ invert;
                     }
                 }
             }
             else if (m_pnm_header.is_float)
             {
+                // float samples: xcount * height 32-bit values
+                if (avail < size_t(xcount) * size_t(height) * 4)
+                {
+                    return false;
+                }
+
                 if (m_pnm_header.endian < 0)
                 {
                     LittleEndianConstPointer ptr = p;
@@ -440,7 +485,14 @@ namespace
             {
                 if (m_pnm_header.invert)
                 {
-                    for (int y = 0; y < m_pnm_header.height; ++y)
+                    // 1-bit packed data, each scanline byte-aligned
+                    const size_t bytes_per_scan = (size_t(xcount) + 7) / 8;
+                    if (avail < bytes_per_scan * size_t(height))
+                    {
+                        return false;
+                    }
+
+                    for (int y = 0; y < height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
 
@@ -470,7 +522,13 @@ namespace
                 }
                 else if (m_pnm_header.maxvalue <= 255)
                 {
-                    for (int y = 0; y < m_pnm_header.height; ++y)
+                    // one byte per sample
+                    if (avail < size_t(xcount) * size_t(height))
+                    {
+                        return false;
+                    }
+
+                    for (int y = 0; y < height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
                         std::memcpy(image, p, xcount);
@@ -479,9 +537,15 @@ namespace
                 }
                 else
                 {
+                    // two bytes per sample
+                    if (avail < size_t(xcount) * size_t(height) * 2)
+                    {
+                        return false;
+                    }
+
                     BigEndianConstPointer e = p;
 
-                    for (int y = 0; y < m_pnm_header.height; ++y)
+                    for (int y = 0; y < height; ++y)
                     {
                         u8* image = dest.address<u8>(0, y);
 

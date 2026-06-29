@@ -345,6 +345,32 @@ namespace
         KHR_DF_SAMPLE_DATATYPE_FLOAT    = 1U << 7U
     };
 
+    ColorPrimaries khr_df_to_primaries(u8 value)
+    {
+        switch (value)
+        {
+            case KHR_DF_PRIMARIES_BT709:       return ColorPrimaries::BT709;
+            case KHR_DF_PRIMARIES_BT601_EBU:   return ColorPrimaries::BT601_625;
+            case KHR_DF_PRIMARIES_BT601_SMPTE: return ColorPrimaries::BT601_525;
+            case KHR_DF_PRIMARIES_BT2020:      return ColorPrimaries::BT2020;
+            case KHR_DF_PRIMARIES_CIEXYZ:      return ColorPrimaries::SMPTE428;
+            case KHR_DF_PRIMARIES_ACES:        return ColorPrimaries::ACES_AP0;
+            default:                           return ColorPrimaries::Unspecified;
+        }
+    }
+
+    TransferFunction khr_df_to_transfer(u8 value)
+    {
+        switch (value)
+        {
+            case KHR_DF_TRANSFER_LINEAR: return TransferFunction::Linear;
+            case KHR_DF_TRANSFER_SRGB:   return TransferFunction::sRGB;
+            case KHR_DF_TRANSFER_ITU:    return TransferFunction::BT709;
+            case KHR_DF_TRANSFER_NTSC:   return TransferFunction::Gamma22;
+            default:                     return TransferFunction::Unspecified;
+        }
+    }
+
     // ------------------------------------------------------------
     // KTX2
     // ------------------------------------------------------------
@@ -1067,6 +1093,23 @@ namespace
                     texelBlockDimension1 += !!texelBlockDimension1;
                     texelBlockDimension2 += !!texelBlockDimension2;
                     texelBlockDimension3 += !!texelBlockDimension3;
+
+                    // Forward the data-format-descriptor color signalling.
+                    header.color.primaries = khr_df_to_primaries(colorPrimaries);
+
+                    TransferFunction transfer = khr_df_to_transfer(transferFunction);
+                    if (transfer != TransferFunction::Unspecified)
+                    {
+                        header.color.transfer = transfer;
+                        header.linear = header.color.isLinear();
+                    }
+                    else
+                    {
+                        // The DFD did not signal a transfer function; mirror the
+                        // format-derived linear flag so the two stay consistent.
+                        header.color.transfer = header.linear ? TransferFunction::Linear
+                                                              : TransferFunction::sRGB;
+                    }
 
                     printLine(Print::Info, "  colorModel: {}", colorModel);
                     printLine(Print::Info, "  colorPrimaries: {}", colorPrimaries);

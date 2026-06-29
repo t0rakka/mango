@@ -24,6 +24,13 @@ namespace
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
+            // 12-byte header: magic (4) + width (4) + height (4)
+            if (memory.size < 12)
+            {
+                header.setError("[ImageDecoder.FBMP] Not enough data.");
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             u32 magic = p.read32();
@@ -36,7 +43,13 @@ namespace
             u32 width = p.read32();
             u32 height = p.read32();
 
-            if (memory.size != size_t(width) * height * 4 + 12)
+            // Validate width * height * 4 == payload without overflowing: derive the pixel
+            // count from the available bytes and check it factors into width x height.
+            const size_t payload = memory.size - 12;
+            const size_t pixels = payload / 4;
+
+            if (!width || !height || (payload & 3) != 0 ||
+                pixels / width != height || pixels % width != 0)
             {
                 header.setError("[ImageDecoder.FBMP] Incorrect data size.");
                 return;

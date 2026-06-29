@@ -664,6 +664,7 @@ namespace
                 TextureCompression info(compression);
                 format = info.format;
                 header.linear = info.isLinear();
+                header.color.transfer = header.linear ? TransferFunction::Linear : TransferFunction::sRGB;
             }
             else
             {

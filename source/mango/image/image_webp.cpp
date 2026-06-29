@@ -77,6 +77,49 @@ namespace
     }
 
     // ------------------------------------------------------------
+    // RIFF container scan (for the optional ICCP color profile chunk)
+    // ------------------------------------------------------------
+
+    ConstMemory webpFindChunk(ConstMemory memory, u32 fourcc)
+    {
+        // WebP files are a RIFF container: "RIFF" <u32 size> "WEBP" then a sequence of
+        // chunks, each a 4-byte FourCC + u32 little-endian payload size + payload padded
+        // to an even length. Extended (VP8X) files may carry an "ICCP" profile chunk. The
+        // simple libwebp decode API does not expose it, so we walk the container ourselves.
+        // All reads are bounds-checked against the buffer end.
+        if (memory.size < 12 ||
+            std::memcmp(memory.address, "RIFF", 4) != 0 ||
+            std::memcmp(memory.address + 8, "WEBP", 4) != 0)
+        {
+            return ConstMemory(nullptr, 0);
+        }
+
+        const u8* p = memory.address + 12;
+        const u8* end = memory.end();
+
+        while (p + 8 <= end)
+        {
+            u32 id = bigEndian::uload32(p);            // FourCC, read in byte order
+            u32 size = littleEndian::uload32(p + 4);   // RIFF chunk sizes are little-endian
+            p += 8;
+
+            if (size > size_t(end - p))
+            {
+                break;
+            }
+
+            if (id == fourcc)
+            {
+                return ConstMemory(p, size);
+            }
+
+            p += size + (size & 1); // chunks are padded to an even size
+        }
+
+        return ConstMemory(nullptr, 0);
+    }
+
+    // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
 
@@ -102,6 +145,15 @@ namespace
                 header.faces   = 0;
                 header.format  = webpDefaultFormat(true).format;
                 header.compression = TextureCompression::NONE;
+
+                // WebP pixel data is sRGB (the default). Forward an embedded ICC profile
+                // when present; it then defines the color space.
+                icc = webpFindChunk(m_memory, u32_mask_rev('I', 'C', 'C', 'P'));
+                if (icc.size)
+                {
+                    header.color.primaries = ColorPrimaries::Unspecified;
+                    header.color.transfer = TransferFunction::Unspecified;
+                }
             }
         }
 

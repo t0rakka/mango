@@ -22,34 +22,40 @@ namespace
     std::string_view readline(const u8*& data, const u8* end)
     {
         const u8* p = data;
+        const u8* text_end = data;
 
-        int endsize = 1;
-
-        // scan for endline
-        for ( ; data < end; )
+        // scan for endline, bounded by the end of the buffer (a file without a trailing
+        // newline must not run the pointer past the end)
+        while (p < end)
         {
-            u8 v = *p++;
+            u8 v = *p;
 
             // Unix ("\n")
             if (v == '\n')
+            {
+                ++p;
                 break;
+            }
 
             // MacOS ("\r")
             if (v == '\r')
             {
+                ++p;
+
                 // Windows ("\r\n")
-                if (*p == '\n')
+                if (p < end && *p == '\n')
                 {
-                    ++endsize;
                     ++p;
                 }
 
                 break;
             }
+
+            ++p;
+            text_end = p;
         }
 
-        size_t size = size_t(p - data) - endsize;
-        std::string_view msg(reinterpret_cast<const char*>(data), size);
+        std::string_view msg(reinterpret_cast<const char*>(data), size_t(text_end - data));
 
         data = p;
 
@@ -158,46 +164,6 @@ namespace
     }
 
     // ------------------------------------------------------------
-    // encoder
-    // ------------------------------------------------------------
-
-    /*
-    struct rgbe
-    {
-        u8 r, g, b, e;
-    };
-
-    rgbe create_rgbe(float r, float g, float b)
-    {
-        float maxf = r > g ? r : g;
-        maxf = maxf > b ? maxf : b;
-    
-        rgbe color;
-
-        if (maxf <= 1e-32f)
-        {
-            color.r = 0;
-            color.g = 0;
-            color.b = 0;
-            color.e = 0;
-        }
-        else
-        {
-            int exponent;
-            std::frexpf(maxf, &exponent);
-            float scale = std::ldexpf(1.0f, 8 - exponent);
-
-            color.r = u8(r * scale);
-            color.g = u8(g * scale);
-            color.b = u8(b * scale);
-            color.e = u8(exponent + 128);
-        }
-
-        return color;
-    }
-    */
-
-    // ------------------------------------------------------------
     // decoder
     // ------------------------------------------------------------
 
@@ -247,6 +213,8 @@ namespace
                     break;
 
                 std::vector<std::string_view> tokens = tokenize(line);
+                if (tokens.empty())
+                    continue;
 
                 if (tokens[0] == "FORMAT")
                 {
@@ -346,7 +314,9 @@ namespace
                 }
             }
 
-            if (!width || !height)
+            // std::atoi can yield zero or a negative value; reject anything non-positive so
+            // the surface allocation and decode loops below stay well-defined.
+            if (width <= 0 || height <= 0)
             {
                 header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
                 return nullptr;
@@ -359,18 +329,115 @@ namespace
             header.faces   = 0;
             header.format  = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32, Format::LINEAR);
             header.linear  = true;
+            header.color.transfer = TransferFunction::Linear; // Radiance RGBE is linear radiance
             header.compression = TextureCompression::NONE;
+
+            // A PRIMARIES line carries exact CIE 1931 chromaticities; expose them (and a
+            // named primaries set when they match a known one). Without it, the sRGB/BT.709
+            // default is kept, which matches the common interpretation of untagged Radiance.
+            if (chromaticity.enable)
+            {
+                ColorInfo& ci = header.color;
+                ci.has_chromaticities = true;
+                ci.white = { chromaticity.white.x, chromaticity.white.y };
+                ci.red   = { chromaticity.red.x,   chromaticity.red.y };
+                ci.green = { chromaticity.green.x, chromaticity.green.y };
+                ci.blue  = { chromaticity.blue.x,  chromaticity.blue.y };
+
+                ColorPrimaries named = identifyPrimaries(ci.white, ci.red, ci.green, ci.blue);
+                if (named != ColorPrimaries::Unspecified)
+                {
+                    ci.primaries = named;
+                }
+            }
 
             return data;
         }
     };
 
-    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data)
+    // Old-style Radiance: a flat stream of 4-byte RGBE pixels with a simple run-length where
+    // a pixel of (1,1,1,n) repeats the previous pixel n << rshift times (rshift grows by 8
+    // for consecutive run records, allowing runs longer than 255; it resets on a real pixel).
+    void hdr_decode_old(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
+    {
+        const int width = surface.width;
+        const int height = surface.height;
+
+        float pr = 0.0f, pg = 0.0f, pb = 0.0f; // previous pixel (carried across the stream)
+
+        for (int y = 0; y < height; ++y)
+        {
+            float* image = surface.address<float>(0, y);
+
+            int rshift = 0;
+            int x = 0;
+
+            while (x < width)
+            {
+                if (data + 4 > data_end)
+                {
+                    status.setError("[ImageDecoder.HDR] Truncated rgbe stream.");
+                    return;
+                }
+
+                u8 r = data[0];
+                u8 g = data[1];
+                u8 b = data[2];
+                u8 e = data[3];
+                data += 4;
+
+                if (r == 1 && g == 1 && b == 1)
+                {
+                    // repeat the previous pixel; clamp the run to the rest of the scanline
+                    size_t count = size_t(e) << rshift;
+                    if (count > size_t(width - x))
+                    {
+                        count = size_t(width - x);
+                    }
+
+                    for (size_t i = 0; i < count; ++i)
+                    {
+                        image[x * 4 + 0] = pr;
+                        image[x * 4 + 1] = pg;
+                        image[x * 4 + 2] = pb;
+                        image[x * 4 + 3] = 1.0f;
+                        ++x;
+                    }
+
+                    rshift += 8;
+                }
+                else
+                {
+                    float scale = getScale(e);
+                    pr = r * scale;
+                    pg = g * scale;
+                    pb = b * scale;
+
+                    image[x * 4 + 0] = pr;
+                    image[x * 4 + 1] = pg;
+                    image[x * 4 + 2] = pb;
+                    image[x * 4 + 3] = 1.0f;
+
+                    rshift = 0;
+                    ++x;
+                }
+            }
+        }
+    }
+
+    void hdr_decode_rle(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
     {
         Buffer buffer(surface.width * 4);
 
         for (int y = 0; y < surface.height; ++y)
         {
+            // every scanline begins with a 4-byte record header
+            if (data + 4 > data_end)
+            {
+                status.setError("[ImageDecoder.HDR] Truncated scanline header.");
+                return;
+            }
+
             if (data[0] != 2 || data[1] != 2 || data[2] & 0x80)
             {
                 status.setError("[ImageDecoder.HDR] Incorrect stream header ({:x} {:x} {:x}).", data[0], data[1], data[2]);
@@ -392,6 +459,12 @@ namespace
 
                 while (dest < end)
                 {
+                    if (data >= data_end)
+                    {
+                        status.setError("[ImageDecoder.HDR] Truncated rle stream.");
+                        return;
+                    }
+
                     int count = *data++;
 
                     if (count > 128)
@@ -400,6 +473,12 @@ namespace
                         if (!count || dest + count > end)
                         {
                             status.setError("[ImageDecoder.HDR] Incorrect rle count ({}).", count);
+                            return;
+                        }
+
+                        if (data >= data_end)
+                        {
+                            status.setError("[ImageDecoder.HDR] Truncated rle stream.");
                             return;
                         }
 
@@ -412,6 +491,12 @@ namespace
                         if (!count || dest + count > end)
                         {
                             status.setError("[ImageDecoder.HDR] Incorrect rle count ({}).", count);
+                            return;
+                        }
+
+                        if (data + count > data_end)
+                        {
+                            status.setError("[ImageDecoder.HDR] Truncated rle stream.");
                             return;
                         }
 
@@ -441,6 +526,26 @@ namespace
         }
     }
 
+    void hdr_decode(ImageDecodeStatus& status, const Surface& surface, const u8* data, const u8* data_end)
+    {
+        // New-style adaptive RLE is only used when a scanline begins with the 2,2,len_hi,len_lo
+        // marker (and the width is in [8, 0x7fff]). Anything else is the old flat/RLE format.
+        const int width = surface.width;
+
+        bool newrle = width >= 8 && width < 0x8000 && data + 4 <= data_end &&
+                      data[0] == 2 && data[1] == 2 &&
+                      ((data[2] << 8) | data[3]) == width;
+
+        if (newrle)
+        {
+            hdr_decode_rle(status, surface, data, data_end);
+        }
+        else
+        {
+            hdr_decode_old(status, surface, data, data_end);
+        }
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -449,10 +554,12 @@ namespace
     {
         HeaderRAD m_rad_header;
         const u8* m_data;
+        const u8* m_end;
 
         Interface(ConstMemory memory)
         {
             m_data = m_rad_header.parse(memory);
+            m_end = memory.end();
             header = m_rad_header.header;
         }
 
@@ -477,7 +584,7 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
-            hdr_decode(status, target, m_data);
+            hdr_decode(status, target, m_data, m_end);
             if (status)
             {
                 target.resolve();

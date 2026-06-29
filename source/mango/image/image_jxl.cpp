@@ -88,6 +88,14 @@ namespace
                         header.height = info.ysize;
                         header.format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
 
+                        // Continue to the color encoding event so the color space is
+                        // available from header() (we subscribed to JXL_DEC_COLOR_ENCODING).
+                        break;
+                    }
+
+                    case JXL_DEC_COLOR_ENCODING:
+                    {
+                        readColorEncoding();
                         return;
                     }
 
@@ -96,8 +104,75 @@ namespace
                         return;
                 }
             }
+        }
 
-            icc = m_icc;
+        void readColorEncoding()
+        {
+            JxlDecoder* decoder = m_decoder.get();
+            ColorInfo& color = header.color;
+
+            // Forward the ICC profile of the decoded pixels when libjxl can provide one.
+            size_t icc_size = 0;
+            if (JxlDecoderGetICCProfileSize(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size) == JXL_DEC_SUCCESS && icc_size)
+            {
+                m_icc.resize(icc_size);
+                if (JxlDecoderGetColorAsICCProfile(decoder, JXL_COLOR_PROFILE_TARGET_DATA, m_icc.data(), m_icc.size()) == JXL_DEC_SUCCESS)
+                {
+                    icc = m_icc;
+                }
+                else
+                {
+                    m_icc.reset();
+                }
+            }
+
+            // Map the structured color encoding of the decoded pixels (preferred for
+            // identifying the nominal color space, including HDR PQ/HLG).
+            JxlColorEncoding enc;
+            if (JxlDecoderGetColorAsEncodedProfile(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &enc) == JXL_DEC_SUCCESS)
+            {
+                switch (enc.transfer_function)
+                {
+                    case JXL_TRANSFER_FUNCTION_709:    color.transfer = TransferFunction::BT709; break;
+                    case JXL_TRANSFER_FUNCTION_LINEAR: color.transfer = TransferFunction::Linear; break;
+                    case JXL_TRANSFER_FUNCTION_SRGB:   color.transfer = TransferFunction::sRGB; break;
+                    case JXL_TRANSFER_FUNCTION_PQ:     color.transfer = TransferFunction::PQ; break;
+                    case JXL_TRANSFER_FUNCTION_HLG:    color.transfer = TransferFunction::HLG; break;
+                    case JXL_TRANSFER_FUNCTION_GAMMA:
+                        color.gamma = float(enc.gamma);
+                        color.transfer = TransferFunction::Unspecified;
+                        break;
+                    default:
+                        color.transfer = TransferFunction::Unspecified;
+                        break;
+                }
+
+                if (enc.color_space == JXL_COLOR_SPACE_RGB)
+                {
+                    // libjxl fills the numerical chromaticities regardless of the enum, so
+                    // forward the exact coordinates alongside the named primaries.
+                    color.has_chromaticities = true;
+                    color.white = { float(enc.white_point_xy[0]),    float(enc.white_point_xy[1]) };
+                    color.red   = { float(enc.primaries_red_xy[0]),   float(enc.primaries_red_xy[1]) };
+                    color.green = { float(enc.primaries_green_xy[0]), float(enc.primaries_green_xy[1]) };
+                    color.blue  = { float(enc.primaries_blue_xy[0]),  float(enc.primaries_blue_xy[1]) };
+
+                    switch (enc.primaries)
+                    {
+                        case JXL_PRIMARIES_SRGB: color.primaries = ColorPrimaries::BT709; break;
+                        case JXL_PRIMARIES_2100: color.primaries = ColorPrimaries::BT2020; break;
+                        case JXL_PRIMARIES_P3:
+                            color.primaries = (enc.white_point == JXL_WHITE_POINT_DCI)
+                                ? ColorPrimaries::DCI_P3 : ColorPrimaries::DisplayP3;
+                            break;
+                        default:
+                            color.primaries = identifyPrimaries(color.white, color.red, color.green, color.blue);
+                            break;
+                    }
+                }
+            }
+
+            header.linear = color.isLinear();
         }
 
         ~Interface()

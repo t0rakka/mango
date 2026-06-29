@@ -102,6 +102,16 @@ namespace
 
         Interface(ConstMemory memory)
         {
+            const u8* const end = memory.end();
+
+            // The fixed header is 26 bytes through the color mode, plus 4 for the color
+            // mode data length; reject anything shorter before reading it.
+            if (memory.size < 30)
+            {
+                header.setError("[ImageDecoder.PSD] Not enough data.");
+                return;
+            }
+
             BigEndianConstPointer p = memory;
 
             u32 magic = p.read32();
@@ -181,8 +191,26 @@ namespace
                     return;
             }
 
+            // The resolve*() paths read a fixed number of channel planes out of the decode
+            // buffer (RGB/LAB read 3, CMYK reads 4). Make sure the file actually carries
+            // enough channels so those reads stay in bounds.
+            {
+                int required = 1;
+                if (m_color_mode == ColorMode::RGB || m_color_mode == ColorMode::LAB)
+                    required = 3;
+                else if (m_color_mode == ColorMode::CMYK)
+                    required = 4;
+
+                if (m_channels < required)
+                {
+                    header.setError("[ImageDecoder.PSD] Color mode {} requires at least {} channels (got {}).",
+                        int(m_color_mode), required, m_channels);
+                    return;
+                }
+            }
+
             // ColorMode data
-            int colormode_size = p.read32();
+            u32 colormode_size = p.read32();
 
             if (m_color_mode == ColorMode::INDEXED)
             {
@@ -197,16 +225,50 @@ namespace
                 }
             }
 
+            // every variable-length section length is taken from the file; validate that it
+            // stays within the buffer before skipping over it
+            if (colormode_size > u32(end - p))
+            {
+                header.setError("[ImageDecoder.PSD] Truncated color mode data.");
+                return;
+            }
             p += colormode_size;
 
             // ImageResource data
-            ConstMemory image_resource_data(p + 4, p.read32());
-            p += image_resource_data.size;
+            if (p + 4 > end)
+            {
+                header.setError("[ImageDecoder.PSD] Out of data.");
+                return;
+            }
+            u32 image_resource_size = p.read32();
+            if (image_resource_size > u32(end - p))
+            {
+                header.setError("[ImageDecoder.PSD] Truncated image resources.");
+                return;
+            }
+            ConstMemory image_resource_data(p, image_resource_size);
+            p += image_resource_size;
 
             // Layer and Mask data
-            ConstMemory layer_data(p + 4, p.read32());
-            p += layer_data.size;
+            if (p + 4 > end)
+            {
+                header.setError("[ImageDecoder.PSD] Out of data.");
+                return;
+            }
+            u32 layer_size = p.read32();
+            if (layer_size > u32(end - p))
+            {
+                header.setError("[ImageDecoder.PSD] Truncated layer data.");
+                return;
+            }
+            ConstMemory layer_data(p, layer_size);
+            p += layer_size;
 
+            if (p + 2 > end)
+            {
+                header.setError("[ImageDecoder.PSD] Out of data.");
+                return;
+            }
             m_compression = Compression(p.read16());
             switch (m_compression)
             {
@@ -223,7 +285,6 @@ namespace
                     return;
             }
 
-            const u8* end = memory.end();
             if (p >= end)
             {
                 header.setError("[ImageDecoder.PSD] Out of data.");
@@ -264,12 +325,17 @@ namespace
             return ConstMemory();
         }
 
-        std::string parse_string(BigEndianConstPointer& p, int alignment)
+        std::string parse_string(BigEndianConstPointer& p, const u8* end, int alignment)
         {
             std::string str;
 
+            if (p >= end)
+            {
+                return str;
+            }
+
             u8 length = *p++;
-            if (length)
+            if (length && p + length <= end)
             {
                 const char* s = p.cast<const char>();
                 str = std::string(s, s + length);
@@ -288,7 +354,9 @@ namespace
 
             printLine(Print::Info, "  [ImageResourceBlocks]");
 
-            while (p < end)
+            // Each block is: 4-byte signature, 2-byte id, padded pascal string, 4-byte
+            // length, then 'length' bytes. Every read is bounded against the block end.
+            while (p + 10 <= end)
             {
                 u32 signature = p.read32();
                 if (signature != 0x3842494d)
@@ -297,8 +365,19 @@ namespace
                 }
 
                 u16 id = p.read16();
-                std::string c_name = parse_string(p, 2);
+                std::string c_name = parse_string(p, end, 2);
+
+                if (p + 4 > end)
+                {
+                    return;
+                }
                 u32 length = p.read32();
+
+                // clamp the payload to what remains in the resource block
+                if (length > u32(end - p))
+                {
+                    length = u32(end - p);
+                }
 
                 bool supported = true;
 
@@ -348,13 +427,15 @@ namespace
             ImageDecodeStatus status;
 
             const u8* p = m_memory.address;
+            const u8* const data_end = m_memory.end();
 
             int width = header.width;
             int height = header.height;
             int channels = std::min(4, m_channels);
 
-            int bytes_per_scan = div_ceil(width * m_bits, 8);
-            int bytes_per_channel = height * bytes_per_scan;
+            // size math in size_t: PSB dimensions can be large enough to overflow int
+            const size_t bytes_per_scan = div_ceil(width * m_bits, 8);
+            const size_t bytes_per_channel = size_t(height) * bytes_per_scan;
 
             //printLine(Print::Info, "  available: {} bytes", m_memory.size);
             //printLine(Print::Info, "  request:   {} bytes", channels * bytes_per_channel);
@@ -366,6 +447,14 @@ namespace
             {
                 case Compression::RAW:
                 {
+                    // RAW stores m_channels contiguous planes; we read the first 'channels'.
+                    const size_t needed = size_t(channels) * bytes_per_channel;
+                    if (m_memory.size < needed)
+                    {
+                        status.setError("[ImageDecoder.PSD] Truncated raw image data.");
+                        return status;
+                    }
+
                     for (int y = 0; y < height; ++y)
                     {
                         for (int channel = 0; channel < channels; ++channel)
@@ -386,6 +475,15 @@ namespace
 
                 case Compression::RLE:
                 {
+                    // The per-scanline length table precedes the compressed data; make sure
+                    // it is fully present before PackBits::parse reads it.
+                    const size_t table_bytes = size_t(m_channels) * size_t(height) * (m_version == 1 ? 2 : 4);
+                    if (size_t(data_end - p) < table_bytes)
+                    {
+                        status.setError("[ImageDecoder.PSD] Truncated RLE length table.");
+                        return status;
+                    }
+
                     PackBits packbits(m_channels, height);
                     p = packbits.parse(p, m_channels, height, m_version);
 
@@ -396,6 +494,13 @@ namespace
                             u32 bytes = packbits.sizes[channel * height + y];
                             const u8* src = p + packbits.offsets[channel];
                             packbits.offsets[channel] += bytes;
+
+                            // the compressed scanline must lie within the buffer
+                            if (src < p || src + bytes > data_end)
+                            {
+                                status.setError("[ImageDecoder.PSD] Truncated RLE image data.");
+                                return status;
+                            }
 
                             u8* dst = buffer + channel * bytes_per_scan;
 

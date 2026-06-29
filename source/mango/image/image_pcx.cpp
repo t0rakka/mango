@@ -92,6 +92,13 @@ namespace
 
         HeaderPCX(ConstMemory memory)
         {
+            // The fixed PCX header is 128 bytes; reject anything shorter before reading it.
+            if (memory.size < 128)
+            {
+                header.setError("[ImageDecoder.PCX] Incorrect file size.");
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
 
             Manufacturer  = p.read8();
@@ -121,12 +128,6 @@ namespace
                 return;
             }
 
-            if (memory.size < 128)
-            {
-                header.setError("[ImageDecoder.PCX] Incorrect file size.");
-                return;
-            }
-
             // 256-color palette marker is only valid for 8 bpp, 1 plane images
             if (BitsPerPixel == 8 && NPlanes == 1 && memory.size > (128 + 768))
             {
@@ -147,8 +148,19 @@ namespace
                 (BitsPerPixel == 4 && NPlanes == 1) ||
                 (BitsPerPixel == 8 && NPlanes == 1));
 
-            header.width   = int(Xmax - Xmin + 1);
-            header.height  = int(Ymax - Ymin + 1);
+            const int width = int(Xmax) - int(Xmin) + 1;
+            const int height = int(Ymax) - int(Ymin) + 1;
+
+            // Reject degenerate/inverted bounding boxes (Xmax < Xmin etc.) so later size
+            // computations cannot go negative or zero.
+            if (width <= 0 || height <= 0)
+            {
+                header.setError("[ImageDecoder.PCX] Invalid image dimensions ({} x {}).", width, height);
+                return;
+            }
+
+            header.width   = width;
+            header.height  = height;
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
@@ -166,10 +178,13 @@ namespace
     // scanline decoders
     // ------------------------------------------------------------
 
-    bool scanRLE(u8* dest, int bytes, const u8* p, const u8* end)
+    bool scanRLE(u8* dest, size_t bytes, const u8* p, const u8* end)
     {
         while (bytes > 0)
         {
+            if (p >= end)
+                return false;
+
             u8 sample = *p++;
             if (sample < 0xc0)
             {
@@ -178,8 +193,10 @@ namespace
             }
             else
             {
-                int count = sample & 0x3f;
+                size_t count = sample & 0x3f;
                 if (count > bytes)
+                    return false;
+                if (p >= end)
                     return false;
                 sample = *p++;
                 std::memset(dest, sample, count);
@@ -355,14 +372,25 @@ namespace
 
             DecodeTargetBitmap target(dest, width, height, format);
 
-            // RLE scanline buffer
+            // RLE scanline buffer. BytesPerLine must cover the decoded width; otherwise the
+            // per-scanline expanders below would read past the end of each scanline (and the
+            // buffer on the final row). Reject inconsistent headers up front.
+            const int minBytesPerLine = div_ceil(width * m_pcx_header.BitsPerPixel, 8);
             int bytesPerLine = m_pcx_header.BytesPerLine ? m_pcx_header.BytesPerLine
-                                                         : width * div_ceil(m_pcx_header.BitsPerPixel, 8);
+                                                         : minBytesPerLine;
+            if (bytesPerLine < minBytesPerLine)
+            {
+                status.setError("[ImageDecoder.PCX] BytesPerLine ({}) too small for width ({}).",
+                    bytesPerLine, width);
+                return status;
+            }
+
             int scansize = m_pcx_header.NPlanes * bytesPerLine;
 
-            Buffer buffer(scansize * height);
+            const size_t buffer_size = size_t(scansize) * size_t(height);
+            Buffer buffer(buffer_size);
 
-            if (!scanRLE(buffer, scansize * height, m_memory.address + 128, m_memory.address + m_memory.size))
+            if (!scanRLE(buffer, buffer_size, m_memory.address + 128, m_memory.address + m_memory.size))
             {
                 status.setError("[ImageDecoderPCX] RLE decoding failure.");
                 return status;

@@ -22,15 +22,18 @@ namespace
         ConstMemory m_data;
 
         Interface(ConstMemory memory)
-            : m_data(memory.address + PICT_HEADER_SIZE, memory.size - PICT_HEADER_SIZE)
         {
-            BigEndianConstPointer p = memory;
-
+            // Guard the header size before computing the body slice; otherwise
+            // (memory.size - PICT_HEADER_SIZE) underflows for short files.
             if (memory.size < PICT_HEADER_SIZE)
             {
                 header.setError("[ImageDecoder.PIC] Not enough data.");
                 return;
             }
+
+            m_data = ConstMemory(memory.address + PICT_HEADER_SIZE, memory.size - PICT_HEADER_SIZE);
+
+            BigEndianConstPointer p = memory;
 
             constexpr u8 identifier [] =
             {
@@ -56,6 +59,13 @@ namespace
 
             int width = p.read16();
             int height = p.read16();
+
+            // a zero dimension yields an empty surface and no decodable body
+            if (width < 1 || height < 1)
+            {
+                header.setError("[ImageDecoder.PIC] Invalid image dimensions ({} x {}).", width, height);
+                return;
+            }
 
             header.width   = width;
             header.height  = height;
@@ -155,16 +165,22 @@ namespace
                     switch (packet.type)
                     {
                         case 0:
-                            p = decode_uncompressed(dst, p, width, packet.mask);
+                            p = decode_uncompressed(dst, p, end, width, packet.mask);
                             break;
 
                         case 1:
-                            p = decode_runlength(dst, p, width, packet.mask);
+                            p = decode_runlength(dst, p, end, width, packet.mask);
                             break;
 
                         case 2:
-                            p = decode_mixed(dst, p, width, packet.mask);
+                            p = decode_mixed(dst, p, end, width, packet.mask);
                             break;
+                    }
+
+                    if (!p)
+                    {
+                        status.setError("[ImageDecoder.PIC] Truncated image data.");
+                        return status;
                     }
                 }
             }
@@ -174,12 +190,19 @@ namespace
             return status;
         }
 
-        const u8* read(u8* dest, const u8* p, u32 mask, int count) const
+        // The decoders below return nullptr on any attempt to read past the end of the
+        // input; callers treat that as a truncated-stream error. 'count' is always clamped
+        // to the remaining scanline width so the writes through 'dest' stay in bounds.
+
+        const u8* read(u8* dest, const u8* p, const u8* end, u32 mask, int count) const
         {
             for (int channel = 0; channel < 4; ++channel)
             {
                 if (mask & (1 << channel))
                 {
+                    if (p >= end)
+                        return nullptr;
+
                     u8 value = *p++;
 
                     for (int i = 0; i < count; ++i)
@@ -194,25 +217,32 @@ namespace
             return p;
         }
 
-        const u8* decode_uncompressed(u8* dest, const u8* p, int width, u32 mask) const
+        const u8* decode_uncompressed(u8* dest, const u8* p, const u8* end, int width, u32 mask) const
         {
             for (int x = 0; x < width; ++x)
             {
-                p = read(dest, p, mask, 1);
+                p = read(dest, p, end, mask, 1);
+                if (!p)
+                    return nullptr;
                 dest += 4;
             }
 
             return p;
         }
 
-        const u8* decode_runlength(u8* dest, const u8* p, int width, u32 mask) const
+        const u8* decode_runlength(u8* dest, const u8* p, const u8* end, int width, u32 mask) const
         {
             while (width > 0)
             {
+                if (p >= end)
+                    return nullptr;
+
                 int count = *p++;
                 count = std::min(count, width);
 
-                p = read(dest, p, mask, count);
+                p = read(dest, p, end, mask, count);
+                if (!p)
+                    return nullptr;
                 dest += count * 4;
                 width -= count;
             }
@@ -220,18 +250,24 @@ namespace
             return p;
         }
 
-        const u8* decode_mixed(u8* dest, const u8* p, int width, u32 mask) const
+        const u8* decode_mixed(u8* dest, const u8* p, const u8* end, int width, u32 mask) const
         {
             while (width > 0)
             {
+                if (p >= end)
+                    return nullptr;
+
                 int count = *p++;
 
                 if (count < 128)
                 {
                     ++count;
+                    count = std::min(count, width);
                     for (int i = 0; i < count; ++i)
                     {
-                        p = read(dest, p, mask, 1);
+                        p = read(dest, p, end, mask, 1);
+                        if (!p)
+                            return nullptr;
                         dest += 4;
                     }
                 }
@@ -239,6 +275,8 @@ namespace
                 {
                     if (count == 128)
                     {
+                        if (p + 2 > end)
+                            return nullptr;
                         count = bigEndian::uload16(p);
                         p += 2;
                     }
@@ -247,7 +285,12 @@ namespace
                         count -= 127;
                     }
 
-                    p = read(dest, p, mask, count);
+                    // clamp so 'read' cannot write past the end of the scanline
+                    count = std::min(count, width);
+
+                    p = read(dest, p, end, mask, count);
+                    if (!p)
+                        return nullptr;
                     dest += count * 4;
                 }
 

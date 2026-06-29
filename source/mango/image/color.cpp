@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <cmath>
 #include <mango/core/exception.hpp>
 #include <mango/image/image.hpp>
 #include <mango/core/print.hpp>
@@ -9,6 +10,86 @@
 
 namespace mango::image
 {
+
+    // ------------------------------------------------------------------
+    // Color space description
+    // ------------------------------------------------------------------
+
+    ColorPrimaries identifyPrimaries(const ColorPoint& white, const ColorPoint& red,
+                                     const ColorPoint& green, const ColorPoint& blue,
+                                     float tolerance) noexcept
+    {
+        struct Reference
+        {
+            ColorPrimaries primaries;
+            float wx, wy, rx, ry, gx, gy, bx, by;
+        };
+
+        // White points: D65 (0.3127, 0.3290), DCI (0.3140, 0.3510).
+        static const Reference table [] =
+        {
+            { ColorPrimaries::BT709,     0.3127f, 0.3290f, 0.6400f, 0.3300f, 0.3000f, 0.6000f, 0.1500f, 0.0600f },
+            { ColorPrimaries::BT2020,    0.3127f, 0.3290f, 0.7080f, 0.2920f, 0.1700f, 0.7970f, 0.1310f, 0.0460f },
+            { ColorPrimaries::DisplayP3, 0.3127f, 0.3290f, 0.6800f, 0.3200f, 0.2650f, 0.6900f, 0.1500f, 0.0600f },
+            { ColorPrimaries::DCI_P3,    0.3140f, 0.3510f, 0.6800f, 0.3200f, 0.2650f, 0.6900f, 0.1500f, 0.0600f },
+            { ColorPrimaries::AdobeRGB,  0.3127f, 0.3290f, 0.6400f, 0.3300f, 0.2100f, 0.7100f, 0.1500f, 0.0600f },
+            { ColorPrimaries::BT601_625, 0.3127f, 0.3290f, 0.6400f, 0.3300f, 0.2900f, 0.6000f, 0.1500f, 0.0600f },
+            { ColorPrimaries::BT601_525, 0.3127f, 0.3290f, 0.6300f, 0.3400f, 0.3100f, 0.5950f, 0.1550f, 0.0700f },
+        };
+
+        auto near = [tolerance] (float a, float b)
+        {
+            return std::fabs(a - b) < tolerance;
+        };
+
+        for (const Reference& ref : table)
+        {
+            if (near(white.x, ref.wx) && near(white.y, ref.wy) &&
+                near(red.x,   ref.rx) && near(red.y,   ref.ry) &&
+                near(green.x, ref.gx) && near(green.y, ref.gy) &&
+                near(blue.x,  ref.bx) && near(blue.y,  ref.by))
+            {
+                return ref.primaries;
+            }
+        }
+
+        return ColorPrimaries::Unspecified;
+    }
+
+    ColorPrimaries colorPrimariesFromCICP(u8 code_point) noexcept
+    {
+        switch (code_point)
+        {
+            case 1:  return ColorPrimaries::BT709;
+            case 4:  return ColorPrimaries::BT470M;
+            case 5:  return ColorPrimaries::BT601_625;
+            case 6:  return ColorPrimaries::BT601_525;
+            case 7:  return ColorPrimaries::BT601_525; // SMPTE 240M (shares 170M primaries)
+            case 9:  return ColorPrimaries::BT2020;
+            case 10: return ColorPrimaries::SMPTE428;
+            case 11: return ColorPrimaries::DCI_P3;
+            case 12: return ColorPrimaries::DisplayP3;
+            default: return ColorPrimaries::Unspecified;
+        }
+    }
+
+    TransferFunction transferFunctionFromCICP(u8 code_point) noexcept
+    {
+        switch (code_point)
+        {
+            case 1:  return TransferFunction::BT709;
+            case 4:  return TransferFunction::Gamma22;
+            case 5:  return TransferFunction::Gamma28;
+            case 6:  return TransferFunction::BT709; // BT.601 shares the BT.709 curve
+            case 8:  return TransferFunction::Linear;
+            case 13: return TransferFunction::sRGB;
+            case 14: return TransferFunction::BT709; // BT.2020 10-bit
+            case 15: return TransferFunction::BT709; // BT.2020 12-bit
+            case 16: return TransferFunction::PQ;
+            case 18: return TransferFunction::HLG;
+            default: return TransferFunction::Unspecified;
+        }
+    }
 
     // ------------------------------------------------------------------
     // ColorManager

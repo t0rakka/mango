@@ -22,6 +22,7 @@ namespace
     {
         heif_context* m_context = nullptr;
         heif_image_handle* m_image_handle = nullptr;
+        Buffer m_icc;
 
         Interface(ConstMemory memory)
         {
@@ -93,6 +94,64 @@ namespace
             header.faces   = 0;
             header.format  = format;
             header.compression = TextureCompression::NONE;
+
+            readColorProfile();
+        }
+
+        void readColorProfile()
+        {
+            ColorInfo& color = header.color;
+
+            // Forward an embedded ICC profile when present; it defines the color space and
+            // takes precedence over the NCLX signalling.
+            heif_color_profile_type type = heif_image_handle_get_color_profile_type(m_image_handle);
+            if (type == heif_color_profile_type_rICC || type == heif_color_profile_type_prof)
+            {
+                size_t size = heif_image_handle_get_raw_color_profile_size(m_image_handle);
+                if (size)
+                {
+                    m_icc.resize(size);
+                    heif_error error = heif_image_handle_get_raw_color_profile(m_image_handle, m_icc.data());
+                    if (error.code == heif_error_Ok)
+                    {
+                        icc = m_icc;
+                        color.primaries = ColorPrimaries::Unspecified;
+                        color.transfer = TransferFunction::Unspecified;
+                        return;
+                    }
+
+                    m_icc.reset();
+                }
+            }
+
+            // Otherwise map the NCLX (CICP) signalling. libheif also decodes the exact
+            // chromaticities, which we forward as well.
+            heif_color_profile_nclx* nclx = nullptr;
+            heif_error error = heif_image_handle_get_nclx_color_profile(m_image_handle, &nclx);
+            if (error.code == heif_error_Ok && nclx)
+            {
+                ColorPrimaries primaries = colorPrimariesFromCICP(u8(nclx->color_primaries));
+                TransferFunction transfer = transferFunctionFromCICP(u8(nclx->transfer_characteristics));
+
+                if (primaries != ColorPrimaries::Unspecified)
+                {
+                    color.primaries = primaries;
+                }
+                if (transfer != TransferFunction::Unspecified)
+                {
+                    color.transfer = transfer;
+                }
+
+                color.has_chromaticities = true;
+                color.white = { nclx->color_primary_white_x, nclx->color_primary_white_y };
+                color.red   = { nclx->color_primary_red_x,   nclx->color_primary_red_y   };
+                color.green = { nclx->color_primary_green_x, nclx->color_primary_green_y };
+                color.blue  = { nclx->color_primary_blue_x,  nclx->color_primary_blue_y  };
+
+                heif_nclx_color_profile_free(nclx);
+            }
+
+            header.linear = color.isLinear();
         }
 
         ~Interface()
