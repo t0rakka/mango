@@ -149,7 +149,7 @@ namespace mango::image::jpeg
     // Parser
     // ----------------------------------------------------------------------------
 
-    Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory, u32 flags)
+    StreamDecoder::StreamDecoder(ImageDecodeInterface* interface, ConstMemory memory, u32 flags)
         : m_interface(interface)
         , m_memory(memory)
         , quantTableVector(64 * JPEG_MAX_COMPS_IN_SCAN)
@@ -179,17 +179,43 @@ namespace mango::image::jpeg
         }
     }
 
+    StreamDecoder::~StreamDecoder()
+    {
+    }
+
+    // ----------------------------------------------------------------------------
+    // Parser
+    // ----------------------------------------------------------------------------
+
+    Parser::Parser(ImageDecodeInterface* interface, ConstMemory memory, u32 flags)
+        : m_base(interface, memory, flags)
+        , header(m_base.header)
+        , exif_memory(m_base.exif_memory)
+        , icc_buffer(m_base.icc_buffer)
+    {
+    }
+
     Parser::~Parser()
     {
     }
 
     void Parser::setMemory(ConstMemory memory)
     {
+        m_base.setMemory(memory);
+    }
+
+    ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
+    {
+        return m_base.decode(target, options);
+    }
+
+    void StreamDecoder::setMemory(ConstMemory memory)
+    {
         m_memory = memory;
         parse(m_memory, false);
     }
 
-    bool Parser::isJPEG(ConstMemory memory) const
+    bool StreamDecoder::isJPEG(ConstMemory memory) const
     {
         if (!memory.address || memory.size < 4)
             return false;
@@ -200,7 +226,7 @@ namespace mango::image::jpeg
         return true;
     }
 
-    const u8* Parser::stepMarker(const u8* p, const u8* end) const
+    const u8* StreamDecoder::stepMarker(const u8* p, const u8* end) const
     {
         if (p + 2 > end)
             return end;
@@ -218,7 +244,7 @@ namespace mango::image::jpeg
         return p;
     }
 
-    const u8* Parser::seekMarker(const u8* start, const u8* end) const
+    const u8* StreamDecoder::seekMarker(const u8* start, const u8* end) const
     {
         const u8* p = start;
         --end; // markers are two bytes: don't look at the last byte
@@ -254,30 +280,30 @@ namespace mango::image::jpeg
         return end + 1;
     }
 
-    void Parser::processSOI()
+    void StreamDecoder::processSOI()
     {
         printLine(Print::Info, "[ SOI ]");
         restartInterval = 0;
     }
 
-    void Parser::processEOI()
+    void StreamDecoder::processEOI()
     {
         printLine(Print::Info, "[ EOI ]");
     }
 
-    void Parser::processCOM(const u8* p)
+    void StreamDecoder::processCOM(const u8* p)
     {
         printLine(Print::Info, "[ COM ]");
         MANGO_UNREFERENCED(p);
     }
 
-    void Parser::processTEM(const u8* p)
+    void StreamDecoder::processTEM(const u8* p)
     {
         printLine(Print::Info, "[ TEM ]");
         MANGO_UNREFERENCED(p);
     }
 
-    void Parser::processRES(const u8* p)
+    void StreamDecoder::processRES(const u8* p)
     {
         printLine(Print::Info, "[ RES ]");
 
@@ -285,7 +311,7 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(p);
     }
 
-    void Parser::processJPG(const u8* p)
+    void StreamDecoder::processJPG(const u8* p)
     {
         printLine(Print::Info, "[ JPG ]");
 
@@ -293,7 +319,7 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(p);
     }
 
-    void Parser::processJPG(const u8* p, u16 marker)
+    void StreamDecoder::processJPG(const u8* p, u16 marker)
     {
         printLine(Print::Info, "[ JPG{} ]", marker - MARKER_JPG0);
 
@@ -302,7 +328,7 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(marker);
     }
 
-    void Parser::processAPP(const u8* p, u16 marker)
+    void StreamDecoder::processAPP(const u8* p, u16 marker)
     {
         printLine(Print::Info, "[ APP{} ]", marker - MARKER_APP0);
 
@@ -469,7 +495,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::processSOF(const u8* p, u16 marker)
+    void StreamDecoder::processSOF(const u8* p, u16 marker)
     {
         printLine(Print::Info, "[ SOF{} ]", marker - MARKER_SOF0);
 
@@ -711,7 +737,7 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(length);
     }
 
-    const u8* Parser::processSOS(const u8* p, const u8* end)
+    const u8* StreamDecoder::processSOS(const u8* p, const u8* end)
     {
         printLine(Print::Info, "[ SOS ]");
 
@@ -1012,7 +1038,7 @@ namespace mango::image::jpeg
         return p;
     }
 
-    void Parser::processDQT(const u8* p)
+    void StreamDecoder::processDQT(const u8* p)
     {
         printLine(Print::Info, "[ DQT ]");
 
@@ -1075,7 +1101,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::processDHT(const u8* p, const u8* end)
+    void StreamDecoder::processDHT(const u8* p, const u8* end)
     {
         printLine(Print::Info, "[ DHT ]");
 
@@ -1177,7 +1203,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::processDAC(const u8* p)
+    void StreamDecoder::processDAC(const u8* p)
     {
         printLine(Print::Info, "[ DAC ]");
 
@@ -1247,7 +1273,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::processDNL(const u8* p)
+    void StreamDecoder::processDNL(const u8* p)
     {
         printLine(Print::Info, "[ DNL ]");
 
@@ -1259,7 +1285,7 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(Ld);
     }
 
-    void Parser::processDRI(const u8* p)
+    void StreamDecoder::processDRI(const u8* p)
     {
         printLine(Print::Info, "[ DRI ]");
 
@@ -1273,7 +1299,7 @@ namespace mango::image::jpeg
         printLine(Print::Info, "  Restart interval: {}", restartInterval);
     }
 
-    void Parser::processDHP(const u8* p)
+    void StreamDecoder::processDHP(const u8* p)
     {
         printLine(Print::Info, "[ DHP ]");
 
@@ -1308,7 +1334,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::processEXP(const u8* p)
+    void StreamDecoder::processEXP(const u8* p)
     {
         printLine(Print::Info, "[ EXP ]");
 
@@ -1323,7 +1349,7 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(Ev);
     }
 
-    void Parser::parse(ConstMemory memory, bool decode)
+    void StreamDecoder::parse(ConstMemory memory, bool decode)
     {
         const u8* end = memory.end();
         const u8* p = memory.address;
@@ -1514,7 +1540,7 @@ namespace mango::image::jpeg
         }
     }
 
-    bool Parser::handleRestart()
+    bool StreamDecoder::handleRestart()
     {
         if (restartInterval > 0 && !--restartCounter)
         {
@@ -1531,7 +1557,7 @@ namespace mango::image::jpeg
         return false;
     }
 
-    void Parser::configureCPU(SampleType sample, const ImageDecodeOptions& options)
+    void StreamDecoder::configureCPU(SampleType sample, const ImageDecodeOptions& options)
     {
         u64 flags = options.simd ? cpu::getFlags() : 0;
         MANGO_UNREFERENCED(flags);
@@ -1855,7 +1881,7 @@ namespace mango::image::jpeg
         printLine(Print::Info, "");
     }
 
-    ImageDecodeStatus Parser::decode(const Surface& target, const ImageDecodeOptions& options)
+    ImageDecodeStatus StreamDecoder::decode(const Surface& target, const ImageDecodeOptions& options)
     {
         m_decode_status = ImageDecodeStatus();
 
@@ -1970,7 +1996,7 @@ namespace mango::image::jpeg
         return m_decode_status;
     }
 
-    std::string Parser::getInfo() const
+    std::string StreamDecoder::getInfo() const
     {
         std::string info = m_encoding;
 
@@ -1997,7 +2023,7 @@ namespace mango::image::jpeg
         return info;
     }
 
-    int Parser::getTaskSize(int tasks) const
+    int StreamDecoder::getTaskSize(int tasks) const
     {
         constexpr int max_threads = 64;
         const int threads = std::min(m_hardware_concurrency, max_threads);
@@ -2006,7 +2032,7 @@ namespace mango::image::jpeg
         return tasks_per_thread;
     }
 
-    void Parser::decodeLossless()
+    void StreamDecoder::decodeLossless()
     {
         // NOTE: need more test files to make this more conformant
         // NOTE: color sub-sampling is not supported (need test files)
@@ -2113,7 +2139,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeSequential()
+    void StreamDecoder::decodeSequential()
     {
         if (m_hardware_concurrency > 1)
         {
@@ -2126,7 +2152,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeSequentialST()
+    void StreamDecoder::decodeSequentialST()
     {
         if (restartInterval)
         {
@@ -2262,7 +2288,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeSequentialMT(int N)
+    void StreamDecoder::decodeSequentialMT(int N)
     {
         ConcurrentQueue queue("jpeg.sequential");
 
@@ -2517,7 +2543,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeMultiScan()
+    void StreamDecoder::decodeMultiScan()
     {
         s16* data = blockVector;
         data += decodeState.block[0].offset;
@@ -2543,7 +2569,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeProgressive()
+    void StreamDecoder::decodeProgressive()
     {
         if (decodeState.spectral_start == 0)
         {
@@ -2565,7 +2591,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeProgressiveDC()
+    void StreamDecoder::decodeProgressiveDC()
     {
         if (restartInterval)
         {
@@ -2629,7 +2655,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::decodeProgressiveAC()
+    void StreamDecoder::decodeProgressiveAC()
     {
         if (restartInterval)
         {
@@ -2743,7 +2769,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::finishProgressive()
+    void StreamDecoder::finishProgressive()
     {
         int n = getTaskSize(ymcu);
         if (n)
@@ -2781,7 +2807,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::process_range(int y0, int y1, const s16* data)
+    void StreamDecoder::process_range(int y0, int y1, const s16* data)
     {
         const size_t stride = m_surface->stride;
         const size_t bytes_per_pixel = m_surface->format.bytes();
@@ -2834,7 +2860,7 @@ namespace mango::image::jpeg
         blit_and_update(rect);
     }
 
-    void Parser::process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height)
+    void StreamDecoder::process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height)
     {
         if (xblock != width || yblock != height)
         {
@@ -2861,7 +2887,7 @@ namespace mango::image::jpeg
         }
     }
 
-    void Parser::blit_and_update(const ImageDecodeRect& rect, bool force_blit)
+    void StreamDecoder::blit_and_update(const ImageDecodeRect& rect, bool force_blit)
     {
         if (!m_decode_status.direct || force_blit)
         {

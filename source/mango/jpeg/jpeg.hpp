@@ -352,10 +352,16 @@ namespace mango::image::jpeg
     };
 
     // ----------------------------------------------------------------------------
-    // Parser
+    // StreamDecoder
     // ----------------------------------------------------------------------------
+    //
+    // StreamDecoder owns ALL per-stream decoding state: the entropy decoder,
+    // quantization / Huffman tables, frame geometry, restart information and the
+    // scan byte range. It parses one JPEG bitstream and decodes it into a target
+    // surface. Two of these can run side by side (e.g. an UltraHDR base image and
+    // its gain map) under a single orchestrating Parser.
 
-    class Parser
+    class StreamDecoder
     {
     protected:
         ConstMemory m_memory;
@@ -470,6 +476,37 @@ namespace mango::image::jpeg
         enum Flags : u32
         {
             RELAXED_PARSER = 0x0001,
+        };
+
+        StreamDecoder(ImageDecodeInterface* interface, ConstMemory memory, u32 flags = 0);
+        ~StreamDecoder();
+
+        void setMemory(ConstMemory memory);
+
+        ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
+    };
+
+    // ----------------------------------------------------------------------------
+    // Parser
+    // ----------------------------------------------------------------------------
+    //
+    // Parser is the orchestrator. Today it owns a single StreamDecoder and simply
+    // forwards to it, preserving the public interface used by the image codec. It
+    // is the seam where a second (gain map) stream and the fp16 join will attach.
+
+    class Parser
+    {
+    protected:
+        StreamDecoder m_base;
+
+    public:
+        ImageHeader& header;
+        ConstMemory& exif_memory;
+        Buffer& icc_buffer;
+
+        enum Flags : u32
+        {
+            RELAXED_PARSER = StreamDecoder::RELAXED_PARSER,
         };
 
         Parser(ImageDecodeInterface* interface, ConstMemory memory, u32 flags = 0);
