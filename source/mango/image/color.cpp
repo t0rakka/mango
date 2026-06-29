@@ -37,17 +37,17 @@ namespace mango::image
             { ColorPrimaries::BT601_525, 0.3127f, 0.3290f, 0.6300f, 0.3400f, 0.3100f, 0.5950f, 0.1550f, 0.0700f },
         };
 
-        auto near = [tolerance] (float a, float b)
+        auto isNear = [tolerance] (float a, float b)
         {
             return std::fabs(a - b) < tolerance;
         };
 
         for (const Reference& ref : table)
         {
-            if (near(white.x, ref.wx) && near(white.y, ref.wy) &&
-                near(red.x,   ref.rx) && near(red.y,   ref.ry) &&
-                near(green.x, ref.gx) && near(green.y, ref.gy) &&
-                near(blue.x,  ref.bx) && near(blue.y,  ref.by))
+            if (isNear(white.x, ref.wx) && isNear(white.y, ref.wy) &&
+                isNear(red.x,   ref.rx) && isNear(red.y,   ref.ry) &&
+                isNear(green.x, ref.gx) && isNear(green.y, ref.gy) &&
+                isNear(blue.x,  ref.bx) && isNear(blue.y,  ref.by))
             {
                 return ref.primaries;
             }
