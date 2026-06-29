@@ -142,7 +142,12 @@ namespace
             */
 
             const bool isTrueColor = (BitsPerPixel == 8 && (NPlanes == 3 || NPlanes == 4));
-            const bool isIndexed = !isTrueColor && (
+
+            // 1 bpp / 1 plane is monochrome. There is no meaningful palette, so we expand
+            // it to an 8-bit luminance image (0 -> 0x00, 1 -> 0xff) instead of an indexed one.
+            const bool isLuminance = (BitsPerPixel == 1 && NPlanes == 1);
+
+            const bool isIndexed = !isTrueColor && !isLuminance && (
                 (BitsPerPixel == 1 && NPlanes == 4) ||
                 (BitsPerPixel == 2 && NPlanes == 1) ||
                 (BitsPerPixel == 4 && NPlanes == 1) ||
@@ -164,8 +169,9 @@ namespace
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.format  = isIndexed ? IndexedFormat(8)
-                                       : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+            header.format  = isIndexed   ? IndexedFormat(8)
+                           : isLuminance ? LuminanceFormat(8, Format::UNORM, 8, 0)
+                                         : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             header.compression = TextureCompression::NONE;
         }
 
@@ -178,12 +184,20 @@ namespace
     // scanline decoders
     // ------------------------------------------------------------
 
+    // Best-effort PCX RLE expander. Decodes as much as the input provides and
+    // zero-fills any remainder, so truncated/corrupt files still display the
+    // scanlines that are present instead of failing outright. Returns false only
+    // when the stream was short (the tail was zero-filled), true when complete.
     bool scanRLE(u8* dest, size_t bytes, const u8* p, const u8* end)
     {
         while (bytes > 0)
         {
             if (p >= end)
+            {
+                // Out of input: zero-fill the remaining pixels and stop.
+                std::memset(dest, 0, bytes);
                 return false;
+            }
 
             u8 sample = *p++;
             if (sample < 0xc0)
@@ -194,10 +208,14 @@ namespace
             else
             {
                 size_t count = sample & 0x3f;
-                if (count > bytes)
-                    return false;
+                count = std::min(count, bytes);
+
                 if (p >= end)
+                {
+                    std::memset(dest, 0, bytes);
                     return false;
+                }
+
                 sample = *p++;
                 std::memset(dest, sample, count);
                 dest += count;
@@ -206,6 +224,29 @@ namespace
         }
 
         return true;
+    }
+
+    void decode1(const Surface& s, u8* buffer, int scansize)
+    {
+        // 1 bpp monochrome expanded to 8-bit luminance: bit 0 -> 0x00, bit 1 -> 0xff.
+        // The expansion is branchless: 0u - 0 == 0x00, 0u - 1 == 0xff (8-bit wrap).
+        const int width = s.width;
+        const int height = s.height;
+        const size_t stride = s.stride;
+        u8* image = s.image;
+
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                const u8 data = buffer[x >> 3];
+                const u8 value = (data >> (7 - (x & 7))) & 1;
+                image[x] = u8(0 - value);
+            }
+
+            buffer += scansize;
+            image += stride;
+        }
     }
 
     void decode2(const Surface& s, u8* buffer, int scansize)
@@ -390,10 +431,11 @@ namespace
             const size_t buffer_size = size_t(scansize) * size_t(height);
             Buffer buffer(buffer_size);
 
+            // A short/corrupt RLE stream is zero-filled by scanRLE rather than rejected,
+            // so the scanlines that did decode are still shown.
             if (!scanRLE(buffer, buffer_size, m_memory.address + 128, m_memory.address + m_memory.size))
             {
-                status.setError("[ImageDecoderPCX] RLE decoding failure.");
-                return status;
+                printLine(Print::Warning, "[ImageDecoder.PCX] Truncated RLE stream; remainder zero-filled.");
             }
 
             switch (m_pcx_header.BitsPerPixel)
@@ -401,16 +443,32 @@ namespace
                 case 1:
                     switch (m_pcx_header.NPlanes)
                     {
+                        case 1:
+                            // 1 bpp monochrome -> 8-bit luminance (no palette).
+                            decode1(target, buffer, scansize);
+                            break;
                         case 4:
                         {
                             Palette palette(16);
 
-                            // read palette
-                            const u8* pal = m_pcx_header.ColorMap;
-                            for (u32 i = 0; i < palette.size; ++i)
+                            // PCX version 3 does not store a palette in the header (the
+                            // 48-byte ColorMap is undefined); fall back to the standard
+                            // 16-color EGA palette. Other versions carry the palette inline.
+                            if (m_pcx_header.Version == 3)
                             {
-                                palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
-                                pal += 3;
+                                for (u32 i = 0; i < palette.size; ++i)
+                                {
+                                    palette[i] = g_ega_palette[i];
+                                }
+                            }
+                            else
+                            {
+                                const u8* pal = m_pcx_header.ColorMap;
+                                for (u32 i = 0; i < palette.size; ++i)
+                                {
+                                    palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
+                                    pal += 3;
+                                }
                             }
 
                             *target.palette = palette;
