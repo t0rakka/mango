@@ -2010,6 +2010,12 @@ namespace
         u8 m_cicp_matrix = 0;
         u8 m_cicp_full_range = 1;
 
+        // mDCV (Mastering Display Color Volume) / cLLI (Content Light Level)
+        bool m_has_mdcv = false;
+        MasteringDisplay m_mdcv;
+        bool m_has_clli = false;
+        ContentLightLevel m_clli;
+
         // acTL
         u32 m_number_of_frames = 0;
         u32 m_repeat_count = 0;
@@ -2043,6 +2049,8 @@ namespace
         void read_sBIT(BigEndianConstPointer p, u32 size);
         void read_sRGB(BigEndianConstPointer p, u32 size);
         void read_cICP(BigEndianConstPointer p, u32 size);
+        void read_mDCV(BigEndianConstPointer p, u32 size);
+        void read_cLLI(BigEndianConstPointer p, u32 size);
         void read_acTL(BigEndianConstPointer p, u32 size);
         void read_fcTL(BigEndianConstPointer p, u32 size);
         void read_fdAT(BigEndianConstPointer p, u32 size);
@@ -2142,6 +2150,19 @@ namespace
                 }
             }
             // else: no color signalling at all -> keep the sRGB default (PNG convention).
+
+            // HDR static metadata is independent of the color-space precedence above.
+            if (m_has_mdcv)
+            {
+                color.has_mastering_display = true;
+                color.mastering_display = m_mdcv;
+            }
+
+            if (m_has_clli)
+            {
+                color.has_content_light_level = true;
+                color.content_light_level = m_clli;
+            }
 
             m_header.linear = color.isLinear();
         }
@@ -2293,6 +2314,14 @@ namespace
 
                     case u32_mask_rev('c', 'I', 'C', 'P'):
                         read_cICP(p, size);
+                        break;
+
+                    case u32_mask_rev('m', 'D', 'C', 'V'):
+                        read_mDCV(p, size);
+                        break;
+
+                    case u32_mask_rev('c', 'L', 'L', 'I'):
+                        read_cLLI(p, size);
                         break;
 
                     case u32_mask_rev('i', 'C', 'C', 'P'):
@@ -2644,6 +2673,54 @@ namespace
         printLine(Print::Info, "  range:     {}", m_cicp_full_range);
     }
 
+    void ParserPNG::read_mDCV(BigEndianConstPointer p, u32 size)
+    {
+        // 8x u16 chromaticities (R,G,B,white) in 0.00002 units, then 2x u32
+        // luminances (max, min) in 0.0001 cd/m2 units (SMPTE ST 2086).
+        if (size != 24)
+        {
+            setError("Incorrect mDCV chunk size.");
+            return;
+        }
+
+        const float chroma_scale = 1.0f / 50000.0f; // 0.00002
+        const float lum_scale    = 1.0f / 10000.0f; // 0.0001 cd/m2
+
+        m_mdcv.red.x   = p.read16() * chroma_scale;
+        m_mdcv.red.y   = p.read16() * chroma_scale;
+        m_mdcv.green.x = p.read16() * chroma_scale;
+        m_mdcv.green.y = p.read16() * chroma_scale;
+        m_mdcv.blue.x  = p.read16() * chroma_scale;
+        m_mdcv.blue.y  = p.read16() * chroma_scale;
+        m_mdcv.white.x = p.read16() * chroma_scale;
+        m_mdcv.white.y = p.read16() * chroma_scale;
+        m_mdcv.max_luminance = p.read32() * lum_scale;
+        m_mdcv.min_luminance = p.read32() * lum_scale;
+        m_has_mdcv = true;
+
+        printLine(Print::Info, "  mastering max: {} cd/m2", m_mdcv.max_luminance);
+        printLine(Print::Info, "  mastering min: {} cd/m2", m_mdcv.min_luminance);
+    }
+
+    void ParserPNG::read_cLLI(BigEndianConstPointer p, u32 size)
+    {
+        // 2x u32 in 0.0001 cd/m2 units; 0 means "unknown".
+        if (size != 8)
+        {
+            setError("Incorrect cLLI chunk size.");
+            return;
+        }
+
+        const float lum_scale = 1.0f / 10000.0f; // 0.0001 cd/m2
+
+        m_clli.max_cll  = p.read32() * lum_scale;
+        m_clli.max_fall = p.read32() * lum_scale;
+        m_has_clli = true;
+
+        printLine(Print::Info, "  MaxCLL:  {} cd/m2", m_clli.max_cll);
+        printLine(Print::Info, "  MaxFALL: {} cd/m2", m_clli.max_fall);
+    }
+
     void ParserPNG::read_acTL(BigEndianConstPointer p, u32 size)
     {
         if (size != 8)
@@ -2840,6 +2917,14 @@ namespace
 
                 case u32_mask_rev('c', 'I', 'C', 'P'):
                     read_cICP(p, size);
+                    break;
+
+                case u32_mask_rev('m', 'D', 'C', 'V'):
+                    read_mDCV(p, size);
+                    break;
+
+                case u32_mask_rev('c', 'L', 'L', 'I'):
+                    read_cLLI(p, size);
                     break;
 
                 case u32_mask_rev('I', 'D', 'A', 'T'):
