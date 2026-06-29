@@ -152,6 +152,33 @@ namespace mango::image
     };
 
     /*
+        Mastering display color volume (HDR static metadata; PNG mDCV, SMPTE ST 2086).
+        Describes the display the content was graded on, so a target display can adapt
+        its tone mapping. Luminances are absolute cd/m2 (nits). Gated by
+        ColorInfo::has_mastering_display.
+    */
+    struct MasteringDisplay
+    {
+        ColorPoint red;
+        ColorPoint green;
+        ColorPoint blue;
+        ColorPoint white;
+        float max_luminance = 0.0f; // cd/m2
+        float min_luminance = 0.0f; // cd/m2
+    };
+
+    /*
+        Content light level (HDR static metadata; PNG cLLI). Absolute cd/m2 (nits);
+        a value of 0 means "unknown / not calculable". Gated by
+        ColorInfo::has_content_light_level.
+    */
+    struct ContentLightLevel
+    {
+        float max_cll = 0.0f;  // Maximum Content Light Level
+        float max_fall = 0.0f; // Maximum Frame-Average Light Level
+    };
+
+    /*
         Color space description attached to a decoded image.
 
         'primaries' and 'transfer' carry the named (CICP) signalling. When a
@@ -159,6 +186,9 @@ namespace mango::image
         'has_chromaticities' is set and the coordinates take precedence over the
         named primaries. 'gamma' carries an explicit display-gamma exponent when
         a file provides one (PNG gAMA); 0 means "not specified".
+
+        'mastering_display' and 'content_light_level' carry optional HDR static
+        metadata (PNG mDCV / cLLI) for tone mapping; each is gated by its own flag.
 
         An empty ColorInfo (all Unspecified) means the decoder reported no color
         signalling; clients should then assume sRGB for integer formats.
@@ -175,6 +205,12 @@ namespace mango::image
         ColorPoint blue;
 
         float gamma = 0.0f;
+
+        bool has_mastering_display = false;
+        MasteringDisplay mastering_display;
+
+        bool has_content_light_level = false;
+        ContentLightLevel content_light_level;
 
         bool isLinear() const noexcept
         {
@@ -196,6 +232,50 @@ namespace mango::image
     // with CICP code points (PNG cICP, AVIF, HEIF).
     ColorPrimaries colorPrimariesFromCICP(u8 code_point) noexcept;
     TransferFunction transferFunctionFromCICP(u8 code_point) noexcept;
+
+    // ------------------------------------------------------------------
+    // linearize
+    // ------------------------------------------------------------------
+
+    /*
+        Options controlling linearize().
+
+        'target' selects the output (linear) RGB primaries. The source is adapted
+        into these primaries with a 3x3 matrix; the default BT.709 is the
+        conventional scene-linear working space.
+
+        When 'preserve_gamut' is set the primaries conversion is skipped and only
+        the transfer function is inverted, so the output keeps the source
+        primaries. Use this for wide-gamut working spaces that must not be clipped
+        to 'target'.
+    */
+    struct LinearizeOptions
+    {
+        ColorPrimaries target = ColorPrimaries::BT709;
+        bool preserve_gamut = false;
+    };
+
+    /*
+        Convert an image to scene-linear light using its color signalling (ColorInfo).
+
+        Two steps, mirroring a standard HDR-aware display pipeline:
+          1. invert the transfer function (sRGB / BT.709 / PQ / HLG / explicit
+             gamma) to recover linear light;
+          2. convert the source primaries to 'options.target' with a 3x3 matrix
+             (a no-op when they already match or when preserve_gamut is set).
+
+        'source' may be any format: it is read as normalized float, so integer
+        samples map to [0,1] and PQ output is normalized so that 1.0 == 10,000 nits.
+        'dest' should be a float (FLOAT16 or FLOAT32) RGBA surface, since wide-gamut
+        and HDR conversions produce unbounded and negative values; 'dest' and
+        'source' must have the same dimensions. Alpha is passed through unchanged.
+
+        The decoder pipeline never calls this: clients opt in, choosing when and to
+        which working space to convert (or skipping it when ColorInfo already
+        matches their pipeline). 'source' is not modified.
+    */
+    void linearize(const Surface& dest, const Surface& source, const ColorInfo& color,
+                   const LinearizeOptions& options = LinearizeOptions());
 
     // ------------------------------------------------------------------
     // ColorManager
