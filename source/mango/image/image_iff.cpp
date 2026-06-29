@@ -70,6 +70,116 @@ namespace
         }
     }
 
+    // Atari ST "VDAT" vertical RLE (ILBM compression mode 2). The BODY holds one
+    // VDAT chunk per bitplane. Each chunk carries a byte command stream followed by
+    // a 16-bit value (word) stream; words are laid out vertically, one 16-pixel
+    // column at a time, top to bottom. Command bytes:
+    //   b == 0        : <wordCount = value> literal run of that many words
+    //   b == 1        : <wordCount = value><word> run of value words
+    //   2 <= b <= 127 : run of b copies of the next word
+    //   128 <= b      : literal run of (256 - b) words
+    // Output is written into mango's plane-sequential interleaved scanline layout.
+    static
+    bool decode_vdat(u8* buffer, size_t scan_size, ConstMemory body, int width, int height, int nplanes)
+    {
+        const u8* end = body.end();
+        const int rowbytes = ((width + 15) >> 4) << 1;
+        const int words_per_row = rowbytes >> 1;
+
+        const u8* chunk = body.address;
+
+        for (int plane = 0; plane < nplanes; ++plane)
+        {
+            if (chunk + 14 > end || std::memcmp(chunk, "VDAT", 4) != 0)
+                return false;
+
+            const u32 chunk_size = bigEndian::uload32(chunk + 4);
+            const u8* chunk_end = chunk + 8 + chunk_size;
+            if (chunk_end > end || chunk_end < chunk)
+                chunk_end = end;
+
+            // command stream byte count (includes the 2-byte count field itself)
+            const int cmd_count = (chunk[8] << 8) | chunk[9];
+            const u8* cmd = chunk + 10;
+            const u8* cmd_end = chunk + 8 + cmd_count;
+            if (cmd_end > chunk_end || cmd_end < cmd)
+                cmd_end = chunk_end;
+            const u8* val = cmd_end;
+            const u8* val_end = chunk_end;
+
+            int repeatCount = 0;
+            int repeatValue = -1; // -1 means a run of literals
+
+            auto readValue = [&]() -> int
+            {
+                if (val + 2 > val_end)
+                    return -1;
+                int v = (val[0] << 8) | val[1];
+                val += 2;
+                return v;
+            };
+
+            auto readCommand = [&]() -> bool
+            {
+                if (cmd >= cmd_end)
+                    return false;
+                int b = *cmd++;
+                if (b < 128)
+                {
+                    if (b == 0 || b == 1)
+                    {
+                        repeatCount = readValue();
+                        if (repeatCount < 0)
+                            return false;
+                    }
+                    else
+                    {
+                        repeatCount = b;
+                    }
+                    repeatValue = (b == 0) ? -1 : readValue();
+                }
+                else
+                {
+                    repeatCount = 256 - b;
+                    repeatValue = -1;
+                }
+                return true;
+            };
+
+            auto readWord = [&]() -> int
+            {
+                while (repeatCount == 0)
+                {
+                    if (!readCommand())
+                        return -1;
+                }
+                --repeatCount;
+                if (repeatValue >= 0)
+                    return repeatValue;
+                return readValue();
+            };
+
+            // each VDAT column is a vertical 16-pixel strip filled top to bottom
+            for (int w = 0; w < words_per_row; ++w)
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    int word = readWord();
+                    if (word < 0)
+                        return false; // partial decode: caller renders what we have
+
+                    size_t offset = size_t(y) * scan_size + size_t(plane) * rowbytes + size_t(w) * 2;
+                    buffer[offset] = u8(word >> 8);
+                    buffer[offset + 1] = u8(word & 0xff);
+                }
+            }
+
+            chunk = chunk_end;
+        }
+
+        return true;
+    }
+
     static
     void unpack_rgb8(Memory dest, ConstMemory source, u32 pixels)
     {
@@ -645,7 +755,7 @@ namespace
         s16 yorigin = 0;
         u8 nplanes = 0;
         u8 masking = 0; // 0: None, 1: HasMask, 2: TransparentColor, 3: Lasso
-        u8 compression = 0; // 0: None, 1: ByteRun1
+        u8 compression = 0; // 0: None, 1: ByteRun1, 2: Atari ST VDAT vertical RLE
         u8 unused = 0;
         u16 transparent = 0;
         u8 xaspect = 0;
@@ -1555,6 +1665,19 @@ namespace
                 u8* allocated = allocation.get();
 
                 unpack(Memory(allocated, bytes), m_body);
+                buffer = allocated;
+                buffer_size = bytes;
+            }
+            else if (m_bmhd.compression == 2)
+            {
+                // Atari ST VDAT vertical RLE (one VDAT chunk per bitplane)
+                size_t scan_size = ((xsize + 15) & ~15) / 8 * m_bmhd.nplanes;
+                size_t bytes = scan_size * ysize;
+
+                allocation.reset(new u8[bytes]());
+                u8* allocated = allocation.get();
+
+                decode_vdat(allocated, scan_size, m_body, xsize, ysize, m_bmhd.nplanes);
                 buffer = allocated;
                 buffer_size = bytes;
             }
