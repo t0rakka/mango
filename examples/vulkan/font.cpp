@@ -2049,7 +2049,10 @@ public:
         }
         m_frameTimeMs = frame_sum / float(m_frameTimeCount);
 
+        u64 time0 = mango::Time::us();
         render();
+        u64 time1 = mango::Time::us();
+        setTitle(fmt::format("font: {:.2f} ms", (time1 - time0) / 1000.0));
     }
 
     void onKeyPress(Keycode code, u32 mask) override
