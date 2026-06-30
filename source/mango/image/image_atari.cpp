@@ -628,7 +628,10 @@ namespace
                 const int max_palette_sets = 3 * (height - 1);
                 while (p + 2 <= end && palette_set < max_palette_sets)
                 {
-                    u16 vector = p.read16();
+                    // The change-vector is a 15-bit inclusion mask; the top bit is
+                    // not a colour flag (palette entry 15 stays black). Treating it
+                    // as one would read an extra colour word and desync the stream.
+                    u16 vector = p.read16() & 0x7fff;
 
                     for (int i = 0; i < 16; ++i)
                     {
