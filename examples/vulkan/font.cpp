@@ -100,8 +100,9 @@ namespace mango::font
             return true;
         }
 
-        float t = (c1 - c0) / qa;
-        return t < -kEpsilon || t > 1.0f + kEpsilon;
+        // Extremum parameter; monotonic on [0, 1] when t is outside the open unit interval.
+        float t = (c0 - c1) / qa;
+        return t <= kEpsilon || t >= 1.0f - kEpsilon;
     }
 
     static bool is_monotonic(const QuadraticCurve& curve)
@@ -128,12 +129,7 @@ namespace mango::font
             return;
         }
 
-        if (depth >= 10) // paper §3.1 says 2; Arial needs more for strict monotonicity
-        {
-            output.push_back(curve);
-            return;
-        }
-
+        // Paper §3.1: subdivide until x- and y-monotonic; never emit non-monotonic curves.
         QuadraticCurve left, right;
         subdivide_quadratic(curve, left, right);
         make_monotonic(left, output, depth + 1);
@@ -449,9 +445,9 @@ namespace mango::font
             coverage += std::copysign(1.0f, delta.y) * h * size.x;
         }
 
-        float trap_h = q1.y - q0.y;
-        float trap_b = (-0.5f * (q0.x + q1.x)) + size.x;
-        coverage += trap_b * trap_h;
+        float h = q1.y - q0.y;
+        float b = (-0.5f * (q0.x + q1.x)) + size.x;
+        coverage += b * h;
 
         return coverage;
     }
@@ -707,7 +703,7 @@ vec2 read_curve_point(uint curve_index, uint point_index)
     return vec2(points[base + 0u], points[base + 1u]);
 }
 
-// --- Scanline Sweeper appendix 8.1 / 8.2 / 8.3 (GLSL port) ---
+// --- Scanline Sweeper appendix 8.1 / 8.2 / 8.3 (GLSL port of HLSL golden model) ---
 
 vec2 evaluate_bezier(vec2 p0, vec2 p1, vec2 p2, float t)
 {
@@ -818,13 +814,13 @@ float scanline_sweep(vec2 size, vec2 offset, vec2 p0, vec2 p1, vec2 p2)
         coverage += sign(delta.y) * h * size.x;
     }
 
-    float trap_h = q1.y - q0.y;
-    float trap_b = -0.5 * (q0.x + q1.x) + size.x;
-    coverage += trap_b * trap_h;
+    float h = q1.y - q0.y;
+    float b = -0.5 * (q0.x + q1.x) + size.x;
+    coverage += b * h;
     return coverage;
 }
 
-// --- implementer glue (section 8 intro) ---
+// --- implementer glue (section 8 intro; not part of appendix 8.1-8.3) ---
 
 void main()
 {
@@ -856,11 +852,13 @@ void main()
             vec2 p1 = read_curve_point(idx, 1u);
             vec2 p2 = read_curve_point(idx, 2u);
 
+            // §3.2: cull by scanline and right window edge only. Curves entirely left
+            // of the window still contribute rectangular sweep area inside scanline_sweep.
             if (max(p0.y, p2.y) <= em_offset.y || min(p0.y, p2.y) >= em_offset.y + window_size.y)
             {
                 continue;
             }
-            if (max(p0.x, p2.x) < em_offset.x || min(p0.x, p2.x) > em_offset.x + window_size.x)
+            if (min(p0.x, p2.x) > em_offset.x + window_size.x)
             {
                 continue;
             }
@@ -869,7 +867,7 @@ void main()
         }
     }
 
-    float alpha = area > 0.0 ? clamp(coverage_sum / area, 0.0, 1.0) : 0.0;
+    float alpha = area > 0.0 ? coverage_sum / area : 0.0;
     alpha *= pc.color.a;
 
     if (alpha <= 0.0)
