@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Commodore 64 decoders copyright (C) 2011 Toni Lönnberg. All rights reserved.
@@ -2601,6 +2601,652 @@ namespace
         return x;
     }
 
+    // ------------------------------------------------------------
+    // Commodore VIC-20 palette (for Fluff64 VIC-20 export)
+    // ------------------------------------------------------------
+
+    const Color g_vic20_palette_colors [16] =
+    {
+        0xFF000000, 0xFFFFFFFF, 0xFF6D2327, 0xFFA0FEF8,
+        0xFF8E3C97, 0xFF7EDA75, 0xFF252390, 0xFFFFFF86,
+        0xFFA4643B, 0xFFFFC8A1, 0xFFF2A7AB, 0xFFDBFFFF,
+        0xFFFFB4FF, 0xFFD7FFCE, 0xFF9D9AFF, 0xFFFFFFC9,
+    };
+
+    struct PaletteVIC20 : Palette
+    {
+        PaletteVIC20()
+        {
+            size = 16;
+            for (size_t i = 0; i < 16; ++i)
+                color[i] = g_vic20_palette_colors[i];
+        }
+    } g_vic20_palette;
+
+    // C64 character ROM (uppercase/graphics set), 128 glyphs x 8 rows.
+    // Used to render PETSCII text-screen images (Fluff64 PET mode).
+    const u8 g_c64_font [1024] =
+    {
+        60, 102, 110, 110, 96, 98, 60, 0, 24, 60, 102, 126, 102, 102, 102, 0,
+        124, 102, 102, 124, 102, 102, 124, 0, 60, 102, 96, 96, 96, 102, 60, 0,
+        120, 108, 102, 102, 102, 108, 120, 0, 126, 96, 96, 120, 96, 96, 126, 0,
+        126, 96, 96, 120, 96, 96, 96, 0, 60, 102, 96, 110, 102, 102, 60, 0,
+        102, 102, 102, 126, 102, 102, 102, 0, 60, 24, 24, 24, 24, 24, 60, 0,
+        30, 12, 12, 12, 12, 108, 56, 0, 102, 108, 120, 112, 120, 108, 102, 0,
+        96, 96, 96, 96, 96, 96, 126, 0, 99, 119, 127, 107, 99, 99, 99, 0,
+        102, 118, 126, 126, 110, 102, 102, 0, 60, 102, 102, 102, 102, 102, 60, 0,
+        124, 102, 102, 124, 96, 96, 96, 0, 60, 102, 102, 102, 102, 60, 14, 0,
+        124, 102, 102, 124, 120, 108, 102, 0, 60, 102, 96, 60, 6, 102, 60, 0,
+        126, 24, 24, 24, 24, 24, 24, 0, 102, 102, 102, 102, 102, 102, 60, 0,
+        102, 102, 102, 102, 102, 60, 24, 0, 99, 99, 99, 107, 127, 119, 99, 0,
+        102, 102, 60, 24, 60, 102, 102, 0, 102, 102, 102, 60, 24, 24, 24, 0,
+        126, 6, 12, 24, 48, 96, 126, 0, 60, 48, 48, 48, 48, 48, 60, 0,
+        12, 18, 48, 124, 48, 98, 252, 0, 60, 12, 12, 12, 12, 12, 60, 0,
+        0, 24, 60, 126, 24, 24, 24, 24, 0, 16, 48, 127, 127, 48, 16, 0,
+        0, 0, 0, 0, 0, 0, 0, 0, 24, 24, 24, 24, 0, 0, 24, 0,
+        102, 102, 102, 0, 0, 0, 0, 0, 102, 102, 255, 102, 255, 102, 102, 0,
+        24, 62, 96, 60, 6, 124, 24, 0, 98, 102, 12, 24, 48, 102, 70, 0,
+        60, 102, 60, 56, 103, 102, 63, 0, 6, 12, 24, 0, 0, 0, 0, 0,
+        12, 24, 48, 48, 48, 24, 12, 0, 48, 24, 12, 12, 12, 24, 48, 0,
+        0, 102, 60, 255, 60, 102, 0, 0, 0, 24, 24, 126, 24, 24, 0, 0,
+        0, 0, 0, 0, 0, 24, 24, 48, 0, 0, 0, 126, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 24, 24, 0, 0, 3, 6, 12, 24, 48, 96, 0,
+        60, 102, 110, 118, 102, 102, 60, 0, 24, 24, 56, 24, 24, 24, 126, 0,
+        60, 102, 6, 12, 48, 96, 126, 0, 60, 102, 6, 28, 6, 102, 60, 0,
+        6, 14, 30, 102, 127, 6, 6, 0, 126, 96, 124, 6, 6, 102, 60, 0,
+        60, 102, 96, 124, 102, 102, 60, 0, 126, 102, 12, 24, 24, 24, 24, 0,
+        60, 102, 102, 60, 102, 102, 60, 0, 60, 102, 102, 62, 6, 102, 60, 0,
+        0, 0, 24, 0, 0, 24, 0, 0, 0, 0, 24, 0, 0, 24, 24, 48,
+        14, 24, 48, 96, 48, 24, 14, 0, 0, 0, 126, 0, 126, 0, 0, 0,
+        112, 24, 12, 6, 12, 24, 112, 0, 60, 102, 6, 12, 24, 0, 24, 0,
+        0, 0, 0, 255, 255, 0, 0, 0, 8, 28, 62, 127, 127, 28, 62, 0,
+        24, 24, 24, 24, 24, 24, 24, 24, 0, 0, 0, 255, 255, 0, 0, 0,
+        0, 0, 255, 255, 0, 0, 0, 0, 0, 255, 255, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 255, 255, 0, 0, 48, 48, 48, 48, 48, 48, 48, 48,
+        12, 12, 12, 12, 12, 12, 12, 12, 0, 0, 0, 224, 240, 56, 24, 24,
+        24, 24, 28, 15, 7, 0, 0, 0, 24, 24, 56, 240, 224, 0, 0, 0,
+        192, 192, 192, 192, 192, 192, 255, 255, 192, 224, 112, 56, 28, 14, 7, 3,
+        3, 7, 14, 28, 56, 112, 224, 192, 255, 255, 192, 192, 192, 192, 192, 192,
+        255, 255, 3, 3, 3, 3, 3, 3, 0, 60, 126, 126, 126, 126, 60, 0,
+        0, 0, 0, 0, 0, 255, 255, 0, 54, 127, 127, 127, 62, 28, 8, 0,
+        96, 96, 96, 96, 96, 96, 96, 96, 0, 0, 0, 7, 15, 28, 24, 24,
+        195, 231, 126, 60, 60, 126, 231, 195, 0, 60, 126, 102, 102, 126, 60, 0,
+        24, 24, 102, 102, 24, 24, 60, 0, 6, 6, 6, 6, 6, 6, 6, 6,
+        8, 28, 62, 127, 62, 28, 8, 0, 24, 24, 24, 255, 255, 24, 24, 24,
+        192, 192, 48, 48, 192, 192, 48, 48, 24, 24, 24, 24, 24, 24, 24, 24,
+        0, 0, 3, 62, 118, 54, 54, 0, 255, 127, 63, 31, 15, 7, 3, 1,
+        0, 0, 0, 0, 0, 0, 0, 0, 240, 240, 240, 240, 240, 240, 240, 240,
+        0, 0, 0, 0, 255, 255, 255, 255, 255, 0, 0, 0, 0, 0, 0, 0,
+        0, 0, 0, 0, 0, 0, 0, 255, 192, 192, 192, 192, 192, 192, 192, 192,
+        204, 204, 51, 51, 204, 204, 51, 51, 3, 3, 3, 3, 3, 3, 3, 3,
+        0, 0, 0, 0, 204, 204, 51, 51, 255, 254, 252, 248, 240, 224, 192, 128,
+        3, 3, 3, 3, 3, 3, 3, 3, 24, 24, 24, 31, 31, 24, 24, 24,
+        0, 0, 0, 0, 15, 15, 15, 15, 24, 24, 24, 31, 31, 0, 0, 0,
+        0, 0, 0, 248, 248, 24, 24, 24, 0, 0, 0, 0, 0, 0, 255, 255,
+        0, 0, 0, 31, 31, 24, 24, 24, 24, 24, 24, 255, 255, 0, 0, 0,
+        0, 0, 0, 255, 255, 24, 24, 24, 24, 24, 24, 248, 248, 24, 24, 24,
+        192, 192, 192, 192, 192, 192, 192, 192, 224, 224, 224, 224, 224, 224, 224, 224,
+        7, 7, 7, 7, 7, 7, 7, 7, 255, 255, 0, 0, 0, 0, 0, 0,
+        255, 255, 255, 0, 0, 0, 0, 0, 0, 0, 0, 0, 0, 255, 255, 255,
+        3, 3, 3, 3, 3, 3, 255, 255, 0, 0, 0, 0, 240, 240, 240, 240,
+        15, 15, 15, 15, 0, 0, 0, 0, 24, 24, 24, 248, 248, 0, 0, 0,
+        240, 240, 240, 240, 0, 0, 0, 0, 240, 240, 240, 240, 15, 15, 15, 15,
+    };
+
+    // CGA composite/RGBI palette (used by the Fluff64 PC export).
+    const u32 g_cga_palette [16] =
+    {
+        0x000000, 0x0000aa, 0x00aa00, 0x00aaaa,
+        0xaa0000, 0xaa00aa, 0xaa5500, 0xaaaaaa,
+        0x555555, 0x5555ff, 0x55ff55, 0x55ffff,
+        0xff5555, 0xff55ff, 0xffff55, 0xffffff,
+    };
+
+    // ------------------------------------------------------------
+    // ImageDecoder: FLF (Fluff64)
+    //
+    // Fluff64 is a multi-platform exporter; byte[11] selects the target
+    // machine. The Commodore targets are rendered via the C64/VIC-20
+    // character generators; the remaining targets are plain chunky
+    // (1 byte per pixel) bitmaps with a per-platform palette:
+    //
+    //     1, 4, 5     C64 multicolor font (12-byte cells: 8 bitmap + 4 colors)
+    //     6           C64 hires font
+    //     7           C64 PETSCII text screen (rendered via character ROM)
+    //     9           VIC-20 multicolor font
+    //     0x0b        PC / CGA          320x200  (4 colors)
+    //     0x0c        Amiga             320x200  (R8G8B8 palette)
+    //     0x0d        Amiga             320x256  (R8G8B8 palette)
+    //     0x16        Atari ST          320x200  (R8G8B8 palette)
+    //     0x18        Amstrad CPC       320x200  (16 firmware colors, 2x1)
+    //     0x1a        BBC Micro         320x256  (mode 1: 1x1 / mode 2: 2x1)
+    //     0x1b        PC                320x200  (R8G8B8 palette)
+    //     0x1c        ZX Spectrum       256x192  (ULAplus 64-color palette)
+    //
+    // ------------------------------------------------------------
+
+    struct InterfaceFLF : Interface
+    {
+        enum Mode { NONE, FONT_C64, FONT_VIC20, PET, CHUNKY } m_mode = NONE;
+        int m_offset = 0;
+        int m_columns = 0;
+        int m_rows = 0;
+        int m_colors = 0;
+        int m_xmask = 0;
+        int m_cmask = 0;
+        int m_pet_screen = 0;
+        int m_pet_colors = 0;
+        int m_pet_background = 0;
+
+        // CHUNKY mode (non-Commodore platforms)
+        int m_chunk_offset = 0;
+        int m_orig_width = 0;
+        int m_orig_height = 0;
+        int m_scale_x = 1;
+        Palette m_chunk_palette;
+
+        InterfaceFLF(ConstMemory memory)
+            : Interface(memory)
+        {
+            const u8* c = memory.address;
+            size_t length = memory.size;
+
+            if (length < 20 || std::memcmp(c, "FLUFF64", 7) != 0)
+                return;
+
+            switch (c[11])
+            {
+                case 1:
+                    setupFont(15, 40, 25, 16, 6, 3, false);
+                    break;
+                case 4:
+                case 5:
+                    setupFont(18, 40, 25, 16, 6, 3, false);
+                    break;
+                case 6:
+                    setupFont(18, 40, 25, 16, 7, 1, false);
+                    break;
+                case 7:
+                {
+                    int columns = c[0x0f];
+                    int rows = c[0x10];
+                    int count = columns * rows;
+                    if (columns <= 0 || rows <= 0 || length < size_t(0x2d + (count << 1)))
+                        return;
+                    m_mode = PET;
+                    m_columns = columns;
+                    m_rows = rows;
+                    m_pet_screen = 0x1d + count;
+                    m_pet_colors = 0x1d;
+                    m_pet_background = c[0x0d];
+                    setHeader(columns << 3, rows << 3);
+                    break;
+                }
+                case 9:
+                    if (c[12] != 6)
+                        return;
+                    setupFont(20, c[0x12], c[0x13], 8, 6, 3, true);
+                    break;
+
+                case 0x0b: // PC / CGA
+                {
+                    if (length != 64269)
+                        return;
+                    int sel;
+                    switch (c[12])
+                    {
+                        case 2: sel = 1; break;
+                        case 3: sel = 9; break;
+                        case 4: sel = 0; break;
+                        case 5: sel = 8; break;
+                        default: return;
+                    }
+                    initChunkPalette();
+                    setPaletteColor(1, g_cga_palette[sel + 2]);
+                    setPaletteColor(2, g_cga_palette[sel + 4]);
+                    setPaletteColor(3, g_cga_palette[sel + 6]);
+                    setChunky(320, 200, 1, 13);
+                    break;
+                }
+
+                case 0x0c: // Amiga 320x200
+                    if (!setupFlfBytes(200))
+                        return;
+                    break;
+
+                case 0x0d: // Amiga 320x256
+                    if (!setupFlfBytes(256))
+                        return;
+                    break;
+
+                case 0x16: // Atari ST 320x200
+                    if (!setupFlfBytes(200))
+                        return;
+                    break;
+
+                case 0x18: // Amstrad CPC
+                    if (c[12] != 0x0b || length != 32269)
+                        return;
+                    initChunkPalette();
+                    if (!setAmstradFirmwarePalette(0x7dcd, 16))
+                        return;
+                    setChunky(320, 200, 2, 13);
+                    break;
+
+                case 0x1a: // BBC Micro
+                    if (c[12] != 0x0c)
+                        return;
+                    initChunkPalette();
+                    switch (c[13])
+                    {
+                        case 4:
+                            if (length != 82190)
+                                return;
+                            setPaletteColor(1, 0xffffff);
+                            setChunky(320, 256, 1, 13);
+                            break;
+                        case 5:
+                        {
+                            if (length != 41230)
+                                return;
+                            static const u32 bbc2bit [4] =
+                            {
+                                0x000000, 0xff0000, 0xffff00, 0xffffff
+                            };
+                            for (int i = 0; i < 4; ++i)
+                                setPaletteColor(i, bbc2bit[i]);
+                            setChunky(320, 256, 2, 13);
+                            break;
+                        }
+                        default:
+                            return;
+                    }
+                    break;
+
+                case 0x1b: // PC
+                    if (!setupFlfBytes(200))
+                        return;
+                    break;
+
+                case 0x1c: // ZX Spectrum
+                    if (c[12] != 0x0e || length < 49165)
+                        return;
+                    setZxPalette();
+                    setChunky(256, 192, 1, 13);
+                    break;
+
+                default:
+                    // unsupported platform
+                    break;
+            }
+        }
+
+        void initChunkPalette()
+        {
+            m_chunk_palette.size = 256;
+            for (int i = 0; i < 256; ++i)
+                m_chunk_palette.color[i] = Color(0, 0, 0, 0xff);
+        }
+
+        void setPaletteColor(int index, u32 rgb)
+        {
+            m_chunk_palette.color[index] = Color((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, 0xff);
+        }
+
+        void setChunky(int width, int height, int scaleX, int offset)
+        {
+            m_mode = CHUNKY;
+            m_orig_width = width / scaleX;
+            m_orig_height = height;
+            m_scale_x = scaleX;
+            m_chunk_offset = offset;
+            setHeader(width, height);
+        }
+
+        // Amiga / Atari ST / PC: chunky bitmap with an R8G8B8 palette stored
+        // after the pixels
+        bool setupFlfBytes(int height)
+        {
+            const u8* c = m_memory.address;
+            int length = int(m_memory.size);
+
+            int colorsOffset = 14 + 320 * height;
+            if (length < colorsOffset + 6)
+                return false;
+
+            int colors = c[colorsOffset - 1];
+            if (colors == 0)
+                colors = 256;
+
+            int trailing = length - colorsOffset - colors * 3;
+            if (trailing != 0 && trailing != 256)
+                return false;
+
+            initChunkPalette();
+            for (int i = 0; i < colors; ++i)
+            {
+                const u8* p = c + colorsOffset + i * 3;
+                m_chunk_palette.color[i] = Color(p[0], p[1], p[2], 0xff);
+            }
+
+            setChunky(320, height, 1, 13);
+            return true;
+        }
+
+        bool setAmstradFirmwarePalette(int offset, int count)
+        {
+            const u8* c = m_memory.address;
+            if (size_t(offset + count) > m_memory.size)
+                return false;
+
+            const u8 triLevel [3] = { 0, 0x80, 0xff };
+            for (int i = 0; i < count; ++i)
+            {
+                int v = c[offset + i];
+                if (v > 26)
+                    return false;
+                m_chunk_palette.color[i] = Color(triLevel[(v / 3) % 3], triLevel[v / 9], triLevel[v % 3], 0xff);
+            }
+            return true;
+        }
+
+        // ZX Spectrum: 8 normal + 8 bright colors laid out as a 64-entryULAplus palette
+        void setZxPalette()
+        {
+            m_chunk_palette.size = 256;
+            for (int i = 0; i < 64; ++i)
+            {
+                u32 rgb = ((i >> 1) & 1) * 0xff0000 | ((i >> 2) & 1) * 0x00ff00 | (i & 1) * 0x0000ff;
+                if ((i & 0x10) == 0)
+                    rgb &= 0xcdcdcd; // not bright
+                m_chunk_palette.color[i] = Color((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, 0xff);
+            }
+            for (int i = 64; i < 256; ++i)
+                m_chunk_palette.color[i] = Color(0, 0, 0, 0xff);
+        }
+
+        void setHeader(int width, int height)
+        {
+            header.width = width;
+            header.height = height;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        void setupFont(int offset, int columns, int rows, int colors, int xmask, int cmask, bool vic20)
+        {
+            if (columns <= 0 || rows <= 0)
+                return;
+            if (m_memory.size != size_t(offset + columns * rows * 12))
+                return;
+            m_mode = vic20 ? FONT_VIC20 : FONT_C64;
+            m_offset = offset;
+            m_columns = columns;
+            m_rows = rows;
+            m_colors = colors;
+            m_xmask = xmask;
+            m_cmask = cmask;
+            setHeader(columns << 3, rows << 3);
+        }
+
+        const char* decodeImage(const Surface& s) override
+        {
+            const u8* content = m_memory.address;
+            const int width = header.width;
+            const int height = header.height;
+
+            Buffer temp(width * height, 0);
+            u8* image = temp;
+
+            if (m_mode == CHUNKY)
+            {
+                const int ow = m_orig_width;
+                const int oh = m_orig_height;
+                const int sx = m_scale_x;
+
+                if (size_t(m_chunk_offset + ow * oh) > m_memory.size)
+                    return "[ImageDecoder.C64] Truncated Fluff64 image.";
+
+                for (int y = 0; y < oh; ++y)
+                for (int x = 0; x < ow; ++x)
+                {
+                    u8 index = content[m_chunk_offset + y * ow + x];
+                    for (int k = 0; k < sx; ++k)
+                        image[y * width + x * sx + k] = index;
+                }
+
+                Surface indices(width, height, IndexedFormat(8), width, temp);
+                indices.palette = &m_chunk_palette;
+                resolve(s, indices);
+                return nullptr;
+            }
+
+            if (m_mode == PET)
+            {
+                for (int y = 0; y < height; ++y)
+                for (int x = 0; x < width; ++x)
+                {
+                    int offset = (y >> 3) * m_columns + (x >> 3);
+                    int ch = content[m_pet_screen + offset];
+                    int pixel = (g_c64_font[((ch & 0x7f) << 3) + (y & 7)] >> (~x & 7) ^ (ch >> 7)) & 1;
+                    int color = pixel == 0 ? m_pet_background : content[m_pet_colors + offset];
+                    image[y * width + x] = u8(color & 0xf);
+                }
+            }
+            else
+            {
+                for (int y = 0; y < height; ++y)
+                for (int x = 0; x < width; ++x)
+                {
+                    int offset = m_offset + ((y >> 3) * m_columns + (x >> 3)) * 12;
+                    int c = content[offset + (y & 7)] >> (x & m_xmask) & m_cmask;
+                    c = content[offset + 8 + c];
+                    if (c >= m_colors)
+                        return "[ImageDecoder.C64] Invalid Fluff64 color index.";
+                    image[y * width + x] = u8(c);
+                }
+            }
+
+            Surface indices(width, height, IndexedFormat(8), width, temp);
+            indices.palette = (m_mode == FONT_VIC20) ? (Palette*)&g_vic20_palette : (Palette*)&g_c64_palette;
+            resolve(s, indices);
+            return nullptr;
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceFLF(ConstMemory memory)
+    {
+        return new InterfaceFLF(memory);
+    }
+
+    // ------------------------------------------------------------
+    // ImageDecoder: VIC (length-keyed Commodore container)
+    //
+    // The .VIC extension is an alias that selects an underlying C64 picture
+    // format purely by file length:
+    //
+    //     9002/9003/9009   hires            (IPH/ART)
+    //     10018            multicolor       (OCP Advanced Art Studio)
+    //     10241            multicolor       (Dolphin Ed)
+    //     10242            multicolor       (Blazing Paddles)
+    //     17218/17409      multicolor FLI   (FLI Designer / FD2)
+    //     17410            multicolor FLI   (FLI w/ background)
+    //     17474/17665/.6   multicolor FLI   (FLI bars / BML)
+    //     18242            interlaced       (DrazLace)
+    //     33602/33603      interlaced       (Gunpaint)
+    //     33694            interlaced       (FunPaint, optional RLE)
+    //
+    // All offsets are relative to the data area (after the 2-byte load
+    // address) and reuse the shared C64 render helpers.
+    //
+    // ------------------------------------------------------------
+
+    struct InterfaceVIC : Interface
+    {
+        enum Mode { NONE, HIRES, MULTI, FLI, BARS, DRL, GUN, FUN } m_mode = NONE;
+
+        // multicolor / hires render parameters (relative to m_data)
+        u32 m_bitmap = 0;
+        u32 m_vm = 0;
+        u32 m_color = 0;
+        u32 m_bg = 0;
+        int m_bgmode = 0;
+        bool m_fli = false;
+
+        // FunPaint compression
+        bool m_fun_compressed = false;
+        u8 m_fun_escape = 0;
+
+        const u8* m_data = nullptr;
+
+        InterfaceVIC(ConstMemory memory)
+            : Interface(memory)
+        {
+            if (memory.size < 3)
+                return;
+
+            m_data = memory.address + 2; // skip 2-byte load address
+            size_t size = memory.size;
+
+            switch (size)
+            {
+                case 9002:
+                case 9003:
+                case 9009:
+                    m_mode = HIRES;
+                    m_bitmap = 0x0; m_vm = 0x1f40; m_fli = false;
+                    break;
+                case 10018: // OCP
+                    setMulti(0x0, 0x1f40, 0x2338, 0x2329, 1, false);
+                    break;
+                case 10241: // DOL
+                    setMulti(0x800, 0x400, 0x0, 0x7e8, 1, false);
+                    break;
+                case 10242: // BPL
+                    setMulti(0x0, 0x2000, 0x2400, 0x1f80, 1, false);
+                    break;
+                case 17218: // FD2
+                case 17409: // FLI
+                    setMulti(0x2400, 0x400, 0x0, 0x0, 0, true);
+                    break;
+                case 17410: // FLM
+                    setMulti(0x2400, 0x400, 0x0, 0x437f, 1, true);
+                    break;
+                case 17474:
+                case 17665:
+                case 17666: // BML
+                    setMulti(0x2500, 0x500, 0x100, 0x0, 2, true);
+                    m_mode = BARS;
+                    break;
+                case 18242: // DrazLace (raw)
+                    m_mode = DRL;
+                    break;
+                case 33602:
+                case 33603: // Gunpaint
+                    m_mode = GUN;
+                    break;
+                case 33694: // FunPaint
+                    if (!setupFun())
+                        return;
+                    break;
+                default:
+                    return;
+            }
+
+            header.width = 320;
+            header.height = 200;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        void setMulti(u32 bitmap, u32 vm, u32 color, u32 bg, int bgmode, bool fli)
+        {
+            m_mode = MULTI;
+            m_bitmap = bitmap;
+            m_vm = vm;
+            m_color = color;
+            m_bg = bg;
+            m_bgmode = bgmode;
+            m_fli = fli;
+        }
+
+        bool setupFun()
+        {
+            const u8* p = m_memory.address;
+            u16 load_address = p[0] | (p[1] << 8);
+            if (load_address != 0x3ff0 || m_memory.size <= 18)
+                return false;
+            if (std::memcmp(p + 2, "FUNPAINT (MT) ", 14) != 0)
+                return false;
+            m_fun_compressed = p[16] != 0;
+            m_fun_escape = p[17];
+            m_data = p + 18;
+            m_mode = FUN;
+            return true;
+        }
+
+        const char* decodeImage(const Surface& s) override
+        {
+            const int width = header.width;
+            const int height = header.height;
+            const u8* end = m_memory.end();
+
+            switch (m_mode)
+            {
+                case HIRES:
+                    hires_to_surface(s, m_data, width, height, m_bitmap, m_vm, m_fli, false, 0);
+                    break;
+
+                case MULTI:
+                case BARS:
+                    multicolor_to_surface(s, m_data, width, height, m_bitmap, m_vm, m_color, m_bg, 0x0, m_bgmode, m_fli);
+                    break;
+
+                case DRL:
+                {
+                    Buffer background(200, *(m_data + 0x2740));
+                    multicolor_interlace_to_surface(s, m_data, width, height, 0x800, 0x2800, 0x400, 0x400, 0x0, background, 0x0, 2, false, 2);
+                    break;
+                }
+
+                case GUN:
+                {
+                    Buffer background(200);
+                    std::memcpy(background.data() +   0, m_data + 0x3f4f, 177);
+                    std::memcpy(background.data() + 177, m_data + 0x47e8, 20);
+                    background[197] = background[198] = background[199] = background[196];
+                    multicolor_interlace_to_surface(s, m_data, width, height, 0x2000, 0x6400, 0x0, 0x4400, 0x4000, background.data(), 0x0, 2, true, 2);
+                    break;
+                }
+
+                case FUN:
+                {
+                    Buffer temp;
+                    const u8* buffer = m_data;
+                    if (m_fun_compressed)
+                    {
+                        temp.reset(33678);
+                        depack_fun(temp, m_data, 33678, end, m_fun_escape);
+                        buffer = temp;
+                    }
+                    Buffer background(200);
+                    std::memcpy(background.data() +   0, buffer + 0x3f48, 100);
+                    std::memcpy(background.data() + 100, buffer + 0x8328, 100);
+                    multicolor_interlace_to_surface(s, buffer, width, height, 0x2000, 0x63e8, 0x0, 0x43e8, 0x4000, background.data(), 0x0, 2, true, 2);
+                    break;
+                }
+
+                default:
+                    return "[ImageDecoder.C64] Unsupported .VIC image.";
+            }
+
+            return nullptr;
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceVIC(ConstMemory memory)
+    {
+        return new InterfaceVIC(memory);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -2719,6 +3365,12 @@ namespace mango::image
 
         // Vidcom 64
         registerImageDecoder(createInterfaceVID, ".vid");
+
+        // Fluff64 (Commodore variants)
+        registerImageDecoder(createInterfaceFLF, ".flf");
+
+        // VIC (length-keyed Commodore container)
+        registerImageDecoder(createInterfaceVIC, ".vic");
     }
 
 } // namespace mango::image

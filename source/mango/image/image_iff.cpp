@@ -14,7 +14,7 @@
 // - IFF ANIM (delta-compressed animation): http://www.textfiles.com/programming/FORMATS/anim7.txt
 //   ANIM op 5 ("Byte Vertical Delta Compression") is the most common method.
 // - HAM-E (Black Belt Systems): a 4-plane hires ILBM reinterpreted by an external decoder,
-//   programmed via "magic cookie" trigger scanlines. Decode mirrors RECOIL's HAM-E support.
+//   programmed via "magic cookie" trigger scanlines.
 
 namespace
 {
@@ -466,7 +466,7 @@ namespace
     // display and reinterprets a plain 4-bitplane hires ILBM. Two hires pixels combine into
     // one 8-bit HAM-E byte, so the visible image is half as wide. The hardware reads the
     // IRGB colour lines (not the bitplane indices), so the real HAM-E nibble is recovered
-    // from the CMAP colour each index maps to, exactly as the reference decoder in RECOIL.
+    // from the CMAP colour each index maps to.
     //
     // A scanline whose first eight HAM-E bytes match the "magic cookie" is a trigger line:
     // it programs 64 colour registers (mode 20 = register / 256-colour, mode 24 = HAM) and
@@ -511,8 +511,7 @@ namespace
 
     // PCHG (Palette Change): per-scanline palette modifications layered on top of the base
     // CMAP. Supports the uncompressed and Huffman-compressed variants and both the 12-bit
-    // (OCS / SmallLineChanges) and 32-bit (BigLineChanges) change records. The algorithm
-    // mirrors the reference implementation in RECOIL.
+    // (OCS / SmallLineChanges) and 32-bit (BigLineChanges) change records.
     struct PchgState
     {
         const u8* content = nullptr;

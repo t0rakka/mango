@@ -14,8 +14,7 @@
 
         .mag            MAKIchan Graphics
         .shr .3200      Apple IIGS Super Hi-Res
-
-    Reference: RECOIL (Retro Computer Image Library), recoil.c.
+        .scr            ZX Spectrum screen
 
     ------------------------------------------------------------------------
     MAKIchan Graphics (.MAG)
@@ -36,7 +35,6 @@
     including the MSX2 1x2 / 2x1 display-aspect variants. The rarer MSX YJK and
     SCREEN 6 sub-modes are not handled.
 
-    Reference: RECOIL (Retro Computer Image Library), recoil.c.
 */
 #include <vector>
 #include <mango/core/pointer.hpp>
@@ -80,7 +78,7 @@ namespace
         return u8((v << 3) | (v >> 2));
     }
 
-    // MSB-first bit reader matching RECOIL's BitStream (sentinel bit in bit 7).
+    // MSB-first bit reader (sentinel bit in bit 7).
     struct BitReader
     {
         const u8* p;
@@ -109,8 +107,7 @@ namespace
         }
     };
 
-    // Apply the target platform's color-channel precision (RECOIL
-    // RestrictPlatformColor). rgb is 0x00RRGGBB.
+    // Apply the target platform's color-channel precision. rgb is 0x00RRGGBB.
     static u32 restrictColor(Platform platform, u32 rgb, int colors)
     {
         switch (platform)
@@ -409,7 +406,7 @@ namespace
             return true;
         }
 
-        // Decode one MSX2+ YJK pixel (RECOIL DecodeMsxYjk). Groups of 4 pixels
+        // Decode one MSX2+ YJK pixel. Groups of 4 pixels
         // share the J/K chroma; odd luma with YAE selects a palette color.
         Color yjkColor(const u8* row, int x, int width, const Color* palette)
         {
@@ -576,8 +573,6 @@ namespace
     // MagicDraw program for a 640x240 monochrome PGC-RLE bitmap; it is handled
     // as a magic-less fallback.
     //
-    // Reference: RECOIL, DecodeApfShr / DecodeAppleIIShr / DecodeSh3 /
-    // Decode3201 / DecodeTrsShr.
     // ------------------------------------------------------------------------
 
     // Apple PackBytes run-length decoder.
@@ -1024,6 +1019,268 @@ namespace
         return new InterfaceSHR(memory);
     }
 
+    // ------------------------------------------------------------------------
+    // ZX Spectrum screen (.SCR)
+    //
+    // The classic Sinclair ZX Spectrum 256x192 display: a 6144-byte bitmap with
+    // a famously scrambled scanline order, followed by a 768-byte attribute
+    // area (8x8 ink/paper/bright/flash cells - the source of "colour clash").
+    // The .SCR extension covers several length-keyed variants; the genuine
+    // Spectrum ones are handled here:
+    //
+    //     6144            bitmap only (monochrome)
+    //     6912 / 6913     standard screen$ (bitmap + 8x8 attributes)
+    //     6976            ULAplus (64-entry G3R3B2 palette at 0x1b00)
+    //     12288           Timex 8x1 attributes
+    //     12289           Timex hi-res 512x192 (mono, single ink color)
+    //     16000           Electronika MC 0515 640x400 (mono, 1x2)
+    //
+    // A 32768-byte .SCR is an Apple IIGS Super Hi-Res image and is dispatched
+    // to the SHR decoder (see createInterfaceSCR). Other .SCR sizes belong to
+    // unrelated platforms (Atari GR0, Amstrad, ...) and are not handled here.
+    //
+    // ------------------------------------------------------------------------
+
+    struct InterfaceSCR : ImageDecodeInterface
+    {
+        ConstMemory m_memory;
+        std::vector<u32> m_pixels; // 0x00RRGGBB
+        int m_width = 0;
+        int m_height = 0;
+        u32 m_palette [64];
+
+        // ZX bitmap addressing modes (negative sentinels) and attribute modes.
+        enum { BITMAP_LINEAR = -1 };
+        enum { ATTR_NONE = -3, ATTR_TIMEX = -1, ATTR_8X1 = 0, ATTR_8X8 = 3 };
+
+        InterfaceSCR(ConstMemory memory)
+            : m_memory(memory)
+        {
+            const u8* content = memory.address;
+            const int length = int(memory.size);
+
+            bool ok = true;
+            switch (length)
+            {
+                case 6144:
+                    setZx(256, 192);
+                    decodeZx(content, 0, -1, ATTR_NONE);
+                    break;
+                case 6912:
+                case 6913: // trailing border color byte - ignored
+                    setZx(256, 192);
+                    decodeZx(content, 0, 0x1800, ATTR_8X8);
+                    break;
+                case 6976:
+                    setUlaPlus(content, 0x1b00);
+                    decodeZx(content, 0, 0x1800, ATTR_8X8);
+                    break;
+                case 12288:
+                    setZx(256, 192);
+                    decodeZx(content, 0, 0x1800, ATTR_TIMEX);
+                    break;
+                case 12289:
+                    setSize(512, 384);
+                    decodeTimexHires(content, 0);
+                    break;
+                case 16000:
+                    // Electronika MC 0515: 640x200 monochrome, displayed 1x2.
+                    decodeElectronika(content);
+                    break;
+                default:
+                    ok = false;
+                    break;
+            }
+
+            if (!ok)
+            {
+                header.setError("[ImageDecoder.ZXSpectrum] Unsupported or invalid .SCR image.");
+                return;
+            }
+
+            header.width  = m_width;
+            header.height = m_height;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        ~InterfaceSCR()
+        {
+        }
+
+        void setSize(int width, int height)
+        {
+            m_width = width;
+            m_height = height;
+            m_pixels.assign(size_t(width) * height, 0);
+        }
+
+        static u32 zxPaletteColor(int c)
+        {
+            return u32(((c >> 1) & 1) * 0xff0000 | ((c >> 2) & 1) * 0x00ff00 | (c & 1) * 0x0000ff);
+        }
+
+        // 16 Spectrum colors (8 normal + 8 bright) laid out as a 64-entry
+        // ULAplus-style palette so the attribute decoder is shared.
+        void setZx(int width, int height)
+        {
+            setSize(width, height);
+            for (int i = 0; i < 64; ++i)
+            {
+                u32 rgb = zxPaletteColor(i);
+                if ((i & 0x10) == 0) // not bright
+                    rgb &= 0xcdcdcd;
+                m_palette[i] = rgb;
+            }
+        }
+
+        static u32 g3r3b2Color(int c)
+        {
+            // 0bGGGRRRBB -> 0xRRGGBB
+            return u32((((c & 0x1c) * 0x49) >> 3) << 16
+                     | (((c >> 5) * 0x49) >> 1) << 8
+                     | ((c & 3) * 0x55));
+        }
+
+        void setUlaPlus(const u8* content, int paletteOffset)
+        {
+            setSize(256, 192);
+            for (int i = 0; i < 64; ++i)
+                m_palette[i] = g3r3b2Color(content[paletteOffset + i]);
+        }
+
+        // Electronika MC 0515 (Soviet PDP-11 clone): 640x200 monochrome
+        // bitmap shown with a 1x2 vertical stretch (640x400).
+        void decodeElectronika(const u8* content)
+        {
+            setSize(640, 400);
+            for (int y = 0; y < 200; ++y)
+            {
+                for (int x = 0; x < 640; ++x)
+                {
+                    int bit = (content[y * 80 + (x >> 3)] >> (~x & 7)) & 1;
+                    u32 rgb = bit ? 0xffffff : 0;
+                    m_pixels[size_t(y * 2 + 0) * 640 + x] = rgb;
+                    m_pixels[size_t(y * 2 + 1) * 640 + x] = rgb;
+                }
+            }
+        }
+
+        static int zxLineOffset(int y)
+        {
+            return ((y & 0xc0) << 5) + ((y & 7) << 8) + ((y & 0x38) << 2);
+        }
+
+        static int zxIndex(int c, int a)
+        {
+            return (a >> 2 & 0x30) | ((c & 1) == 0 ? (8 | (a >> 3 & 7)) : (a & 7));
+        }
+
+        void decodeZx(const u8* content, int bitmapOffset, int attributesOffset, int attributesMode)
+        {
+            for (int y = 0; y < 192; ++y)
+            {
+                for (int x = 0; x < 256; ++x)
+                {
+                    int col = x >> 3;
+                    int c;
+                    if (bitmapOffset == BITMAP_LINEAR)
+                        c = content[(y << 5) | col] >> (~x & 7);
+                    else
+                        c = content[bitmapOffset + zxLineOffset(y) + col] >> (~x & 7);
+
+                    u32 rgb;
+                    if (attributesMode == ATTR_NONE)
+                    {
+                        rgb = (c & 1) ? 0xffffff : 0;
+                    }
+                    else
+                    {
+                        int a;
+                        if (attributesMode == ATTR_TIMEX)
+                            a = attributesOffset + zxLineOffset(y);
+                        else
+                            a = attributesOffset + (y >> attributesMode << 5);
+                        a = content[a + col];
+                        rgb = m_palette[zxIndex(c, a)];
+                    }
+                    m_pixels[(y << 8) + x] = rgb;
+                }
+            }
+        }
+
+        // Timex hi-res: 512x192 monochrome, displayed 512x384 (1x2), with a
+        // single ink color taken from the attribute byte.
+        void decodeTimexHires(const u8* content, int contentOffset)
+        {
+            u32 inkColor = zxPaletteColor(content[contentOffset + 0x3000] >> 3);
+            for (int y = 0; y < 192; ++y)
+            {
+                for (int x = 0; x < 512; ++x)
+                {
+                    int c = content[contentOffset + (x & 8) * 768 + zxLineOffset(y) + (x >> 4)] >> (~x & 7) & 1;
+                    int offset = (y << 10) + x;
+                    m_pixels[offset + 512] = m_pixels[offset] = (c == 0) ? (inkColor ^ 0xffffff) : inkColor;
+                }
+            }
+        }
+
+        ConstMemory memory(int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+            return ConstMemory();
+        }
+
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(options);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
+
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+
+            for (int y = 0; y < m_height; ++y)
+            {
+                const u32* src = &m_pixels[size_t(y) * m_width];
+                u8* d = target.address<u8>(0, y);
+                for (int x = 0; x < m_width; ++x)
+                {
+                    u32 rgb = src[x];
+                    d[0] = u8(rgb >> 16);
+                    d[1] = u8(rgb >> 8);
+                    d[2] = u8(rgb);
+                    d[3] = 0xff;
+                    d += 4;
+                }
+            }
+
+            target.resolve();
+
+            status.direct = target.isDirect();
+            return status;
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceSCR(ConstMemory memory)
+    {
+        // The .scr extension is shared across platforms. A 32768-byte file is
+        // an Apple IIGS $2000 raw Super Hi-Res image, handled by the SHR path.
+        if (memory.size == 32768)
+            return createInterfaceSHR(memory);
+
+        return new InterfaceSCR(memory);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -1037,6 +1294,9 @@ namespace mango::image
         // Apple IIGS Super Hi-Res
         registerImageDecoder(createInterfaceSHR, ".shr");
         registerImageDecoder(createInterfaceSHR, ".3200");
+
+        // ZX Spectrum screen
+        registerImageDecoder(createInterfaceSCR, ".scr");
     }
 
 } // namespace mango::image

@@ -1706,7 +1706,6 @@ namespace
     //   - keep run       00 00 <n>         : n+1 bytes copied from the line above
     //   - line repeat    00 00 FF <n>      : output the next decoded scanline n times
     // STTT files store planes plane-major rather than scanline-interleaved. The
-    // algorithm follows RECOIL's GEM/IMG decoder.
 
     struct GemRleStream
     {
@@ -1910,7 +1909,7 @@ namespace
             return data;
         }
 
-        // RECOIL SetDefaultStPalette: VDI default colors (index 0 = white, last = black).
+        // VDI default colors (index 0 = white, last = black).
         void setDefaultStPalette(Palette& palette) const
         {
             palette[0] = Color(255, 255, 255, 255);
@@ -2132,7 +2131,7 @@ namespace
     // ImageDecoder: Atari Falcon PIX ("PIXT")
     // ------------------------------------------------------------
 
-    // The Atari Falcon ".PIX" format (RECOIL: FalconPix). A 14- or 16-byte
+    // The Atari Falcon ".PIX" format. A 14- or 16-byte
     // header tagged "PIXT" followed by an optional RGB palette and pixels.
     // The depth byte selects the storage layout:
     //   1/2/4 bpp : ST word-interleaved bitplanes, preceded by an RGB palette
@@ -2140,7 +2139,6 @@ namespace
     //   16    bpp : Falcon true color (RGB565, big-endian)
     //   24    bpp : packed R8G8B8
     //   32    bpp : packed X8R8G8B8 (leading pad byte ignored)
-    // Reference: RECOIL_DecodeFalconPix() in recoil.c.
 
     struct InterfacePIX : Interface
     {

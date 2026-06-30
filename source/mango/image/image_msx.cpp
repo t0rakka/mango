@@ -21,7 +21,6 @@
     MSX2+ .MIF / .MIG interchange formats (compressed, any SCREEN mode including
     the 424-line interlaced hi-color variants).
 
-    Reference: RECOIL (Retro Computer Image Library), recoil.c.
 */
 #include <vector>
 #include <cstring>
@@ -528,7 +527,6 @@ namespace
     //     12  compression     0 = none, 1 = LZ (G9bStream)
     //     16  palette         colors * 3 bytes (5-bit R, G, B)
     //
-    // Reference: RECOIL, DecodeG9b().
 
     // LZ-style bit/byte stream used by the compressed variant.
     struct G9bStream
@@ -816,7 +814,7 @@ namespace
         }
 
         // Palette: 3 bytes per entry, each a 5-bit channel. Reject if any
-        // channel uses the top three bits (RECOIL treats this as malformed).
+        // channel uses the top three bits.
         bool setG9bPalette(const u8* content, int colors)
         {
             for (int c = 0; c < colors; ++c)
@@ -978,7 +976,6 @@ namespace
     //         tagged chunks (VDP registers / palette / bitmap); the SCREEN mode
     //         is recovered from the emulated register state.
     //
-    // Reference: RECOIL, DecodeMif / DecodeMig.
 
     // Shared MSB-first bit reader (8 bits sliding left with a trailing 1).
     struct MsxBitStream
@@ -1060,8 +1057,6 @@ namespace
         ~InterfaceMSXi()
         {
         }
-
-        // --- geometry / scaling (mirrors RECOIL SetScaledPixel) ---
 
         int originalWidth() const { return m_scale == DOUBLE_X ? (m_width >> 1) : m_width; }
         int originalHeight() const { return m_scale == DOUBLE_Y ? (m_height >> 1) : m_height; }
