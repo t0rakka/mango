@@ -180,45 +180,16 @@ namespace
             const int channel_bits = int(bytes_per_sample) * 8;
             const size_t stride = size_t(width) * colors * bytes_per_sample;
 
-            if (colors == 3)
-            {
-                // Wrap LibRaw's interleaved RGB buffer and let the blitter normalize it
-                // into the (UNORM16 RGBA) target, synthesizing opaque alpha.
-                Format source(colors * channel_bits, Format::UNORM, Format::RGB,
-                              channel_bits, channel_bits, channel_bits, 0, Format::LINEAR);
-                Surface raw_surface(width, height, source, stride, image->data);
-                target.blit(0, 0, raw_surface);
-            }
-            else
-            {
-                // Monochrome sensor: the blitter has no luminance -> RGBA16 path, so
-                // broadcast the single channel into the UNORM16 RGBA target directly.
-                for (int y = 0; y < height; ++y)
-                {
-                    u16* d = target.address<u16>(0, y);
+            // Wrap LibRaw's interleaved buffer and let the blitter normalize it into the
+            // (UNORM16 RGBA) target. RGB synthesizes opaque alpha; a monochrome sensor's
+            // single channel is broadcast to RGB -- both handled by the generic converter.
+            Format source = (colors == 3)
+                ? Format(colors * channel_bits, Format::UNORM, Format::RGB,
+                         channel_bits, channel_bits, channel_bits, 0, Format::LINEAR)
+                : LuminanceFormat(channel_bits, Format::UNORM, channel_bits, 0, Format::LINEAR);
 
-                    if (bits > 8)
-                    {
-                        const u16* s = reinterpret_cast<const u16*>(image->data) + size_t(y) * width;
-                        for (int x = 0; x < width; ++x)
-                        {
-                            const u16 v = s[x];
-                            d[0] = v; d[1] = v; d[2] = v; d[3] = 0xffff;
-                            d += 4;
-                        }
-                    }
-                    else
-                    {
-                        const u8* s = image->data + size_t(y) * width;
-                        for (int x = 0; x < width; ++x)
-                        {
-                            const u16 v = u16(s[x] * 0x0101); // replicate 8-bit into 16-bit
-                            d[0] = v; d[1] = v; d[2] = v; d[3] = 0xffff;
-                            d += 4;
-                        }
-                    }
-                }
-            }
+            Surface raw_surface(width, height, source, stride, image->data);
+            target.blit(0, 0, raw_surface);
 
             LibRaw::dcraw_clear_mem(image);
 
