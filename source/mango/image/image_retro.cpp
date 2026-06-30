@@ -12,7 +12,8 @@
 
     Currently implemented:
 
-        .mag    MAKIchan Graphics
+        .mag            MAKIchan Graphics
+        .shr .3200      Apple IIGS Super Hi-Res
 
     Reference: RECOIL (Retro Computer Image Library), recoil.c.
 
@@ -555,6 +556,474 @@ namespace
         return new MagDecoder(memory);
     }
 
+    // ------------------------------------------------------------------------
+    // Apple IIGS Super Hi-Res (.SHR, .3200)
+    //
+    // The Apple IIGS Super Hi-Res screen is 320x200 with 16 colors per line,
+    // each color a 12-bit $0RGB value. A 200-byte "scanline control byte" table
+    // selects one of 16 palettes (each 32 bytes) per line. Several on-disk
+    // wrappers exist:
+    //
+    //     $C1/APF    Apple Preferred Format - chunked, PackBytes compressed,
+    //                optional per-line MULTIPAL palettes, 320 or 640 modes.
+    //     $2000      Raw 32000-byte bitmap + SCB table + palettes (optionally
+    //                PackBytes compressed to 0x8000 bytes).
+    //     3200       3200-color: one full 16-color palette per scanline. Either
+    //                uncompressed (38400 bytes, "Brooks") or the "$3201" packed
+    //                variant ($C1 D0 D0 00 header).
+    //
+    // The .shr extension is additionally used by the (unrelated) TRS-80
+    // MagicDraw program for a 640x240 monochrome PGC-RLE bitmap; it is handled
+    // as a magic-less fallback.
+    //
+    // Reference: RECOIL, DecodeApfShr / DecodeAppleIIShr / DecodeSh3 /
+    // Decode3201 / DecodeTrsShr.
+    // ------------------------------------------------------------------------
+
+    // Apple PackBytes run-length decoder.
+    struct PackBytesStream
+    {
+        const u8* content;
+        int contentOffset;
+        int contentLength;
+        int count = 1;
+        int pattern = 0;
+
+        int readByte()
+        {
+            if (contentOffset >= contentLength)
+                return -1;
+            return content[contentOffset++];
+        }
+
+        int readUnpacked()
+        {
+            if (--count == 0)
+            {
+                if (contentOffset >= contentLength)
+                    return -1;
+                int b = content[contentOffset++];
+                count = (b & 0x3f) + 1;
+                if (b >= 0x80)
+                    count <<= 2;
+                static const int patterns [4] = { 0, 1, 4, 1 };
+                pattern = patterns[b >> 6];
+            }
+            else if ((count & (pattern - 1)) == 0)
+            {
+                contentOffset -= pattern;
+            }
+            return readByte();
+        }
+    };
+
+    // PGC byte-oriented RLE used by the TRS-80 MagicDraw .SHR variant.
+    struct PgcStream
+    {
+        const u8* content;
+        int contentOffset;
+        int contentLength;
+        int repeatCount = 0;
+        int repeatValue = 0;
+
+        int readByte()
+        {
+            if (contentOffset >= contentLength)
+                return -1;
+            return content[contentOffset++];
+        }
+
+        bool readCommand()
+        {
+            int b = readByte();
+            if (b < 0)
+                return false;
+            if (b < 128)
+            {
+                repeatCount = b;
+                repeatValue = -1; // literal run
+            }
+            else
+            {
+                repeatCount = b - 128;
+                repeatValue = readByte();
+            }
+            return true;
+        }
+
+        int readRle()
+        {
+            while (repeatCount == 0)
+            {
+                if (!readCommand())
+                    return -1;
+            }
+            repeatCount--;
+            if (repeatValue >= 0)
+                return repeatValue;
+            return readByte();
+        }
+    };
+
+    struct InterfaceSHR : ImageDecodeInterface
+    {
+        ConstMemory m_memory;
+        std::vector<u32> m_pixels; // 0x00RRGGBB
+        int m_width = 0;
+        int m_height = 0;
+        bool m_doubled = false;    // 640 mode: source line drawn on two rows
+        u32 m_palette [16];
+
+        InterfaceSHR(ConstMemory memory)
+            : m_memory(memory)
+        {
+            const u8* content = memory.address;
+            const int length = int(memory.size);
+
+            // Try the wrappers in an order that is safe for both .shr and
+            // .3200 (strong magics first, size-only formats last). The .shr
+            // extension is also used by the TRS-80 MagicDraw program, whose
+            // mono PGC-RLE bitmap has no magic - it goes last as a fallback.
+            bool ok = decodeApf(content, length)
+                   || decode3201(content, length)
+                   || decodeSh3(content, length)
+                   || decodeAppleIIShr(content, length)
+                   || decodeTrsShr(content, length);
+
+            if (!ok)
+            {
+                header.setError("[ImageDecoder.SHR] Unsupported or invalid Super Hi-Res image.");
+                return;
+            }
+
+            header.width  = m_width;
+            header.height = m_height;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        ~InterfaceSHR()
+        {
+        }
+
+        static bool isString(const u8* content, int offset, const char* s)
+        {
+            for ( ; *s; ++s, ++offset)
+                if (content[offset] != u8(*s))
+                    return false;
+            return true;
+        }
+
+        static int get32le(const u8* content, int offset)
+        {
+            return content[offset] | (content[offset + 1] << 8) |
+                   (content[offset + 2] << 16) | (content[offset + 3] << 24);
+        }
+
+        bool setSize(int width, int height, bool doubled)
+        {
+            if (width <= 0 || height <= 0 || width > 1024 || height > 1024)
+                return false;
+            m_width = width;
+            m_height = height;
+            m_doubled = doubled;
+            m_pixels.assign(size_t(width) * height, 0);
+            return true;
+        }
+
+        // One IIGS palette: 16 entries of $0RGB (low nibble of each byte).
+        void setPalette(const u8* content, int contentOffset, int reverse)
+        {
+            for (int c = 0; c < 16; ++c)
+            {
+                int offset = contentOffset + ((c ^ reverse) << 1);
+                int gb = content[offset];
+                int r = content[offset + 1] & 0xf;
+                int g = gb >> 4;
+                int b = gb & 0xf;
+                int rgb = (r << 16) | (g << 8) | b;
+                rgb |= rgb << 4; // 4-bit -> 8-bit per channel
+                m_palette[c] = u32(rgb);
+            }
+        }
+
+        // 320-mode scanline: 160 bytes, 2 pixels per byte (high nibble first).
+        void decodeShrLine(const u8* content, int y)
+        {
+            const u8* row = content + y * 160;
+            u32* dst = &m_pixels[size_t(y) * 320];
+            for (int x = 0; x < 320; ++x)
+            {
+                int b = row[x >> 1];
+                int nibble = (x & 1) == 0 ? (b >> 4) : (b & 0xf);
+                dst[x] = m_palette[nibble];
+            }
+        }
+
+        bool decodePackBytes(PackBytesStream& stream, int pixelsOffset, int unpackedBytes)
+        {
+            const int size = int(m_pixels.size());
+            for (int x = 0; x < unpackedBytes; ++x)
+            {
+                int b = stream.readUnpacked();
+                if (b < 0)
+                    return false;
+
+                if (m_doubled)
+                {
+                    int offset = (pixelsOffset << 1) + (x << 2);
+                    if (offset < 0 || offset + m_width + 3 >= size)
+                        return false;
+                    m_pixels[offset + m_width + 0] = m_pixels[offset + 0] = m_palette[8 + (b >> 6)];
+                    m_pixels[offset + m_width + 1] = m_pixels[offset + 1] = m_palette[12 + ((b >> 4) & 3)];
+                    m_pixels[offset + m_width + 2] = m_pixels[offset + 2] = m_palette[(b >> 2) & 3];
+                    m_pixels[offset + m_width + 3] = m_pixels[offset + 3] = m_palette[4 + (b & 3)];
+                }
+                else
+                {
+                    int offset = pixelsOffset + (x << 1);
+                    if (offset < 0 || offset + 1 >= size)
+                        return false;
+                    m_pixels[offset + 0] = m_palette[b >> 4];
+                    m_pixels[offset + 1] = m_palette[b & 0xf];
+                }
+            }
+            return true;
+        }
+
+        // $2000: raw bitmap + SCB table (0x7d00) + 16 palettes (0x7e00).
+        bool decodeAppleIIShrUnpacked(const u8* content)
+        {
+            if (!setSize(320, 200, false))
+                return false;
+            for (int y = 0; y < 200; ++y)
+            {
+                setPalette(content, 0x7e00 + ((content[0x7d00 + y] & 0xf) << 5), 0);
+                decodeShrLine(content, y);
+            }
+            return true;
+        }
+
+        bool decodeAppleIIShr(const u8* content, int length)
+        {
+            if (length == 32768)
+                return decodeAppleIIShrUnpacked(content);
+
+            // PackBytes compressed to exactly 0x8000 bytes.
+            std::vector<u8> unpacked(32768);
+            PackBytesStream stream { content, 0, length };
+            for (int o = 0; o < 32768; ++o)
+            {
+                int b = stream.readUnpacked();
+                if (b < 0)
+                    return false;
+                unpacked[o] = u8(b);
+            }
+            if (stream.readUnpacked() >= 0)
+                return false; // trailing data: not this format
+            return decodeAppleIIShrUnpacked(unpacked.data());
+        }
+
+        // 3200-color: one 16-color palette per scanline (38400 bytes).
+        bool decodeSh3(const u8* content, int length)
+        {
+            if (length != 38400)
+                return false;
+            if (!setSize(320, 200, false))
+                return false;
+            for (int y = 0; y < 200; ++y)
+            {
+                setPalette(content, 0x7d00 + (y << 5), 0xf);
+                decodeShrLine(content, y);
+            }
+            return true;
+        }
+
+        // $3201: packed 3200-color (per-line palette + PackBytes bitmap).
+        bool decode3201(const u8* content, int length)
+        {
+            if (length < 6404 + 160 * 200 / 128 ||
+                content[0] != 0xc1 || content[1] != 0xd0 || content[2] != 0xd0 || content[3] != 0)
+                return false;
+            if (!setSize(320, 200, false))
+                return false;
+            PackBytesStream stream { content, 0x1904, length };
+            for (int y = 0; y < 200; ++y)
+            {
+                setPalette(content, 4 + (y << 5), 0xf);
+                if (!decodePackBytes(stream, y * 320, 160))
+                    return false;
+            }
+            return true;
+        }
+
+        // TRS-80 MagicDraw: 640x240 mono PGC-RLE bitmap, displayed 640x480.
+        // There is no header/magic, so this is only reached as a last resort.
+        bool decodeTrsShr(const u8* content, int length)
+        {
+            if (!setSize(640, 480, false))
+                return false;
+            PgcStream rle { content, 0, length };
+            for (int y = 0; y < 240; ++y)
+            {
+                int b = 0;
+                u32* row0 = &m_pixels[size_t(2 * y) * 640];
+                u32* row1 = &m_pixels[size_t(2 * y + 1) * 640];
+                for (int x = 0; x < 640; ++x)
+                {
+                    if ((x & 7) == 0)
+                    {
+                        b = rle.readRle();
+                        if (b < 0)
+                            return false;
+                    }
+                    u32 c = ((b >> (~x & 7)) & 1) ? 0xffffffu : 0x000000u;
+                    row0[x] = c;
+                    row1[x] = c;
+                }
+            }
+            return true;
+        }
+
+        // Apple Preferred Format (chunked, PackBytes, optional MULTIPAL).
+        bool decodeApf(const u8* content, int length)
+        {
+            if (length < 1249 || content[4] != 4 || !isString(content, 5, "MAIN") || content[14] != 0)
+                return false;
+
+            int paletteCount = content[13];
+            if (paletteCount > 16)
+                return false;
+
+            int dirOffset = 0x11 + (paletteCount << 5);
+            if (dirOffset >= length)
+                return false;
+
+            int mode = content[9] & 0xf0;
+            int width = content[11] | (content[12] << 8);
+            int height = content[dirOffset - 2] | (content[dirOffset - 1] << 8);
+
+            int bytesPerLine;
+            switch (mode)
+            {
+                case 0x00:
+                    if ((width & 1) || !setSize(width, height, false))
+                        return false;
+                    bytesPerLine = width >> 1;
+                    break;
+                case 0x80:
+                    if ((width & 3) || !setSize(width, height << 1, true))
+                        return false;
+                    bytesPerLine = width >> 2;
+                    break;
+                default:
+                    return false;
+            }
+
+            // Locate an optional per-line MULTIPAL palette chunk (200-line art).
+            int multipalOffset = -1;
+            int contentOffset = 0;
+            if (height == 200)
+            {
+                for (int chunkLength = get32le(content, 0); ; )
+                {
+                    if (chunkLength <= 0)
+                        return false;
+                    contentOffset += chunkLength;
+                    if (contentOffset < 0 || contentOffset > length - 6415)
+                        break;
+                    chunkLength = get32le(content, contentOffset);
+                    if (chunkLength == 6415 && content[contentOffset + 4] == 8 &&
+                        isString(content, contentOffset + 5, "MULTIPAL") &&
+                        content[contentOffset + 13] == 200 && content[contentOffset + 14] == 0)
+                    {
+                        multipalOffset = contentOffset + 15;
+                        break;
+                    }
+                }
+            }
+
+            contentOffset = dirOffset + (height << 2);
+            if (contentOffset >= length)
+                return false;
+
+            PackBytesStream stream { content, contentOffset, length };
+            for (int y = 0; y < height; ++y)
+            {
+                if (multipalOffset >= 0)
+                {
+                    setPalette(content, multipalOffset + (y << 5), 0);
+                }
+                else
+                {
+                    int lineMode = content[dirOffset + (y << 2) + 2];
+                    int palette = lineMode & 0xf;
+                    if ((lineMode & 0xf0) != mode || palette >= paletteCount ||
+                        content[dirOffset + (y << 2) + 3] != 0)
+                        return false;
+                    setPalette(content, 0xf + (palette << 5), 0);
+                }
+
+                int nextLineOffset = stream.contentOffset +
+                    content[dirOffset + (y << 2)] + (content[dirOffset + (y << 2) + 1] << 8);
+                if (!decodePackBytes(stream, y * width, bytesPerLine))
+                    return false;
+                stream.contentOffset = nextLineOffset;
+            }
+            return true;
+        }
+
+        ConstMemory memory(int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+            return ConstMemory();
+        }
+
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(options);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
+
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+
+            for (int y = 0; y < m_height; ++y)
+            {
+                const u32* src = &m_pixels[size_t(y) * m_width];
+                u8* d = target.address<u8>(0, y);
+                for (int x = 0; x < m_width; ++x)
+                {
+                    u32 rgb = src[x];
+                    d[0] = u8(rgb >> 16);
+                    d[1] = u8(rgb >> 8);
+                    d[2] = u8(rgb);
+                    d[3] = 0xff;
+                    d += 4;
+                }
+            }
+
+            target.resolve();
+
+            status.direct = target.isDirect();
+            return status;
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceSHR(ConstMemory memory)
+    {
+        return new InterfaceSHR(memory);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -564,6 +1033,10 @@ namespace mango::image
     {
         // MAKIchan Graphics
         registerImageDecoder(createInterfaceMAG, ".mag");
+
+        // Apple IIGS Super Hi-Res
+        registerImageDecoder(createInterfaceSHR, ".shr");
+        registerImageDecoder(createInterfaceSHR, ".3200");
     }
 
 } // namespace mango::image

@@ -16,6 +16,9 @@
     overlaid hardware sprites are intentionally ignored - this is a single file,
     single image decoder.
 
+    Also handles the V9990 ("GRAPHIC9000") .G9B format, which carries its own
+    self-describing header and an optional LZ compression layer.
+
     Reference: RECOIL (Retro Computer Image Library), recoil.c.
 */
 #include <vector>
@@ -93,6 +96,36 @@ namespace
         {
             palette[c] = Color(expand3((c >> 2) & 7), expand3((c >> 5) & 7), expand3(BLUES[c & 3]), 0xff);
         }
+    }
+
+    // Decode a single MSX YJK pixel. "base" points at the start of the row,
+    // "x" is the column and "width" the row length (needed to detect the last,
+    // partial quad). When "usePalette" is set, an odd luma nibble selects a
+    // direct palette color instead of YJK chroma (SCREEN 10/11 behaviour).
+    static Color msxYjkColor(const u8* base, int x, int width, const Color* palette, bool usePalette)
+    {
+        int yv = base[x] >> 3;
+        if (usePalette && (yv & 1))
+            return palette[yv >> 1];
+
+        int r, g, b;
+        if ((x | 3) >= width)
+        {
+            r = g = b = yv;
+        }
+        else
+        {
+            const u8* p = base + (x & ~3);
+            int k = (p[0] & 7) | ((p[1] & 7) << 3);
+            int j = (p[2] & 7) | ((p[3] & 7) << 3);
+            k -= (k & 32) << 1;
+            j -= (j & 32) << 1;
+            r = clampU5(yv + j);
+            g = clampU5(yv + k);
+            b = clampU5((5 * yv - 2 * j - k + 2) >> 2);
+        }
+
+        return Color(expand5(r), expand5(g), expand5(b), 0xff);
     }
 
     static int getMsxHeader(const u8* data, size_t size)
@@ -252,28 +285,7 @@ namespace
 
         Color yjk(const u8* row, int x, int width, const Color* palette, bool usePalette)
         {
-            int yv = row[x] >> 3;
-            if (usePalette && (yv & 1))
-                return palette[yv >> 1];
-
-            int r, g, b;
-            if ((x | 3) >= width)
-            {
-                r = g = b = yv;
-            }
-            else
-            {
-                const u8* p = row + (x & ~3);
-                int k = (p[0] & 7) | ((p[1] & 7) << 3);
-                int j = (p[2] & 7) | ((p[3] & 7) << 3);
-                k -= (k & 32) << 1;
-                j -= (j & 32) << 1;
-                r = clampU5(yv + j);
-                g = clampU5(yv + k);
-                b = clampU5((5 * yv - 2 * j - k + 2) >> 2);
-            }
-
-            return Color(expand5(r), expand5(g), expand5(b), 0xff);
+            return msxYjkColor(row, x, width, palette, usePalette);
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -494,6 +506,460 @@ namespace
         return new Interface(memory, screen);
     }
 
+    // ------------------------------------------------------------
+    // GRAPHIC9000 / V9990 (.G9B)
+    // ------------------------------------------------------------
+    //
+    // The V9990 ("GRAPHIC9000") was a much more capable VDP than the stock
+    // MSX2 V9938; .G9B is the de-facto interchange format for the homebrew
+    // graphics it produces. The 16-byte header is followed by an optional
+    // palette and then the (optionally compressed) pixel data:
+    //
+    //     0   "G9B"
+    //     3   11, 0           (fixed)
+    //     5   depth           bits per pixel: 2, 4, 8 or 16
+    //     6   mode            for 8bpp/0-color: 0x40 GRB332, 0x80 YJK, 0xc0 YUV
+    //     7   colors          palette entry count (0, 4, 16 or 64)
+    //     8   width           little-endian u16
+    //     10  height          little-endian u16
+    //     12  compression     0 = none, 1 = LZ (G9bStream)
+    //     16  palette         colors * 3 bytes (5-bit R, G, B)
+    //
+    // Reference: RECOIL, DecodeG9b().
+
+    // LZ-style bit/byte stream used by the compressed variant.
+    struct G9bStream
+    {
+        static constexpr int BlockEnd = -2;
+
+        const u8* content;
+        int contentLength;
+        int contentOffset = 0;
+        int bits = 0; // 8 bits sliding left with a trailing 1
+
+        int readBit()
+        {
+            if ((bits & 0x7f) == 0)
+            {
+                if (contentOffset >= contentLength)
+                    return -1;
+                bits = (content[contentOffset++] << 1) | 1;
+            }
+            else
+            {
+                bits <<= 1;
+            }
+            return (bits >> 8) & 1;
+        }
+
+        int readByte()
+        {
+            if (contentOffset >= contentLength)
+                return -1;
+            return content[contentOffset++];
+        }
+
+        int readBits(int count)
+        {
+            int result = 0;
+            while (--count >= 0)
+            {
+                int bit = readBit();
+                if (bit < 0)
+                    return -1;
+                result = (result << 1) | bit;
+            }
+            return result;
+        }
+
+        int readLength()
+        {
+            for (int length = 1; length < (1 << 16); )
+            {
+                switch (readBit())
+                {
+                    case 0: return length + 1;
+                    case 1: break;
+                    default: return -1;
+                }
+                length <<= 1;
+                switch (readBit())
+                {
+                    case 0: break;
+                    case 1: length++; break;
+                    default: return -1;
+                }
+            }
+            return BlockEnd;
+        }
+
+        bool unpack(u8* unpacked, int headerLength, int unpackedLength)
+        {
+            contentOffset = headerLength + 3;
+            for (int offset = headerLength; offset < unpackedLength; )
+            {
+                int b;
+                switch (readBit())
+                {
+                    case 0:
+                        b = readByte();
+                        if (b < 0)
+                            return false;
+                        unpacked[offset++] = u8(b);
+                        break;
+
+                    case 1:
+                    {
+                        int length = readLength();
+                        if (length == BlockEnd)
+                        {
+                            contentOffset += 2; // skip block length
+                            bits = 0;           // reset bit buffer
+                            break;
+                        }
+                        if (length < 0 || offset + length > unpackedLength)
+                            return false;
+                        int distance = readByte();
+                        if (distance < 0)
+                            return false;
+                        if (distance >= 128)
+                        {
+                            b = readBits(4);
+                            if (b < 0)
+                                return false;
+                            distance += (b - 1) << 7;
+                        }
+                        distance++;
+                        if (offset - distance < headerLength)
+                            return false;
+                        do
+                        {
+                            unpacked[offset] = unpacked[offset - distance];
+                            offset++;
+                        }
+                        while (--length > 0);
+                        break;
+                    }
+
+                    default:
+                        return false;
+                }
+            }
+            return true;
+        }
+    };
+
+    struct InterfaceG9B : ImageDecodeInterface
+    {
+        enum class Mode
+        {
+            MSX6,   // 2 bpp, 4-color palette
+            NIBBLE, // 4 bpp, 16-color palette
+            BYTE,   // 8 bpp, palette (64-color or GRB332)
+            YJK,    // 8 bpp YJK
+            YUV,    // 8 bpp YUV
+            RGB16,  // 15-bit direct color
+        };
+
+        ConstMemory m_memory;
+        Buffer m_unpacked;          // holds decompressed stream when needed
+        const u8* m_content = nullptr;
+        int m_header_length = 0;
+        Mode m_mode = Mode::BYTE;
+        Color m_palette [256];
+
+        InterfaceG9B(ConstMemory memory)
+            : m_memory(memory)
+        {
+            const u8* content = memory.address;
+            const int length = int(memory.size);
+
+            if (length < 17 ||
+                content[0] != 'G' || content[1] != '9' || content[2] != 'B' ||
+                content[3] != 11 || content[4] != 0)
+            {
+                header.setError("[ImageDecoder.MSX] Incorrect G9B identifier.");
+                return;
+            }
+
+            int depth = content[5];
+            int colors = content[7];
+            int headerLength = 16 + colors * 3;
+            int width = content[8] | (content[9] << 8);
+            int height = content[10] | (content[11] << 8);
+
+            if (length <= headerLength || width <= 0 || height <= 0 ||
+                width > 2048 || height > 2048)
+            {
+                header.setError("[ImageDecoder.MSX] Incorrect G9B header.");
+                return;
+            }
+
+            // The unpacked size is computed from the original (pre-substitution)
+            // depth, before YJK / YUV remap the 8bpp modes below.
+            const int unpackedLength = headerLength + ((width * depth + 7) >> 3) * height;
+
+            for (int c = 0; c < 256; ++c)
+                m_palette[c] = Color(0, 0, 0, 0xff);
+
+            switch (depth)
+            {
+                case 2:
+                    if (colors != 4 || !setG9bPalette(content, 4))
+                    {
+                        header.setError("[ImageDecoder.MSX] Incorrect G9B palette.");
+                        return;
+                    }
+                    m_mode = Mode::MSX6;
+                    break;
+
+                case 4:
+                    if (colors != 16 || !setG9bPalette(content, 16))
+                    {
+                        header.setError("[ImageDecoder.MSX] Incorrect G9B palette.");
+                        return;
+                    }
+                    m_mode = Mode::NIBBLE;
+                    break;
+
+                case 8:
+                    if (colors == 0)
+                    {
+                        if (width & 3)
+                        {
+                            header.setError("[ImageDecoder.MSX] Incorrect G9B width.");
+                            return;
+                        }
+                        switch (content[6])
+                        {
+                            case 0x40:
+                                setSc8Palette(m_palette);
+                                m_mode = Mode::BYTE;
+                                break;
+                            case 0x80:
+                                m_mode = Mode::YJK;
+                                break;
+                            case 0xc0:
+                                m_mode = Mode::YUV;
+                                break;
+                            default:
+                                header.setError("[ImageDecoder.MSX] Incorrect G9B mode.");
+                                return;
+                        }
+                    }
+                    else if (colors == 64)
+                    {
+                        if (!setG9bPalette(content, 64))
+                        {
+                            header.setError("[ImageDecoder.MSX] Incorrect G9B palette.");
+                            return;
+                        }
+                        m_mode = Mode::BYTE;
+                    }
+                    else
+                    {
+                        header.setError("[ImageDecoder.MSX] Incorrect G9B palette.");
+                        return;
+                    }
+                    break;
+
+                case 16:
+                    m_mode = Mode::RGB16;
+                    break;
+
+                default:
+                    header.setError("[ImageDecoder.MSX] Incorrect G9B depth.");
+                    return;
+            }
+
+            switch (content[12])
+            {
+                case 0:
+                    if (length != unpackedLength)
+                    {
+                        header.setError("[ImageDecoder.MSX] Incorrect G9B length.");
+                        return;
+                    }
+                    m_content = content;
+                    break;
+
+                case 1:
+                {
+                    m_unpacked.resize(unpackedLength);
+                    G9bStream stream { content, length };
+                    if (!stream.unpack(m_unpacked.data(), headerLength, unpackedLength))
+                    {
+                        header.setError("[ImageDecoder.MSX] G9B decompression failed.");
+                        return;
+                    }
+                    m_content = m_unpacked.data();
+                    break;
+                }
+
+                default:
+                    header.setError("[ImageDecoder.MSX] Incorrect G9B compression.");
+                    return;
+            }
+
+            m_header_length = headerLength;
+
+            header.width  = width;
+            header.height = height;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        ~InterfaceG9B()
+        {
+        }
+
+        // Palette: 3 bytes per entry, each a 5-bit channel. Reject if any
+        // channel uses the top three bits (RECOIL treats this as malformed).
+        bool setG9bPalette(const u8* content, int colors)
+        {
+            for (int c = 0; c < colors; ++c)
+            {
+                int r = content[16 + c * 3 + 0];
+                int g = content[16 + c * 3 + 1];
+                int b = content[16 + c * 3 + 2];
+                if (((r | g | b) & 0xe0) != 0)
+                    return false;
+                m_palette[c] = Color(expand5(r), expand5(g), expand5(b), 0xff);
+            }
+            return true;
+        }
+
+        ConstMemory memory(int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+            return ConstMemory();
+        }
+
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(options);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
+
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+            decodeImage(target);
+            target.resolve();
+
+            status.direct = target.isDirect();
+            return status;
+        }
+
+        void decodeImage(const Surface& dest)
+        {
+            const int width = header.width;
+            const int height = header.height;
+            const u8* content = m_content;
+
+            for (int y = 0; y < height; ++y)
+            {
+                u8* scan = dest.address<u8>(0, y);
+
+                switch (m_mode)
+                {
+                    case Mode::MSX6:
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const int offset = y * width + x;
+                            const int b = content[m_header_length + (offset >> 2)];
+                            store(scan, m_palette[(b >> ((~offset & 3) << 1)) & 3]);
+                        }
+                        break;
+
+                    case Mode::NIBBLE:
+                    {
+                        const int stride = (width + 1) >> 1;
+                        const u8* row = content + 64 + size_t(y) * stride;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const int b = row[x >> 1];
+                            const int nibble = (x & 1) == 0 ? (b >> 4) : (b & 15);
+                            store(scan, m_palette[nibble]);
+                        }
+                        break;
+                    }
+
+                    case Mode::BYTE:
+                    {
+                        const u8* row = content + m_header_length + size_t(y) * width;
+                        for (int x = 0; x < width; ++x)
+                            store(scan, m_palette[row[x]]);
+                        break;
+                    }
+
+                    case Mode::YJK:
+                    {
+                        const u8* row = content + 16 + size_t(y) * width;
+                        for (int x = 0; x < width; ++x)
+                            store(scan, msxYjkColor(row, x, width, m_palette, false));
+                        break;
+                    }
+
+                    case Mode::YUV:
+                    {
+                        const u8* row = content + 16 + size_t(y) * width;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const int yv = row[x] >> 3;
+                            const u8* p = row + (x & ~3);
+                            int v = (p[0] & 7) | ((p[1] & 7) << 3);
+                            int u = (p[2] & 7) | ((p[3] & 7) << 3);
+                            u -= (u & 0x20) << 1;
+                            v -= (v & 0x20) << 1;
+                            const int r = clampU5(yv + u);
+                            const int g = clampU5((((5 * yv - v) >> 1) - u) >> 1);
+                            const int b = clampU5(yv + v);
+                            store(scan, Color(expand5(r), expand5(g), expand5(b), 0xff));
+                        }
+                        break;
+                    }
+
+                    case Mode::RGB16:
+                    {
+                        const u8* row = content + 16 + size_t(y) * width * 2;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const int c = row[x * 2] | (row[x * 2 + 1] << 8);
+                            // XGGGGGRR RRRBBBBB
+                            int rgb = ((c & 0x3e0) << 14) | ((c & 0x7c00) << 1) | ((c & 0x1f) << 3);
+                            rgb |= (rgb >> 5) & 0x070707;
+                            store(scan, Color((rgb >> 16) & 0xff, (rgb >> 8) & 0xff, rgb & 0xff, 0xff));
+                        }
+                        break;
+                    }
+                }
+            }
+        }
+
+        void store(u8*& d, Color color)
+        {
+            d[0] = color.r;
+            d[1] = color.g;
+            d[2] = color.b;
+            d[3] = 0xff;
+            d += 4;
+        }
+    };
+
+    ImageDecodeInterface* createInterfaceG9B(ConstMemory memory)
+    {
+        return new InterfaceG9B(memory);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -510,6 +976,7 @@ namespace mango::image
         registerImageDecoder(createInterface<Screen::SC8>, ".sc8");
         registerImageDecoder(createInterface<Screen::SCA>, ".sca");
         registerImageDecoder(createInterface<Screen::SCC>, ".scc");
+        registerImageDecoder(createInterfaceG9B, ".g9b");
     }
 
 } // namespace mango::image
