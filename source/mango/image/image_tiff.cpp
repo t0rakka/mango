@@ -76,9 +76,11 @@ namespace
         JPEG_MODERN = 7,
         ZIP = 8,
         CCITT_RLE_W = 32771, // CCITT Group 3 (T.4) 1D RLE (word aligned)
+        PIXARLOG = 32909,    // Pixar companded 11-bit log + zlib (HDR)
         PACKBITS = 32773,
         DEFLATE = 32946,
-        SGILOG = 34676,
+        SGILOG = 34676,      // SGI LogLuv / LogL adaptive RLE (HDR)
+        SGILOG24 = 34677,    // SGI LogLuv 24-bit packed (HDR)
         WEBP = 50001,
     };
 
@@ -101,7 +103,8 @@ namespace
         ICCLAB = 9,
         ITULAB = 10,
         CFA = 32803,
-        LOGLUV = 32845,
+        LOGL = 32844,    // CIE Log2(L) - SGI LogLuv grayscale (HDR)
+        LOGLUV = 32845,  // CIE Log2(L) (u',v') - SGI LogLuv color (HDR)
         LINEAR_RAW = 34892,
     };
 
@@ -1282,6 +1285,297 @@ namespace
         }
     };
 
+    // ------------------------------------------------------------------------
+    // PixarLog (COMPRESSION_PIXARLOG, 32909)
+    //
+    // Pixar's companded 11-bit log encoding wrapped in a zlib stream. The codec
+    // stores extended-range linear color (values up to ~25.0) as 11-bit tokens
+    // with horizontal differencing, then zlib-compresses them. The 11-bit token
+    // -> linear mapping is the "ToLinearF" table below. We always decode to
+    // linear float to preserve the HDR range.
+    //
+    // ------------------------------------------------------------------------
+
+    // 2049-entry token -> linear table (2048 codes + one slop entry).
+    const float* pixarLogToLinearTable()
+    {
+        static const std::vector<float> table = []
+        {
+            constexpr int TSIZE = 2048;
+            constexpr double RATIO = 1.004;
+            constexpr double ONE = 1250.0;
+
+            std::vector<float> t(TSIZE + 1);
+
+            double c = std::log(RATIO);
+            int nlin = int(1.0 / c); // must be integer
+            c = 1.0 / nlin;
+            double b = std::exp(-c * ONE); // b * exp(c * ONE) == 1
+            double linstep = b * c * std::exp(1.0);
+
+            int j = 0;
+            for (int i = 0; i < nlin; ++i)
+                t[j++] = float(i * linstep);
+            for (int i = nlin; i < TSIZE; ++i)
+                t[j++] = float(b * std::exp(c * i));
+            t[TSIZE] = t[TSIZE - 1];
+
+            return t;
+        }();
+
+        return table.data();
+    }
+
+    // Undo horizontal differencing for one row and convert tokens to linear
+    // float. Accumulators wrap modulo 2048 (the 11-bit code space).
+    void pixarLogAccumulateRow(const u16* wp, int n, int stride, float* op, const float* toLinear)
+    {
+        constexpr u32 mask = 0x7ff;
+
+        if (n < stride)
+            return;
+
+        u32 acc [4] = { 0, 0, 0, 0 };
+
+        for (int k = 0; k < stride; ++k)
+        {
+            acc[k] = wp[k] & mask;
+            op[k] = toLinear[acc[k]];
+        }
+
+        for (int x = stride; x < n; x += stride)
+        {
+            for (int k = 0; k < stride; ++k)
+            {
+                acc[k] = (acc[k] + wp[x + k]) & mask;
+                op[x + k] = toLinear[acc[k]];
+            }
+        }
+    }
+
+    // ------------------------------------------------------------------------
+    // SGI LogLuv / LogL (COMPRESSION_SGILOG 34676, COMPRESSION_SGILOG24 34677)
+    //
+    // Greg Ward Larson's high dynamic range encoding. Luminance is stored as a
+    // log2 value; chromaticity as CIE (u',v'). Three on-disk variants:
+    //
+    //   LogL  (16-bit)   PHOTOMETRIC_LOGL  + SGILOG     grayscale luminance
+    //   LogLuv(32-bit)   PHOTOMETRIC_LOGLUV+ SGILOG     sign+15 logL, 8 u, 8 v
+    //   LogLuv(24-bit)   PHOTOMETRIC_LOGLUV+ SGILOG24   10 logL', 14 (u,v) index
+    //
+    // The 16/32-bit forms use a byte-plane PackBits-style RLE; the 24-bit form
+    // is stored raw. We decode to linear float: luminance via 2^x, chromaticity
+    // to CIE XYZ, then to linear RGB with the SGI primaries matrix (which maps
+    // the equal-energy white [1,1,1] to RGB white). Negative (out-of-gamut)
+    // components are clamped to 0; highlights above 1 are preserved.
+    //
+    // ------------------------------------------------------------------------
+
+    // 24-bit (u',v') decode grid from uvcode.h (version 1.0, 1997).
+    struct UVRow { float ustart; short nus, ncum; };
+
+    static constexpr float UV_SQSIZ  = 0.003500f;
+    static constexpr float UV_VSTART = 0.016940f;
+    static constexpr int   UV_NVS    = 163;
+    static constexpr int   UV_NDIVS  = 16289;
+
+    const UVRow* logLuvUVRow()
+    {
+        static const UVRow uv_row[UV_NVS] =
+        {
+            {0.247663f,4,0},{0.243779f,6,4},{0.241684f,7,10},{0.237874f,9,17},
+            {0.235906f,10,26},{0.232153f,12,36},{0.228352f,14,48},{0.226259f,15,62},
+            {0.222371f,17,77},{0.220410f,18,94},{0.214710f,21,112},{0.212714f,22,133},
+            {0.210721f,23,155},{0.204976f,26,178},{0.202986f,27,204},{0.199245f,29,231},
+            {0.195525f,31,260},{0.193560f,32,291},{0.189878f,34,323},{0.186216f,36,357},
+            {0.186216f,36,393},{0.182592f,38,429},{0.179003f,40,467},{0.175466f,42,507},
+            {0.172001f,44,549},{0.172001f,44,593},{0.168612f,46,637},{0.168612f,46,683},
+            {0.163575f,49,729},{0.158642f,52,778},{0.158642f,52,830},{0.158642f,52,882},
+            {0.153815f,55,934},{0.153815f,55,989},{0.149097f,58,1044},{0.149097f,58,1102},
+            {0.142746f,62,1160},{0.142746f,62,1222},{0.142746f,62,1284},{0.138270f,65,1346},
+            {0.138270f,65,1411},{0.138270f,65,1476},{0.132166f,69,1541},{0.132166f,69,1610},
+            {0.126204f,73,1679},{0.126204f,73,1752},{0.126204f,73,1825},{0.120381f,77,1898},
+            {0.120381f,77,1975},{0.120381f,77,2052},{0.120381f,77,2129},{0.112962f,82,2206},
+            {0.112962f,82,2288},{0.112962f,82,2370},{0.107450f,86,2452},{0.107450f,86,2538},
+            {0.107450f,86,2624},{0.107450f,86,2710},{0.100343f,91,2796},{0.100343f,91,2887},
+            {0.100343f,91,2978},{0.095126f,95,3069},{0.095126f,95,3164},{0.095126f,95,3259},
+            {0.095126f,95,3354},{0.088276f,100,3449},{0.088276f,100,3549},{0.088276f,100,3649},
+            {0.088276f,100,3749},{0.081523f,105,3849},{0.081523f,105,3954},{0.081523f,105,4059},
+            {0.081523f,105,4164},{0.074861f,110,4269},{0.074861f,110,4379},{0.074861f,110,4489},
+            {0.074861f,110,4599},{0.068290f,115,4709},{0.068290f,115,4824},{0.068290f,115,4939},
+            {0.068290f,115,5054},{0.063573f,119,5169},{0.063573f,119,5288},{0.063573f,119,5407},
+            {0.063573f,119,5526},{0.057219f,124,5645},{0.057219f,124,5769},{0.057219f,124,5893},
+            {0.057219f,124,6017},{0.050985f,129,6141},{0.050985f,129,6270},{0.050985f,129,6399},
+            {0.050985f,129,6528},{0.050985f,129,6657},{0.044859f,134,6786},{0.044859f,134,6920},
+            {0.044859f,134,7054},{0.044859f,134,7188},{0.040571f,138,7322},{0.040571f,138,7460},
+            {0.040571f,138,7598},{0.040571f,138,7736},{0.036339f,142,7874},{0.036339f,142,8016},
+            {0.036339f,142,8158},{0.036339f,142,8300},{0.032139f,146,8442},{0.032139f,146,8588},
+            {0.032139f,146,8734},{0.032139f,146,8880},{0.027947f,150,9026},{0.027947f,150,9176},
+            {0.027947f,150,9326},{0.023739f,154,9476},{0.023739f,154,9630},{0.023739f,154,9784},
+            {0.023739f,154,9938},{0.019504f,158,10092},{0.019504f,158,10250},{0.019504f,158,10408},
+            {0.016976f,161,10566},{0.016976f,161,10727},{0.016976f,161,10888},{0.016976f,161,11049},
+            {0.012639f,165,11210},{0.012639f,165,11375},{0.012639f,165,11540},{0.009991f,168,11705},
+            {0.009991f,168,11873},{0.009991f,168,12041},{0.009016f,170,12209},{0.009016f,170,12379},
+            {0.009016f,170,12549},{0.006217f,173,12719},{0.006217f,173,12892},{0.005097f,175,13065},
+            {0.005097f,175,13240},{0.005097f,175,13415},{0.003909f,177,13590},{0.003909f,177,13767},
+            {0.002340f,177,13944},{0.002389f,170,14121},{0.001068f,164,14291},{0.001653f,157,14455},
+            {0.000717f,150,14612},{0.001614f,143,14762},{0.000270f,136,14905},{0.000484f,129,15041},
+            {0.001103f,123,15170},{0.001242f,115,15293},{0.001188f,109,15408},{0.001011f,103,15517},
+            {0.000709f,97,15620},{0.000301f,89,15717},{0.002416f,82,15806},{0.003251f,76,15888},
+            {0.003246f,69,15964},{0.004141f,62,16033},{0.005963f,55,16095},{0.008839f,47,16150},
+            {0.010490f,40,16197},{0.016994f,31,16237},{0.023659f,21,16268},
+        };
+        return uv_row;
+    }
+
+    inline double logLuvL16toY(int p16)
+    {
+        constexpr double M_LN2_ = 0.69314718055994530942;
+        int Le = p16 & 0x7fff;
+        if (!Le)
+            return 0.0;
+        double Y = std::exp(M_LN2_ / 256.0 * (Le + 0.5) - M_LN2_ * 64.0);
+        return (p16 & 0x8000) ? -Y : Y;
+    }
+
+    inline double logLuvL10toY(int p10)
+    {
+        constexpr double M_LN2_ = 0.69314718055994530942;
+        if (p10 == 0)
+            return 0.0;
+        return std::exp(M_LN2_ / 64.0 * (p10 + 0.5) - M_LN2_ * 12.0);
+    }
+
+    // Decode a 14-bit (u',v') chromaticity index via binary search in the grid.
+    bool logLuvUVDecode(double& u, double& v, int c)
+    {
+        if (c < 0 || c >= UV_NDIVS)
+            return false;
+
+        const UVRow* uv_row = logLuvUVRow();
+
+        unsigned lower = 0;
+        unsigned upper = UV_NVS;
+        while (upper - lower > 1)
+        {
+            unsigned vi = (lower + upper) >> 1;
+            int ui = c - uv_row[vi].ncum;
+            if (ui > 0)
+                lower = vi;
+            else if (ui < 0)
+                upper = vi;
+            else
+            {
+                lower = vi;
+                break;
+            }
+        }
+
+        unsigned vi = lower;
+        int ui = c - uv_row[vi].ncum;
+        u = double(uv_row[vi].ustart) + (double(ui) + 0.5) * double(UV_SQSIZ);
+        v = double(UV_VSTART) + (double(vi) + 0.5) * double(UV_SQSIZ);
+        return true;
+    }
+
+    void logLuv32toXYZ(u32 p, float* XYZ)
+    {
+        double L = logLuvL16toY(int(p) >> 16);
+        if (L <= 0.0)
+        {
+            XYZ[0] = XYZ[1] = XYZ[2] = 0.0f;
+            return;
+        }
+
+        constexpr double UVSCALE = 410.0;
+        double u = 1.0 / UVSCALE * ((p >> 8 & 0xff) + 0.5);
+        double v = 1.0 / UVSCALE * ((p & 0xff) + 0.5);
+        double s = 1.0 / (6.0 * u - 16.0 * v + 12.0);
+        double x = 9.0 * u * s;
+        double y = 4.0 * v * s;
+
+        XYZ[0] = float(x / y * L);
+        XYZ[1] = float(L);
+        XYZ[2] = float((1.0 - x - y) / y * L);
+    }
+
+    void logLuv24toXYZ(u32 p, float* XYZ)
+    {
+        constexpr double U_NEU = 0.210526316;
+        constexpr double V_NEU = 0.473684211;
+
+        double L = logLuvL10toY(p >> 14 & 0x3ff);
+        if (L <= 0.0)
+        {
+            XYZ[0] = XYZ[1] = XYZ[2] = 0.0f;
+            return;
+        }
+
+        double u, v;
+        if (!logLuvUVDecode(u, v, int(p & 0x3fff)))
+        {
+            u = U_NEU;
+            v = V_NEU;
+        }
+
+        double s = 1.0 / (6.0 * u - 16.0 * v + 12.0);
+        double x = 9.0 * u * s;
+        double y = 4.0 * v * s;
+
+        XYZ[0] = float(x / y * L);
+        XYZ[1] = float(L);
+        XYZ[2] = float((1.0 - x - y) / y * L);
+    }
+
+    // CIE XYZ (equal-energy white) -> linear RGB, SGI CCIR-709 primaries.
+    void logLuvXYZtoLinearRGB(const float* xyz, float* rgb)
+    {
+        double r =  2.690 * xyz[0] - 1.276 * xyz[1] - 0.414 * xyz[2];
+        double g = -1.022 * xyz[0] + 1.978 * xyz[1] + 0.044 * xyz[2];
+        double b =  0.061 * xyz[0] - 0.224 * xyz[1] + 1.163 * xyz[2];
+
+        rgb[0] = float(r > 0.0 ? r : 0.0);
+        rgb[1] = float(g > 0.0 ? g : 0.0);
+        rgb[2] = float(b > 0.0 ? b : 0.0);
+    }
+
+    // Byte-plane PackBits-style RLE used by SGILOG 16/32-bit. Fills `planes`
+    // byte planes (high to low) of `npixels` tokens. Advances bp/cc.
+    bool logLuvDecodeRLE(u32* tp, int npixels, const u8*& bp, size_t& cc, int planes)
+    {
+        for (int i = 0; i < npixels; ++i)
+            tp[i] = 0;
+
+        for (int shft = (planes - 1) * 8; shft >= 0; shft -= 8)
+        {
+            int i = 0;
+            while (i < npixels && cc > 0)
+            {
+                if (*bp >= 128)
+                {
+                    // run
+                    if (cc < 2)
+                        break;
+                    int rc = *bp++ + (2 - 128);
+                    u32 b = u32(*bp++) << shft;
+                    cc -= 2;
+                    while (rc-- && i < npixels)
+                        tp[i++] |= b;
+                }
+                else
+                {
+                    // non-run
+                    int rc = *bp++;
+                    while (--cc && rc-- && i < npixels)
+                        tp[i++] |= u32(*bp++) << shft;
+                }
+            }
+            if (i != npixels)
+                return false;
+        }
+        return true;
+    }
+
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
@@ -1472,6 +1766,29 @@ namespace
                 }
             }
 
+            // PixarLog carries companded 11-bit log samples with extended range.
+            // The stored BitsPerSample/SampleFormat is only a compatibility hint
+            if (m_context.compression == u32(Compression::PIXARLOG))
+            {
+                switch (m_context.samples_per_pixel)
+                {
+                    case 1: return LuminanceFormat(32, Format::FLOAT32, 32, 0);
+                    case 2: return LuminanceFormat(64, Format::FLOAT32, 32, 32);
+                    case 3: return Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0);
+                    default: return Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
+                }
+            }
+
+            // SGI LogLuv / LogL: high dynamic range, always decode to linear float.
+            if (m_context.photometric == u32(PhotometricInterpretation::LOGLUV))
+            {
+                return Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0);
+            }
+            if (m_context.photometric == u32(PhotometricInterpretation::LOGL))
+            {
+                return LuminanceFormat(32, Format::FLOAT32, 32, 0);
+            }
+
             // bit-packed formats resolve to at least 8 bits per channel
             //u32 bits = m_context.sample_bits >= 8 ? m_context.sample_bits : 8;
             u32 bits = round_ceil(m_context.sample_bits, 8);
@@ -1566,6 +1883,12 @@ namespace
                 case PhotometricInterpretation::SEPARATED:
                     return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
+                case PhotometricInterpretation::LOGLUV:
+                case PhotometricInterpretation::LOGL:
+                    // Note: LOGLUV / LOGL are handled earlier (decoded to linear float),
+                    // so they never reach this unsupported list.
+                    return Format();
+
                 case PhotometricInterpretation::CIELAB:
                     //return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 case PhotometricInterpretation::TRANSPARENCY_MASK:
@@ -1573,7 +1896,6 @@ namespace
                 case PhotometricInterpretation::ICCLAB:
                 case PhotometricInterpretation::ITULAB:
                 case PhotometricInterpretation::CFA:
-                case PhotometricInterpretation::LOGLUV:
                 case PhotometricInterpretation::LINEAR_RAW:
                     // TODO
                     header.setError("Unsupported PhotometricInterpretation: {}", m_context.photometric);
@@ -2386,6 +2708,128 @@ namespace
             }
         }
 
+        // Decode one PixarLog strip/tile directly into the (float) target.
+        void pixarlog_decompress(ImageDecodeStatus& status, Surface target, ConstMemory memory, int width, int height)
+        {
+            if (m_context.planar_configuration != 1)
+            {
+                status.setError("[ImageDecoder.TIFF] PixarLog planar configuration is not supported.");
+                return;
+            }
+
+            const int stride = int(m_context.samples_per_pixel);
+            if (stride < 1 || stride > 4)
+            {
+                status.setError("[ImageDecoder.TIFF] PixarLog unsupported channel count: {}", stride);
+                return;
+            }
+
+            const size_t nsamples = size_t(stride) * width * height;
+
+            // +stride samples of slop
+            Buffer raw((nsamples + stride) * sizeof(u16), 0);
+
+            CompressionStatus cs = zlib::decompress(raw, memory);
+            if (!cs.success)
+            {
+                status.setError("[ImageDecoder.TIFF] PixarLog zlib decompression failed: {}", cs.info);
+                return;
+            }
+
+            u16* up = reinterpret_cast<u16*>(raw.data());
+
+            // The codec stores the tokens in the file byte order.
+            if (m_is_little_endian != cpu::isLittleEndian())
+            {
+                byteswap(up, nsamples);
+            }
+
+            const float* table = pixarLogToLinearTable();
+            const int llen = stride * width;
+
+            std::vector<float> row(llen);
+
+            for (int y = 0; y < height; ++y)
+            {
+                pixarLogAccumulateRow(up + size_t(y) * llen, llen, stride, row.data(), table);
+                std::memcpy(target.image, row.data(), size_t(llen) * sizeof(float));
+                target.image += target.stride;
+            }
+        }
+
+        // Decode one SGI LogLuv / LogL strip/tile directly into the (float) target.
+        void logluv_decompress(ImageDecodeStatus& status, Surface target, ConstMemory memory, int width, int height)
+        {
+            const bool is_grayscale = (m_context.photometric == u32(PhotometricInterpretation::LOGL));
+            const bool is_24bit = (m_context.compression == u32(Compression::SGILOG24));
+
+            const u8* bp = memory.address;
+            size_t cc = memory.size;
+
+            std::vector<u32> tokens(width);
+
+            for (int y = 0; y < height; ++y)
+            {
+                if (is_grayscale)
+                {
+                    // 16-bit log luminance, two byte planes.
+                    if (!logLuvDecodeRLE(tokens.data(), width, bp, cc, 2))
+                    {
+                        status.setError("[ImageDecoder.TIFF] LogL truncated row {}.", y);
+                        return;
+                    }
+
+                    float* dest = target.address<float>(0, y);
+                    for (int x = 0; x < width; ++x)
+                    {
+                        double Y = logLuvL16toY(s16(tokens[x]));
+                        dest[x] = float(Y > 0.0 ? Y : 0.0);
+                    }
+                }
+                else if (is_24bit)
+                {
+                    // 24-bit packed, no RLE: 3 bytes per pixel, big-endian order.
+                    int i = 0;
+                    for (; i < width && cc >= 3; ++i)
+                    {
+                        tokens[i] = u32(bp[0]) << 16 | u32(bp[1]) << 8 | u32(bp[2]);
+                        bp += 3;
+                        cc -= 3;
+                    }
+                    if (i != width)
+                    {
+                        status.setError("[ImageDecoder.TIFF] LogLuv24 truncated row {}.", y);
+                        return;
+                    }
+
+                    float* dest = target.address<float>(0, y);
+                    for (int x = 0; x < width; ++x)
+                    {
+                        float xyz[3];
+                        logLuv24toXYZ(tokens[x], xyz);
+                        logLuvXYZtoLinearRGB(xyz, dest + x * 3);
+                    }
+                }
+                else
+                {
+                    // 32-bit LogLuv, four byte planes.
+                    if (!logLuvDecodeRLE(tokens.data(), width, bp, cc, 4))
+                    {
+                        status.setError("[ImageDecoder.TIFF] LogLuv32 truncated row {}.", y);
+                        return;
+                    }
+
+                    float* dest = target.address<float>(0, y);
+                    for (int x = 0; x < width; ++x)
+                    {
+                        float xyz[3];
+                        logLuv32toXYZ(tokens[x], xyz);
+                        logLuvXYZtoLinearRGB(xyz, dest + x * 3);
+                    }
+                }
+            }
+        }
+
         void decodeRect(ImageDecodeStatus& status, Surface target, ConstMemory memory, int width, int height, u32 channel = 0)
         {
             u32 sample_bits = m_context.sample_bits;
@@ -2583,8 +3027,16 @@ namespace
                     break;
                 }
 
-                case Compression::DEFLATE:
+                case Compression::PIXARLOG:
+                    pixarlog_decompress(status, target, memory, width, height);
+                    return;
+
                 case Compression::SGILOG:
+                case Compression::SGILOG24:
+                    logluv_decompress(status, target, memory, width, height);
+                    return;
+
+                case Compression::DEFLATE:
                     printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
                     return;
 
