@@ -1743,7 +1743,7 @@ protected:
     mango::font::Font m_font;
     std::unordered_map<int, CachedGlyph> m_glyphCache;
 
-    float m_fontPixelHeight = 16.0f;
+    float m_fontPixelHeight = 32.0f;
     float m_frameTimeMs = 0.0f;
     static constexpr size_t kFrameTimeHistory = 60;
     std::array<float, kFrameTimeHistory> m_frameTimeHistory {};
@@ -1975,7 +1975,7 @@ public:
 
         m_renderer->clear_canvas(cmd, 0.1f, 0.14f, 0.23f, 1.0f);
 
-        static constexpr float kHudPixelHeight = 32.0f;
+        static constexpr float kHudPixelHeight = 24.0f;
         const float anim_height = m_fontPixelHeight;
 
         m_font.set_pixel_height(kHudPixelHeight);
