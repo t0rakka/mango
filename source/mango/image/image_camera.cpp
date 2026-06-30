@@ -9,9 +9,11 @@
 //
 // LibRaw identifies the camera model directly from the in-memory buffer
 // (open_buffer) and decodes the mosaiced sensor data into a demosaiced image.
-// Sensors have a wide range of native precisions (12/14/16-bit, sometimes
-// floating point) and the data is scene-linear, so we request 16-bit linear
-// output and present it as linear FLOAT16 RGBA.
+// Sensors have a wide range of native precisions (12/14/16-bit), so we request
+// 16-bit linear output and present it verbatim as linear UNORM16 RGBA. Keeping
+// the integer samples (rather than converting to FLOAT16 here) is lossless and
+// lets the caller decide: a memcpy when their surface already matches, a blit
+// conversion otherwise, or linearize() to reach a scene-linear float space.
 
 #if defined(MANGO_ENABLE_LIBRAW)
 
@@ -28,7 +30,7 @@ namespace
 
     // Apply the shared output configuration: 16-bit linear, camera white balance,
     // sRGB (Rec.709) primaries, no auto-brightening. This keeps the decoded pixels
-    // scene-linear so the FLOAT16 surface preserves the sensor's dynamic range and
+    // scene-linear so the UNORM16 surface preserves the sensor's dynamic range and
     // precision.
     static void configure(LibRaw& raw)
     {
@@ -88,7 +90,7 @@ namespace
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.format  = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16, Format::LINEAR);
+            header.format  = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16, Format::LINEAR);
             header.compression = TextureCompression::NONE;
 
             // Scene-linear output with sRGB/Rec.709 primaries (output_color == 1).
@@ -169,53 +171,58 @@ namespace
                 return status;
             }
 
-            // Convert the linear integer samples to linear FLOAT16 RGBA.
-            Bitmap temp(width, height, header.format);
+            // Present the linear integer samples as UNORM16 RGBA (header.format). The
+            // DecodeTargetBitmap wraps 'dest' directly when it already matches, so the
+            // resolve() degrades to a memcpy; otherwise it allocates a temporary in our
+            // format and resolve() converts into the caller's surface.
+            DecodeTargetBitmap target(dest, width, height, header.format);
 
-            const float scale = (bits > 8) ? 1.0f / 65535.0f : 1.0f / 255.0f;
+            const int channel_bits = int(bytes_per_sample) * 8;
+            const size_t stride = size_t(width) * colors * bytes_per_sample;
 
-            for (int y = 0; y < height; ++y)
+            if (colors == 3)
             {
-                float16* d = temp.address<float16>(0, y);
+                // Wrap LibRaw's interleaved RGB buffer and let the blitter normalize it
+                // into the (UNORM16 RGBA) target, synthesizing opaque alpha.
+                Format source(colors * channel_bits, Format::UNORM, Format::RGB,
+                              channel_bits, channel_bits, channel_bits, 0, Format::LINEAR);
+                Surface raw_surface(width, height, source, stride, image->data);
+                target.blit(0, 0, raw_surface);
+            }
+            else
+            {
+                // Monochrome sensor: the blitter has no luminance -> RGBA16 path, so
+                // broadcast the single channel into the UNORM16 RGBA target directly.
+                for (int y = 0; y < height; ++y)
+                {
+                    u16* d = target.address<u16>(0, y);
 
-                if (bits > 8)
-                {
-                    const u16* s = reinterpret_cast<const u16*>(image->data) + size_t(y) * width * colors;
-                    for (int x = 0; x < width; ++x)
+                    if (bits > 8)
                     {
-                        float r = s[0] * scale;
-                        float g = colors == 3 ? s[1] * scale : r;
-                        float b = colors == 3 ? s[2] * scale : r;
-                        d[0] = r;
-                        d[1] = g;
-                        d[2] = b;
-                        d[3] = 1.0f;
-                        d += 4;
-                        s += colors;
+                        const u16* s = reinterpret_cast<const u16*>(image->data) + size_t(y) * width;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const u16 v = s[x];
+                            d[0] = v; d[1] = v; d[2] = v; d[3] = 0xffff;
+                            d += 4;
+                        }
                     }
-                }
-                else
-                {
-                    const u8* s = image->data + size_t(y) * width * colors;
-                    for (int x = 0; x < width; ++x)
+                    else
                     {
-                        float r = s[0] * scale;
-                        float g = colors == 3 ? s[1] * scale : r;
-                        float b = colors == 3 ? s[2] * scale : r;
-                        d[0] = r;
-                        d[1] = g;
-                        d[2] = b;
-                        d[3] = 1.0f;
-                        d += 4;
-                        s += colors;
+                        const u8* s = image->data + size_t(y) * width;
+                        for (int x = 0; x < width; ++x)
+                        {
+                            const u16 v = u16(s[x] * 0x0101); // replicate 8-bit into 16-bit
+                            d[0] = v; d[1] = v; d[2] = v; d[3] = 0xffff;
+                            d += 4;
+                        }
                     }
                 }
             }
 
             LibRaw::dcraw_clear_mem(image);
 
-            dest.blit(0, 0, temp);
-
+            target.resolve();
             return status;
         }
     };
