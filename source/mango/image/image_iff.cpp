@@ -1741,10 +1741,12 @@ namespace
             }
 
             // masking == 2: the BMHD transparent colour index renders fully
-            // transparent. For palette-based output this propagates through the
-            // attached palette; the HAM writer reads palette alpha in its base
-            // (hold) case so the same entry stays transparent there too.
-            if (m_bmhd.masking == 2 && m_bmhd.transparent < m_palette.size)
+            // transparent. This applies to indexed/EHB images only. HAM is
+            // excluded: only its "base" (hold) pixels carry a palette index, and
+            // p2c_ham holds the previous alpha across modify codes, so a single
+            // transparent base pixel would propagate transparency along the whole
+            // hold chain (visible as white streaks). HAM pictures are opaque.
+            if (m_bmhd.masking == 2 && !m_ham && m_bmhd.transparent < m_palette.size)
             {
                 m_palette[m_bmhd.transparent].a = 0;
             }
