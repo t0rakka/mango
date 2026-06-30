@@ -9,9 +9,11 @@
 #include <cmath>
 #include <cstring>
 #include <algorithm>
+#include <array>
 #include <vector>
 #include <unordered_map>
 #include <string>
+#include <string_view>
 #include <memory>
 
 #define MANGO_IMPLEMENT_MAIN
@@ -505,22 +507,26 @@ namespace mango::font
             return true;
         }
 
+        void set_pixel_height(float pixel_height)
+        {
+            scale = stbtt_ScaleForPixelHeight(&info, pixel_height);
+        }
+
         GlyphOutline load_outline(int codepoint) const
         {
             GlyphOutline outline;
-            stbtt_vertex* vertices = nullptr;
-            int count = stbtt_GetCodepointShape(&info, codepoint, &vertices);
-            if (count <= 0 || !vertices)
-            {
-                return outline;
-            }
-
-            process_shape(vertices, count, outline);
-            stbtt_FreeShape(&info, vertices);
 
             int advance = 0;
             stbtt_GetCodepointHMetrics(&info, codepoint, &advance, nullptr);
             outline.advance = float(advance);
+
+            stbtt_vertex* vertices = nullptr;
+            int count = stbtt_GetCodepointShape(&info, codepoint, &vertices);
+            if (count > 0 && vertices)
+            {
+                process_shape(vertices, count, outline);
+                stbtt_FreeShape(&info, vertices);
+            }
 
             return outline;
         }
@@ -875,7 +881,7 @@ void main()
         return;
     }
 
-    ivec2 pixel = ivec2(pc.params1.xy) + ivec2(gid);
+    ivec2 pixel = ivec2(floor(pc.params1.xy)) + ivec2(gid);
     ivec2 canvas_size = imageSize(canvas);
     if (pixel.x < 0 || pixel.y < 0 || pixel.x >= canvas_size.x || pixel.y >= canvas_size.y)
     {
@@ -960,6 +966,8 @@ namespace mango::vulkan::font
         float em_window_x0 = 0.0f;
         float em_window_y_top = 0.0f;
         float em_per_pixel = 1.0f;
+        u32 pixel_width = 1;
+        u32 pixel_height = 1;
         float32x4 color { 1.0f, 1.0f, 1.0f, 1.0f };
     };
 
@@ -1122,14 +1130,8 @@ namespace mango::vulkan::font
                 return;
             }
 
-            float ink_right_em = std::min(glyph.bounds_max.x, glyph.bounds_min.x + glyph.advance);
-            float glyph_width_em = ink_right_em - glyph.bounds_min.x;
-            float glyph_height_em = glyph.bounds_max.y - glyph.bounds_min.y;
-            if (glyph_width_em <= 0.0f) glyph_width_em = params.em_per_pixel;
-            if (glyph_height_em <= 0.0f) glyph_height_em = params.em_per_pixel;
-
-            u32 pixel_width = std::max(1u, u32(std::ceil(glyph_width_em / params.em_per_pixel)));
-            u32 pixel_height = std::max(1u, u32(std::ceil(glyph_height_em / params.em_per_pixel)));
+            u32 pixel_width = std::max(1u, params.pixel_width);
+            u32 pixel_height = std::max(1u, params.pixel_height);
 
             GlyphPushConstants push {};
             push.color[0] = params.color.x;
@@ -1741,8 +1743,26 @@ protected:
     mango::font::Font m_font;
     std::unordered_map<int, CachedGlyph> m_glyphCache;
 
-    float m_fontPixelHeight = 48.0f;
-    std::string m_text = "The quick brown fox";
+    float m_fontPixelHeight = 16.0f;
+    float m_frameTimeMs = 0.0f;
+    static constexpr size_t kFrameTimeHistory = 60;
+    std::array<float, kFrameTimeHistory> m_frameTimeHistory {};
+    size_t m_frameTimeIndex = 0;
+    size_t m_frameTimeCount = 0;
+    std::vector<std::string> m_lines =
+    {
+        "The quick brown fox jumps over the lazy dog. 0123456789",
+        "An ancient hero from the waters, from the waves he came while singing.",
+        "Ready now I bring my singing, ready now my incantations.",
+        "Ilmarinen, smith immortal, forged the wonder-grinder Sampo.",
+        "Wainamoinen, old and truthful, sang the birth of ancient wisdom.",
+        "Let the dead rest in the darkness, let the living wander light-foot.",
+        "Thus began the ancient legends, thus began the old traditions.",
+        "Runo after runo he counted, spell on spell he laid in order.",
+        "From the forge of the Creator, from the hammer of the Maker.",
+        "Never yet was born a singer, never will there be his equal.",
+        "Ahti, ruler of the waters, lord of every lake and island.",
+    };
     std::string m_fontPath;
 
 public:
@@ -1835,7 +1855,11 @@ public:
         }
         else
         {
-            cache_string(m_text);
+            for (const std::string& line : m_lines)
+            {
+                cache_string(line);
+            }
+            cache_string(" fps()");
         }
 
         VkExtent2D extent = m_swapchain->getExtent();
@@ -1895,6 +1919,48 @@ public:
         return m_glyphCache.at(codepoint);
     }
 
+    void draw_text(VkCommandBuffer cmd, float pen_x, float baseline_y, std::string_view text, float32x4 color)
+    {
+        const float pixel_scale = m_font.pixel_scale();
+        const float em_per_pixel = m_font.em_per_pixel();
+
+        // One vertical pixel grid for the whole line — do not floor per-glyph bbox tops.
+        const float line_screen_y = std::floor(baseline_y - float(m_font.ascent) * pixel_scale);
+        const float em_window_y_top = (baseline_y - line_screen_y) * em_per_pixel;
+
+        for (unsigned char ch : text)
+        {
+            const CachedGlyph& cached = get_glyph(ch);
+
+            if (cached.cpu.curve_bytes.empty())
+            {
+                pen_x += cached.cpu.advance * pixel_scale;
+                continue;
+            }
+
+            const float ink_right_em = std::min(cached.cpu.bounds_max.x, cached.cpu.bounds_min.x + cached.cpu.advance);
+            const float float_left = pen_x + cached.cpu.bounds_min.x * pixel_scale;
+            const float float_right = pen_x + ink_right_em * pixel_scale;
+            const float float_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
+
+            const float screen_x = std::floor(float_left);
+
+            vulkan::font::GlyphDrawParams params;
+            params.screen_x = screen_x;
+            params.screen_y = line_screen_y;
+            params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
+            params.em_window_y_top = em_window_y_top;
+            params.em_per_pixel = em_per_pixel;
+            params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
+            params.pixel_height = std::max(1u, u32(std::ceil(float_bottom - line_screen_y)));
+            params.color = color;
+
+            m_renderer->draw_glyph(cmd, cached.gpu, cached.cpu, params);
+
+            pen_x += cached.cpu.advance * pixel_scale;
+        }
+    }
+
     void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
     {
         vkResetCommandBuffer(cmd, 0);
@@ -1909,38 +1975,29 @@ public:
 
         m_renderer->clear_canvas(cmd, 0.1f, 0.14f, 0.23f, 1.0f);
 
+        static constexpr float kHudPixelHeight = 32.0f;
+        const float anim_height = m_fontPixelHeight;
+
+        m_font.set_pixel_height(kHudPixelHeight);
+        const float hud_scale = m_font.pixel_scale();
+
+        const float fps = m_frameTimeMs > 0.0f ? 1000.0f / m_frameTimeMs : 0.0f;
+        char frame_time_text[48];
+        std::snprintf(frame_time_text, sizeof(frame_time_text), "%6.3f ms (%3.0f fps)",
+            double(m_frameTimeMs), double(fps));
+
+        const float hud_baseline = 8.0f + float(m_font.ascent) * hud_scale;
+        draw_text(cmd, 8.0f, hud_baseline, frame_time_text, float32x4(0.75f, 0.9f, 1.0f, 1.0f));
+
+        m_font.set_pixel_height(anim_height);
+
         const float pixel_scale = m_font.pixel_scale();
-        const float em_per_pixel = m_font.em_per_pixel();
-        const float baseline_y = 120.0f;
-        float pen_x = 40.0f;
-
-        for (unsigned char ch : m_text)
+        const float line_step = float(m_font.ascent - m_font.descent + m_font.line_gap) * pixel_scale * 1.12f;
+        float baseline_y = 100.0f;
+        for (const std::string& line : m_lines)
         {
-            const CachedGlyph& cached = get_glyph(ch);
-
-            if (cached.cpu.curve_bytes.empty())
-            {
-                pen_x += cached.cpu.advance * pixel_scale;
-                continue;
-            }
-
-            vulkan::font::GlyphDrawParams params;
-
-            float float_left = pen_x + cached.cpu.bounds_min.x * pixel_scale;
-            float float_top = baseline_y - cached.cpu.bounds_max.y * pixel_scale;
-            float screen_left = std::round(float_left);
-            float screen_top = std::round(float_top);
-
-            params.screen_x = screen_left;
-            params.screen_y = screen_top;
-            params.em_window_x0 = cached.cpu.bounds_min.x + (screen_left - float_left) * em_per_pixel;
-            params.em_window_y_top = cached.cpu.bounds_max.y + (screen_top - float_top) * em_per_pixel;
-            params.em_per_pixel = em_per_pixel;
-            params.color = float32x4(1.0f, 1.0f, 1.0f, 1.0f);
-
-            m_renderer->draw_glyph(cmd, cached.gpu, cached.cpu, params);
-
-            pen_x += cached.cpu.advance * pixel_scale;
+            draw_text(cmd, 40.0f, baseline_y, line, float32x4(1.0f, 1.0f, 1.0f, 1.0f));
+            baseline_y += line_step;
         }
 
         m_swapchain->cmdTransitionImageToColorAttachment(cmd, imageIndex);
@@ -1971,7 +2028,27 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        MANGO_UNREFERENCED(info);
+        constexpr float min_size = 5.0f;
+        constexpr float max_size = 64.0f;
+        constexpr float cycle_seconds = 10.0f;
+
+        float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
+        float t = 1.0f - std::fabs(phase * 2.0f - 1.0f);
+        m_fontPixelHeight = min_size + t * (max_size - min_size);
+        m_font.set_pixel_height(m_fontPixelHeight);
+
+        const float frame_ms = float(info.dt * 1000.0);
+        m_frameTimeHistory[m_frameTimeIndex] = frame_ms;
+        m_frameTimeIndex = (m_frameTimeIndex + 1) % kFrameTimeHistory;
+        m_frameTimeCount = std::min(m_frameTimeCount + 1, kFrameTimeHistory);
+
+        float frame_sum = 0.0f;
+        for (size_t i = 0; i < m_frameTimeCount; ++i)
+        {
+            frame_sum += m_frameTimeHistory[i];
+        }
+        m_frameTimeMs = frame_sum / float(m_frameTimeCount);
+
         render();
     }
 
