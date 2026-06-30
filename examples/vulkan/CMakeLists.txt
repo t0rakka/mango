@@ -1,6 +1,7 @@
 
 list(APPEND EXAMPLES
     vkbasic
+    font
 )
 
 foreach(example IN LISTS EXAMPLES)
