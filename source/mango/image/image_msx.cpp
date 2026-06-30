@@ -17,11 +17,14 @@
     single image decoder.
 
     Also handles the V9990 ("GRAPHIC9000") .G9B format, which carries its own
-    self-describing header and an optional LZ compression layer.
+    self-describing header and an optional LZ compression layer, and the MSX2 /
+    MSX2+ .MIF / .MIG interchange formats (compressed, any SCREEN mode including
+    the 424-line interlaced hi-color variants).
 
     Reference: RECOIL (Retro Computer Image Library), recoil.c.
 */
 #include <vector>
+#include <cstring>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/system.hpp>
@@ -960,6 +963,686 @@ namespace
         return new InterfaceG9B(memory);
     }
 
+    // ------------------------------------------------------------
+    // MSX interchange formats (.MIF, .MIG)
+    // ------------------------------------------------------------
+    //
+    // Two compressed container formats that can carry any MSX2 / MSX2+ SCREEN
+    // mode (2, 3, 5, 6, 7, 8, 10, 12) including the 424-line interlaced
+    // hi-color variants. Both unpack to a raw VRAM image which is then rendered
+    // with the standard MSX screen decoders.
+    //
+    //   .MIF  starts with a 1-byte SCREEN selector, an optional 32-byte VDP
+    //         palette and an LZW-compressed bitmap.
+    //   .MIG  "MSXMIG" magic + a custom LZ stream that unpacks to a sequence of
+    //         tagged chunks (VDP registers / palette / bitmap); the SCREEN mode
+    //         is recovered from the emulated register state.
+    //
+    // Reference: RECOIL, DecodeMif / DecodeMig.
+
+    // Shared MSB-first bit reader (8 bits sliding left with a trailing 1).
+    struct MsxBitStream
+    {
+        const u8* content;
+        int contentOffset;
+        int contentLength;
+        int bits = 0;
+
+        int readBit()
+        {
+            if ((bits & 0x7f) == 0)
+            {
+                if (contentOffset >= contentLength)
+                    return -1;
+                bits = (content[contentOffset++] << 1) | 1;
+            }
+            else
+            {
+                bits <<= 1;
+            }
+            return (bits >> 8) & 1;
+        }
+
+        int readByte()
+        {
+            if (contentOffset >= contentLength)
+                return -1;
+            return content[contentOffset++];
+        }
+
+        int readBits(int count)
+        {
+            int result = 0;
+            while (--count >= 0)
+            {
+                int bit = readBit();
+                if (bit < 0)
+                    return -1;
+                result = (result << 1) | bit;
+            }
+            return result;
+        }
+    };
+
+    struct InterfaceMSXi : ImageDecodeInterface
+    {
+        enum class Kind { MIF, MIG };
+        enum Scale { PLAIN, DOUBLE_X, DOUBLE_Y };
+
+        ConstMemory m_memory;
+        Kind m_kind;
+        std::vector<Color> m_pixels;
+        int m_width = 0;
+        int m_height = 0;
+        Scale m_scale = PLAIN;
+        Color m_palette [256];
+        int m_colors = 0;
+
+        InterfaceMSXi(ConstMemory memory, Kind kind)
+            : m_memory(memory)
+            , m_kind(kind)
+        {
+            for (int i = 0; i < 256; ++i)
+                m_palette[i] = Color(0, 0, 0, 0xff);
+
+            bool ok = (kind == Kind::MIF) ? decodeMif() : decodeMig();
+            if (!ok)
+            {
+                header.setError("[ImageDecoder.MSX] Unsupported or invalid MSX interchange image.");
+                return;
+            }
+
+            header.width  = m_width;
+            header.height = m_height;
+            header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        ~InterfaceMSXi()
+        {
+        }
+
+        // --- geometry / scaling (mirrors RECOIL SetScaledPixel) ---
+
+        int originalWidth() const { return m_scale == DOUBLE_X ? (m_width >> 1) : m_width; }
+        int originalHeight() const { return m_scale == DOUBLE_Y ? (m_height >> 1) : m_height; }
+
+        void setSize(int width, int height, Scale scale)
+        {
+            m_width = width;
+            m_height = height;
+            m_scale = scale;
+            m_pixels.assign(size_t(width) * height, Color(0, 0, 0, 0xff));
+        }
+
+        void setScaledPixel(int x, int y, Color rgb)
+        {
+            switch (m_scale)
+            {
+                case DOUBLE_X:
+                {
+                    int o = y * m_width + (x << 1);
+                    m_pixels[o] = m_pixels[o + 1] = rgb;
+                    break;
+                }
+                case DOUBLE_Y:
+                {
+                    int o = (y * m_width << 1) + x;
+                    m_pixels[o] = m_pixels[o + m_width] = rgb;
+                    break;
+                }
+                default:
+                    m_pixels[y * m_width + x] = rgb;
+                    break;
+            }
+        }
+
+        void loadPalette(const u8* buf, int offset, int colors)
+        {
+            setMsxPalette(m_palette, buf, offset, colors);
+            m_colors = colors;
+        }
+
+        // --- pixel renderers (operate on the unpacked VRAM image) ---
+
+        void decodeNibbles(const u8* buf, int offset, int stride)
+        {
+            const int ow = originalWidth();
+            const int oh = originalHeight();
+            for (int y = 0; y < oh; ++y)
+                for (int x = 0; x < ow; ++x)
+                {
+                    int b = buf[offset + y * stride + (x >> 1)];
+                    int nibble = (x & 1) == 0 ? (b >> 4) : (b & 0xf);
+                    setScaledPixel(x, y, m_palette[nibble]);
+                }
+        }
+
+        void decodeMsx6(const u8* buf, int offset)
+        {
+            const int oh = originalHeight();
+            for (int y = 0; y < oh; ++y)
+                for (int x = 0; x < m_width; ++x)
+                {
+                    int o = y * m_width + x;
+                    int b = buf[offset + (o >> 2)];
+                    int index = (b >> ((~x & 3) << 1)) & 3;
+                    setScaledPixel(x, y, m_palette[index]);
+                }
+        }
+
+        void decodeBytes(const u8* buf, int offset)
+        {
+            const int ow = originalWidth();
+            const int oh = originalHeight();
+            for (int y = 0; y < oh; ++y)
+                for (int x = 0; x < ow; ++x)
+                    setScaledPixel(x, y, m_palette[buf[offset + y * ow + x]]);
+        }
+
+        void decodeYjkScreen(const u8* buf, int offset, bool usePalette)
+        {
+            const int ow = originalWidth();
+            const int oh = originalHeight();
+            for (int y = 0; y < oh; ++y)
+                for (int x = 0; x < ow; ++x)
+                    setScaledPixel(x, y, msxYjkColor(buf + offset + y * ow, x, ow, m_palette, usePalette));
+        }
+
+        // SCREEN 2/4 tile mode (256x192).
+        void decodeSc2Sc4(const u8* buf, int offset)
+        {
+            setSize(256, 192, PLAIN);
+            for (int y = 0; y < 192; ++y)
+            {
+                int fontOffset = offset + ((y & 0xc0) << 5) + (y & 7);
+                for (int x = 0; x < 256; ++x)
+                {
+                    int b = fontOffset + (buf[offset + 0x1800 + ((y & ~7) << 2) + (x >> 3)] << 3);
+                    int c = buf[0x2000 + b];
+                    int idx = ((buf[b] >> (~x & 7)) & 1) == 0 ? (c & 0xf) : (c >> 4);
+                    m_pixels[(y << 8) + x] = m_palette[idx];
+                }
+            }
+        }
+
+        // SCREEN 3 multicolor (256x192). The "long" name-table form is never
+        // used by MIF/MIG, so only the implicit layout is handled.
+        void decodeSc3Screen(const u8* buf, int offset)
+        {
+            setSize(256, 192, PLAIN);
+            for (int y = 0; y < 192; ++y)
+                for (int x = 0; x < 256; ++x)
+                {
+                    int c = (y & 0xe0) + (x >> 3);
+                    c = (buf[offset + (c << 3) + ((y >> 2) & 7)] >> (~x & 4)) & 0xf;
+                    m_pixels[(y << 8) + x] = m_palette[c];
+                }
+        }
+
+        // The MIG renderer: writes the final (possibly interlaced) image
+        // directly, recovering vertical doubling / field interleave from the
+        // pixel offset arithmetic.
+        void decodeMsxScreen(const u8* buf, int offset, int height, int mode, int interlaceMask)
+        {
+            if (interlaceMask != 0)
+            {
+                Scale scale = (mode >= 10) ? DOUBLE_X
+                            : (mode >> 1 == 3) ? PLAIN
+                            : DOUBLE_X;
+                setSize(512, height << 1, scale);
+            }
+            else if (mode >> 1 == 3)
+            {
+                setSize(512, height << 1, DOUBLE_Y);
+            }
+            else
+            {
+                setSize(256, height, PLAIN);
+            }
+
+            for (int y = 0; y < m_height; ++y)
+            {
+                int screenOffset = (y & interlaceMask) == 0
+                    ? offset
+                    : offset + (mode <= 6 ? 0x6a07 : 0xd407);
+
+                for (int x = 0; x < m_width; ++x)
+                {
+                    Color rgb(0, 0, 0, 0xff);
+                    switch (mode)
+                    {
+                        case 5:
+                        {
+                            int o = screenOffset + ((y >> interlaceMask) << 7);
+                            int idx = x >> interlaceMask;
+                            int b = buf[o + (idx >> 1)];
+                            rgb = m_palette[(idx & 1) == 0 ? (b >> 4) : (b & 0xf)];
+                            break;
+                        }
+                        case 6:
+                            rgb = m_palette[(buf[screenOffset + ((y >> 1) << 7) + (x >> 2)] >> ((~x & 3) << 1)) & 3];
+                            break;
+                        case 7:
+                        {
+                            int o = screenOffset + ((y >> 1) << 8);
+                            int b = buf[o + (x >> 1)];
+                            rgb = m_palette[(x & 1) == 0 ? (b >> 4) : (b & 0xf)];
+                            break;
+                        }
+                        case 8:
+                            rgb = m_palette[buf[screenOffset + ((y >> interlaceMask) << 8) + (x >> interlaceMask)]];
+                            break;
+                        case 10:
+                            rgb = msxYjkColor(buf + screenOffset + ((y >> interlaceMask) << 8), x >> interlaceMask, 256, m_palette, true);
+                            break;
+                        case 12:
+                            rgb = msxYjkColor(buf + screenOffset + ((y >> interlaceMask) << 8), x >> interlaceMask, 256, m_palette, false);
+                            break;
+                    }
+                    m_pixels[y * m_width + x] = rgb;
+                }
+            }
+        }
+
+        // --- MIF (LZW) ---
+
+        bool unpackMif(std::vector<u8>& unpacked, int unpackedLength, bool palette)
+        {
+            const u8* content = m_memory.address;
+            const int length = int(m_memory.size);
+
+            MsxBitStream s { content, palette ? 34 : 2, length };
+            std::vector<int> offsets(16384 / 3);
+            int codes = 0;
+            int codeBits = 2;
+
+            for (int offset = 0; offset < unpackedLength; )
+            {
+                if (codes >= int(offsets.size()))
+                    return false;
+                offsets[codes++] = offset;
+                if (codes >> codeBits)
+                    codeBits++;
+
+                int bit = s.readBit();
+                if (bit == 0)
+                {
+                    int code = s.readBits(codeBits);
+                    if (code < 0 || code >= codes)
+                        return false;
+                    if (code == codes - 1)
+                    {
+                        codes = 0;
+                        codeBits = 2;
+                        continue;
+                    }
+                    int sourceOffset = offsets[code];
+                    int endOffset = offsets[code + 1];
+                    if (offset + endOffset - sourceOffset >= unpackedLength)
+                        return false;
+                    do
+                    {
+                        unpacked[offset++] = unpacked[sourceOffset++];
+                    }
+                    while (sourceOffset <= endOffset);
+                }
+                else if (bit == 1)
+                {
+                    int b = s.readBits(8);
+                    if (b < 0)
+                        return false;
+                    unpacked[offset++] = u8(b);
+                }
+                else
+                {
+                    return false;
+                }
+            }
+
+            if (s.readBit() != 0 || s.readBits(codeBits) <= codes || s.contentOffset != length)
+                return false;
+            if (palette)
+                loadPalette(content, 2, 16);
+            return true;
+        }
+
+        bool decodeMif()
+        {
+            const u8* content = m_memory.address;
+            const int length = int(m_memory.size);
+            if (length < 35)
+                return false;
+
+            std::vector<u8> unpacked(108544);
+
+            switch (content[0])
+            {
+                case 0x00:
+                    if (!unpackMif(unpacked, 27136, true)) return false;
+                    setSize(256, 212, PLAIN);
+                    decodeNibbles(unpacked.data(), 0, 128);
+                    return true;
+                case 0x01:
+                    if (!unpackMif(unpacked, 27136, true)) return false;
+                    setSize(512, 424, DOUBLE_Y);
+                    decodeMsx6(unpacked.data(), 0);
+                    return true;
+                case 0x02:
+                    if (!unpackMif(unpacked, 54272, true)) return false;
+                    setSize(512, 424, DOUBLE_Y);
+                    decodeNibbles(unpacked.data(), 0, 256);
+                    return true;
+                case 0x03:
+                    if (!unpackMif(unpacked, 54272, false)) return false;
+                    setSc8Palette(m_palette);
+                    setSize(256, 212, PLAIN);
+                    decodeBytes(unpacked.data(), 0);
+                    return true;
+                case 0x04:
+                    if (!unpackMif(unpacked, 54272, true)) return false;
+                    setSize(256, 212, PLAIN);
+                    decodeYjkScreen(unpacked.data(), 0, true);
+                    return true;
+                case 0x05:
+                    if (!unpackMif(unpacked, 54272, false)) return false;
+                    setSize(256, 212, PLAIN);
+                    decodeYjkScreen(unpacked.data(), 0, false);
+                    return true;
+                case 0x08:
+                    if (!unpackMif(unpacked, 14336, true)) return false;
+                    decodeSc2Sc4(unpacked.data(), 0);
+                    return true;
+                case 0x09:
+                    if (!unpackMif(unpacked, 1536, true)) return false;
+                    decodeSc3Screen(unpacked.data(), 0);
+                    return true;
+                case 0x10:
+                    if (!unpackMif(unpacked, 54272, true)) return false;
+                    setSize(512, 424, DOUBLE_X);
+                    decodeNibbles(unpacked.data(), 0, 128);
+                    return true;
+                case 0x11:
+                    if (!unpackMif(unpacked, 54272, true)) return false;
+                    setSize(512, 424, PLAIN);
+                    decodeMsx6(unpacked.data(), 0);
+                    return true;
+                case 0x12:
+                    if (!unpackMif(unpacked, 108544, true)) return false;
+                    setSize(512, 424, PLAIN);
+                    decodeNibbles(unpacked.data(), 0, 256);
+                    return true;
+                case 0x13:
+                    if (!unpackMif(unpacked, 108544, false)) return false;
+                    setSc8Palette(m_palette);
+                    setSize(512, 424, DOUBLE_X);
+                    decodeBytes(unpacked.data(), 0);
+                    return true;
+                case 0x14:
+                    if (!unpackMif(unpacked, 108544, true)) return false;
+                    setSize(512, 424, DOUBLE_X);
+                    decodeYjkScreen(unpacked.data(), 0, true);
+                    return true;
+                case 0x15:
+                    if (!unpackMif(unpacked, 108544, false)) return false;
+                    setSize(512, 424, DOUBLE_X);
+                    decodeYjkScreen(unpacked.data(), 0, false);
+                    return true;
+                default:
+                    return false;
+            }
+        }
+
+        // --- MIG (register state machine + custom LZ) ---
+
+        static int migMode(int reg0, int reg1, int reg19, int length)
+        {
+            return (reg0 & 0x0e) | ((reg1 & 0x18) << 1) | ((reg19 & 0x18) << 3) | (length << 8);
+        }
+
+        // MIG LZ. Returns unpacked length or -1 on error.
+        int unpackMig(std::vector<u8>& unpacked)
+        {
+            const int maxUnpacked = 108800;
+            const u8* content = m_memory.address;
+            const int length = int(m_memory.size);
+
+            MsxBitStream s { content, 11 + 4, length };
+
+            for (int offset = 0; offset < maxUnpacked; )
+            {
+                int c = s.readBit();
+                if (c < 0)
+                    return -1;
+                int b = s.readByte();
+                if (b < 0)
+                    return -1;
+
+                if (c == 0)
+                {
+                    unpacked[offset++] = u8(b);
+                }
+                else
+                {
+                    if (b >= 128)
+                    {
+                        c = s.readBits(4);
+                        if (c < 0)
+                            return -1;
+                        b += (c - 1) << 7;
+                    }
+                    int distance = b + 1;
+                    if (offset - distance < 0)
+                        return -1;
+
+                    c = -1;
+                    do
+                    {
+                        b = s.readBit();
+                        if (b < 0)
+                            return -1;
+                        c++;
+                    }
+                    while (b != 0);
+
+                    int len = s.readBits(c);
+                    if (len < 0)
+                        return -1;
+
+                    if (c >= 16)
+                    {
+                        s.contentOffset += 4; // skip block lengths
+                        if (s.contentOffset >= s.contentLength)
+                            return offset;
+                        s.bits = 0;
+                    }
+                    else
+                    {
+                        len += (1 << c) + 1;
+                        if (offset + len > maxUnpacked)
+                            return -1;
+                        do
+                        {
+                            unpacked[offset] = unpacked[offset - distance];
+                            offset++;
+                        }
+                        while (--len > 0);
+                    }
+                }
+            }
+            return -1;
+        }
+
+        bool decodeMig()
+        {
+            const u8* content = m_memory.address;
+            const int length = int(m_memory.size);
+
+            if (length < 16 ||
+                std::memcmp(content, "MSXMIG", 6) != 0 ||
+                (content[6] | (content[7] << 8) | (content[8] << 16) | (content[9] << 24)) != length - 6)
+                return false;
+
+            std::vector<u8> unpacked(108800);
+            int unpackedLength = unpackMig(unpacked);
+            if (unpackedLength <= 0)
+                return false;
+
+            const u8* buf = unpacked.data();
+            int colors = 0;
+            u8 registers [256] = { 0 };
+
+            for (int offset = 0; offset < unpackedLength; )
+            {
+                switch (buf[offset])
+                {
+                    case 0: // VDP registers
+                    {
+                        if (offset + 1 >= unpackedLength)
+                            return false;
+                        int c = buf[offset + 1];
+                        if (offset + 2 + c * 3 > unpackedLength)
+                            return false;
+                        for (int i = 0; i < c; ++i)
+                        {
+                            int o = offset + 2 + i * 3;
+                            int r = buf[o];
+                            int m = buf[o + 2];
+                            registers[r] = u8((registers[r] & ~m) | (buf[o + 1] & m));
+                        }
+                        offset += 2 + c * 3;
+                        break;
+                    }
+
+                    case 1: // palette
+                    {
+                        if (offset + 2 >= unpackedLength || buf[offset + 1] != 0)
+                            return false;
+                        colors = buf[offset + 2];
+                        if (offset + 3 + (colors << 1) > unpackedLength)
+                            return false;
+                        loadPalette(buf, offset + 3, colors);
+                        offset += 3 + (colors << 1);
+                        break;
+                    }
+
+                    case 2: // bitmap
+                    {
+                        if (offset + 7 >= unpackedLength ||
+                            buf[offset + 1] || buf[offset + 2] || buf[offset + 3] ||
+                            buf[offset + 4] || buf[offset + 6])
+                            return false;
+                        int blockLength = buf[offset + 5];
+                        offset += 7;
+
+                        int interlaceMask;
+                        switch (registers[9] & 0x0c)
+                        {
+                            case 0x00:
+                                if (offset + (blockLength << 8) + 1 != unpackedLength)
+                                    return false;
+                                interlaceMask = 0;
+                                break;
+                            case 0x0c:
+                                if (offset + (blockLength << 9) + 7 + 1 != unpackedLength ||
+                                    buf[offset + (blockLength << 8)] != 2 ||
+                                    buf[offset + (blockLength << 8) + 1] != 0 ||
+                                    buf[offset + (blockLength << 8) + 4] != 0 ||
+                                    buf[offset + (blockLength << 8) + 5] != blockLength ||
+                                    buf[offset + (blockLength << 8) + 6] != 0)
+                                    return false;
+                                interlaceMask = 1;
+                                break;
+                            default:
+                                return false;
+                        }
+
+                        int key = migMode(registers[0], registers[1], registers[0x19], blockLength);
+
+                        if (key == migMode(0x02, 0x00, 0x00, 0x38))
+                        {
+                            if (colors < 16 || interlaceMask != 0) return false;
+                            decodeSc2Sc4(buf, offset);
+                            return true;
+                        }
+                        if (key == migMode(0x00, 0x08, 0x00, 0x06))
+                        {
+                            if (colors < 16 || interlaceMask != 0) return false;
+                            decodeSc3Screen(buf, offset);
+                            return true;
+                        }
+
+                        int mode;
+                        if (key == migMode(0x06, 0x00, 0x00, 0x6a)) { if (colors < 16) return false; mode = 5; }
+                        else if (key == migMode(0x08, 0x00, 0x00, 0x6a)) { if (colors < 4) return false; mode = 6; }
+                        else if (key == migMode(0x0a, 0x00, 0x00, 0xd4)) { if (colors < 16) return false; mode = 7; }
+                        else if (key == migMode(0x0e, 0x00, 0x00, 0xd4)) { setSc8Palette(m_palette); mode = 8; }
+                        else if (key == migMode(0x0e, 0x00, 0x18, 0xd4)) { if (colors < 16) return false; mode = 10; }
+                        else if (key == migMode(0x0e, 0x00, 0x08, 0xd4)) { mode = 12; }
+                        else return false;
+
+                        decodeMsxScreen(buf, offset, 212, mode, interlaceMask);
+                        return true;
+                    }
+
+                    default:
+                        return false;
+                }
+            }
+            return false;
+        }
+
+        ConstMemory memory(int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+            return ConstMemory();
+        }
+
+        ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
+        {
+            MANGO_UNREFERENCED(options);
+            MANGO_UNREFERENCED(level);
+            MANGO_UNREFERENCED(depth);
+            MANGO_UNREFERENCED(face);
+
+            ImageDecodeStatus status;
+
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+
+            for (int y = 0; y < m_height; ++y)
+            {
+                const Color* src = &m_pixels[size_t(y) * m_width];
+                u8* d = target.address<u8>(0, y);
+                for (int x = 0; x < m_width; ++x)
+                {
+                    d[0] = src[x].r;
+                    d[1] = src[x].g;
+                    d[2] = src[x].b;
+                    d[3] = 0xff;
+                    d += 4;
+                }
+            }
+
+            target.resolve();
+
+            status.direct = target.isDirect();
+            return status;
+        }
+    };
+
+    template <InterfaceMSXi::Kind kind>
+    ImageDecodeInterface* createInterfaceMSXi(ConstMemory memory)
+    {
+        return new InterfaceMSXi(memory, kind);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -977,6 +1660,8 @@ namespace mango::image
         registerImageDecoder(createInterface<Screen::SCA>, ".sca");
         registerImageDecoder(createInterface<Screen::SCC>, ".scc");
         registerImageDecoder(createInterfaceG9B, ".g9b");
+        registerImageDecoder(createInterfaceMSXi<InterfaceMSXi::Kind::MIF>, ".mif");
+        registerImageDecoder(createInterfaceMSXi<InterfaceMSXi::Kind::MIG>, ".mig");
     }
 
 } // namespace mango::image
