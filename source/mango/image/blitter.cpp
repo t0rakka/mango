@@ -1753,6 +1753,167 @@ namespace
         }
     }
 
+    // Generic FLOAT <- UNORM converter for the component layouts the fixed-size (<= 32 bit)
+    // fast paths do not cover, e.g. 48-bit RGB16 or 64-bit RGBA16 sources. Each source pixel
+    // is read as a little-endian integer up to 64 bits wide and normalized to [0,1]. Without
+    // this fallback such conversions silently resolved to convert_none, leaving the float
+    // destination untouched. 'DestType' is the destination float component (float16/float/double).
+    template <typename DestType>
+    void convert_generic_fp_unorm(const Blitter& blitter, const Blitter::Rect& rect)
+    {
+        const Format& sf = blitter.sourceFormat;
+        const Format& df = blitter.destFormat;
+
+        const int srcBytes = sf.bytes();
+        const int dstFloatShift = df.type - Format::FLOAT16 + 4; // fp16:>>4, fp32:>>5, fp64:>>6
+
+        struct Component
+        {
+            u64 srcMask = 0;
+            u32 srcShift = 0;
+            int dstIndex = 0;
+            float scale = 0.0f;
+            float fill = 0.0f;
+            bool present = false;
+        } component[4];
+
+        int count = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (!df.size[i])
+                continue;
+
+            Component& c = component[count];
+            c.dstIndex = df.offset[i] >> dstFloatShift;
+
+            if (sf.size[i])
+            {
+                c.present = true;
+                c.srcMask = (u64(1) << sf.size[i]) - 1;
+                c.srcShift = sf.offset[i];
+                c.scale = 1.0f / float(c.srcMask);
+            }
+            else
+            {
+                // source lacks this channel: alpha defaults to 1.0, color to 0.0
+                c.fill = (i == 3) ? 1.0f : 0.0f;
+            }
+
+            ++count;
+        }
+
+        const int dstStep = df.bytes() / int(sizeof(DestType));
+
+        for (int y = 0; y < rect.height; ++y)
+        {
+            const u8* s = rect.source.address + rect.source.stride * y;
+            u8* draw = rect.dest.address + rect.dest.stride * y;
+            DestType* d = reinterpret_cast<DestType*>(draw);
+
+            for (int x = 0; x < rect.width; ++x)
+            {
+                u64 sv = 0;
+                for (int b = 0; b < srcBytes; ++b)
+                {
+                    sv |= u64(s[b]) << (b * 8);
+                }
+
+                for (int i = 0; i < count; ++i)
+                {
+                    const Component& c = component[i];
+                    const float value = c.present
+                        ? float((sv >> c.srcShift) & c.srcMask) * c.scale
+                        : c.fill;
+                    d[c.dstIndex] = DestType(value);
+                }
+
+                s += srcBytes;
+                d += dstStep;
+            }
+        }
+    }
+
+    // Generic UNORM <- FLOAT converter, the inverse of convert_generic_fp_unorm, for wide
+    // UNORM destinations (e.g. resolving a float HDR surface into a 48/64-bit RGB16/RGBA16
+    // client buffer). Float samples are clamped to [0,1] before quantization. 'SourceType'
+    // is the source float component (float16/float/double).
+    template <typename SourceType>
+    void convert_generic_unorm_fp(const Blitter& blitter, const Blitter::Rect& rect)
+    {
+        const Format& sf = blitter.sourceFormat;
+        const Format& df = blitter.destFormat;
+
+        const int dstBytes = df.bytes();
+        const int srcFloatShift = sf.type - Format::FLOAT16 + 4;
+
+        struct Component
+        {
+            int srcIndex = 0;
+            u32 dstShift = 0;
+            float dstMax = 0.0f;
+            bool present = false;
+        } component[4];
+
+        u64 alphaFill = 0;
+        int count = 0;
+        for (int i = 0; i < 4; ++i)
+        {
+            if (!df.size[i])
+                continue;
+
+            Component& c = component[count];
+            c.dstShift = df.offset[i];
+            c.dstMax = float((u64(1) << df.size[i]) - 1);
+
+            if (sf.size[i])
+            {
+                c.present = true;
+                c.srcIndex = sf.offset[i] >> srcFloatShift;
+            }
+            else if (i == 3)
+            {
+                // destination has alpha but the source does not: default alpha to 1.0
+                alphaFill |= ((u64(1) << df.size[i]) - 1) << df.offset[i];
+            }
+
+            ++count;
+        }
+
+        const int srcStep = sf.bytes() / int(sizeof(SourceType));
+
+        for (int y = 0; y < rect.height; ++y)
+        {
+            const u8* sraw = rect.source.address + rect.source.stride * y;
+            const SourceType* s = reinterpret_cast<const SourceType*>(sraw);
+            u8* d = rect.dest.address + rect.dest.stride * y;
+
+            for (int x = 0; x < rect.width; ++x)
+            {
+                u64 dv = alphaFill;
+
+                for (int i = 0; i < count; ++i)
+                {
+                    const Component& c = component[i];
+                    if (!c.present)
+                        continue;
+
+                    float value = float(s[c.srcIndex]);
+                    value = value < 0.0f ? 0.0f : (value > 1.0f ? 1.0f : value);
+                    const u64 scaled = u64(value * c.dstMax + 0.5f);
+                    dv |= scaled << c.dstShift;
+                }
+
+                for (int b = 0; b < dstBytes; ++b)
+                {
+                    d[b] = u8(dv >> (b * 8));
+                }
+
+                s += srcStep;
+                d += dstBytes;
+            }
+        }
+    }
+
     Blitter::RectFunc get_rect_convert(const Format& dest, const Format& source)
     {
         int destBits = modeBits(dest);
@@ -1761,7 +1922,14 @@ namespace
 
         Blitter::RectFunc func = convert_none;
 
-        if (isConversionTableSupported(dest, source))
+        // The fixed-size modeMask dispatch below only covers UNORM pixels up to 32 bits and
+        // the float sentinels (BITS_FP16/FP32/FP64 == 40/48/56). A wider UNORM layout aliases
+        // those sentinels via modeBits() (e.g. 48-bit RGB16 collides with BITS_FP32), so it
+        // must never enter the switch - it is routed to the generic converters below instead.
+        const bool destWideUnorm = dest.type == Format::UNORM && dest.bits > 32;
+        const bool sourceWideUnorm = source.type == Format::UNORM && source.bits > 32;
+
+        if (!destWideUnorm && !sourceWideUnorm && isConversionTableSupported(dest, source))
         {
             switch (modeMask)
             {
@@ -1850,7 +2018,7 @@ namespace
 #endif // defined(BLITTER_ENABLE_AVX512)
 
         }
-        else
+        else if (!destWideUnorm && !sourceWideUnorm)
         {
             switch (modeMask)
             {
@@ -1909,11 +2077,38 @@ namespace
         }
 
         // Fixed-size fast paths only cover pixels up to 32 bits; fall back to the generic
-        // component converter for wider UNORM layouts (e.g. RGB16/RGBA16) instead of leaving
-        // the conversion as a silent no-op.
-        if (func == convert_none && dest.type == Format::UNORM && source.type == Format::UNORM)
+        // component converters for wider layouts (e.g. RGB16/RGBA16) instead of leaving the
+        // conversion as a silent no-op. This covers UNORM<->UNORM as well as the UNORM<->FLOAT
+        // directions, which the fixed-size dispatch above only handles for <= 32 bit pixels.
+        if (func == convert_none)
         {
-            func = convert_generic_unorm_unorm;
+            const bool destFloat = dest.isFloat();
+            const bool sourceFloat = source.isFloat();
+
+            if (dest.type == Format::UNORM && source.type == Format::UNORM)
+            {
+                func = convert_generic_unorm_unorm;
+            }
+            else if (destFloat && source.type == Format::UNORM)
+            {
+                switch (dest.type)
+                {
+                    case Format::FLOAT16: func = convert_generic_fp_unorm<float16>; break;
+                    case Format::FLOAT32: func = convert_generic_fp_unorm<float>; break;
+                    case Format::FLOAT64: func = convert_generic_fp_unorm<double>; break;
+                    default: break;
+                }
+            }
+            else if (dest.type == Format::UNORM && sourceFloat)
+            {
+                switch (source.type)
+                {
+                    case Format::FLOAT16: func = convert_generic_unorm_fp<float16>; break;
+                    case Format::FLOAT32: func = convert_generic_unorm_fp<float>; break;
+                    case Format::FLOAT64: func = convert_generic_unorm_fp<double>; break;
+                    default: break;
+                }
+            }
         }
 
         return func;

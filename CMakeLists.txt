@@ -38,6 +38,7 @@ OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
 OPTION(LIBRARY_WP2          "Enable WP2 image codec support"            ON)
 OPTION(LIBRARY_AVIF         "Enable avif image codec support"           ON)
 OPTION(LIBRARY_HEIF         "Enable heif image codec support"           ON)
+OPTION(LIBRARY_LIBRAW       "Enable camera raw image codec (LibRaw)"    ON)
 OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
@@ -66,6 +67,7 @@ if (LIBRARY_DISABLE)
     set(LIBRARY_WP2    OFF)
     set(LIBRARY_AVIF   OFF)
     set(LIBRARY_HEIF   OFF)
+    set(LIBRARY_LIBRAW OFF)
     set(LIBRARY_ISAL   OFF)
 endif ()
 
@@ -1108,6 +1110,37 @@ endif ()
 
 if (LIBRARY_HEIF)
     find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
+endif ()
+
+if (LIBRARY_LIBRAW)
+    # LibRaw ships only a pkg-config file (no CMake package config). Its .pc pulls in
+    # bare link tokens (-lstdc++, OpenMP, lcms2 via Requires); adding those as plain
+    # library names defeats CMake's link de-duplication and ends up duplicating every
+    # other pkg-config library on the link line. Linking through an imported target
+    # keeps those flags encapsulated and the link line clean.
+    if (PkgConfig_FOUND)
+        pkg_check_modules(LIBRAW QUIET IMPORTED_TARGET libraw>=0.20.0)
+        if (LIBRAW_FOUND)
+            resolve_version(package_version "${LIBRAW_VERSION}")
+            message("    LIBRAW: " ${package_version} " [pkgconfig]")
+
+            # LibRaw's .pc lists an explicit C++ runtime (-lstdc++). We always link
+            # through the C++ compiler driver, which provides it implicitly, so drop
+            # it to avoid a duplicate-library warning (it aliases libc++ on macOS).
+            if (TARGET PkgConfig::LIBRAW)
+                get_target_property(_libraw_libs PkgConfig::LIBRAW INTERFACE_LINK_LIBRARIES)
+                if (_libraw_libs)
+                    list(REMOVE_ITEM _libraw_libs "stdc++")
+                    set_target_properties(PkgConfig::LIBRAW PROPERTIES INTERFACE_LINK_LIBRARIES "${_libraw_libs}")
+                endif ()
+            endif ()
+
+            target_compile_definitions(mango PRIVATE "MANGO_ENABLE_LIBRAW")
+            target_link_libraries(mango ${INTERFACE} PkgConfig::LIBRAW)
+        else ()
+            message("    LIBRAW: no version [not found]")
+        endif ()
+    endif ()
 endif ()
 
 if (BUILD_IMPORT3D)

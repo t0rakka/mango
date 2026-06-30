@@ -3,6 +3,7 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
+#include <set>
 #include <mango/core/system.hpp>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
@@ -124,6 +125,7 @@ namespace mango::image
     void registerImageCodecPIC();
     void registerImageCodecPSD();
     void registerImageCodecRAW();
+    void registerImageCodecCAMERA();
     void registerImageCodecJXL();
     void registerImageCodecJP2();
     void registerImageCodecHEIF();
@@ -168,6 +170,7 @@ namespace mango::image
             registerImageCodecPIC();
             registerImageCodecPSD();
             registerImageCodecRAW();
+            registerImageCodecCAMERA();
             registerImageCodecJXL();
             registerImageCodecJP2();
             registerImageCodecHEIF();
@@ -257,6 +260,22 @@ namespace mango::image
     // ImageDecoder
     // ----------------------------------------------------------------------------
 
+    // Many camera raw formats are TIFF containers (DNG, NEF, CR2, ARW, ORF, ...)
+    // and therefore share TIFF's "II*\0" / "MM\0*" signature. The signature alone
+    // cannot tell them apart from an ordinary TIFF without parsing the IFD, so when
+    // the filename uses one of these dedicated raw extensions we route to the camera
+    // (LibRaw) decoder instead of the TIFF decoder.
+    static bool isTIFFContainerRawExtension(const std::string& extension)
+    {
+        static const std::set<std::string> extensions =
+        {
+            ".dng", ".cr2", ".nef", ".nrw", ".arw", ".sr2", ".srf",
+            ".orf", ".pef", ".srw", ".rw2", ".3fr", ".fff", ".iiq",
+            ".mos", ".mef", ".rwl", ".dcr", ".kdc", ".erf", ".gpr"
+        };
+        return extensions.find(extension) != extensions.end();
+    }
+
     static ImageDecodeInterface* createDecodeInterface(ConstMemory memory, const std::string& filename)
     {
         // Inspect signature to determine image format
@@ -265,6 +284,18 @@ namespace mango::image
         {
             // signature wasn't recognized -> trust the filename
             extension = getLowerCaseExtension(filename);
+        }
+        else if (extension == ".tiff")
+        {
+            // Disambiguate TIFF-container camera raws from ordinary TIFF using the
+            // filename; only redirects when a decoder for that extension exists
+            // (i.e. the camera codec is enabled).
+            std::string fileExtension = getLowerCaseExtension(filename);
+            if (isTIFFContainerRawExtension(fileExtension) &&
+                g_imageServer.getImageDecoder(fileExtension))
+            {
+                extension = fileExtension;
+            }
         }
 
         ImageDecoder::CreateDecodeFunc create = g_imageServer.getImageDecoder(extension);
