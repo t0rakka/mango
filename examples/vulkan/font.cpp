@@ -78,12 +78,6 @@ namespace mango::font
 
     static constexpr float kEpsilon = 1e-4f;
 
-    static float2 evaluate_bezier(const float2& p0, const float2& p1, const float2& p2, float t)
-    {
-        float s = 1.0f - t;
-        return p0 * (s * s) + p1 * (2.0f * s * t) + p2 * (t * t);
-    }
-
     static float2 evaluate_cubic(const float2& p0, const float2& p1, const float2& p2, const float2& p3, float t)
     {
         float s = 1.0f - t;
@@ -327,154 +321,6 @@ namespace mango::font
         flush_contour();
     }
 
-    static float intersect_monotonic(float qa, float c0, float c1, float c2, float target)
-    {
-        if (std::fabs(qa) < 1e-3f)
-        {
-            return (target - c0) / (c2 - c0);
-        }
-
-        float qb = 2.0f * c1 - 2.0f * c0;
-        float qc = c0 - target;
-        float d = qb * qb - 4.0f * qa * qc;
-        float sqrt_d = d < 0.0f ? 0.0f : std::sqrt(d);
-        float inv_2a = 0.5f / qa;
-        float sign_val = (c2 - c0) >= 0.0f ? 1.0f : -1.0f;
-        return (-qb * inv_2a) + sign_val * sqrt_d * inv_2a;
-    }
-
-    static float scanline_sweep(float2 size, float2 offset, float2 p0, float2 p1, float2 p2)
-    {
-        if (std::max(p0.y, p2.y) <= offset.y || std::min(p0.y, p2.y) >= offset.y + size.y)
-        {
-            return 0.0f;
-        }
-
-        float2 delta = p2 - p0;
-        p0 -= offset;
-        p1 -= offset;
-        p2 -= offset;
-
-        if (p0.x == p1.x && p0.x == p2.x)
-        {
-            if (p0.x >= size.x)
-            {
-                return 0.0f;
-            }
-
-            float t = std::min(std::max(p0.y, p2.y), size.y);
-            float b = std::max(std::min(p0.y, p2.y), 0.0f);
-            float h = t - b;
-            float w = std::min(size.x, size.x - p0.x);
-            return std::copysign(1.0f, delta.y) * w * h;
-        }
-
-        float qa = -2.0f * p1.y + p0.y + p2.y;
-        float bt = intersect_monotonic(qa, p0.y, p1.y, p2.y, 0.0f);
-        float tt = intersect_monotonic(qa, p0.y, p1.y, p2.y, size.y);
-        float v_min_t = delta.y > 0.0f ? bt : tt;
-        float v_max_t = delta.y > 0.0f ? tt : bt;
-        float2 v_min = evaluate_bezier(p0, p1, p2, std::clamp(v_min_t, 0.0f, 1.0f));
-        float2 v_max = evaluate_bezier(p0, p1, p2, std::clamp(v_max_t, 0.0f, 1.0f));
-
-        if (std::max(v_min.x, v_max.x) <= 0.0f)
-        {
-            return (v_max.y - v_min.y) * size.x;
-        }
-
-        if (std::min(v_min.x, v_max.x) >= size.x)
-        {
-            return 0.0f;
-        }
-
-        qa = -2.0f * p1.x + p0.x + p2.x;
-        float h_min_t = 0.0f;
-        float h_max_t = 0.0f;
-
-        float32x4 h_check = delta.x > 0.0f
-            ? float32x4(p0.x, p2.x, 0.0f, 0.0f)
-            : float32x4(p2.x, p0.x, size.x, 1.0f);
-
-        if (h_check.x >= h_check.z)
-        {
-            h_min_t = h_check.w;
-        }
-        else if (h_check.y <= h_check.z)
-        {
-            h_min_t = 1.0f - h_check.w;
-        }
-        else
-        {
-            h_min_t = intersect_monotonic(qa, p0.x, p1.x, p2.x, h_check.z);
-        }
-
-        h_check.z = size.x - h_check.z;
-
-        if (h_check.x >= h_check.z)
-        {
-            h_max_t = h_check.w;
-        }
-        else if (h_check.y <= h_check.z)
-        {
-            h_max_t = 1.0f - h_check.w;
-        }
-        else
-        {
-            h_max_t = intersect_monotonic(qa, p0.x, p1.x, p2.x, h_check.z);
-        }
-
-        float min_t = std::clamp(std::max(v_min_t, h_min_t), 0.0f, 1.0f);
-        float max_t = std::clamp(std::min(v_max_t, h_max_t), 0.0f, 1.0f);
-
-        float2 q0 = v_min_t >= h_min_t ? v_min : evaluate_bezier(p0, p1, p2, min_t);
-        float2 q1 = v_max_t <= h_max_t ? v_max : evaluate_bezier(p0, p1, p2, max_t);
-
-        float coverage = 0.0f;
-
-        if (min_t > 0.0f && delta.x > 0.0f)
-        {
-            float h = delta.y > 0.0f
-                ? q0.y - std::max(0.0f, p0.y)
-                : std::min(size.y, p0.y) - q0.y;
-            coverage = std::copysign(1.0f, delta.y) * h * size.x;
-        }
-
-        if (max_t < 1.0f && delta.x < 0.0f)
-        {
-            float h = delta.y > 0.0f
-                ? std::min(size.y, p2.y) - q1.y
-                : q1.y - std::max(0.0f, p2.y);
-            coverage += std::copysign(1.0f, delta.y) * h * size.x;
-        }
-
-        float h = q1.y - q0.y;
-        float b = (-0.5f * (q0.x + q1.x)) + size.x;
-        coverage += b * h;
-
-        return coverage;
-    }
-
-    static float evaluate_glyph_coverage_raw(const GlyphOutline& outline, float2 em_offset, float2 em_size)
-    {
-        if (outline.contours.empty())
-        {
-            return 0.0f;
-        }
-
-        float coverage_sum = 0.0f;
-        float area = em_size.x * em_size.y;
-
-        for (const Contour& contour : outline.contours)
-        {
-            for (const QuadraticCurve& curve : contour.curves)
-            {
-                coverage_sum += scanline_sweep(em_size, em_offset, curve.p0, curve.p1, curve.p2);
-            }
-        }
-
-        return area > 0.0f ? coverage_sum / area : 0.0f;
-    }
-
     class Font
     {
     public:
@@ -549,126 +395,6 @@ namespace mango::font
             return scale;
         }
     };
-
-    static bool validate_glyph_cpu(const Font& font, int codepoint, float pen_x = 40.0f, float baseline_y = 120.0f)
-    {
-        GlyphOutline outline = font.load_outline(codepoint);
-        if (outline.contours.empty())
-        {
-            printLine(Print::Warning, "CPU validation: glyph U+{:04X} has no curves.", codepoint);
-            return false;
-        }
-
-        float em_per_pixel = font.em_per_pixel();
-        float pixel_scale = font.pixel_scale();
-        float2 em_size(em_per_pixel, em_per_pixel);
-
-        float float_left = pen_x + outline.bounds_min.x * pixel_scale;
-        float float_top = baseline_y - outline.bounds_max.y * pixel_scale;
-        float screen_left = std::round(float_left);
-        float screen_top = std::round(float_top);
-        float em_window_x0 = outline.bounds_min.x + (screen_left - float_left) * em_per_pixel;
-        float em_window_y_top = outline.bounds_max.y + (screen_top - float_top) * em_per_pixel;
-
-        float ink_right_em = std::min(outline.bounds_max.x, outline.bounds_min.x + outline.advance);
-        int width = std::max(1, int(std::ceil((ink_right_em - outline.bounds_min.x) / em_per_pixel)));
-        int height = std::max(1, int(std::ceil((outline.bounds_max.y - outline.bounds_min.y) / em_per_pixel)));
-
-        std::vector<float> sweeper(size_t(width * height), 0.0f);
-        std::vector<float> signed_cov(size_t(width * height), 0.0f);
-        std::vector<u8> reference(size_t(width * height), 0);
-
-        int glyph_index = stbtt_FindGlyphIndex(&font.info, codepoint);
-        stbtt_MakeGlyphBitmap(&font.info, reference.data(), width, height, width, font.scale, font.scale, glyph_index);
-
-        for (int y = 0; y < height; ++y)
-        {
-            for (int x = 0; x < width; ++x)
-            {
-                float2 em_offset = float2(
-                    em_window_x0 + float(x) * em_per_pixel,
-                    em_window_y_top - (float(y) + 1.0f) * em_per_pixel);
-                signed_cov[size_t(y * width + x)] = evaluate_glyph_coverage_raw(outline, em_offset, em_size);
-                sweeper[size_t(y * width + x)] = std::clamp(signed_cov[size_t(y * width + x)], 0.0f, 1.0f);
-            }
-        }
-
-        float max_diff = 0.0f;
-        float interior_ref = 0.0f;
-        float interior_cov = 0.0f;
-        float interior_signed = 0.0f;
-        int interior_count = 0;
-        int exterior_leak = 0;
-        int right_edge_leak = 0;
-        for (int i = 0; i < width * height; ++i)
-        {
-            float ref = reference[i] / 255.0f;
-            float cov = sweeper[i];
-            float raw = signed_cov[i];
-            max_diff = std::max(max_diff, std::fabs(cov - ref));
-            if (ref > 0.5f)
-            {
-                interior_ref += ref;
-                interior_cov += cov;
-                interior_signed += raw;
-                ++interior_count;
-            }
-            else if (ref < 0.05f && cov > 0.2f)
-            {
-                ++exterior_leak;
-                int px = i % width;
-                if (px >= width - 2)
-                {
-                    ++right_edge_leak;
-                }
-            }
-        }
-
-        float mean_interior_ref = interior_count > 0 ? interior_ref / float(interior_count) : 0.0f;
-        float mean_interior_cov = interior_count > 0 ? interior_cov / float(interior_count) : 0.0f;
-        float mean_interior_signed = interior_count > 0 ? interior_signed / float(interior_count) : 0.0f;
-
-        std::fprintf(stderr,
-            "  bounds [%.1f,%.1f]-[%.1f,%.1f] advance=%.1f ink_right=%.1f (%dx%d px)\n",
-            outline.bounds_min.x, outline.bounds_min.y,
-            outline.bounds_max.x, outline.bounds_max.y,
-            outline.advance,
-            ink_right_em, width, height);
-
-        std::fprintf(stderr,
-            "CPU validation glyph U+%04X (%dx%d): max diff = %.3f, interior = %.3f/%.3f, signed = %.3f, leak = %d (right %d)\n",
-            codepoint, width, height, max_diff, mean_interior_cov, mean_interior_ref, mean_interior_signed, exterior_leak, right_edge_leak);
-        return max_diff < 0.35f;
-    }
-
-    static void validate_font_cpu(const Font& font)
-    {
-        int non_monotonic = 0;
-        int total_curves = 0;
-        for (int codepoint = 32; codepoint < 127; ++codepoint)
-        {
-            GlyphOutline outline = font.load_outline(codepoint);
-            for (const Contour& contour : outline.contours)
-            {
-                for (const QuadraticCurve& curve : contour.curves)
-                {
-                    ++total_curves;
-                    if (!is_monotonic(curve))
-                    {
-                        ++non_monotonic;
-                    }
-                }
-            }
-        }
-
-        std::fprintf(stderr, "Non-monotonic curves after subdivision: %d / %d\n", non_monotonic, total_curves);
-
-        const int glyphs[] = { 'T', 'K', 'W', 'X', 'e', 'o' };
-        for (int codepoint : glyphs)
-        {
-            validate_glyph_cpu(font, codepoint);
-        }
-    }
 
 } // namespace mango::font
 
@@ -2080,32 +1806,15 @@ static std::string default_font_path()
 int mangoMain(const mango::CommandLine& commands)
 {
     std::string fontPath = default_font_path();
-    bool validate_only = false;
+    //bool validate_only = false;
 
     for (size_t i = 1; i < commands.size(); ++i)
     {
         std::string arg = std::string(commands[i]);
-        if (arg == "--validate")
-        {
-            validate_only = true;
-        }
-        else if (arg[0] != '-')
+        if (arg[0] != '-')
         {
             fontPath = arg;
         }
-    }
-
-    if (validate_only)
-    {
-        mango::font::Font font;
-        if (!font.load(fontPath, 48.0f))
-        {
-            printLine(Print::Error, "Failed to load font: {}", fontPath);
-            return 1;
-        }
-
-        mango::font::validate_font_cpu(font);
-        return 0;
     }
 
     std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
