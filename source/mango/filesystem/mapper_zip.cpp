@@ -83,6 +83,7 @@ namespace
         {
             case COMPRESSION_NONE:
             case COMPRESSION_DEFLATE:
+            case COMPRESSION_DEFLATE64:
             case COMPRESSION_BZIP2:
             case COMPRESSION_LZMA:
             case COMPRESSION_ZSTD:
@@ -840,6 +841,12 @@ namespace mango::filesystem
                     break;
                 }
 
+                case COMPRESSION_DEFLATE64:
+                {
+                    compressor.decompress = deflate64::decompress;
+                    break;
+                }
+
                 case COMPRESSION_PPMD:
                 {
                     compressor = getCompressor(Compressor::PPMD8);
@@ -885,7 +892,6 @@ namespace mango::filesystem
                 case COMPRESSION_REDUCE_4:
                 case COMPRESSION_IMPLODE:
                 case COMPRESSION_DCLI:
-                case COMPRESSION_DEFLATE64:
                 case COMPRESSION_CMPSC:
                 case COMPRESSION_TERSE:
                 case COMPRESSION_LZ77:

@@ -172,6 +172,11 @@ namespace mango
         CompressionStatus decompress(Memory dest, ConstMemory source);
     }
 
+    namespace deflate64
+    {
+        CompressionStatus decompress(Memory dest, ConstMemory source);
+    }
+
     namespace lzav
     {
         size_t bound(size_t size);

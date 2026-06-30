@@ -16,6 +16,8 @@
 #include <zlib.h>
 #include <libdeflate.h>
 
+#include <inflatelib.h>
+
 #include "../../external/lzav/lzav.h"
 
 #define ZSTD_DISABLE_DEPRECATE_WARNINGS
@@ -1171,6 +1173,57 @@ namespace deflate_gzip
     }
 
 } // namespace deflate_gzip
+
+// ----------------------------------------------------------------------------
+// deflate64
+// ----------------------------------------------------------------------------
+
+namespace deflate64
+{
+
+    CompressionStatus decompress(Memory dest, ConstMemory source)
+    {
+        inflatelib_stream stream = {};
+
+        CompressionStatus status;
+
+        if (inflatelib_init(&stream) < INFLATELIB_OK)
+        {
+            status.setError("[deflate64] initialization failed.");
+            return status;
+        }
+
+        stream.next_in = source.address;
+        stream.avail_in = source.size;
+        stream.next_out = dest.address;
+        stream.avail_out = dest.size;
+
+        int result = INFLATELIB_OK;
+        while (result != INFLATELIB_EOF)
+        {
+            result = inflatelib_inflate64(&stream);
+            if (result < INFLATELIB_OK)
+            {
+                const char* error = stream.error_msg ? stream.error_msg : "decompression failed";
+                status.setError("[deflate64] {}.", error);
+                inflatelib_destroy(&stream);
+                return status;
+            }
+
+            if (stream.avail_out == 0 && stream.avail_in > 0)
+            {
+                status.setError("[deflate64] insufficient output space.");
+                inflatelib_destroy(&stream);
+                return status;
+            }
+        }
+
+        inflatelib_destroy(&stream);
+        status.size = stream.total_out;
+        return status;
+    }
+
+} // namespace deflate64
 
 // ----------------------------------------------------------------------------
 // lzav

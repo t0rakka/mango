@@ -548,6 +548,11 @@ FILE(GLOB EXTERNAL_UNRAR
     "${EXTERNAL_SOURCE_DIR}/unrar/*.cpp"
 )
 
+FILE(GLOB EXTERNAL_INFLATELIB
+    "${EXTERNAL_SOURCE_DIR}/inflatelib/*.h"
+    "${EXTERNAL_SOURCE_DIR}/inflatelib/*.c"
+)
+
 FILE(GLOB EXTERNAL_ZPNG
     "${EXTERNAL_SOURCE_DIR}/zpng/*.h"
     "${EXTERNAL_SOURCE_DIR}/zpng/*.cpp"
@@ -577,6 +582,7 @@ if (LIBRARY_LZFSE)
     SOURCE_GROUP("external/lzfse"   FILES ${EXTERNAL_LZFSE})
 endif ()
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
+SOURCE_GROUP("external/inflatelib"  FILES ${EXTERNAL_INFLATELIB})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
@@ -605,6 +611,7 @@ set(MANGO_SOURCES
     ${EXTERNAL_ASTC}
     ${EXTERNAL_GOOGLE}
     ${EXTERNAL_UNRAR}
+    ${EXTERNAL_INFLATELIB}
     ${EXTERNAL_BASISU}
     ${EXTERNAL_ZPNG}
 )
@@ -654,6 +661,8 @@ if (BUILD_IMPORT3D)
 endif ()
 
 add_library(mango ${MANGO_SOURCES})
+
+target_include_directories(mango PRIVATE "${EXTERNAL_SOURCE_DIR}/inflatelib")
 
 set_target_properties(mango PROPERTIES
     VERSION ${PROJECT_VERSION}
