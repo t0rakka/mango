@@ -12,7 +12,10 @@
 #include <inflatelib.h>
 
 #include <errno.h>
+
+#if !defined(_MSC_VER)
 #include <stdalign.h>
+#endif
 
 #include "bitstream.h"
 #include "huffman_tree.h"
@@ -128,8 +131,18 @@ typedef struct inflatelib_state
 
 int format_error_message(inflatelib_stream* stream, const char* fmt, ...);
 
-#define INFLATELIB_ALLOC(stream, type, count) (type*)stream->alloc(stream->user_data, sizeof(type) * count, alignof(type))
-#define INFLATELIB_FREE(stream, type, ptr, count) stream->free(stream->user_data, ptr, sizeof(type) * count, alignof(type))
+#if defined(_MSC_VER)
+#define INFLATELIB_ALIGNOF(type) ((size_t)__alignof(type))
+#elif defined(__GNUC__) || defined(__clang__)
+#define INFLATELIB_ALIGNOF(type) ((size_t)__alignof__(type))
+#else
+#define INFLATELIB_ALIGNOF(type) ((size_t)alignof(type))
+#endif
+
+#define INFLATELIB_ALLOC(stream, type, count) \
+    ((type*)stream->alloc(stream->user_data, sizeof(type) * (count), INFLATELIB_ALIGNOF(type)))
+#define INFLATELIB_FREE(stream, type, ptr, count) \
+    stream->free(stream->user_data, (ptr), sizeof(type) * (count), INFLATELIB_ALIGNOF(type))
 
 #ifdef __has_builtin
 #if __has_builtin(__builtin_unreachable)
