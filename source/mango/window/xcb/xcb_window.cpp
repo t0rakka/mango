@@ -639,11 +639,6 @@ namespace mango
             XCB_EVENT_MASK_STRUCTURE_NOTIFY
         };
 
-        if (flags & Window::DISABLE_RESIZE)
-        {
-            // TODO
-        }
-
         visualid = screen->root_visual;
 
         xcb_create_window(connection, XCB_COPY_FROM_PARENT, window, root,
@@ -691,11 +686,22 @@ namespace mango
 
         // Set window size hints
         xcb_size_hints_t size_hints = { 0 };
-        size_hints.flags = XCB_ICCCM_SIZE_HINT_P_MIN_SIZE | XCB_ICCCM_SIZE_HINT_P_RESIZE_INC;
-        size_hints.min_width = 1;
-        size_hints.min_height = 1;
-        size_hints.width_inc = 1;
-        size_hints.height_inc = 1;
+        if (flags & Window::DISABLE_RESIZE)
+        {
+            size_hints.flags = XCB_ICCCM_SIZE_HINT_P_MIN_SIZE | XCB_ICCCM_SIZE_HINT_P_MAX_SIZE;
+            size_hints.min_width = width;
+            size_hints.min_height = height;
+            size_hints.max_width = width;
+            size_hints.max_height = height;
+        }
+        else
+        {
+            size_hints.flags = XCB_ICCCM_SIZE_HINT_P_MIN_SIZE | XCB_ICCCM_SIZE_HINT_P_RESIZE_INC;
+            size_hints.min_width = 1;
+            size_hints.min_height = 1;
+            size_hints.width_inc = 1;
+            size_hints.height_inc = 1;
+        }
         xcb_icccm_set_wm_size_hints(connection, window, XCB_ATOM_WM_NORMAL_HINTS, &size_hints);
 
         // Set window type hint
@@ -1175,7 +1181,7 @@ namespace mango
                                 {
                                     xcb_atom_t* atoms = (xcb_atom_t*)xcb_get_property_value(reply);
                                     int count = xcb_get_property_value_length(reply) / sizeof(xcb_atom_t);
-                                    // TODO: Implement target selection
+                                    // MANGO TODO: Implement target selection
                                     free(reply);
                                 }
                             }
@@ -1241,7 +1247,7 @@ namespace mango
                             xcb_get_property_reply_t* reply = xcb_get_property_reply(connection, cookie, nullptr);
                             if (reply)
                             {
-                                // TODO: Process dropped files
+                                // MANGO TODO: Process dropped files
                                 free(reply);
                             }
 

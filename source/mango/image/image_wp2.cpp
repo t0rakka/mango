@@ -40,7 +40,7 @@ namespace
                 return;
             }
 
-            // TODO: support more output formats, including HDR (floating point)
+            // MANGO TODO: support more output formats, including HDR (floating point)
 
             header.width = features.raw_width;
             header.height = features.raw_height;
@@ -63,7 +63,7 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format);
 
-            // TODO: support more input formats, including HDR (floating point)
+            // MANGO TODO: support more input formats, including HDR (floating point)
             WP2::ArgbBuffer buffer(WP2_RGBA_32);
 
             WP2Status s;
@@ -112,7 +112,7 @@ namespace
 
         WP2Status s;
 
-        // TODO: support more input formats, including HDR (floating point)
+        // MANGO TODO: support more input formats, including HDR (floating point)
         WP2::ArgbBuffer buffer(WP2_RGBA_32);
 
         s = buffer.SetExternal(temp.width, temp.height, temp.image, temp.stride, false);

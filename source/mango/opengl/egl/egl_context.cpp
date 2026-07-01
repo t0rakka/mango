@@ -77,7 +77,10 @@ namespace
 
         if (config.samples > 1)
         {
-            // MANGO TODO
+            attribs.push_back(EGL_SAMPLE_BUFFERS);
+            attribs.push_back(1);
+            attribs.push_back(EGL_SAMPLES);
+            attribs.push_back(int(config.samples));
         }
 
         attribs.push_back(EGL_NONE);
@@ -128,6 +131,30 @@ namespace
         }
 
         choice.config = configs[0];
+        return choice;
+    }
+
+    EGLConfigChoice chooseEGLConfigWithRetry(EGLDisplay display, mango::OpenGLContext::Config& config,
+                                             EGLNativeWindowType native_window)
+    {
+        EGLConfigChoice choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+
+        if (!choice.config && config.samples > 1)
+        {
+            mango::printLine(mango::Print::Warning, "[EGL] {}x multisample not available, falling back to 1x",
+                config.samples);
+            config.samples = 1;
+            choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+        }
+        else if (choice.config && config.samples > 1)
+        {
+            EGLint samples = 0;
+            if (eglGetConfigAttrib(display, choice.config, EGL_SAMPLES, &samples) && samples > 0)
+            {
+                mango::printLine(mango::Print::Info, "[EGL] multisample : {}x", samples);
+            }
+        }
+
         return choice;
     }
 
@@ -207,8 +234,6 @@ namespace mango
 
             // Configure attributes
 
-            const std::vector<EGLint> configAttribs = buildConfigAttribs(config);
-
             eglBindAPI(EGL_OPENGL_API);
 
             OpenGLContextEGL* shared = reinterpret_cast<OpenGLContextEGL*>(theShared);
@@ -237,7 +262,7 @@ namespace mango
             EGLNativeWindowType native_window = (EGLNativeWindowType)(std::uintptr_t)native;
 
             {
-                EGLConfigChoice choice = chooseEGLConfig(egl_display, configAttribs, native_window);
+                EGLConfigChoice choice = chooseEGLConfigWithRetry(egl_display, config, native_window);
                 if (!choice.config)
                 {
                     shutdown();

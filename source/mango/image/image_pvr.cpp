@@ -348,14 +348,14 @@ namespace
                     format = LuminanceFormat(8, Format::UNORM, 4, 4);
                     break;
                 case 0x27: // LVU 655
-                    // MANGO TODO
-                    break;
+                    header.setError("[ImageDecoder.PVR] Unsupported legacy pixel format (LVU 655).");
+                    return;
                 case 0x28: // XLVU 8888
-                    // MANGO TODO
-                    break;
+                    header.setError("[ImageDecoder.PVR] Unsupported legacy pixel format (XLVU 8888).");
+                    return;
                 case 0x29: // QWVU 8888
-                    // MANGO TODO
-                    break;
+                    header.setError("[ImageDecoder.PVR] Unsupported legacy pixel format (QWVU 8888).");
+                    return;
                 case 0x2A: // ABGR 2101010
                     format = Format(32, Format::UNORM, Format::ABGR, 2, 10, 10, 10);
                     break;
@@ -363,14 +363,14 @@ namespace
                     format = Format(32, Format::UNORM, Format::ARGB, 2, 10, 10, 10);
                     break;
                 case 0x2C: // AWVU 2101010
-                    // MANGO TODO
-                    break;
+                    header.setError("[ImageDecoder.PVR] Unsupported legacy pixel format (AWVU 2101010).");
+                    return;
                 case 0x2D: // GR 1616
                     format = Format(32, Format::UNORM, Format::GR, 16, 16, 0, 0);
                     break;
                 case 0x2E: // VU 1616
-                    // MANGO TODO
-                    break;
+                    header.setError("[ImageDecoder.PVR] Unsupported legacy pixel format (VU 1616).");
+                    return;
                 case 0x2F: // ABGR 16161616
                     format = Format(64, Format::UNORM, Format::ABGR, 16, 16, 16, 16);
                     break;
@@ -399,8 +399,8 @@ namespace
                     format = Format(8, Format::UNORM, Format::A, 8, 0, 0, 0);
                     break;
                 case 0x41: // VU 88
-                    // MANGO TODO
-                    break;
+                    header.setError("[ImageDecoder.PVR] Unsupported legacy pixel format (VU 88).");
+                    return;
                 case 0x42: // L16
                     format = LuminanceFormat(16, Format::UNORM, 16, 0);
                     break;

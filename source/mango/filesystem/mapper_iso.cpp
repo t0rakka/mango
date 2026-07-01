@@ -11,10 +11,6 @@
 #include <mango/filesystem/mapper.hpp>
 #include <mango/filesystem/path.hpp>
 
-// TODO: Check record flags why .img files in [BOOT] directory are not visible
-// TODO: Check that we add containers (.zip, rar, etc.) as files AND containers into the index
-// TODO: Implement proper Joliet/Rock Ridge support for lowercase and long filenames
-
 namespace
 {
     using namespace mango;
@@ -27,6 +23,22 @@ namespace
     using mango::u16;
     using mango::u32;
     using mango::u64;
+
+    void getSystemUseArea(const u8* record, u8 record_length, u8 filename_length, const u8*& system_use, u8& system_use_length)
+    {
+        const u8 padded_filename_length = filename_length + (filename_length & 1);
+        const u8 system_use_offset = 33 + padded_filename_length;
+
+        if (system_use_offset >= record_length)
+        {
+            system_use = nullptr;
+            system_use_length = 0;
+            return;
+        }
+
+        system_use = record + system_use_offset;
+        system_use_length = record_length - system_use_offset;
+    }
 
     // -----------------------------------------------------------------
     // ISO 9660 structures
@@ -218,80 +230,82 @@ namespace
 
         std::string getJolietFileName() const
         {
-            // Manual reading to avoid structure alignment issues
             const u8* data = reinterpret_cast<const u8*>(this);
             u8 filename_length = data[32];
 
-            if (filename_length == 0)
+            if (filename_length < 2)
                 return "";
 
-            // Joliet uses UCS-2 (16-bit Unicode), but we'll read as UTF-8 for simplicity
-            // In practice, most Joliet filenames are ASCII-compatible
-            std::string name(reinterpret_cast<const char*>(data + 33), filename_length);
+            std::u16string utf16;
+            utf16.reserve(filename_length / 2);
 
-            // Remove version suffix (;1, ;2, etc.)
-            size_t pos = name.find(';');
-            if (pos != std::string::npos)
+            for (u8 i = 0; i + 1 < filename_length; i += 2)
             {
-                name = name.substr(0, pos);
+                char16_t ch = char16_t(data[33 + i] << 8) | data[33 + i + 1];
+                utf16.push_back(ch);
             }
 
-            return name;
+            size_t pos = utf16.find(u';');
+            if (pos != std::u16string::npos)
+            {
+                utf16.resize(pos);
+            }
+
+            return utf8_from_utf16(utf16);
         }
 
         std::string getRockRidgeFileName() const
         {
-            // Manual reading to avoid structure alignment issues
             const u8* data = reinterpret_cast<const u8*>(this);
+            u8 record_length = data[0];
             u8 filename_length = data[32];
-            u8 system_use_length = data[33 + filename_length];
 
-            if (system_use_length == 0)
+            const u8* system_use = nullptr;
+            u8 system_use_length = 0;
+            getSystemUseArea(data, record_length, filename_length, system_use, system_use_length);
+
+            if (!system_use || system_use_length == 0)
                 return "";
 
-            const u8* system_use = data + 33 + filename_length;
+            std::string name;
 
-            // Parse Rock Ridge System Use area
-            for (u8 i = 0; i < system_use_length - 3; ++i)
+            for (u8 offset = 0; offset < system_use_length; )
             {
-                u8 signature1 = system_use[i];
-                u8 signature2 = system_use[i + 1];
-                u8 length = system_use[i + 2];
-                u8 version = system_use[i + 3];
+                if (offset + 4 > system_use_length)
+                    break;
 
-                // Look for NM (Name) records - these are Rock Ridge extensions
-                if (signature1 == 'N' && signature2 == 'M')
+                u8 signature1 = system_use[offset];
+                u8 signature2 = system_use[offset + 1];
+                u8 length = system_use[offset + 2];
+                u8 version = system_use[offset + 3];
+
+                if (length < 4 || offset + length > system_use_length)
+                    break;
+
+                if (signature1 == 'N' && signature2 == 'M' && length >= 5 && version == 1)
                 {
-                    // NM record - Name field
-                    if (length >= 5 && version == 1)
+                    u8 flags = system_use[offset + 4];
+                    u8 name_length = length - 5;
+
+                    if (name_length > 0)
                     {
-                        u8 flags = system_use[i + 4];
-                        u8 name_length = length - 5;
+                        name.append(reinterpret_cast<const char*>(system_use + offset + 5), name_length);
+                    }
 
-                        if (name_length > 0 && (i + 5 + name_length) <= system_use_length)
-                        {
-                            std::string name(reinterpret_cast<const char*>(system_use + i + 5), name_length);
-
-                            // Check for continuation flag
-                            if (flags & 0x01)
-                            {
-                                // This is a continuation, look for more NM records
-                                // For now, just return the first part
-                            }
-
-                            return name;
-                        }
+                    if ((flags & 0x01) == 0)
+                    {
+                        return name;
                     }
                 }
+                else if (!name.empty())
+                {
+                    return name;
+                }
 
-                // Skip to next record
-                if (length > 0 && length <= system_use_length - i)
-                    i += length - 1;
-                else
-                    break; // Prevent infinite loop
+                offset += length;
             }
 
-            return "";
+            return name;
         }
     };
 
@@ -400,14 +414,14 @@ namespace
                     break;
 
                 // Check for Rock Ridge extensions in System Use area
-                const u8* data = ptr;
-                u8 filename_length = data[32];
-                u8 system_use_length = data[33 + filename_length];
+                u8 filename_length = ptr[32];
 
-                if (system_use_length > 0)
+                const u8* system_use = nullptr;
+                u8 system_use_length = 0;
+                getSystemUseArea(ptr, record_length, filename_length, system_use, system_use_length);
+
+                if (system_use && system_use_length > 0)
                 {
-                    const u8* system_use = data + 33 + filename_length;
-
                     // Look for Rock Ridge signature "RR" or "SP"
                     for (u8 i = 0; i < system_use_length - 1; ++i)
                     {
@@ -596,9 +610,10 @@ namespace
 
             if (pathname.empty() || pathname == "/" || pathname == "\\")
             {
-                // Root directory - use standard ISO 9660 for now
-                const u8* root_dir_data = m_parent_memory.address + (m_root_extent * m_logical_block_size);
-                entries = parseDirectoryContents(root_dir_data, m_root_length, false);
+                const u8* root_dir_data = m_parent_memory.address +
+                    ((m_has_joliet ? m_joliet_root_extent : m_root_extent) * m_logical_block_size);
+                const u32 root_length = m_has_joliet ? m_joliet_root_length : m_root_length;
+                entries = parseDirectoryContents(root_dir_data, root_length, m_has_joliet);
             }
             else
             {
@@ -672,9 +687,7 @@ namespace
                         if (entry.is_directory)
                         {
                             const u8* dir_data = m_parent_memory.address + (entry.extent_location * m_logical_block_size);
-                            
-                            // Use standard ISO 9660 parsing
-                            entries = parseDirectoryContents(dir_data, entry.data_length, false);
+                            entries = parseDirectoryContents(dir_data, entry.data_length, m_has_joliet);
                             found = true;
                         }
                         break;

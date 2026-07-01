@@ -111,32 +111,7 @@ namespace mango
                 //printLine(Print::Info, "  glXIsDirect: ENABLE");
             }
 
-            // MANGO TODO: configuration selection API
-            // MANGO TODO: initialize GLX extensions using GLEXT headers
             glXMakeCurrent(display, window->x11Window(), context);
-
-#if 0
-            PFNGLGETSTRINGIPROC glGetStringi = (PFNGLGETSTRINGIPROC)glXGetProcAddress((const GLubyte*)"glGetStringi");
-
-            if (glGetStringi == NULL)
-            {
-                // Fall-back to the pre-3.0 method for querying extensions.
-                std::string extensionString = (const char*)glGetString(GL_EXTENSIONS);
-                m_extensions = tokenizeString(extensionString, " ");
-            }
-            else
-            {
-                // Use the post-3.0 method for querying extensions
-                GLint numExtensions = 0;
-                glGetIntegerv(GL_NUM_EXTENSIONS, &numExtensions);
-
-                for (int i = 0; i < numExtensions; ++i)
-                {
-                    std::string ext = (const char*)glGetStringi(GL_EXTENSIONS, i);
-                    m_extensions.push_back(ext);
-                }
-            }
-#endif
         }
 
         ~OpenGLContextGLX()

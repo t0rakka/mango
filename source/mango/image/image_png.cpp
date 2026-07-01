@@ -32,9 +32,9 @@
 // https://wiki.mozilla.org/APNG_Specification
 // https://datatracker.ietf.org/doc/html/rfc1951
 
-// HDR color signalling: "cICP" (CICP code points) is parsed and forwarded via ImageHeader::color.
+// HDR color signalling: "cICP", "mDCV", and "cLLI" are parsed and forwarded via
+// ImageHeader::color (ColorInfo).
 // https://github.com/w3c/ColorWeb-CG/blob/master/hdr-in-png-requirements.md#cicp-chunk
-// MANGO TODO: "mDCV"/"cLLI" mastering-display & content-light metadata for HDR tone mapping
 
 namespace fpng
 {

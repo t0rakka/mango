@@ -10,9 +10,9 @@
 #include <mango/image/compression.hpp>
 
 #include <map>
+#include <cstring>
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 
-// MANGO TODO: more input validation so that fuzzing tests pass :)
 // MANGO TODO: supercompression transcoding API to ImageDecoder interface.
 /*
     Implementation note: The BASIS_LZ and UASTC supercompression schemes are
@@ -386,6 +386,20 @@ namespace
         SUPERCOMPRESSION_ZSTANDARD = 2,
         SUPERCOMPRESSION_ZLIB = 3,
     };
+
+    constexpr size_t KTX2_IDENTIFIER_SIZE = 12;
+    constexpr size_t KTX2_HEADER_SIZE = KTX2_IDENTIFIER_SIZE + 9 * 4 + 4 * 4 + 8 * 2; // identifier + fields + index
+    constexpr size_t KTX2_LEVEL_INDEX_ENTRY_SIZE = 8 * 3;
+    constexpr u32 KTX2_MAX_LEVEL_COUNT = 32;
+
+    static
+    bool containsRegion(size_t memory_size, u64 offset, u64 length)
+    {
+        if (length > memory_size)
+            return false;
+
+        return offset <= memory_size - length;
+    }
 
     struct VulkanFormatDesc
     {
@@ -793,7 +807,7 @@ namespace
         u32 levelCount = 0;
         u32 supercompressionScheme = 0;
 
-        bool read(LittleEndianConstPointer& p)
+        bool read(LittleEndianConstPointer p, const u8* end)
         {
             constexpr u8 identifier [] =
             {
@@ -801,13 +815,16 @@ namespace
                 0x30, 0xBB, 0x0D, 0x0A, 0x1A, 0x0A
             };
 
-            if (std::memcmp(p, identifier, sizeof(identifier)))
-            {
-                // incorrect identifier
+            if (p + KTX2_IDENTIFIER_SIZE > end)
                 return false;
-            }
+
+            if (std::memcmp(p, identifier, sizeof(identifier)))
+                return false;
 
             p += sizeof(identifier);
+
+            if (p + 9 * 4 > end)
+                return false;
 
             vkFormat = p.read32();
             typeSize = p.read32();
@@ -860,9 +877,18 @@ namespace
         const u8* tablesData;
         const u8* extendedData;
 
-        void read(ConstMemory memory, int imageCount)
+        int m_image_count = 0;
+
+        bool read(ConstMemory memory, int imageCount)
         {
+            if (imageCount <= 0 || imageCount > 4096)
+                return false;
+
+            if (memory.size < 20)
+                return false;
+
             LittleEndianConstPointer p = memory.address;
+            const u8* end = memory.end();
 
             endpointCount = p.read16();
             selectorCount = p.read16();
@@ -880,33 +906,67 @@ namespace
             printLine(Print::Info, "  tablesByteLength:    {}", tablesByteLength);
             printLine(Print::Info, "  extendedByteLength:  {}", extendedByteLength);
 
-            imageDescData = p;
-            p += imageCount * 20;
+            const u64 image_desc_bytes = u64(imageCount) * 20;
+            const u64 payload_bytes = image_desc_bytes +
+                u64(endpointsByteLength) +
+                u64(selectorsByteLength) +
+                u64(tablesByteLength) +
+                u64(extendedByteLength);
 
-            endpointsData = p; p += endpointsByteLength;
-            selectorsData = p; p += selectorsByteLength;
-            tablesData    = p; p += tablesByteLength;
-            extendedData  = p;
+            if (payload_bytes > memory.size - 20)
+                return false;
+
+            imageDescData = p;
+            p += image_desc_bytes;
+
+            if (p + endpointsByteLength > end)
+                return false;
+            endpointsData = p;
+            p += endpointsByteLength;
+
+            if (p + selectorsByteLength > end)
+                return false;
+            selectorsData = p;
+            p += selectorsByteLength;
+
+            if (p + tablesByteLength > end)
+                return false;
+            tablesData = p;
+            p += tablesByteLength;
+
+            if (p + extendedByteLength > end)
+                return false;
+            extendedData = p;
+            m_image_count = imageCount;
+
+            return true;
         }
 
-        BasisImageDesc readImageDesc(int imageIndex) const
+        bool readImageDesc(int imageIndex, BasisImageDesc& desc) const
         {
-            LittleEndianConstPointer p = imageDescData + imageIndex * 20;
+            if (imageIndex < 0 || imageIndex >= m_image_count || !imageDescData)
+                return false;
 
-            BasisImageDesc desc;
+            const u8* p = imageDescData + imageIndex * 20;
+            const u8* end = imageDescData + m_image_count * 20;
 
-            desc.imageFlags = p.read32();
-            desc.rgbSliceByteOffset = p.read32();
-            desc.rgbSliceByteLength = p.read32();
-            desc.alphaSliceByteOffset = p.read32();
-            desc.alphaSliceByteLength = p.read32();
+            if (p + 20 > end)
+                return false;
+
+            LittleEndianConstPointer ptr = p;
+
+            desc.imageFlags = ptr.read32();
+            desc.rgbSliceByteOffset = ptr.read32();
+            desc.rgbSliceByteLength = ptr.read32();
+            desc.alphaSliceByteOffset = ptr.read32();
+            desc.alphaSliceByteLength = ptr.read32();
 
             printLine(Print::Info, "");
             printLine(Print::Info, "[BasisImageDesc]");
             printLine(Print::Info, "  rgb offset: {}, length: {}", desc.rgbSliceByteOffset, desc.rgbSliceByteLength);
             printLine(Print::Info, "  alpha offset: {}, length: {}", desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
 
-            return desc;
+            return true;
         }
     };
 
@@ -947,18 +1007,60 @@ namespace
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
+            if (memory.size < KTX2_HEADER_SIZE)
+            {
+                header.setError("[ImageDecoder.KTX2] Not enough data.");
+                return;
+            }
+
             LittleEndianConstPointer p = memory.address;
+            const u8* end = memory.end();
 
             HeaderKTX2 ktx2_header;
-            if (!ktx2_header.read(p))
+            if (!ktx2_header.read(p, end))
             {
-                printLine(Print::Info, "[KTX2] Incorrect identifier.");
+                header.setError("[ImageDecoder.KTX2] Incorrect identifier.");
+                return;
+            }
+
+            p = memory.address + KTX2_IDENTIFIER_SIZE + 9 * 4;
+
+            if (!ktx2_header.pixelWidth || !ktx2_header.pixelHeight)
+            {
+                header.setError("[ImageDecoder.KTX2] Invalid dimensions ({} x {}).",
+                    ktx2_header.pixelWidth, ktx2_header.pixelHeight);
+                return;
+            }
+
+            if (ktx2_header.layerCount > 1)
+            {
+                header.setError("[ImageDecoder.KTX2] Layer arrays are not supported.");
+                return;
+            }
+
+            if (ktx2_header.faceCount != 1 && ktx2_header.faceCount != 6)
+            {
+                header.setError("[ImageDecoder.KTX2] Incorrect number of faces ({}).", ktx2_header.faceCount);
+                return;
+            }
+
+            const u32 level_index_count = ktx2_header.levelCount ? ktx2_header.levelCount : 1;
+            if (level_index_count > KTX2_MAX_LEVEL_COUNT)
+            {
+                header.setError("[ImageDecoder.KTX2] Too many mipmap levels ({}).", level_index_count);
+                return;
+            }
+
+            const size_t level_index_bytes = level_index_count * KTX2_LEVEL_INDEX_ENTRY_SIZE;
+            if (memory.size < KTX2_HEADER_SIZE + level_index_bytes)
+            {
+                header.setError("[ImageDecoder.KTX2] Truncated level index.");
                 return;
             }
 
             if (isFormatProhibited(ktx2_header.vkFormat))
             {
-                printLine(Print::Info, "[KTX2] Prohibited format.");
+                header.setError("[ImageDecoder.KTX2] Prohibited format.");
                 return;
             }
 
@@ -1002,8 +1104,8 @@ namespace
                 case SUPERCOMPRESSION_ZLIB:
                     break;
                 default:
-                    // Unsupported / Incorrect compression scheme
-                    header = ImageHeader();
+                    header.setError("[ImageDecoder.KTX2] Unsupported supercompression scheme ({}).",
+                        ktx2_header.supercompressionScheme);
                     return;
             }
 
@@ -1015,28 +1117,60 @@ namespace
             u64 sgdByteOffset = p.read64();
             u64 sgdByteLength = p.read64();
 
-            MANGO_UNREFERENCED(dfdByteOffset);
-            MANGO_UNREFERENCED(dfdByteLength);
-            MANGO_UNREFERENCED(kvdByteOffset);
-            MANGO_UNREFERENCED(kvdByteLength);
-            MANGO_UNREFERENCED(sgdByteOffset);
-            MANGO_UNREFERENCED(sgdByteLength);
-
             printLine(Print::Info, "  dfdByteOffset: {}, dfdByteLength: {}", dfdByteOffset, dfdByteLength);
             printLine(Print::Info, "  kvdByteOffset: {}, kvdByteLength: {}", kvdByteOffset, kvdByteLength);
             printLine(Print::Info, "  sgdByteOffset: {}, sgdByteLength: {}", sgdByteOffset, sgdByteLength);
 
-            int levels = std::max(1, header.levels);
+            if (dfdByteLength && !containsRegion(memory.size, dfdByteOffset, dfdByteLength))
+            {
+                header.setError("[ImageDecoder.KTX2] Data format descriptor out of bounds.");
+                return;
+            }
+
+            if (kvdByteLength && !containsRegion(memory.size, kvdByteOffset, kvdByteLength))
+            {
+                header.setError("[ImageDecoder.KTX2] Key/value data out of bounds.");
+                return;
+            }
+
+            if (sgdByteLength && !containsRegion(memory.size, sgdByteOffset, sgdByteLength))
+            {
+                header.setError("[ImageDecoder.KTX2] Supercompression global data out of bounds.");
+                return;
+            }
+
+            if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ && !sgdByteLength)
+            {
+                header.setError("[ImageDecoder.KTX2] Missing BasisLZ global data.");
+                return;
+            }
+
+            const int levels = int(level_index_count);
             printLine(Print::Info, "");
             printLine(Print::Info, "[levels: {}]", levels);
 
+            m_levels.reserve(levels);
+
             for (int i = 0; i < levels; ++i)
             {
+                if (p + KTX2_LEVEL_INDEX_ENTRY_SIZE > end)
+                {
+                    header.setError("[ImageDecoder.KTX2] Truncated level index entry {}.", i);
+                    return;
+                }
+
                 LevelKTX2 level;
 
                 level.offset = p.read64();
                 level.length = p.read64();
                 level.uncompressed_length = p.read64();
+
+                if (!containsRegion(memory.size, level.offset, level.length))
+                {
+                    header.setError("[ImageDecoder.KTX2] Level {} data out of bounds.", i);
+                    return;
+                }
+
                 level.memory = ConstMemory(m_memory.address + level.offset, level.length);
 
                 m_levels.push_back(level);
@@ -1047,12 +1181,26 @@ namespace
             if (dfdByteLength)
             {
                 p = memory.address + dfdByteOffset;
-                const u8* end = p + dfdByteLength;
+                const u8* dfd_end = p + dfdByteLength;
+
+                if (p + 4 > dfd_end)
+                {
+                    header.setError("[ImageDecoder.KTX2] Truncated data format descriptor.");
+                    return;
+                }
 
                 p += 4; // skip totalSize
 
-                while (p < end)
+                while (p < dfd_end)
                 {
+                    const u8* block = p;
+
+                    if (p + 8 > dfd_end)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Truncated data format descriptor block.");
+                        return;
+                    }
+
                     u32 v0 = p.read32();
                     u32 v1 = p.read32();
 
@@ -1061,10 +1209,23 @@ namespace
                     u32 version_number = v1 & 0xffff;
                     u32 descriptor_block_size = v1 >> 16;
 
+                    if (descriptor_block_size < 24 || block + descriptor_block_size > dfd_end)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Invalid data format descriptor block size ({}).",
+                            descriptor_block_size);
+                        return;
+                    }
+
                     printLine(Print::Info, "");
                     printLine(Print::Info, "[DataFormatDescriptor]");
                     printLine(Print::Info, "  vendor: {}, version: {}", vendor_id, version_number);
                     printLine(Print::Info, "  type: {}, size: {}", descriptor_type, descriptor_block_size);
+
+                    if (p + 16 > block + descriptor_block_size)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Truncated data format descriptor block.");
+                        return;
+                    }
 
                     u8 colorModel           = p[0];
                     u8 colorPrimaries       = p[1];
@@ -1119,6 +1280,12 @@ namespace
                         texelBlockDimension0, texelBlockDimension1,
                         texelBlockDimension2, texelBlockDimension3);
 
+                    if (p + 8 > block + descriptor_block_size)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Truncated data format descriptor block.");
+                        return;
+                    }
+
                     u8 bytesPlane0 = p[0];
                     u8 bytesPlane1 = p[1];
                     u8 bytesPlane2 = p[2];
@@ -1134,11 +1301,15 @@ namespace
                         bytesPlane4, bytesPlane5, bytesPlane6, bytesPlane7);
 
                     u32 sample_count = (descriptor_block_size - 24) / 16;
+                    const size_t sample_bytes = size_t(sample_count) * 16;
 
-                    for (u32 i = 0; i < sample_count; ++i)
+                    if (p + sample_bytes > block + descriptor_block_size)
                     {
-                        p += 16; // skip
+                        header.setError("[ImageDecoder.KTX2] Truncated data format descriptor samples.");
+                        return;
                     }
+
+                    p = block + descriptor_block_size;
                 }
             }
 
@@ -1146,22 +1317,41 @@ namespace
             if (kvdByteLength)
             {
                 p = memory.address + kvdByteOffset;
-                const u8* end = p + kvdByteLength;
+                const u8* kvd_end = p + kvdByteLength;
 
                 printLine(Print::Info, "");
                 printLine(Print::Info, "[Key/Value Data]");
 
-                while (p < end)
+                while (p < kvd_end)
                 {
-                    u32 length = p.read32();
-                    u32 padding = (0 - length) & 3;
+                    if (p + 4 > kvd_end)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Truncated key/value data.");
+                        return;
+                    }
 
+                    u32 length = p.read32();
+                    if (length < 4 || p + length > kvd_end)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Invalid key/value entry length ({}).", length);
+                        return;
+                    }
+
+                    const u8* entry_end = p + length;
                     const char* key = p.cast<const char>();
+                    const size_t key_bytes = size_t(entry_end - p);
+                    const char* key_end = static_cast<const char*>(std::memchr(key, '\0', key_bytes));
+                    if (!key_end)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Unterminated key/value key.");
+                        return;
+                    }
+
                     const u8* value = p + std::strlen(key) + 1;
 
                     if (!strcmp(key, "KTXorientation"))
                     {
-                        for ( ; *value; value++)
+                        for ( ; value < entry_end && *value; ++value)
                         {
                             switch (*value)
                             {
@@ -1184,7 +1374,14 @@ namespace
 
                     printLine(Print::Info, "  {}", key);
 
-                    p += length;
+                    p = entry_end;
+                    const u32 padding = (0 - length) & 3;
+                    if (p + padding > kvd_end)
+                    {
+                        header.setError("[ImageDecoder.KTX2] Truncated key/value padding.");
+                        return;
+                    }
+
                     p += padding;
                 }
             }
@@ -1200,7 +1397,11 @@ namespace
                 if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ)
                 {
                     int imageCount = std::max(1u, ktx2_header.levelCount) * ktx2_header.faceCount;
-                    m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), imageCount);
+                    if (!m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), imageCount))
+                    {
+                        header.setError("[ImageDecoder.KTX2] Invalid BasisLZ global data.");
+                        return;
+                    }
                 }
             }
         }
@@ -1259,6 +1460,12 @@ namespace
 
             ImageDecodeStatus status;
 
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
             const int maxLevel = int(m_levels.size() - 1);
             if (level < 0 || level > maxLevel)
             {
@@ -1289,7 +1496,12 @@ namespace
                 int yblocks = std::max(1, height / 4);
 
                 const int imageIndex = level * header.faces + face;
-                BasisImageDesc desc = m_basis.readImageDesc(imageIndex);
+                BasisImageDesc desc;
+                if (!m_basis.readImageDesc(imageIndex, desc))
+                {
+                    status.setError("[ImageDecoder.KTX2] Invalid BasisLZ image descriptor.");
+                    return status;
+                }
 
                 bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
                     temp.image, width * height,
@@ -1375,6 +1587,16 @@ namespace
                     for (auto level : m_levels)
                     {
                         uncompressed_size += level.uncompressed_length;
+                        if (uncompressed_size < level.uncompressed_length)
+                        {
+                            printLine(Print::Info, "* decompress status: uncompressed size overflow");
+                            return;
+                        }
+                    }
+
+                    if (!uncompressed_size)
+                    {
+                        return;
                     }
 
                     // allocate storage

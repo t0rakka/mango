@@ -98,8 +98,6 @@ struct Fax3CodecState
     int line = 0;
 };
 
-
-// TODO: rename
 enum class Expand
 {
     Success = 0,
@@ -810,9 +808,9 @@ namespace mango::image
         const u32 nruns = round_ceil(width + 1, 32);
         State state(input, width, nruns);
 
-        // TODO: resolve mode from group3_options
+        // MANGO TODO: resolve mode from group3_options
         state.sp.mode = word_aligned ? FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_WORDALIGN
-                                    : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
+                                     : FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
         auto result = state.Fax3DecodeRLE(output);
         return result == Expand::Success;
@@ -823,7 +821,7 @@ namespace mango::image
         const u32 nruns = round_ceil(width + 1, 32);
         State state(input, width, nruns);
 
-        // TODO: resolve mode from group3_options
+        // MANGO TODO: resolve mode from group3_options
         state.sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
 
         auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
@@ -835,7 +833,7 @@ namespace mango::image
         const u32 nruns = round_ceil(width + 1, 32);
         State state(input, width, nruns);
 
-        // TODO: resolve mode from group4_options
+        // MANGO TODO: resolve mode from group4_options
         state.sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
         auto result = state.Fax4Decode(output);

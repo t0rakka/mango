@@ -358,7 +358,7 @@ namespace
                 value = p.read64();
                 break;
             default:
-                // TODO: parsing failure
+                // MANGO TODO: parsing failure
                 printLine(Print::Error, "    [getUnsigned] Unsupported type: {}", int(type));
                 break;
         }
@@ -1668,7 +1668,7 @@ namespace
                 offset_to_next_ifd = bigEndian::uload32(p);
             }
 
-            // TODO: read ALL IFDs (multiple images)
+            // MANGO TODO: read ALL IFDs (multiple images)
 
             // Validate required fields
             if (m_context.width == 0 || m_context.height == 0)
@@ -1799,7 +1799,7 @@ namespace
             if (!m_context.sample_format.empty())
             {
                 // assume all channels have the same sample format
-                // TODO: support different sample formats per channel
+                // MANGO TODO: support different sample formats per channel
                 sample_format = m_context.sample_format[0];
             }
 
@@ -1897,7 +1897,7 @@ namespace
                 case PhotometricInterpretation::ITULAB:
                 case PhotometricInterpretation::CFA:
                 case PhotometricInterpretation::LINEAR_RAW:
-                    // TODO
+                    // MANGO TODO: support different sample formats per channel
                     header.setError("Unsupported PhotometricInterpretation: {}", m_context.photometric);
                     return Format();
 
@@ -2039,10 +2039,10 @@ namespace
                 {
                     // planar format
 
-                    // TODO: clear the target surface correctly
+                    // MANGO TODO: clear the target surface correctly
                     std::memset(target.image, 0, target.stride * header.height);
 
-                    // TODO: verify count == m_context.tile_offsets.size()
+                    // MANGO TODO: verify count == m_context.tile_offsets.size()
                     size_t count = xtiles * ytiles;
 
                     for (size_t i = 0; i < count; ++i)
@@ -2096,7 +2096,7 @@ namespace
                 {
                     // planar format
 
-                    // TODO: clear the target surface correctly
+                    // MANGO TODO: clear the target surface correctly
                     std::memset(target.image, 0, target.stride * header.height);
 
                     // Separate planes (PlanarConfiguration 2): all strips for component 0, then all
@@ -2624,7 +2624,7 @@ namespace
             //printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
             //printLine(Print::Info, "    output stride: {}", dest_stride);
 
-            // TODO: optimize
+            // MANGO TODO: optimize
             // - we reverse bits so that extraction loop is more efficient
             // - The bits are extracted in reverse order, so we need to reverse them back to the original order
             Buffer temp(src.size);
@@ -3343,7 +3343,7 @@ namespace
         {
             // `storage_bits_per_sample` is the width of each sample in `input` after expand/shrink (decodeRect's
             // expanded_sample_bits). Tag BitsPerSample can be 10–14 while storage is 16 — use storage here.
-            // TODO: Planar and prediction requires prediction before expansion
+            // MANGO TODO: Planar and prediction requires prediction before expansion
 
             if (m_context.predictor == 1)
             {
@@ -3389,7 +3389,7 @@ namespace
             {
                 // planar, float differencing
 
-                /* TODO: implement, need test image
+                /* MANGO TODO: implement, need test image
                 */
             }
         }
