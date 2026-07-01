@@ -1279,8 +1279,10 @@ namespace isal
 
     size_t bound(size_t size)
     {
-        // conservative estimate
-        return 1024 + size;
+        // ISAL has no bound API; stateless docs say max expansion is input + stored
+        // block header(s). Raw DEFLATE worst-case bound matches libdeflate.
+        const size_t safety_margin = 2048;
+        return libdeflate_deflate_compress_bound(nullptr, size) + safety_margin;
     }
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
