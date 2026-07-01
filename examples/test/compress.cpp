@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
 #include <cstring>
@@ -69,7 +69,6 @@ void test_compression(ConstMemory input, int level)
         return;
     }
 
-    printLine("------------------------------------------------------------");
     printLine("Input: {} bytes ({:.2f} MB)", size, size / (1024.0 * 1024.0));
     printLine("------------------------------------------------------------");
     printLine("Method      Ratio        Compress       Decompress    Status");
