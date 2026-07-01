@@ -798,11 +798,12 @@ namespace mango::vulkan::font
     class Renderer
     {
     public:
-        Renderer(VkDevice device, VkQueue queue, u32 queueFamily, vulkan::Allocator& allocator)
+        Renderer(VkDevice device, VkQueue queue, u32 queueFamily, vulkan::Allocator& allocator, VkFormat blitColorFormat)
             : m_device(device)
             , m_queue(queue)
             , m_queueFamily(queueFamily)
             , m_allocator(allocator)
+            , m_blitColorFormat(blitColorFormat)
         {
             createDescriptorSetLayouts();
             createPipelines();
@@ -1112,8 +1113,6 @@ namespace mango::vulkan::font
                 std::memcpy(m_tileGlyphBuffer.mapped, tile_glyphs.data(), size_t(index_bytes));
             }
 
-            updateBatchDescriptors();
-
             BatchPushConstants push {};
             push.tile_origin_x = tile_origin_x;
             push.tile_origin_y = tile_origin_y;
@@ -1247,6 +1246,7 @@ namespace mango::vulkan::font
         vulkan::Allocator& m_allocator;
 
         VkExtent2D m_extent { 0, 0 };
+        VkFormat m_blitColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
         VkShaderModule m_computeShader = VK_NULL_HANDLE;
         VkShaderModule m_blitVertexShader = VK_NULL_HANDLE;
@@ -1497,7 +1497,7 @@ namespace mango::vulkan::font
             VkPipelineColorBlendAttachmentState colorBlendAttachment { .colorWriteMask = 0xF };
             VkPipelineColorBlendStateCreateInfo colorBlending { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &colorBlendAttachment };
 
-            VkFormat colorFormat = VK_FORMAT_R8G8B8A8_UNORM;
+            VkFormat colorFormat = m_blitColorFormat;
             VkPipelineRenderingCreateInfo renderingCreateInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
@@ -1774,6 +1774,8 @@ namespace mango::vulkan::font
             new_contour_capacity = std::max(new_contour_capacity, kAtlasInitialBytes);
             new_curve_capacity = std::max(new_curve_capacity, kAtlasInitialBytes);
 
+            vkDeviceWaitIdle(m_device);
+
             auto new_contours = m_allocator.createBuffer(new_contour_capacity,
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
             auto new_curves = m_allocator.createBuffer(new_curve_capacity,
@@ -1820,6 +1822,8 @@ namespace mango::vulkan::font
                 new_capacity = required;
             }
 
+            vkDeviceWaitIdle(m_device);
+
             auto new_buffer = m_allocator.createBuffer(new_capacity,
                 VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
 
@@ -1830,6 +1834,7 @@ namespace mango::vulkan::font
 
             buffer = new_buffer;
             capacity = new_capacity;
+            updateBatchDescriptors();
         }
 
         void updateAtlasDescriptors()
@@ -1872,13 +1877,6 @@ namespace mango::vulkan::font
 class FontWindow : public VulkanWindow
 {
 protected:
-    enum class DebugRenderMode
-    {
-        SingleGlyph1Tile,
-        SingleGlyph4Tiles,
-        FullText,
-    };
-
     struct CachedGlyph
     {
         mango::font::GlyphGpuData cpu;
@@ -1920,10 +1918,10 @@ protected:
         "Ahti, ruler of the waters, lord of every lake and island.",
     };
     std::string m_fontPath;
+    std::string m_hudFramePrefix;
+    std::string m_hudGpuTextTime;
 
-    DebugRenderMode m_debugMode = DebugRenderMode::SingleGlyph1Tile;
-    static constexpr float kDebugFontHeight = 48.0f;
-
+    static constexpr float kHudPixelHeight = 20.0f;
     static constexpr u32 kTimestampsPerFrame = 4;
     enum TimestampSlot : u32
     {
@@ -1953,6 +1951,7 @@ protected:
     u32 m_timestampImageCount = 0;
     bool m_timestampsEnabled = false;
     float m_timestampPeriod = 1.0f;
+    std::vector<bool> m_timestampQueryReady;
     FrameTimings m_timings {};
     static constexpr size_t kTimingHistory = 30;
     std::array<FrameTimings, kTimingHistory> m_timingHistory {};
@@ -1996,10 +1995,12 @@ protected:
         };
 
         vkCreateQueryPool(m_device, &poolInfo, nullptr, &m_timestampPool);
+        m_timestampQueryReady.assign(m_swapchain->getImageCount(), false);
     }
 
     void destroyTimestampQueryPool()
     {
+        m_timestampQueryReady.clear();
         if (m_timestampPool)
         {
             vkDestroyQueryPool(m_device, m_timestampPool, nullptr);
@@ -2029,6 +2030,11 @@ protected:
     void read_gpu_timings(u32 imageIndex)
     {
         if (!m_timestampsEnabled)
+        {
+            return;
+        }
+
+        if (imageIndex >= m_timestampQueryReady.size() || !m_timestampQueryReady[imageIndex])
         {
             return;
         }
@@ -2108,16 +2114,13 @@ protected:
         return avg;
     }
 
-    bool m_printTimingOnNextFrame = false;
-
     std::string timing_title() const
     {
         const FrameTimings t = averaged_timings();
         if (m_timestampsEnabled)
         {
             return fmt::format(
-                "font [{}] total {:.2f} | wait {:.2f} rec {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f}) submit {:.2f} present {:.2f} | GPU {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f})",
-                debug_mode_name(),
+                "font total {:.2f} | wait {:.2f} rec {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f}) submit {:.2f} present {:.2f} | GPU {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f})",
                 t.total_ms,
                 t.wait_ms,
                 t.record_ms,
@@ -2133,8 +2136,7 @@ protected:
         }
 
         return fmt::format(
-            "font [{}] total {:.2f} | wait {:.2f} rec {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f}) submit {:.2f} present {:.2f} | GPU n/a",
-            debug_mode_name(),
+            "font total {:.2f} | wait {:.2f} rec {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f}) submit {:.2f} present {:.2f} | GPU n/a",
             t.total_ms,
             t.wait_ms,
             t.record_ms,
@@ -2143,11 +2145,6 @@ protected:
             t.record_blit_ms,
             t.submit_ms,
             t.present_ms);
-    }
-
-    void print_timing_console() const
-    {
-        printLine(timing_title());
     }
 
 public:
@@ -2212,7 +2209,7 @@ public:
         m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, selectedFormat, m_graphicsQueue, this);
         m_allocator = std::make_unique<vulkan::Allocator>(instance, m_physicalDevice, m_device, VK_API_VERSION_1_3);
         m_renderer = std::make_unique<vulkan::font::Renderer>(m_device, m_graphicsQueue,
-            m_graphicsQueueFamilyIndex, *m_allocator);
+            m_graphicsQueueFamilyIndex, *m_allocator, selectedFormat.format);
 
         VkCommandPoolCreateInfo poolInfo =
         {
@@ -2244,8 +2241,7 @@ public:
             {
                 cache_string(line);
             }
-            cache_string(" fps()");
-            cache_glyph('G');
+            cache_string("frame: 000.000 ms (000 fps)  text: 000.000 ms");
         }
 
         VkExtent2D extent = m_swapchain->getExtent();
@@ -2303,6 +2299,17 @@ public:
         return m_glyphCache.at(codepoint);
     }
 
+    float text_width(std::string_view text)
+    {
+        const float pixel_scale = m_font.pixel_scale();
+        float width = 0.0f;
+        for (unsigned char ch : text)
+        {
+            width += get_glyph(ch).cpu.advance * pixel_scale;
+        }
+        return width;
+    }
+
     void draw_text(float pen_x, float baseline_y, std::string_view text, float32x4 color)
     {
         const float pixel_scale = m_font.pixel_scale();
@@ -2345,31 +2352,6 @@ public:
         }
     }
 
-    void draw_debug_glyph(float32x4 color)
-    {
-        m_font.set_pixel_height(kDebugFontHeight);
-        const CachedGlyph& glyph = get_glyph('G');
-        const float pixel_scale = m_font.pixel_scale();
-
-        const int width = int(m_swapchain->getExtent().width);
-        const int height = int(m_swapchain->getExtent().height);
-        const float pen_x = float(width) * 0.5f - glyph.cpu.advance * pixel_scale * 0.5f;
-        const float baseline_y = float(height) * 0.5f;
-
-        draw_text(pen_x, baseline_y, "G", color);
-    }
-
-    const char* debug_mode_name() const
-    {
-        switch (m_debugMode)
-        {
-            case DebugRenderMode::SingleGlyph1Tile: return "debug: G / 1 tile";
-            case DebugRenderMode::SingleGlyph4Tiles: return "debug: G / 4 tiles";
-            case DebugRenderMode::FullText: return "full text";
-        }
-        return "unknown";
-    }
-
     void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
     {
         read_gpu_timings(imageIndex);
@@ -2398,35 +2380,23 @@ public:
         t_section = Time::us();
         m_renderer->begin_text_batch();
 
-        if (m_debugMode == DebugRenderMode::FullText)
+        const float anim_height = m_fontPixelHeight;
+
+        m_font.set_pixel_height(kHudPixelHeight);
+        const float hud_scale = m_font.pixel_scale();
+        const float hud_baseline = 8.0f + float(m_font.ascent) * hud_scale;
+        draw_text(8.0f, hud_baseline, m_hudFramePrefix, float32x4(0.75f, 0.9f, 1.0f, 1.0f));
+        draw_text(8.0f + text_width(m_hudFramePrefix), hud_baseline, m_hudGpuTextTime, float32x4(1.0f, 0.92f, 0.35f, 1.0f));
+
+        m_font.set_pixel_height(anim_height);
+
+        const float pixel_scale = m_font.pixel_scale();
+        const float line_step = float(m_font.ascent - m_font.descent + m_font.line_gap) * pixel_scale * 1.12f;
+        float baseline_y = 100.0f;
+        for (const std::string& line : m_lines)
         {
-            m_renderer->set_tile_divisions(0);
-
-            static constexpr float kHudPixelHeight = 24.0f;
-            const float anim_height = m_fontPixelHeight;
-
-            m_font.set_pixel_height(kHudPixelHeight);
-            const float hud_scale = m_font.pixel_scale();
-
-            const float hud_baseline = 8.0f + float(m_font.ascent) * hud_scale;
-            draw_text(8.0f, hud_baseline, "timings -> console (keys: 1=G 2=4tile 0=full)", float32x4(0.75f, 0.9f, 1.0f, 1.0f));
-
-            m_font.set_pixel_height(anim_height);
-
-            const float pixel_scale = m_font.pixel_scale();
-            const float line_step = float(m_font.ascent - m_font.descent + m_font.line_gap) * pixel_scale * 1.12f;
-            float baseline_y = 100.0f;
-            for (const std::string& line : m_lines)
-            {
-                draw_text(40.0f, baseline_y, line, float32x4(1.0f, 1.0f, 1.0f, 1.0f));
-                baseline_y += line_step;
-            }
-        }
-        else
-        {
-            m_renderer->set_tile_divisions(
-                m_debugMode == DebugRenderMode::SingleGlyph1Tile ? 1u : 2u);
-            draw_debug_glyph(float32x4(1.0f, 1.0f, 1.0f, 1.0f));
+            draw_text(40.0f, baseline_y, line, float32x4(1.0f, 1.0f, 1.0f, 1.0f));
+            baseline_y += line_step;
         }
 
         m_renderer->flush_text_batch(cmd);
@@ -2479,6 +2449,11 @@ public:
         frame.submit(m_graphicsQueue, cmd);
         m_timings.submit_ms = float(Time::us() - submit_begin) / 1000.0f;
 
+        if (m_timestampsEnabled && frame.imageIndex() < m_timestampQueryReady.size())
+        {
+            m_timestampQueryReady[frame.imageIndex()] = true;
+        }
+
         const u64 present_begin = Time::us();
         frame.present();
         m_timings.present_ms = float(Time::us() - present_begin) / 1000.0f;
@@ -2489,17 +2464,14 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        if (m_debugMode == DebugRenderMode::FullText)
-        {
-            constexpr float min_size = 5.0f;
-            constexpr float max_size = 64.0f;
-            constexpr float cycle_seconds = 10.0f;
+        constexpr float min_size = 5.0f;
+        constexpr float max_size = 64.0f;
+        constexpr float cycle_seconds = 10.0f;
 
-            float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
-            float t = 1.0f - std::fabs(phase * 2.0f - 1.0f);
-            m_fontPixelHeight = min_size + t * (max_size - min_size);
-            m_font.set_pixel_height(m_fontPixelHeight);
-        }
+        float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
+        float t = 1.0f - std::fabs(phase * 2.0f - 1.0f);
+        m_fontPixelHeight = min_size + t * (max_size - min_size);
+        m_font.set_pixel_height(m_fontPixelHeight);
 
         const float frame_ms = float(info.dt * 1000.0);
         m_frameTimeHistory[m_frameTimeIndex] = frame_ms;
@@ -2513,15 +2485,16 @@ public:
         }
         m_frameTimeMs = frame_sum / float(m_frameTimeCount);
 
+        const float fps = 1000.0f / std::max(m_frameTimeMs, 0.001f);
+        m_hudFramePrefix = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  text: ", m_frameTimeMs, fps);
+
+        const FrameTimings avg = averaged_timings();
+        const float text_ms = (m_timestampsEnabled && m_timingCount > 0) ? avg.gpu_text_ms : avg.record_text_ms;
+        m_hudGpuTextTime = fmt::format("{:6.3f} ms", text_ms);
+
         render();
 
-        if (m_printTimingOnNextFrame || (m_timingIndex == 0 && m_timingCount > 0))
-        {
-            print_timing_console();
-            m_printTimingOnNextFrame = false;
-        }
-
-        setTitle(fmt::format("font [{}]", debug_mode_name()));
+        setTitle(timing_title());
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -2532,20 +2505,9 @@ public:
         {
             breakEventLoop();
         }
-        else if (code == KEYCODE_1)
+        else if (code == KEYCODE_F)
         {
-            m_debugMode = DebugRenderMode::SingleGlyph1Tile;
-            m_printTimingOnNextFrame = true;
-        }
-        else if (code == KEYCODE_2)
-        {
-            m_debugMode = DebugRenderMode::SingleGlyph4Tiles;
-            m_printTimingOnNextFrame = true;
-        }
-        else if (code == KEYCODE_0)
-        {
-            m_debugMode = DebugRenderMode::FullText;
-            m_printTimingOnNextFrame = true;
+            toggleFullscreen();
         }
     }
 };
@@ -2564,7 +2526,6 @@ static std::string default_font_path()
 int mangoMain(const mango::CommandLine& commands)
 {
     std::string fontPath = default_font_path();
-    //bool validate_only = false;
 
     for (size_t i = 1; i < commands.size(); ++i)
     {
@@ -2575,6 +2536,7 @@ int mangoMain(const mango::CommandLine& commands)
         }
     }
 
+    std::vector<const char*> enabledLayers;// = { "VK_LAYER_KHRONOS_validation" };
     std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
 
     InstanceExtensionProperties instanceExtensionProperties;
@@ -2593,7 +2555,7 @@ int mangoMain(const mango::CommandLine& commands)
         .apiVersion = VK_MAKE_VERSION(1, 3, 0),
     };
 
-    Instance instance(applicationInfo, {}, enabledExtensions);
+    Instance instance(applicationInfo, enabledLayers, enabledExtensions);
 
     FontWindow window(instance, 1280, 720, 0, fontPath);
     window.setTitle("Scanline Sweeper Font (Vulkan)");
