@@ -449,7 +449,7 @@ struct GlyphInstance
     uint contour_offset;
     uint contour_count;
     vec4 color;
-    vec4 params0; // xy = em-space lower-left of pixel (0,0), zw = em_per_pixel
+    vec4 params0; // xy = em-space lower-left of glyph pixel (0,0), zw = em_per_pixel
     vec4 params1; // xy = canvas pixel origin, zw = glyph size in pixels
 };
 
@@ -600,9 +600,10 @@ float compute_glyph_alpha(GlyphInstance inst, ivec2 pixel)
     }
 
     vec2 em_per_pixel = inst.params0.zw;
+    // params0.xy = em-space lower-left of glyph pixel (0,0); y increases up in em space.
     vec2 em_offset = vec2(
         inst.params0.x + gid.x * em_per_pixel.x,
-        inst.params0.y - (gid.y + 1.0) * em_per_pixel.y);
+        inst.params0.y - gid.y * em_per_pixel.y);
     vec2 window_size = em_per_pixel;
     float area = window_size.x * window_size.y;
 
@@ -779,7 +780,7 @@ namespace mango::vulkan::font
         float screen_x = 0.0f;
         float screen_y = 0.0f;
         float em_window_x0 = 0.0f;
-        float em_window_y_top = 0.0f;
+        float em_window_y0 = 0.0f;
         float em_per_pixel = 1.0f;
         u32 pixel_width = 1;
         u32 pixel_height = 1;
@@ -976,7 +977,7 @@ namespace mango::vulkan::font
             pending.gpu.color[2] = params.color.z;
             pending.gpu.color[3] = params.color.w;
             pending.gpu.params0[0] = params.em_window_x0;
-            pending.gpu.params0[1] = params.em_window_y_top;
+            pending.gpu.params0[1] = params.em_window_y0;
             pending.gpu.params0[2] = params.em_per_pixel;
             pending.gpu.params0[3] = params.em_per_pixel;
             pending.gpu.params1[0] = params.screen_x;
@@ -1921,7 +1922,7 @@ protected:
     std::string m_hudFramePrefix;
     std::string m_hudGpuTextTime;
 
-    static constexpr float kHudPixelHeight = 20.0f;
+    static constexpr float kHudPixelHeight = 16.0f * 2.0f; // TODO: Retina scaling factor
     static constexpr u32 kTimestampsPerFrame = 4;
     enum TimestampSlot : u32
     {
@@ -2315,9 +2316,34 @@ public:
         const float pixel_scale = m_font.pixel_scale();
         const float em_per_pixel = m_font.em_per_pixel();
 
-        // One vertical pixel grid for the whole line — do not floor per-glyph bbox tops.
-        const float line_screen_y = std::floor(baseline_y - float(m_font.ascent) * pixel_scale);
-        const float em_window_y_top = (baseline_y - line_screen_y) * em_per_pixel;
+        // Tight line ink box from actual glyph bounds (ascent metric alone can clip ink).
+        float line_ink_top = baseline_y;
+        float line_ink_bottom = baseline_y;
+        bool has_ink = false;
+
+        for (unsigned char ch : text)
+        {
+            const CachedGlyph& cached = get_glyph(ch);
+            if (cached.cpu.curve_bytes.empty())
+            {
+                continue;
+            }
+
+            has_ink = true;
+            const float ink_top = baseline_y - cached.cpu.bounds_max.y * pixel_scale;
+            const float ink_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
+            line_ink_top = std::min(line_ink_top, ink_top);
+            line_ink_bottom = std::max(line_ink_bottom, ink_bottom);
+        }
+
+        if (!has_ink)
+        {
+            return;
+        }
+
+        const float line_screen_y = std::floor(line_ink_top);
+        const float em_window_y0 = (baseline_y - (line_screen_y + 1.0f)) * em_per_pixel;
+        const u32 line_pixel_height = std::max(1u, u32(std::ceil(line_ink_bottom - line_screen_y)));
 
         for (unsigned char ch : text)
         {
@@ -2332,7 +2358,6 @@ public:
             const float ink_right_em = std::min(cached.cpu.bounds_max.x, cached.cpu.bounds_min.x + cached.cpu.advance);
             const float float_left = pen_x + cached.cpu.bounds_min.x * pixel_scale;
             const float float_right = pen_x + ink_right_em * pixel_scale;
-            const float float_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
 
             const float screen_x = std::floor(float_left);
 
@@ -2340,10 +2365,10 @@ public:
             params.screen_x = screen_x;
             params.screen_y = line_screen_y;
             params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
-            params.em_window_y_top = em_window_y_top;
+            params.em_window_y0 = em_window_y0;
             params.em_per_pixel = em_per_pixel;
             params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
-            params.pixel_height = std::max(1u, u32(std::ceil(float_bottom - line_screen_y)));
+            params.pixel_height = line_pixel_height;
             params.color = color;
 
             m_renderer->queue_glyph(cached.atlas, params);
@@ -2384,9 +2409,9 @@ public:
 
         m_font.set_pixel_height(kHudPixelHeight);
         const float hud_scale = m_font.pixel_scale();
-        const float hud_baseline = 8.0f + float(m_font.ascent) * hud_scale;
+        const float hud_baseline = 32.0f + float(m_font.ascent) * hud_scale;
         draw_text(8.0f, hud_baseline, m_hudFramePrefix, float32x4(0.75f, 0.9f, 1.0f, 1.0f));
-        draw_text(8.0f + text_width(m_hudFramePrefix), hud_baseline, m_hudGpuTextTime, float32x4(1.0f, 0.92f, 0.35f, 1.0f));
+        draw_text(8.0f + text_width(m_hudFramePrefix), hud_baseline, m_hudGpuTextTime, float32x4(1.0f, 0.98f, 1.0f, 1.0f));
 
         m_font.set_pixel_height(anim_height);
 
@@ -2464,12 +2489,12 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        constexpr float min_size = 5.0f;
-        constexpr float max_size = 64.0f;
-        constexpr float cycle_seconds = 10.0f;
+        constexpr float min_size = 5.0f * 2.0f; // TODO: Retina scaling factor
+        constexpr float max_size = 64.0f * 2.0f; // TODO: Retina scaling factor
+        constexpr float cycle_seconds = 20.0f;
 
-        float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
-        float t = 1.0f - std::fabs(phase * 2.0f - 1.0f);
+        const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
+        const float t = 0.5f + 0.5f * std::sin(phase * float(2.0 * 3.14159265358979323846) - float(3.14159265358979323846) * 0.5f);
         m_fontPixelHeight = min_size + t * (max_size - min_size);
         m_font.set_pixel_height(m_fontPixelHeight);
 
