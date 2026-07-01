@@ -449,56 +449,61 @@ namespace bzip2
 
     CompressionStatus compress(Memory dest, ConstMemory source, int level)
     {
+        if (source.size > UINT32_MAX || dest.size > UINT32_MAX)
+        {
+            CompressionStatus status;
+            status.setError("[bzip2] Input or output exceeds 32-bit limit required by bzip2.");
+            return status;
+        }
+
         const int blockSize100k = math::clamp(level, 1, 9);
 
-        const int verbosity = 0;
-        const int workFactor = 30;
-
-        bz_stream strm;
-
+        bz_stream strm {};
         strm.bzalloc = nullptr;
         strm.bzfree = nullptr;
         strm.opaque = nullptr;
 
         CompressionStatus status;
 
-        int x = BZ2_bzCompressInit(&strm, blockSize100k, verbosity, workFactor);
+        int x = BZ2_bzCompressInit(&strm, blockSize100k, 0, 30);
         if (x != BZ_OK)
         {
+            status.setError("[bzip2] BZ2_bzCompressInit() failed.");
+            return status;
+        }
+
+        strm.next_in = const_cast<char*>(source.cast<const char>());
+        strm.avail_in = static_cast<unsigned int>(source.size);
+        strm.next_out = dest.cast<char>();
+        strm.avail_out = static_cast<unsigned int>(dest.size);
+
+        for (;;)
+        {
+            x = BZ2_bzCompress(&strm, BZ_FINISH);
+            if (x == BZ_STREAM_END)
+                break;
+            if (x == BZ_FINISH_OK)
+                continue;
+            BZ2_bzCompressEnd(&strm);
             status.setError("[bzip2] compression failed.");
             return status;
         }
 
-        unsigned int destLength = static_cast<unsigned int>(dest.size);
-
-        strm.next_in = const_cast<char*>(source.cast<const char>());
-        strm.next_out = dest.cast<char>();
-        strm.avail_in = static_cast<unsigned int>(source.size);
-        strm.avail_out = destLength;
-
-        x = BZ2_bzCompress(&strm, BZ_FINISH);
-        if (x == BZ_FINISH_OK)
-        {
-            BZ2_bzCompressEnd(&strm);
-            status.setError("[bzip2] compression failed.");
-        }
-        else if (x != BZ_STREAM_END)
-        {
-            BZ2_bzCompressEnd(&strm);
-            status.setError("[bzip2] compression failed.");
-        }
-
-        destLength -= strm.avail_out;
         BZ2_bzCompressEnd(&strm);
-
-        status.size = size_t(destLength);
+        status.size = dest.size - strm.avail_out;
         return status;
     }
 
     CompressionStatus decompress(Memory dest, ConstMemory source)
     {
-        bz_stream strm;
+        if (source.size > UINT32_MAX || dest.size > UINT32_MAX)
+        {
+            CompressionStatus status;
+            status.setError("[bzip2] Input or output exceeds 32-bit limit required by bzip2.");
+            return status;
+        }
 
+        bz_stream strm {};
         strm.bzalloc = nullptr;
         strm.bzfree = nullptr;
         strm.opaque = nullptr;
@@ -508,29 +513,28 @@ namespace bzip2
         int x = BZ2_bzDecompressInit(&strm, 0, 0);
         if (x != BZ_OK)
         {
-            status.setError("[bzip2] decompression failed.");
+            status.setError("[bzip2] BZ2_bzDecompressInit() failed.");
             return status;
         }
 
         strm.next_in = const_cast<char*>(source.cast<const char>());
-        strm.next_out = dest.cast<char>();
         strm.avail_in = static_cast<unsigned int>(source.size);
+        strm.next_out = dest.cast<char>();
         strm.avail_out = static_cast<unsigned int>(dest.size);
 
-        x = BZ2_bzDecompress(&strm);
-        if (x == BZ_OK)
+        for (;;)
         {
+            x = BZ2_bzDecompress(&strm);
+            if (x == BZ_STREAM_END)
+                break;
+            if (x == BZ_OK)
+                continue;
             BZ2_bzDecompressEnd(&strm);
             status.setError("[bzip2] decompression failed.");
-        }
-        else if (x != BZ_STREAM_END)
-        {
-            BZ2_bzDecompressEnd(&strm);
-            status.setError("[bzip2] decompression failed.");
+            return status;
         }
 
         BZ2_bzDecompressEnd(&strm);
-
         status.size = size_t(strm.next_out - dest.cast<char>());
         return status;
     }
