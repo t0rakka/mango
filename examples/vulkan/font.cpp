@@ -2489,8 +2489,8 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        constexpr float min_size = 5.0f * 2.0f; // TODO: Retina scaling factor
-        constexpr float max_size = 64.0f * 2.0f; // TODO: Retina scaling factor
+        constexpr float min_size = 8.0f;
+        constexpr float max_size = 82.0f;
         constexpr float cycle_seconds = 20.0f;
 
         const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
