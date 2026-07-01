@@ -413,10 +413,25 @@ namespace mango::vulkan
         return submitAndPresent(graphicsQueue, commandBuffer, VK_NULL_HANDLE, 0);
     }
 
-    VkResult Swapchain::Frame::submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
-                                                VkSemaphore signalTimeline, u64 signalValue,
-                                                VkSemaphore waitTimeline, u64 waitValue,
-                                                VkPipelineStageFlags waitStage)
+    VkResult Swapchain::Frame::submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer)
+    {
+        return submit(graphicsQueue, commandBuffer, VK_NULL_HANDLE, 0);
+    }
+
+    VkResult Swapchain::Frame::present()
+    {
+        if (!m_swapchain)
+        {
+            return VK_ERROR_INITIALIZATION_FAILED;
+        }
+
+        return m_swapchain->present(m_imageIndex);
+    }
+
+    VkResult Swapchain::Frame::submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
+                                      VkSemaphore signalTimeline, u64 signalValue,
+                                      VkSemaphore waitTimeline, u64 waitValue,
+                                      VkPipelineStageFlags waitStage)
     {
         if (!m_swapchain)
         {
@@ -471,10 +486,24 @@ namespace mango::vulkan
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkQueueSubmit failed: {}", getString(result));
+        }
+
+        return result;
+    }
+
+    VkResult Swapchain::Frame::submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
+                                                VkSemaphore signalTimeline, u64 signalValue,
+                                                VkSemaphore waitTimeline, u64 waitValue,
+                                                VkPipelineStageFlags waitStage)
+    {
+        VkResult result = submit(graphicsQueue, commandBuffer,
+            signalTimeline, signalValue, waitTimeline, waitValue, waitStage);
+        if (result != VK_SUCCESS)
+        {
             return result;
         }
 
-        return m_swapchain->present(m_imageIndex);
+        return present();
     }
 
     Swapchain::Frame Swapchain::beginFrame()

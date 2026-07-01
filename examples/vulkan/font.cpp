@@ -409,12 +409,12 @@ const char* g_computeShader = R"(#version 450
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
-layout(push_constant) uniform PerGlyph
+layout(push_constant) uniform Batch
 {
-    vec4 color;
-    vec4 params0; // xy = em-space lower-left of pixel (0,0), zw = em_per_pixel
-    vec4 params1; // xy = canvas pixel origin, zw = dispatch size in pixels
-    uint contour_count;
+    uvec2 tile_origin;
+    uvec2 tile_count;
+    uint tile_size;
+    uint workgroup_size;
 } pc;
 
 layout(std430, set = 1, binding = 0) readonly buffer ContourBuffer
@@ -427,7 +427,43 @@ layout(std430, set = 1, binding = 1) readonly buffer CurveBuffer
     float points[];
 };
 
+layout(std430, set = 1, binding = 2) readonly buffer InstanceBuffer
+{
+    vec4 instance_data[]; // header + color + params0 + params1 per glyph
+};
+
+layout(std430, set = 1, binding = 3) readonly buffer TileBuffer
+{
+    uvec2 tiles[]; // x = glyph_start, y = glyph_count
+};
+
+layout(std430, set = 1, binding = 4) readonly buffer TileGlyphBuffer
+{
+    uint tile_glyphs[];
+};
+
 layout(set = 0, binding = 0, rgba8) uniform image2D canvas;
+
+struct GlyphInstance
+{
+    uint contour_offset;
+    uint contour_count;
+    vec4 color;
+    vec4 params0; // xy = em-space lower-left of pixel (0,0), zw = em_per_pixel
+    vec4 params1; // xy = canvas pixel origin, zw = glyph size in pixels
+};
+
+GlyphInstance load_instance(uint index)
+{
+    uint base = index * 4u;
+    GlyphInstance inst;
+    inst.contour_offset = uint(instance_data[base + 0u].x);
+    inst.contour_count = uint(instance_data[base + 0u].y);
+    inst.color = instance_data[base + 1u];
+    inst.params0 = instance_data[base + 2u];
+    inst.params1 = instance_data[base + 3u];
+    return inst;
+}
 
 vec2 read_curve_point(uint curve_index, uint point_index)
 {
@@ -554,28 +590,29 @@ float scanline_sweep(vec2 size, vec2 offset, vec2 p0, vec2 p1, vec2 p2)
 
 // --- implementer glue (section 8 intro; not part of appendix 8.1-8.3) ---
 
-void main()
+float compute_glyph_alpha(GlyphInstance inst, ivec2 pixel)
 {
-    vec2 pixel_size = pc.params1.zw;
-    uvec2 gid = gl_GlobalInvocationID.xy;
-    if (gid.x >= uint(pixel_size.x) || gid.y >= uint(pixel_size.y))
+    vec2 pixel_size = inst.params1.zw;
+    vec2 gid = vec2(pixel) - inst.params1.xy;
+    if (gid.x < 0.0 || gid.y < 0.0 || gid.x >= pixel_size.x || gid.y >= pixel_size.y)
     {
-        return;
+        return 0.0;
     }
 
-    vec2 em_per_pixel = pc.params0.zw;
+    vec2 em_per_pixel = inst.params0.zw;
     vec2 em_offset = vec2(
-        pc.params0.x + float(gid.x) * em_per_pixel.x,
-        pc.params0.y - (float(gid.y) + 1.0) * em_per_pixel.y);
+        inst.params0.x + gid.x * em_per_pixel.x,
+        inst.params0.y - (gid.y + 1.0) * em_per_pixel.y);
     vec2 window_size = em_per_pixel;
     float area = window_size.x * window_size.y;
 
     float coverage_sum = 0.0;
 
-    for (uint ci = 0u; ci < pc.contour_count; ++ci)
+    for (uint ci = 0u; ci < inst.contour_count; ++ci)
     {
-        uint curve_offset = contours[ci].x;
-        uint curve_count = contours[ci].y;
+        uvec2 contour = contours[inst.contour_offset + ci];
+        uint curve_offset = contour.x;
+        uint curve_count = contour.y;
 
         for (uint i = 0u; i < curve_count; ++i)
         {
@@ -584,8 +621,6 @@ void main()
             vec2 p1 = read_curve_point(idx, 1u);
             vec2 p2 = read_curve_point(idx, 2u);
 
-            // §3.2: cull by scanline and right window edge only. Curves entirely left
-            // of the window still contribute rectangular sweep area inside scanline_sweep.
             if (max(p0.y, p2.y) <= em_offset.y || min(p0.y, p2.y) >= em_offset.y + window_size.y)
             {
                 continue;
@@ -600,23 +635,59 @@ void main()
     }
 
     float alpha = area > 0.0 ? coverage_sum / area : 0.0;
-    alpha *= pc.color.a;
+    return alpha * inst.color.a;
+}
 
-    if (alpha <= 0.0)
+void main()
+{
+    uvec2 wg = gl_WorkGroupID.xy;
+    uint subgroups_per_tile = max(1u, (pc.tile_size + pc.workgroup_size - 1u) / pc.workgroup_size);
+    uvec2 tile_idx = wg / subgroups_per_tile;
+    if (tile_idx.x >= pc.tile_count.x || tile_idx.y >= pc.tile_count.y)
     {
         return;
     }
 
-    ivec2 pixel = ivec2(floor(pc.params1.xy)) + ivec2(gid);
+    uvec2 sub_wg = wg % subgroups_per_tile;
+    ivec2 pixel = ivec2(pc.tile_origin)
+        + ivec2(tile_idx) * int(pc.tile_size)
+        + ivec2(sub_wg) * int(pc.workgroup_size)
+        + ivec2(gl_LocalInvocationID.xy);
+
     ivec2 canvas_size = imageSize(canvas);
     if (pixel.x < 0 || pixel.y < 0 || pixel.x >= canvas_size.x || pixel.y >= canvas_size.y)
     {
         return;
     }
 
+    uint tile_index = tile_idx.y * pc.tile_count.x + tile_idx.x;
+    uvec2 tile = tiles[tile_index];
+    uint glyph_start = tile.x;
+    uint glyph_count = tile.y;
+
+    if (glyph_count == 0u)
+    {
+        return;
+    }
+
     vec4 dst = imageLoad(canvas, pixel);
-    vec3 out_rgb = mix(dst.rgb, pc.color.rgb, alpha);
-    imageStore(canvas, pixel, vec4(out_rgb, 1.0));
+    vec3 rgb = dst.rgb;
+
+    for (uint gi = 0u; gi < glyph_count; ++gi)
+    {
+        uint inst_index = tile_glyphs[glyph_start + gi];
+        GlyphInstance inst = load_instance(inst_index);
+
+        float alpha = compute_glyph_alpha(inst, pixel);
+        if (alpha <= 0.0)
+        {
+            continue;
+        }
+
+        rgb = mix(rgb, inst.color.rgb, alpha);
+    }
+
+    imageStore(canvas, pixel, vec4(rgb, 1.0));
 }
 )";
 
@@ -670,19 +741,37 @@ void main()
 namespace mango::vulkan::font
 {
 
-    struct GlyphGpuBuffers
+    static constexpr u32 kTileSize = 64;
+    static constexpr VkDeviceSize kAtlasInitialBytes = 256 * 1024;
+
+    struct GlyphAtlasSlot
     {
-        vulkan::BufferAllocation contours;
-        vulkan::BufferAllocation curves;
-        VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+        u32 contour_offset = 0;
+        u32 contour_count = 0;
     };
 
-    struct GlyphPushConstants
+    struct GpuGlyphInstance
     {
-        float color[4];
-        float params0[4];
-        float params1[4];
-        u32 contour_count;
+        float header[4] = {};
+        float color[4] = {};
+        float params0[4] = {};
+        float params1[4] = {};
+    };
+
+    struct GpuTileInfo
+    {
+        u32 glyph_start = 0;
+        u32 glyph_count = 0;
+    };
+
+    struct BatchPushConstants
+    {
+        u32 tile_origin_x = 0;
+        u32 tile_origin_y = 0;
+        u32 tiles_x = 0;
+        u32 tiles_y = 0;
+        u32 tile_size = kTileSize;
+        u32 workgroup_size = 8;
     };
 
     struct GlyphDrawParams
@@ -695,6 +784,15 @@ namespace mango::vulkan::font
         u32 pixel_width = 1;
         u32 pixel_height = 1;
         float32x4 color { 1.0f, 1.0f, 1.0f, 1.0f };
+    };
+
+    struct PendingGlyph
+    {
+        GpuGlyphInstance gpu;
+        float rect_x0 = 0.0f;
+        float rect_y0 = 0.0f;
+        float rect_x1 = 0.0f;
+        float rect_y1 = 0.0f;
     };
 
     class Renderer
@@ -747,10 +845,13 @@ namespace mango::vulkan::font
                 vkDestroyPipelineLayout(m_device, m_computePipelineLayout, nullptr);
             }
 
-            if (m_glyphDescriptorPool)
+            if (m_batchDescriptorPool)
             {
-                vkDestroyDescriptorPool(m_device, m_glyphDescriptorPool, nullptr);
+                vkDestroyDescriptorPool(m_device, m_batchDescriptorPool, nullptr);
             }
+
+            destroyAtlas();
+            destroyBatchBuffers();
 
             if (m_canvasDescriptorPool)
             {
@@ -767,9 +868,9 @@ namespace mango::vulkan::font
                 vkDestroyDescriptorSetLayout(m_device, m_blitDescriptorSetLayout, nullptr);
             }
 
-            if (m_glyphDescriptorSetLayout)
+            if (m_batchDescriptorSetLayout)
             {
-                vkDestroyDescriptorSetLayout(m_device, m_glyphDescriptorSetLayout, nullptr);
+                vkDestroyDescriptorSetLayout(m_device, m_batchDescriptorSetLayout, nullptr);
             }
 
             if (m_canvasDescriptorSetLayout)
@@ -849,49 +950,227 @@ namespace mango::vulkan::font
                 0, 0, nullptr, 0, nullptr, 1, &barrier);
         }
 
-        void draw_glyph(VkCommandBuffer cmd, const GlyphGpuBuffers& buffers, const mango::font::GlyphGpuData& glyph, const GlyphDrawParams& params)
+        void set_tile_divisions(u32 divisions)
         {
-            if (!m_canvasImage || glyph.curve_bytes.empty())
+            m_tileDivisions = divisions;
+        }
+
+        void begin_text_batch()
+        {
+            m_pendingGlyphs.clear();
+        }
+
+        void queue_glyph(const GlyphAtlasSlot& atlas, const GlyphDrawParams& params)
+        {
+            if (!atlas.contour_count)
             {
                 return;
             }
 
-            u32 pixel_width = std::max(1u, params.pixel_width);
-            u32 pixel_height = std::max(1u, params.pixel_height);
+            PendingGlyph pending {};
+            pending.gpu.header[0] = float(atlas.contour_offset);
+            pending.gpu.header[1] = float(atlas.contour_count);
+            pending.gpu.color[0] = params.color.x;
+            pending.gpu.color[1] = params.color.y;
+            pending.gpu.color[2] = params.color.z;
+            pending.gpu.color[3] = params.color.w;
+            pending.gpu.params0[0] = params.em_window_x0;
+            pending.gpu.params0[1] = params.em_window_y_top;
+            pending.gpu.params0[2] = params.em_per_pixel;
+            pending.gpu.params0[3] = params.em_per_pixel;
+            pending.gpu.params1[0] = params.screen_x;
+            pending.gpu.params1[1] = params.screen_y;
+            pending.gpu.params1[2] = float(std::max(1u, params.pixel_width));
+            pending.gpu.params1[3] = float(std::max(1u, params.pixel_height));
+            pending.rect_x0 = params.screen_x;
+            pending.rect_y0 = params.screen_y;
+            pending.rect_x1 = params.screen_x + float(std::max(1u, params.pixel_width));
+            pending.rect_y1 = params.screen_y + float(std::max(1u, params.pixel_height));
+            m_pendingGlyphs.push_back(pending);
+        }
 
-            GlyphPushConstants push {};
-            push.color[0] = params.color.x;
-            push.color[1] = params.color.y;
-            push.color[2] = params.color.z;
-            push.color[3] = params.color.w;
-            push.params0[0] = params.em_window_x0;
-            push.params0[1] = params.em_window_y_top;
-            push.params0[2] = params.em_per_pixel;
-            push.params0[3] = params.em_per_pixel;
-            push.params1[0] = params.screen_x;
-            push.params1[1] = params.screen_y;
-            push.params1[2] = float(pixel_width);
-            push.params1[3] = float(pixel_height);
-            push.contour_count = u32(glyph.contours.size());
+        void flush_text_batch(VkCommandBuffer cmd)
+        {
+            if (!m_canvasImage || m_pendingGlyphs.empty())
+            {
+                return;
+            }
 
-            VkDescriptorSet sets[] = { m_canvasDescriptorSet, buffers.descriptorSet };
+            float bbox_x0 = m_pendingGlyphs[0].rect_x0;
+            float bbox_y0 = m_pendingGlyphs[0].rect_y0;
+            float bbox_x1 = m_pendingGlyphs[0].rect_x1;
+            float bbox_y1 = m_pendingGlyphs[0].rect_y1;
+
+            for (const PendingGlyph& glyph : m_pendingGlyphs)
+            {
+                bbox_x0 = std::min(bbox_x0, glyph.rect_x0);
+                bbox_y0 = std::min(bbox_y0, glyph.rect_y0);
+                bbox_x1 = std::max(bbox_x1, glyph.rect_x1);
+                bbox_y1 = std::max(bbox_y1, glyph.rect_y1);
+            }
+
+            bbox_x0 = std::floor(bbox_x0);
+            bbox_y0 = std::floor(bbox_y0);
+            bbox_x1 = std::ceil(bbox_x1);
+            bbox_y1 = std::ceil(bbox_y1);
+
+            bbox_x0 = std::max(0.0f, bbox_x0);
+            bbox_y0 = std::max(0.0f, bbox_y0);
+            bbox_x1 = std::min(float(m_extent.width), bbox_x1);
+            bbox_y1 = std::min(float(m_extent.height), bbox_y1);
+
+            if (bbox_x1 <= bbox_x0 || bbox_y1 <= bbox_y0)
+            {
+                return;
+            }
+
+            u32 tile_origin_x = u32(bbox_x0) / kTileSize * kTileSize;
+            u32 tile_origin_y = u32(bbox_y0) / kTileSize * kTileSize;
+            u32 tile_size = kTileSize;
+            u32 tiles_x = (u32(std::ceil(bbox_x1)) - tile_origin_x + tile_size - 1) / tile_size;
+            u32 tiles_y = (u32(std::ceil(bbox_y1)) - tile_origin_y + tile_size - 1) / tile_size;
+
+            if (m_tileDivisions == 1)
+            {
+                // Debug: one tile whose size matches the text bbox (legacy per-glyph dispatch footprint).
+                tile_origin_x = u32(std::floor(bbox_x0));
+                tile_origin_y = u32(std::floor(bbox_y0));
+                const u32 bbox_w = std::max(1u, u32(std::ceil(bbox_x1 - bbox_x0)));
+                const u32 bbox_h = std::max(1u, u32(std::ceil(bbox_y1 - bbox_y0)));
+                tile_size = std::max(std::max(bbox_w, bbox_h), 8u);
+                tile_size = (tile_size + 7u) & ~7u;
+                tiles_x = 1;
+                tiles_y = 1;
+            }
+            else if (m_tileDivisions == 2)
+            {
+                // Debug: split the text bbox into a 2×2 tile grid.
+                tile_origin_x = u32(std::floor(bbox_x0));
+                tile_origin_y = u32(std::floor(bbox_y0));
+                const u32 bbox_w = std::max(1u, u32(std::ceil(bbox_x1 - bbox_x0)));
+                const u32 bbox_h = std::max(1u, u32(std::ceil(bbox_y1 - bbox_y0)));
+                tile_size = std::max((bbox_w + 1u) / 2u, (bbox_h + 1u) / 2u);
+                tile_size = std::max(tile_size, 8u);
+                tile_size = (tile_size + 7u) & ~7u;
+                tiles_x = 2;
+                tiles_y = 2;
+            }
+
+            std::vector<GpuTileInfo> tile_infos(tiles_x * tiles_y);
+            std::vector<u32> tile_glyphs;
+            tile_glyphs.reserve(m_pendingGlyphs.size() * 2);
+
+            for (u32 ty = 0; ty < tiles_y; ++ty)
+            {
+                for (u32 tx = 0; tx < tiles_x; ++tx)
+                {
+                    const float tile_x0 = float(tile_origin_x + tx * tile_size);
+                    const float tile_y0 = float(tile_origin_y + ty * tile_size);
+                    const float tile_x1 = tile_x0 + float(tile_size);
+                    const float tile_y1 = tile_y0 + float(tile_size);
+
+                    GpuTileInfo& tile = tile_infos[ty * tiles_x + tx];
+                    tile.glyph_start = u32(tile_glyphs.size());
+
+                    for (u32 i = 0; i < u32(m_pendingGlyphs.size()); ++i)
+                    {
+                        const PendingGlyph& glyph = m_pendingGlyphs[i];
+                        if (glyph.rect_x1 <= tile_x0 || glyph.rect_x0 >= tile_x1 ||
+                            glyph.rect_y1 <= tile_y0 || glyph.rect_y0 >= tile_y1)
+                        {
+                            continue;
+                        }
+
+                        tile_glyphs.push_back(i);
+                    }
+
+                    tile.glyph_count = u32(tile_glyphs.size()) - tile.glyph_start;
+                }
+            }
+
+            const VkDeviceSize instance_bytes = sizeof(GpuGlyphInstance) * m_pendingGlyphs.size();
+            const VkDeviceSize tile_bytes = sizeof(GpuTileInfo) * tile_infos.size();
+            const VkDeviceSize index_bytes = sizeof(u32) * std::max<size_t>(tile_glyphs.size(), 1);
+
+            ensureBatchBuffer(m_instanceBuffer, m_instanceBufferCapacity, instance_bytes);
+            ensureBatchBuffer(m_tileBuffer, m_tileBufferCapacity, tile_bytes);
+            ensureBatchBuffer(m_tileGlyphBuffer, m_tileGlyphBufferCapacity, index_bytes);
+
+            for (size_t i = 0; i < m_pendingGlyphs.size(); ++i)
+            {
+                std::memcpy(static_cast<u8*>(m_instanceBuffer.mapped) + i * sizeof(GpuGlyphInstance),
+                    &m_pendingGlyphs[i].gpu, sizeof(GpuGlyphInstance));
+            }
+            std::memcpy(m_tileBuffer.mapped, tile_infos.data(), size_t(tile_bytes));
+            if (tile_glyphs.empty())
+            {
+                u32 zero = 0;
+                std::memcpy(m_tileGlyphBuffer.mapped, &zero, sizeof(zero));
+            }
+            else
+            {
+                std::memcpy(m_tileGlyphBuffer.mapped, tile_glyphs.data(), size_t(index_bytes));
+            }
+
+            updateBatchDescriptors();
+
+            BatchPushConstants push {};
+            push.tile_origin_x = tile_origin_x;
+            push.tile_origin_y = tile_origin_y;
+            push.tiles_x = tiles_x;
+            push.tiles_y = tiles_y;
+            push.tile_size = tile_size;
+            push.workgroup_size = 8;
+
+            const u32 subgroups_per_axis = (tile_size + push.workgroup_size - 1) / push.workgroup_size;
+
+            VkDescriptorSet sets[] = { m_canvasDescriptorSet, m_batchDescriptorSet };
 
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipeline);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_computePipelineLayout, 0, 2, sets, 0, nullptr);
             vkCmdPushConstants(cmd, m_computePipelineLayout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(push), &push);
-            vkCmdDispatch(cmd, (pixel_width + 7) / 8, (pixel_height + 7) / 8, 1);
+            vkCmdDispatch(cmd, tiles_x * subgroups_per_axis, tiles_y * subgroups_per_axis, 1);
+        }
 
-            VkMemoryBarrier barrier =
+        GlyphAtlasSlot append_glyph_to_atlas(const mango::font::GlyphGpuData& glyph)
+        {
+            GlyphAtlasSlot slot;
+            if (glyph.curve_bytes.empty())
             {
-                .sType = VK_STRUCTURE_TYPE_MEMORY_BARRIER,
-                .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-            };
+                return slot;
+            }
 
-            vkCmdPipelineBarrier(cmd,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                0, 1, &barrier, 0, nullptr, 0, nullptr);
+            const u32 contour_count = u32(glyph.contours.size());
+            const u32 curve_count = u32(glyph.curve_data.size() / 6);
+            const u32 curve_index_base = m_atlasCurveCount;
+
+            const VkDeviceSize contour_bytes = sizeof(mango::font::GpuContourHeader) * contour_count;
+            const VkDeviceSize curve_bytes = glyph.curve_bytes.size();
+
+            ensureAtlasCapacity(m_atlasContourBytes + contour_bytes, m_atlasCurveBytes + curve_bytes);
+
+            slot.contour_offset = m_atlasContourCount;
+            slot.contour_count = contour_count;
+
+            auto* contour_dst = reinterpret_cast<mango::font::GpuContourHeader*>(
+                static_cast<u8*>(m_atlasContours.mapped) + m_atlasContourBytes);
+
+            for (u32 i = 0; i < contour_count; ++i)
+            {
+                contour_dst[i] = glyph.contours[i];
+                contour_dst[i].curve_offset += curve_index_base;
+            }
+
+            std::memcpy(static_cast<u8*>(m_atlasCurves.mapped) + m_atlasCurveBytes,
+                glyph.curve_bytes.data(), glyph.curve_bytes.size());
+
+            m_atlasContourBytes += contour_bytes;
+            m_atlasCurveBytes += curve_bytes;
+            m_atlasContourCount += contour_count;
+            m_atlasCurveCount += curve_count;
+
+            updateAtlasDescriptors();
+            return slot;
         }
 
         void blit_to_swapchain(VkCommandBuffer cmd, VkImageView swapchainView, VkExtent2D extent)
@@ -961,70 +1240,6 @@ namespace mango::vulkan::font
             MANGO_UNREFERENCED(swap_barrier);
         }
 
-        GlyphGpuBuffers upload_glyph(const mango::font::GlyphGpuData& glyph)
-        {
-            GlyphGpuBuffers buffers;
-
-            VkDeviceSize contour_size = std::max<VkDeviceSize>(glyph.contour_bytes.size(), 16);
-            buffers.contours = m_allocator.createBuffer(contour_size,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
-            if (glyph.contour_bytes.empty())
-            {
-                std::memset(buffers.contours.mapped, 0, size_t(contour_size));
-            }
-            else
-            {
-                std::memcpy(buffers.contours.mapped, glyph.contour_bytes.data(), glyph.contour_bytes.size());
-            }
-
-            VkDeviceSize curve_size = std::max<VkDeviceSize>(glyph.curve_bytes.size(), 16);
-            buffers.curves = m_allocator.createBuffer(curve_size,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
-            std::memcpy(buffers.curves.mapped, glyph.curve_bytes.data(), glyph.curve_bytes.size());
-
-            VkDescriptorSetAllocateInfo allocInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                .descriptorPool = m_glyphDescriptorPool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &m_glyphDescriptorSetLayout,
-            };
-
-            vkAllocateDescriptorSets(m_device, &allocInfo, &buffers.descriptorSet);
-
-            VkDescriptorBufferInfo contourInfo = { buffers.contours.buffer, 0, VK_WHOLE_SIZE };
-            VkDescriptorBufferInfo curveInfo = { buffers.curves.buffer, 0, VK_WHOLE_SIZE };
-
-            VkWriteDescriptorSet writes[2] =
-            {
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = buffers.descriptorSet, .dstBinding = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &contourInfo },
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = buffers.descriptorSet, .dstBinding = 1, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &curveInfo },
-            };
-
-            vkUpdateDescriptorSets(m_device, 2, writes, 0, nullptr);
-
-            return buffers;
-        }
-
-        void destroy_glyph_buffers(GlyphGpuBuffers& buffers)
-        {
-            if (buffers.descriptorSet)
-            {
-                vkFreeDescriptorSets(m_device, m_glyphDescriptorPool, 1, &buffers.descriptorSet);
-                buffers.descriptorSet = VK_NULL_HANDLE;
-            }
-
-            if (buffers.contours)
-            {
-                m_allocator.destroyBuffer(buffers.contours);
-            }
-
-            if (buffers.curves)
-            {
-                m_allocator.destroyBuffer(buffers.curves);
-            }
-        }
-
     private:
         VkDevice m_device = VK_NULL_HANDLE;
         VkQueue m_queue = VK_NULL_HANDLE;
@@ -1038,7 +1253,7 @@ namespace mango::vulkan::font
         VkShaderModule m_blitFragmentShader = VK_NULL_HANDLE;
 
         VkDescriptorSetLayout m_canvasDescriptorSetLayout = VK_NULL_HANDLE;
-        VkDescriptorSetLayout m_glyphDescriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSetLayout m_batchDescriptorSetLayout = VK_NULL_HANDLE;
         VkDescriptorSetLayout m_blitDescriptorSetLayout = VK_NULL_HANDLE;
         VkPipelineLayout m_computePipelineLayout = VK_NULL_HANDLE;
         VkPipelineLayout m_blitPipelineLayout = VK_NULL_HANDLE;
@@ -1046,9 +1261,10 @@ namespace mango::vulkan::font
         VkPipeline m_blitPipeline = VK_NULL_HANDLE;
 
         VkDescriptorPool m_canvasDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorPool m_glyphDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorPool m_batchDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorPool m_blitDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet m_canvasDescriptorSet = VK_NULL_HANDLE;
+        VkDescriptorSet m_batchDescriptorSet = VK_NULL_HANDLE;
         VkDescriptorSet m_blitDescriptorSet = VK_NULL_HANDLE;
 
         VkSampler m_sampler = VK_NULL_HANDLE;
@@ -1056,6 +1272,25 @@ namespace mango::vulkan::font
         vulkan::ImageAllocation m_canvasAllocation;
         VkImage m_canvasImage = VK_NULL_HANDLE;
         VkImageView m_canvasView = VK_NULL_HANDLE;
+
+        vulkan::BufferAllocation m_atlasContours;
+        vulkan::BufferAllocation m_atlasCurves;
+        VkDeviceSize m_atlasContourCapacity = 0;
+        VkDeviceSize m_atlasCurveCapacity = 0;
+        VkDeviceSize m_atlasContourBytes = 0;
+        VkDeviceSize m_atlasCurveBytes = 0;
+        u32 m_atlasContourCount = 0;
+        u32 m_atlasCurveCount = 0;
+
+        vulkan::BufferAllocation m_instanceBuffer;
+        vulkan::BufferAllocation m_tileBuffer;
+        vulkan::BufferAllocation m_tileGlyphBuffer;
+        VkDeviceSize m_instanceBufferCapacity = 0;
+        VkDeviceSize m_tileBufferCapacity = 0;
+        VkDeviceSize m_tileGlyphBufferCapacity = 0;
+
+        std::vector<PendingGlyph> m_pendingGlyphs;
+        u32 m_tileDivisions = 0;
 
         void createDescriptorSetLayouts()
         {
@@ -1076,20 +1311,23 @@ namespace mango::vulkan::font
 
             vkCreateDescriptorSetLayout(m_device, &canvasLayoutInfo, nullptr, &m_canvasDescriptorSetLayout);
 
-            VkDescriptorSetLayoutBinding glyphBindings[] =
+            VkDescriptorSetLayoutBinding batchBindings[] =
             {
                 { .binding = 0, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT },
                 { .binding = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT },
+                { .binding = 2, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT },
+                { .binding = 3, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT },
+                { .binding = 4, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT },
             };
 
-            VkDescriptorSetLayoutCreateInfo glyphLayoutInfo =
+            VkDescriptorSetLayoutCreateInfo batchLayoutInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-                .bindingCount = 2,
-                .pBindings = glyphBindings,
+                .bindingCount = 5,
+                .pBindings = batchBindings,
             };
 
-            vkCreateDescriptorSetLayout(m_device, &glyphLayoutInfo, nullptr, &m_glyphDescriptorSetLayout);
+            vkCreateDescriptorSetLayout(m_device, &batchLayoutInfo, nullptr, &m_batchDescriptorSetLayout);
 
             VkDescriptorSetLayoutBinding blitBinding =
             {
@@ -1119,21 +1357,20 @@ namespace mango::vulkan::font
 
             vkCreateDescriptorPool(m_device, &canvasPoolInfo, nullptr, &m_canvasDescriptorPool);
 
-            VkDescriptorPoolSize glyphPoolSizes[] =
+            VkDescriptorPoolSize batchPoolSizes[] =
             {
-                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 128 * 2 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5 },
             };
 
-            VkDescriptorPoolCreateInfo glyphPoolInfo =
+            VkDescriptorPoolCreateInfo batchPoolInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                .flags = VK_DESCRIPTOR_POOL_CREATE_FREE_DESCRIPTOR_SET_BIT,
-                .maxSets = 128,
+                .maxSets = 1,
                 .poolSizeCount = 1,
-                .pPoolSizes = glyphPoolSizes,
+                .pPoolSizes = batchPoolSizes,
             };
 
-            vkCreateDescriptorPool(m_device, &glyphPoolInfo, nullptr, &m_glyphDescriptorPool);
+            vkCreateDescriptorPool(m_device, &batchPoolInfo, nullptr, &m_batchDescriptorPool);
 
             VkDescriptorPoolSize blitPoolSize = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 };
             VkDescriptorPoolCreateInfo blitPoolInfo =
@@ -1165,6 +1402,19 @@ namespace mango::vulkan::font
             };
 
             vkAllocateDescriptorSets(m_device, &blitAllocInfo, &m_blitDescriptorSet);
+
+            VkDescriptorSetAllocateInfo batchAllocInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                .descriptorPool = m_batchDescriptorPool,
+                .descriptorSetCount = 1,
+                .pSetLayouts = &m_batchDescriptorSetLayout,
+            };
+
+            vkAllocateDescriptorSets(m_device, &batchAllocInfo, &m_batchDescriptorSet);
+
+            createAtlasBuffers();
+            createBatchBuffers();
         }
 
         void createPipelines()
@@ -1189,10 +1439,10 @@ namespace mango::vulkan::font
             {
                 .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
                 .offset = 0,
-                .size = sizeof(GlyphPushConstants),
+                .size = sizeof(BatchPushConstants),
             };
 
-            VkDescriptorSetLayout computeSetLayouts[] = { m_canvasDescriptorSetLayout, m_glyphDescriptorSetLayout };
+            VkDescriptorSetLayout computeSetLayouts[] = { m_canvasDescriptorSetLayout, m_batchDescriptorSetLayout };
 
             VkPipelineLayoutCreateInfo computeLayoutInfo =
             {
@@ -1438,6 +1688,179 @@ namespace mango::vulkan::font
 
             vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
         }
+
+        void createAtlasBuffers()
+        {
+            m_atlasContourCapacity = kAtlasInitialBytes;
+            m_atlasCurveCapacity = kAtlasInitialBytes;
+            m_atlasContourBytes = 0;
+            m_atlasCurveBytes = 0;
+            m_atlasContourCount = 0;
+            m_atlasCurveCount = 0;
+
+            m_atlasContours = m_allocator.createBuffer(m_atlasContourCapacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+            m_atlasCurves = m_allocator.createBuffer(m_atlasCurveCapacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+            updateAtlasDescriptors();
+        }
+
+        void createBatchBuffers()
+        {
+            m_instanceBufferCapacity = 64 * 1024;
+            m_tileBufferCapacity = 16 * 1024;
+            m_tileGlyphBufferCapacity = 64 * 1024;
+
+            m_instanceBuffer = m_allocator.createBuffer(m_instanceBufferCapacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+            m_tileBuffer = m_allocator.createBuffer(m_tileBufferCapacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+            m_tileGlyphBuffer = m_allocator.createBuffer(m_tileGlyphBufferCapacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+            updateBatchDescriptors();
+        }
+
+        void destroyAtlas()
+        {
+            if (m_atlasContours)
+            {
+                m_allocator.destroyBuffer(m_atlasContours);
+            }
+
+            if (m_atlasCurves)
+            {
+                m_allocator.destroyBuffer(m_atlasCurves);
+            }
+
+            m_atlasContourCapacity = 0;
+            m_atlasCurveCapacity = 0;
+            m_atlasContourBytes = 0;
+            m_atlasCurveBytes = 0;
+            m_atlasContourCount = 0;
+            m_atlasCurveCount = 0;
+        }
+
+        void destroyBatchBuffers()
+        {
+            if (m_instanceBuffer)
+            {
+                m_allocator.destroyBuffer(m_instanceBuffer);
+            }
+
+            if (m_tileBuffer)
+            {
+                m_allocator.destroyBuffer(m_tileBuffer);
+            }
+
+            if (m_tileGlyphBuffer)
+            {
+                m_allocator.destroyBuffer(m_tileGlyphBuffer);
+            }
+
+            m_instanceBufferCapacity = 0;
+            m_tileBufferCapacity = 0;
+            m_tileGlyphBufferCapacity = 0;
+        }
+
+        void ensureAtlasCapacity(VkDeviceSize contour_bytes, VkDeviceSize curve_bytes)
+        {
+            if (contour_bytes <= m_atlasContourCapacity && curve_bytes <= m_atlasCurveCapacity)
+            {
+                return;
+            }
+
+            VkDeviceSize new_contour_capacity = std::max(contour_bytes, m_atlasContourCapacity * 2);
+            VkDeviceSize new_curve_capacity = std::max(curve_bytes, m_atlasCurveCapacity * 2);
+            new_contour_capacity = std::max(new_contour_capacity, kAtlasInitialBytes);
+            new_curve_capacity = std::max(new_curve_capacity, kAtlasInitialBytes);
+
+            auto new_contours = m_allocator.createBuffer(new_contour_capacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+            auto new_curves = m_allocator.createBuffer(new_curve_capacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+
+            if (m_atlasContourBytes)
+            {
+                std::memcpy(new_contours.mapped, m_atlasContours.mapped, size_t(m_atlasContourBytes));
+            }
+
+            if (m_atlasCurveBytes)
+            {
+                std::memcpy(new_curves.mapped, m_atlasCurves.mapped, size_t(m_atlasCurveBytes));
+            }
+
+            if (m_atlasContours)
+            {
+                m_allocator.destroyBuffer(m_atlasContours);
+            }
+
+            if (m_atlasCurves)
+            {
+                m_allocator.destroyBuffer(m_atlasCurves);
+            }
+
+            m_atlasContours = new_contours;
+            m_atlasCurves = new_curves;
+            m_atlasContourCapacity = new_contour_capacity;
+            m_atlasCurveCapacity = new_curve_capacity;
+            updateAtlasDescriptors();
+        }
+
+        void ensureBatchBuffer(vulkan::BufferAllocation& buffer, VkDeviceSize& capacity, VkDeviceSize required)
+        {
+            required = std::max<VkDeviceSize>(required, 16);
+            if (required <= capacity)
+            {
+                return;
+            }
+
+            VkDeviceSize new_capacity = std::max(required, capacity * 2);
+            if (!capacity)
+            {
+                new_capacity = required;
+            }
+
+            auto new_buffer = m_allocator.createBuffer(new_capacity,
+                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+
+            if (buffer)
+            {
+                m_allocator.destroyBuffer(buffer);
+            }
+
+            buffer = new_buffer;
+            capacity = new_capacity;
+        }
+
+        void updateAtlasDescriptors()
+        {
+            VkDescriptorBufferInfo contourInfo = { m_atlasContours.buffer, 0, VK_WHOLE_SIZE };
+            VkDescriptorBufferInfo curveInfo = { m_atlasCurves.buffer, 0, VK_WHOLE_SIZE };
+
+            VkWriteDescriptorSet writes[2] =
+            {
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = m_batchDescriptorSet, .dstBinding = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &contourInfo },
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = m_batchDescriptorSet, .dstBinding = 1, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &curveInfo },
+            };
+
+            vkUpdateDescriptorSets(m_device, 2, writes, 0, nullptr);
+        }
+
+        void updateBatchDescriptors()
+        {
+            VkDescriptorBufferInfo instanceInfo = { m_instanceBuffer.buffer, 0, VK_WHOLE_SIZE };
+            VkDescriptorBufferInfo tileInfo = { m_tileBuffer.buffer, 0, VK_WHOLE_SIZE };
+            VkDescriptorBufferInfo indexInfo = { m_tileGlyphBuffer.buffer, 0, VK_WHOLE_SIZE };
+
+            VkWriteDescriptorSet writes[3] =
+            {
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = m_batchDescriptorSet, .dstBinding = 2, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &instanceInfo },
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = m_batchDescriptorSet, .dstBinding = 3, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &tileInfo },
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = m_batchDescriptorSet, .dstBinding = 4, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &indexInfo },
+            };
+
+            vkUpdateDescriptorSets(m_device, 3, writes, 0, nullptr);
+        }
     };
 
 } // namespace mango::vulkan::font
@@ -1449,10 +1872,17 @@ namespace mango::vulkan::font
 class FontWindow : public VulkanWindow
 {
 protected:
+    enum class DebugRenderMode
+    {
+        SingleGlyph1Tile,
+        SingleGlyph4Tiles,
+        FullText,
+    };
+
     struct CachedGlyph
     {
         mango::font::GlyphGpuData cpu;
-        vulkan::font::GlyphGpuBuffers gpu;
+        vulkan::font::GlyphAtlasSlot atlas;
     };
 
     VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
@@ -1490,6 +1920,235 @@ protected:
         "Ahti, ruler of the waters, lord of every lake and island.",
     };
     std::string m_fontPath;
+
+    DebugRenderMode m_debugMode = DebugRenderMode::SingleGlyph1Tile;
+    static constexpr float kDebugFontHeight = 48.0f;
+
+    static constexpr u32 kTimestampsPerFrame = 4;
+    enum TimestampSlot : u32
+    {
+        TS_FrameBegin = 0,
+        TS_AfterClear = 1,
+        TS_AfterText = 2,
+        TS_AfterBlit = 3,
+    };
+
+    struct FrameTimings
+    {
+        float wait_ms = 0.0f;
+        float record_ms = 0.0f;
+        float record_clear_ms = 0.0f;
+        float record_text_ms = 0.0f;
+        float record_blit_ms = 0.0f;
+        float submit_ms = 0.0f;
+        float present_ms = 0.0f;
+        float gpu_clear_ms = 0.0f;
+        float gpu_text_ms = 0.0f;
+        float gpu_blit_ms = 0.0f;
+        float gpu_total_ms = 0.0f;
+        float total_ms = 0.0f;
+    };
+
+    VkQueryPool m_timestampPool = VK_NULL_HANDLE;
+    u32 m_timestampImageCount = 0;
+    bool m_timestampsEnabled = false;
+    float m_timestampPeriod = 1.0f;
+    FrameTimings m_timings {};
+    static constexpr size_t kTimingHistory = 30;
+    std::array<FrameTimings, kTimingHistory> m_timingHistory {};
+    size_t m_timingIndex = 0;
+    size_t m_timingCount = 0;
+
+    u32 timestamp_base(u32 imageIndex) const
+    {
+        return imageIndex * kTimestampsPerFrame;
+    }
+
+    void createTimestampQueryPool()
+    {
+        VkPhysicalDeviceProperties properties {};
+        vkGetPhysicalDeviceProperties(m_physicalDevice, &properties);
+
+        std::vector<VkQueueFamilyProperties> queueFamilies =
+            getPhysicalDeviceQueueFamilyProperties(m_physicalDevice);
+
+        u32 timestamp_valid_bits = 0;
+        if (m_graphicsQueueFamilyIndex < queueFamilies.size())
+        {
+            timestamp_valid_bits = queueFamilies[m_graphicsQueueFamilyIndex].timestampValidBits;
+        }
+
+        m_timestampsEnabled = properties.limits.timestampComputeAndGraphics && timestamp_valid_bits > 0;
+        m_timestampPeriod = properties.limits.timestampPeriod;
+
+        if (!m_timestampsEnabled)
+        {
+            printLine(Print::Warning, "GPU timestamps unavailable; CPU split timings only.");
+            return;
+        }
+
+        const u32 query_count = m_swapchain->getImageCount() * kTimestampsPerFrame;
+        VkQueryPoolCreateInfo poolInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
+            .queryType = VK_QUERY_TYPE_TIMESTAMP,
+            .queryCount = query_count,
+        };
+
+        vkCreateQueryPool(m_device, &poolInfo, nullptr, &m_timestampPool);
+    }
+
+    void destroyTimestampQueryPool()
+    {
+        if (m_timestampPool)
+        {
+            vkDestroyQueryPool(m_device, m_timestampPool, nullptr);
+            m_timestampPool = VK_NULL_HANDLE;
+        }
+    }
+
+    void write_timestamp(VkCommandBuffer cmd, u32 imageIndex, TimestampSlot slot)
+    {
+        if (!m_timestampsEnabled)
+        {
+            return;
+        }
+
+        VkPipelineStageFlagBits stage = VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT;
+        switch (slot)
+        {
+            case TS_AfterClear: stage = VK_PIPELINE_STAGE_TRANSFER_BIT; break;
+            case TS_AfterText: stage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT; break;
+            case TS_AfterBlit: stage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT; break;
+            default: break;
+        }
+
+        vkCmdWriteTimestamp(cmd, stage, m_timestampPool, timestamp_base(imageIndex) + slot);
+    }
+
+    void read_gpu_timings(u32 imageIndex)
+    {
+        if (!m_timestampsEnabled)
+        {
+            return;
+        }
+
+        u64 values[kTimestampsPerFrame] = {};
+        VkResult result = vkGetQueryPoolResults(
+            m_device,
+            m_timestampPool,
+            timestamp_base(imageIndex),
+            kTimestampsPerFrame,
+            sizeof(values),
+            values,
+            sizeof(u64),
+            VK_QUERY_RESULT_64_BIT | VK_QUERY_RESULT_WAIT_BIT);
+
+        if (result != VK_SUCCESS)
+        {
+            return;
+        }
+
+        auto delta_ms = [this](u64 a, u64 b) -> float
+        {
+            return float(double(b - a) * double(m_timestampPeriod) / 1'000'000.0);
+        };
+
+        m_timings.gpu_clear_ms = delta_ms(values[TS_FrameBegin], values[TS_AfterClear]);
+        m_timings.gpu_text_ms = delta_ms(values[TS_AfterClear], values[TS_AfterText]);
+        m_timings.gpu_blit_ms = delta_ms(values[TS_AfterText], values[TS_AfterBlit]);
+        m_timings.gpu_total_ms = delta_ms(values[TS_FrameBegin], values[TS_AfterBlit]);
+    }
+
+    void push_timing_sample()
+    {
+        m_timingHistory[m_timingIndex] = m_timings;
+        m_timingIndex = (m_timingIndex + 1) % kTimingHistory;
+        m_timingCount = std::min(m_timingCount + 1, kTimingHistory);
+    }
+
+    FrameTimings averaged_timings() const
+    {
+        FrameTimings avg;
+        if (m_timingCount == 0)
+        {
+            return avg;
+        }
+
+        for (size_t i = 0; i < m_timingCount; ++i)
+        {
+            const FrameTimings& t = m_timingHistory[i];
+            avg.wait_ms += t.wait_ms;
+            avg.record_ms += t.record_ms;
+            avg.record_clear_ms += t.record_clear_ms;
+            avg.record_text_ms += t.record_text_ms;
+            avg.record_blit_ms += t.record_blit_ms;
+            avg.submit_ms += t.submit_ms;
+            avg.present_ms += t.present_ms;
+            avg.gpu_clear_ms += t.gpu_clear_ms;
+            avg.gpu_text_ms += t.gpu_text_ms;
+            avg.gpu_blit_ms += t.gpu_blit_ms;
+            avg.gpu_total_ms += t.gpu_total_ms;
+            avg.total_ms += t.total_ms;
+        }
+
+        const float inv = 1.0f / float(m_timingCount);
+        avg.wait_ms *= inv;
+        avg.record_ms *= inv;
+        avg.record_clear_ms *= inv;
+        avg.record_text_ms *= inv;
+        avg.record_blit_ms *= inv;
+        avg.submit_ms *= inv;
+        avg.present_ms *= inv;
+        avg.gpu_clear_ms *= inv;
+        avg.gpu_text_ms *= inv;
+        avg.gpu_blit_ms *= inv;
+        avg.gpu_total_ms *= inv;
+        avg.total_ms *= inv;
+        return avg;
+    }
+
+    bool m_printTimingOnNextFrame = false;
+
+    std::string timing_title() const
+    {
+        const FrameTimings t = averaged_timings();
+        if (m_timestampsEnabled)
+        {
+            return fmt::format(
+                "font [{}] total {:.2f} | wait {:.2f} rec {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f}) submit {:.2f} present {:.2f} | GPU {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f})",
+                debug_mode_name(),
+                t.total_ms,
+                t.wait_ms,
+                t.record_ms,
+                t.record_clear_ms,
+                t.record_text_ms,
+                t.record_blit_ms,
+                t.submit_ms,
+                t.present_ms,
+                t.gpu_total_ms,
+                t.gpu_clear_ms,
+                t.gpu_text_ms,
+                t.gpu_blit_ms);
+        }
+
+        return fmt::format(
+            "font [{}] total {:.2f} | wait {:.2f} rec {:.2f} (clr {:.2f} txt {:.2f} blt {:.2f}) submit {:.2f} present {:.2f} | GPU n/a",
+            debug_mode_name(),
+            t.total_ms,
+            t.wait_ms,
+            t.record_ms,
+            t.record_clear_ms,
+            t.record_text_ms,
+            t.record_blit_ms,
+            t.submit_ms,
+            t.present_ms);
+    }
+
+    void print_timing_console() const
+    {
+        printLine(timing_title());
+    }
 
 public:
     FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& fontPath)
@@ -1586,10 +2245,13 @@ public:
                 cache_string(line);
             }
             cache_string(" fps()");
+            cache_glyph('G');
         }
 
         VkExtent2D extent = m_swapchain->getExtent();
         m_renderer->resize(extent);
+        createTimestampQueryPool();
+        m_timestampImageCount = m_swapchain->getImageCount();
         setVisible(true);
     }
 
@@ -1599,11 +2261,7 @@ public:
         {
             vkDeviceWaitIdle(m_device);
 
-            for (auto& [codepoint, cached] : m_glyphCache)
-            {
-                MANGO_UNREFERENCED(codepoint);
-                m_renderer->destroy_glyph_buffers(cached.gpu);
-            }
+            destroyTimestampQueryPool();
             m_glyphCache.clear();
 
             m_renderer.reset();
@@ -1625,7 +2283,7 @@ public:
         cached.cpu = m_font.load_gpu_glyph(codepoint);
         if (!cached.cpu.curve_bytes.empty())
         {
-            cached.gpu = m_renderer->upload_glyph(cached.cpu);
+            cached.atlas = m_renderer->append_glyph_to_atlas(cached.cpu);
         }
 
         m_glyphCache[codepoint] = std::move(cached);
@@ -1645,7 +2303,7 @@ public:
         return m_glyphCache.at(codepoint);
     }
 
-    void draw_text(VkCommandBuffer cmd, float pen_x, float baseline_y, std::string_view text, float32x4 color)
+    void draw_text(float pen_x, float baseline_y, std::string_view text, float32x4 color)
     {
         const float pixel_scale = m_font.pixel_scale();
         const float em_per_pixel = m_font.em_per_pixel();
@@ -1681,14 +2339,41 @@ public:
             params.pixel_height = std::max(1u, u32(std::ceil(float_bottom - line_screen_y)));
             params.color = color;
 
-            m_renderer->draw_glyph(cmd, cached.gpu, cached.cpu, params);
+            m_renderer->queue_glyph(cached.atlas, params);
 
             pen_x += cached.cpu.advance * pixel_scale;
         }
     }
 
+    void draw_debug_glyph(float32x4 color)
+    {
+        m_font.set_pixel_height(kDebugFontHeight);
+        const CachedGlyph& glyph = get_glyph('G');
+        const float pixel_scale = m_font.pixel_scale();
+
+        const int width = int(m_swapchain->getExtent().width);
+        const int height = int(m_swapchain->getExtent().height);
+        const float pen_x = float(width) * 0.5f - glyph.cpu.advance * pixel_scale * 0.5f;
+        const float baseline_y = float(height) * 0.5f;
+
+        draw_text(pen_x, baseline_y, "G", color);
+    }
+
+    const char* debug_mode_name() const
+    {
+        switch (m_debugMode)
+        {
+            case DebugRenderMode::SingleGlyph1Tile: return "debug: G / 1 tile";
+            case DebugRenderMode::SingleGlyph4Tiles: return "debug: G / 4 tiles";
+            case DebugRenderMode::FullText: return "full text";
+        }
+        return "unknown";
+    }
+
     void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
     {
+        read_gpu_timings(imageIndex);
+
         vkResetCommandBuffer(cmd, 0);
 
         VkCommandBufferBeginInfo beginInfo =
@@ -1699,69 +2384,122 @@ public:
 
         vkBeginCommandBuffer(cmd, &beginInfo);
 
-        m_renderer->clear_canvas(cmd, 0.1f, 0.14f, 0.23f, 1.0f);
-
-        static constexpr float kHudPixelHeight = 24.0f;
-        const float anim_height = m_fontPixelHeight;
-
-        m_font.set_pixel_height(kHudPixelHeight);
-        const float hud_scale = m_font.pixel_scale();
-
-        const float fps = m_frameTimeMs > 0.0f ? 1000.0f / m_frameTimeMs : 0.0f;
-        char frame_time_text[48];
-        std::snprintf(frame_time_text, sizeof(frame_time_text), "%6.3f ms (%3.0f fps)",
-            double(m_frameTimeMs), double(fps));
-
-        const float hud_baseline = 8.0f + float(m_font.ascent) * hud_scale;
-        draw_text(cmd, 8.0f, hud_baseline, frame_time_text, float32x4(0.75f, 0.9f, 1.0f, 1.0f));
-
-        m_font.set_pixel_height(anim_height);
-
-        const float pixel_scale = m_font.pixel_scale();
-        const float line_step = float(m_font.ascent - m_font.descent + m_font.line_gap) * pixel_scale * 1.12f;
-        float baseline_y = 100.0f;
-        for (const std::string& line : m_lines)
+        if (m_timestampsEnabled)
         {
-            draw_text(cmd, 40.0f, baseline_y, line, float32x4(1.0f, 1.0f, 1.0f, 1.0f));
-            baseline_y += line_step;
+            vkCmdResetQueryPool(cmd, m_timestampPool, timestamp_base(imageIndex), kTimestampsPerFrame);
+            write_timestamp(cmd, imageIndex, TS_FrameBegin);
         }
 
+        u64 t_section = Time::us();
+        m_renderer->clear_canvas(cmd, 0.1f, 0.14f, 0.23f, 1.0f);
+        m_timings.record_clear_ms = float(Time::us() - t_section) / 1000.0f;
+        write_timestamp(cmd, imageIndex, TS_AfterClear);
+
+        t_section = Time::us();
+        m_renderer->begin_text_batch();
+
+        if (m_debugMode == DebugRenderMode::FullText)
+        {
+            m_renderer->set_tile_divisions(0);
+
+            static constexpr float kHudPixelHeight = 24.0f;
+            const float anim_height = m_fontPixelHeight;
+
+            m_font.set_pixel_height(kHudPixelHeight);
+            const float hud_scale = m_font.pixel_scale();
+
+            const float hud_baseline = 8.0f + float(m_font.ascent) * hud_scale;
+            draw_text(8.0f, hud_baseline, "timings -> console (keys: 1=G 2=4tile 0=full)", float32x4(0.75f, 0.9f, 1.0f, 1.0f));
+
+            m_font.set_pixel_height(anim_height);
+
+            const float pixel_scale = m_font.pixel_scale();
+            const float line_step = float(m_font.ascent - m_font.descent + m_font.line_gap) * pixel_scale * 1.12f;
+            float baseline_y = 100.0f;
+            for (const std::string& line : m_lines)
+            {
+                draw_text(40.0f, baseline_y, line, float32x4(1.0f, 1.0f, 1.0f, 1.0f));
+                baseline_y += line_step;
+            }
+        }
+        else
+        {
+            m_renderer->set_tile_divisions(
+                m_debugMode == DebugRenderMode::SingleGlyph1Tile ? 1u : 2u);
+            draw_debug_glyph(float32x4(1.0f, 1.0f, 1.0f, 1.0f));
+        }
+
+        m_renderer->flush_text_batch(cmd);
+        m_timings.record_text_ms = float(Time::us() - t_section) / 1000.0f;
+        write_timestamp(cmd, imageIndex, TS_AfterText);
+
+        t_section = Time::us();
         m_swapchain->cmdTransitionImageToColorAttachment(cmd, imageIndex);
         m_renderer->blit_to_swapchain(cmd, m_swapchain->getImageView(imageIndex), extent);
         m_swapchain->cmdTransitionImageToPresent(cmd, imageIndex);
+        m_timings.record_blit_ms = float(Time::us() - t_section) / 1000.0f;
+        write_timestamp(cmd, imageIndex, TS_AfterBlit);
 
         vkEndCommandBuffer(cmd);
     }
 
     void render()
     {
+        const u64 frame_begin = Time::us();
+
+        const u64 wait_begin = Time::us();
         auto frame = m_swapchain->beginFrame();
+        m_timings.wait_ms = float(Time::us() - wait_begin) / 1000.0f;
+
         if (!frame)
         {
             return;
         }
 
         VkExtent2D extent = m_swapchain->getExtent();
+        const u32 image_count = m_swapchain->getImageCount();
         if (extent.width > 0 && extent.height > 0)
         {
             m_renderer->resize(extent);
         }
 
+        if (image_count != m_timestampImageCount)
+        {
+            destroyTimestampQueryPool();
+            createTimestampQueryPool();
+            m_timestampImageCount = image_count;
+        }
+
+        const u64 record_begin = Time::us();
         VkCommandBuffer cmd = m_commandBuffers[frame.imageIndex()];
         recordCommandBuffer(cmd, frame.imageIndex(), extent);
-        frame.submitAndPresent(m_graphicsQueue, cmd);
+        m_timings.record_ms = float(Time::us() - record_begin) / 1000.0f;
+
+        const u64 submit_begin = Time::us();
+        frame.submit(m_graphicsQueue, cmd);
+        m_timings.submit_ms = float(Time::us() - submit_begin) / 1000.0f;
+
+        const u64 present_begin = Time::us();
+        frame.present();
+        m_timings.present_ms = float(Time::us() - present_begin) / 1000.0f;
+
+        m_timings.total_ms = float(Time::us() - frame_begin) / 1000.0f;
+        push_timing_sample();
     }
 
     void onFrame(const FrameInfo& info) override
     {
-        constexpr float min_size = 5.0f;
-        constexpr float max_size = 64.0f;
-        constexpr float cycle_seconds = 10.0f;
+        if (m_debugMode == DebugRenderMode::FullText)
+        {
+            constexpr float min_size = 5.0f;
+            constexpr float max_size = 64.0f;
+            constexpr float cycle_seconds = 10.0f;
 
-        float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
-        float t = 1.0f - std::fabs(phase * 2.0f - 1.0f);
-        m_fontPixelHeight = min_size + t * (max_size - min_size);
-        m_font.set_pixel_height(m_fontPixelHeight);
+            float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
+            float t = 1.0f - std::fabs(phase * 2.0f - 1.0f);
+            m_fontPixelHeight = min_size + t * (max_size - min_size);
+            m_font.set_pixel_height(m_fontPixelHeight);
+        }
 
         const float frame_ms = float(info.dt * 1000.0);
         m_frameTimeHistory[m_frameTimeIndex] = frame_ms;
@@ -1775,10 +2513,15 @@ public:
         }
         m_frameTimeMs = frame_sum / float(m_frameTimeCount);
 
-        u64 time0 = mango::Time::us();
         render();
-        u64 time1 = mango::Time::us();
-        setTitle(fmt::format("font: {:.2f} ms", (time1 - time0) / 1000.0));
+
+        if (m_printTimingOnNextFrame || (m_timingIndex == 0 && m_timingCount > 0))
+        {
+            print_timing_console();
+            m_printTimingOnNextFrame = false;
+        }
+
+        setTitle(fmt::format("font [{}]", debug_mode_name()));
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -1788,6 +2531,21 @@ public:
         if (code == KEYCODE_ESC)
         {
             breakEventLoop();
+        }
+        else if (code == KEYCODE_1)
+        {
+            m_debugMode = DebugRenderMode::SingleGlyph1Tile;
+            m_printTimingOnNextFrame = true;
+        }
+        else if (code == KEYCODE_2)
+        {
+            m_debugMode = DebugRenderMode::SingleGlyph4Tiles;
+            m_printTimingOnNextFrame = true;
+        }
+        else if (code == KEYCODE_0)
+        {
+            m_debugMode = DebugRenderMode::FullText;
+            m_printTimingOnNextFrame = true;
         }
     }
 };
