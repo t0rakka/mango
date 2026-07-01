@@ -1,11 +1,12 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
 #include <mango/core/configure.hpp>
+#include <mango/core/exception.hpp>
 #include <mango/core/memory.hpp>
 
 namespace mango::image
@@ -13,34 +14,36 @@ namespace mango::image
 
     struct Exif
     {
+        Status      status;
+
         // image data structure
-        u32         ImageWidth;
-        u32         ImageLength;
-        u16         BitsPerSample;
-        u16         Compression;
-        u16         PhotometricInterpretation;
-        u16         Orientation;
-        u16         SamplesPerPixel;
-        u16         PlanarConfiguration;
-        u16         YCbCrSubSampling;
-        u16         YCbCrPositioning;
-        float       XResolution;
-        float       YResolution;
-        u16         ResolutionUnit;
+        u32         ImageWidth = 0;
+        u32         ImageLength = 0;
+        u16         BitsPerSample = 0;
+        u16         Compression = 0;
+        u16         PhotometricInterpretation = 0;
+        u16         Orientation = 1;
+        u16         SamplesPerPixel = 0;
+        u16         PlanarConfiguration = 0;
+        u16         YCbCrSubSampling = 0;
+        u16         YCbCrPositioning = 0;
+        float       XResolution = 0;
+        float       YResolution = 0;
+        u16         ResolutionUnit = 0;
 
         // recording offset
-        u32         StripOffsets;
-        u32         RowsPerStrip;
-        u32         StripByteCounts;
-        u32         JPEGInterchangeFormat;
-        u32         JPEGInterchangeFormatLength;
+        u32         StripOffsets = 0;
+        u32         RowsPerStrip = 0;
+        u32         StripByteCounts = 0;
+        u32         JPEGInterchangeFormat = 0;
+        u32         JPEGInterchangeFormatLength = 0;
 
         // image data characteristics
-        u16         TransferFunction;
-        float       WhitePoint;
-        float       PrimaryChromaticities;
-        float       YCbCrCoefficients;
-        float       ReferenceBlackWhite;
+        u16         TransferFunction = 0;
+        float       WhitePoint = 0;
+        float       PrimaryChromaticities = 0;
+        float       YCbCrCoefficients = 0;
+        float       ReferenceBlackWhite = 0;
 
         // other tags
         std::string DateTime;
@@ -51,83 +54,88 @@ namespace mango::image
         std::string Artist;
         std::string Copyright;
 
-        float       ExposureTime;
-        float       FNumber;
-        u16         ExposureProgram;
+        float       ExposureTime = 0;
+        float       FNumber = 0;
+        u16         ExposureProgram = 0;
         std::string SpectralSensitivity;
-        u16         ISOSpeedRatings;
+        u16         ISOSpeedRatings = 0;
         std::string DateTimeOriginal;
         std::string DateTimeDigitized;
-        float       CompressedBitsPerPixel;
-        float       ShutterSpeedValue;
-        float       ApertureValue;
-        float       BrightnessValue;
-        float       ExposureBiasValue;
-        float       MaxApertureValue;
-        float       SubjectDistance;
-        u16         MeteringMode;
-        u16         LightSource;
-        u16         Flash;
-        float       FocalLength;
+        float       CompressedBitsPerPixel = 0;
+        float       ShutterSpeedValue = 0;
+        float       ApertureValue = 0;
+        float       BrightnessValue = 0;
+        float       ExposureBiasValue = 0;
+        float       MaxApertureValue = 0;
+        float       SubjectDistance = 0;
+        u16         MeteringMode = 0;
+        u16         LightSource = 0;
+        u16         Flash = 0;
+        float       FocalLength = 0;
         std::string MakerNote;
         std::string UserComment;
-        u16         ColorSpace;
-        u32         PixelXDimension;
-        u32         PixelYDimension;
-        float       FlashEnergy;
-        float       FocalPlaneXResolution;
-        float       FocalPlaneYResolution;
-        u16         FocalPlaneResolutionUnit;
-        float       ExposureIndex;
-        u16         SensingMethod;
-        u16         CustomRendered;
-        u16         ExposureMode;
-        u16         WhiteBalance;
-        float       DigitalZoomRatio;
-        u16         FocalLengthIn35mmFilm;
-        u16         SceneCaptureType;
-        u16         GainControl;
-        u16         Contrast;
-        u16         Saturation;
-        u16         Sharpness;
-        u16         SubjectDistanceRange;
+        u16         ColorSpace = 0;
+        u32         PixelXDimension = 0;
+        u32         PixelYDimension = 0;
+        float       FlashEnergy = 0;
+        float       FocalPlaneXResolution = 0;
+        float       FocalPlaneYResolution = 0;
+        u16         FocalPlaneResolutionUnit = 0;
+        float       ExposureIndex = 0;
+        u16         SensingMethod = 0;
+        u16         CustomRendered = 0;
+        u16         ExposureMode = 0;
+        u16         WhiteBalance = 0;
+        float       DigitalZoomRatio = 0;
+        u16         FocalLengthIn35mmFilm = 0;
+        u16         SceneCaptureType = 0;
+        u16         GainControl = 0;
+        u16         Contrast = 0;
+        u16         Saturation = 0;
+        u16         Sharpness = 0;
+        u16         SubjectDistanceRange = 0;
         std::string ImageUniqueID;
 
         // GPS
-        u8          GPSVersionID[4];
+        u8          GPSVersionID[4] {};
         std::string GPSLatitudeRef;
-        float       GPSLatitude[3];
+        float       GPSLatitude[3] {};
         std::string GPSLongitudeRef;
-        float       GPSLongitude[3];
-        u8          GPSAltitudeRef;
-        float       GPSAltitude;
-        float       GPSTimeStamp[3];
+        float       GPSLongitude[3] {};
+        u8          GPSAltitudeRef = 0;
+        float       GPSAltitude = 0;
+        float       GPSTimeStamp[3] {};
         std::string GPSSatellites;
         std::string GPSStatus;
         std::string GPSMeasureMode;
-        float       GPSDOP;
+        float       GPSDOP = 0;
         std::string GPSSpeedRef;
-        float       GPSSpeed;
+        float       GPSSpeed = 0;
         std::string GPSTrackRef;
-        float       GPSTrack;
+        float       GPSTrack = 0;
         std::string GPSImgDirectionRef;
-        float       GPSImgDirection;
+        float       GPSImgDirection = 0;
         std::string GPSMapDatum;
         std::string GPSDestLatitudeRef;
-        float       GPSDestLatitude[3];
+        float       GPSDestLatitude[3] {};
         std::string GPSDestLongitudeRef;
-        float       GPSDestLongitude[3];
+        float       GPSDestLongitude[3] {};
         std::string GPSDestBearingRef;
-        float       GPSDestBearing;
+        float       GPSDestBearing = 0;
         std::string GPSDestDistanceRef;
-        float       GPSDestDistance;
+        float       GPSDestDistance = 0;
         std::string GPSDateStamp;
-        u16         GPSDifferential;
+        u16         GPSDifferential = 0;
 
-        // Canon
+        // MakerNote lens model (Canon, Nikon, Fuji, Olympus, Pentax, ...)
         std::string LenseName;
 
-        Exif();
+        operator bool () const
+        {
+            return status;
+        }
+
+        Exif() = default;
         Exif(ConstMemory memory);
     };
 

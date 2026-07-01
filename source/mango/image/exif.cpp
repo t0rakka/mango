@@ -1,9 +1,8 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <cstdio>
-#include <cmath>
+#include <cstring>
 #include <mango/core/endian.hpp>
 #include <mango/image/exif.hpp>
 
@@ -12,21 +11,20 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
-    enum
+    enum ExifFormat : u16
     {
-        EXIF_BYTE       = 1,
-        EXIF_ASCII      = 2,
-        EXIF_SHORT      = 3,
-        EXIF_LONG       = 4,
-        EXIF_RATIONAL   = 5,
-        EXIF_UNDEFINED  = 7,
-        EXIF_SLONG      = 9,
-        EXIF_SRATIONAL  = 10
+        EXIF_BYTE      = 1,
+        EXIF_ASCII     = 2,
+        EXIF_SHORT     = 3,
+        EXIF_LONG      = 4,
+        EXIF_RATIONAL  = 5,
+        EXIF_UNDEFINED = 7,
+        EXIF_SLONG     = 9,
+        EXIF_SRATIONAL = 10
     };
 
-    enum
+    enum ExifTag : u16
     {
-        // image data structure
         ImageWidth                  = 0x0100,
         ImageLength                 = 0x0101,
         BitsPerSample               = 0x0102,
@@ -40,657 +38,957 @@ namespace
         XResolution                 = 0x011a,
         YResolution                 = 0x011b,
         ResolutionUnit              = 0x0128,
-
-        // recording offset
         StripOffsets                = 0x0111,
         RowsPerStrip                = 0x0116,
         StripByteCounts             = 0x0117,
         JPEGInterchangeFormat       = 0x0201,
         JPEGInterchangeFormatLength = 0x0202,
+        TransferFunction            = 0x012d,
+        WhitePoint                  = 0x013e,
+        PrimaryChromaticities       = 0x013f,
+        YCbCrCoefficients           = 0x0211,
+        ReferenceBlackWhite         = 0x0214,
+        DateTime                    = 0x0132,
+        ImageDescription            = 0x010e,
+        Make                        = 0x010f,
+        Model                       = 0x0110,
+        Software                    = 0x0131,
+        Artist                      = 0x013b,
+        Copyright                   = 0x8298,
+        Exif_IFD                    = 0x8769,
+        GPS_IFD                     = 0x8825,
+        Interoperability_IFD        = 0xa005,
+        ExposureTime                = 0x829A,
+        FNumber                     = 0x829D,
+        ExposureProgram             = 0x8822,
+        SpectralSensitivity         = 0x8824,
+        ISOSpeedRatings             = 0x8827,
+        DateTimeOriginal            = 0x9003,
+        DateTimeDigitized           = 0x9004,
+        CompressedBitsPerPixel      = 0x9102,
+        ShutterSpeedValue           = 0x9201,
+        ApertureValue               = 0x9202,
+        BrightnessValue             = 0x9203,
+        ExposureBiasValue           = 0x9204,
+        MaxApertureValue            = 0x9205,
+        SubjectDistance             = 0x9206,
+        MeteringMode                = 0x9207,
+        LightSource                 = 0x9208,
+        Flash                       = 0x9209,
+        FocalLength                 = 0x920A,
+        MakerNote                   = 0x927C,
+        UserComment                 = 0x9286,
+        ColorSpace                  = 0xA001,
+        PixelXDimension             = 0xA002,
+        PixelYDimension             = 0xA003,
+        FlashEnergy                 = 0xA20B,
+        FocalPlaneXResolution       = 0xA20E,
+        FocalPlaneYResolution       = 0xA20F,
+        FocalPlaneResolutionUnit    = 0xA210,
+        ExposureIndex               = 0xA215,
+        SensingMethod               = 0xA217,
+        CustomRendered              = 0xA401,
+        ExposureMode                = 0xA402,
+        WhiteBalance                = 0xA403,
+        DigitalZoomRatio            = 0xA404,
+        FocalLengthIn35mmFilm       = 0xA405,
+        SceneCaptureType            = 0xA406,
+        GainControl                 = 0xA407,
+        Contrast                    = 0xA408,
+        Saturation                  = 0xA409,
+        Sharpness                   = 0xA40A,
+        SubjectDistanceRange        = 0xA40C,
+        ImageUniqueID               = 0xA420,
+        GPSVersionID                = 0x0000,
+        GPSLatitudeRef              = 0x0001,
+        GPSLatitude                 = 0x0002,
+        GPSLongitudeRef             = 0x0003,
+        GPSLongitude                = 0x0004,
+        GPSAltitudeRef              = 0x0005,
+        GPSAltitude                 = 0x0006,
+        GPSTimeStamp                = 0x0007,
+        GPSSatellites               = 0x0008,
+        GPSStatus                   = 0x0009,
+        GPSMeasureMode              = 0x000a,
+        GPSDOP                      = 0x000b,
+        GPSSpeedRef                 = 0x000c,
+        GPSSpeed                    = 0x000d,
+        GPSTrackRef                 = 0x000e,
+        GPSTrack                    = 0x000f,
+        GPSImgDirectionRef          = 0x0010,
+        GPSImgDirection             = 0x0011,
+        GPSMapDatum                 = 0x0012,
+        GPSDestLatitudeRef          = 0x0013,
+        GPSDestLatitude             = 0x0014,
+        GPSDestLongitudeRef         = 0x0015,
+        GPSDestLongitude            = 0x0016,
+        GPSDestBearingRef           = 0x0017,
+        GPSDestBearing              = 0x0018,
+        GPSDestDistanceRef          = 0x0019,
+        GPSDestDistance             = 0x001a,
+        GPSDateStamp                = 0x001d,
+        GPSDifferential             = 0x001e,
 
-        // image data characteristics
-        TransferFunction          = 0x012d,
-        WhitePoint                = 0x013e,
-        PrimaryChromaticities     = 0x013f,
-        YCbCrCoefficients         = 0x0211,
-        ReferenceBlackWhite       = 0x0214,
-
-        // other tags
-        DateTime                 = 0x0132,
-        ImageDescription         = 0x010e,
-        Make                     = 0x010f,
-        Model                    = 0x0110,
-        Software                 = 0x0131,
-        Artist                   = 0x013b,
-        Copyright                = 0x8298,
-
-        Exif_IFD                 = 0x8769,  // A pointer to the Exif IFD.
-        GPS_IFD                  = 0x8825,  // A pointer to the Exif-related GPS Info IFD.
-        Interoperability_IFD     = 0xa005,  // A pointer to the Exif-related Interoperability IFD.
-
-        ExposureTime             = 0x829A,  // Exposure time, given in seconds.
-        FNumber                  = 0x829D,  // The F number.
-        ExposureProgram          = 0x8822,  // The class of the program used by the camera to set exposure when the picture is taken.
-        SpectralSensitivity      = 0x8824,  // Indicates the spectral sensitivity of each channel of the camera used.
-        ISOSpeedRatings          = 0x8827,  // Indicates the ISO Speed and ISO Latitude of the camera or input device as specified in ISO 12232.
-        ExifVersion              = 0x9000,  // The version of the supported Exif standard.
-        DateTimeOriginal         = 0x9003,  // The date and time when the original image data was generated.
-        DateTimeDigitized        = 0x9004,  // The date and time when the image was stored as digital data.
-        ComponentsConfiguration  = 0x9101,  // Specific to compressed data; specifies the channels and complements PhotometricInterpretation
-        CompressedBitsPerPixel   = 0x9102,  // Specific to compressed data; states the compressed bits per pixel.
-        ShutterSpeedValue        = 0x9201,  // Shutter speed.
-        ApertureValue            = 0x9202,  // The lens aperture.
-        BrightnessValue          = 0x9203,  // The value of brightness.
-        ExposureBiasValue        = 0x9204,  // The exposure bias.
-        MaxApertureValue         = 0x9205,  // The smallest F number of the lens.
-        SubjectDistance          = 0x9206,  // The distance to the subject, given in meters.
-        MeteringMode             = 0x9207,  // The metering mode.
-        LightSource              = 0x9208,  // The kind of light source.
-        Flash                    = 0x9209,  // Indicates the status of flash when the image was shot.
-        FocalLength              = 0x920A,  // The actual focal length of the lens, in mm.
-        SubjectArea              = 0x9214,  // Indicates the location and area of the main subject in the overall scene.
-        MakerNote                = 0x927C,  // Manufacturer specific information.
-        UserComment              = 0x9286,  // Keywords or comments on the image; complements ImageDescription.
-        SubsecTime               = 0x9290,  // A tag used to record fractions of seconds for the DateTime tag.
-        SubsecTimeOriginal       = 0x9291,  // A tag used to record fractions of seconds for the DateTimeOriginal tag.
-        SubsecTimeDigitized      = 0x9292,  // A tag used to record fractions of seconds for the DateTimeDigitized tag.
-        FlashpixVersion          = 0xA000,  // The Flashpix format version supported by a FPXR file.
-        ColorSpace               = 0xA001,  // The color space information tag is always recorded as the color space specifier.
-        PixelXDimension          = 0xA002,  // Specific to compressed data; the valid width of the meaningful image.
-        PixelYDimension          = 0xA003,  // Specific to compressed data; the valid height of the meaningful image.
-        RelatedSoundFile         = 0xA004,  // Used to record the name of an audio file related to the image data.
-        FlashEnergy              = 0xA20B,  // Indicates the strobe energy at the time the image is captured, as measured in Beam Candle Power Seconds
-        SpatialFrequencyResponse = 0xA20C,  // Records the camera or input device spatial frequency table and SFR values in the direction of image width, image height, and diagonal direction, as specified in ISO 12233.
-        FocalPlaneXResolution    = 0xA20E,  // Indicates the number of pixels in the image width (X) direction per FocalPlaneResolutionUnit on the camera focal plane.
-        FocalPlaneYResolution    = 0xA20F,  // Indicates the number of pixels in the image height (Y) direction per FocalPlaneResolutionUnit on the camera focal plane.
-        FocalPlaneResolutionUnit = 0xA210,  // Indicates the unit for measuring FocalPlaneXResolution and FocalPlaneYResolution.
-        SubjectLocation          = 0xA214,  // Indicates the location of the main subject in the scene.
-        ExposureIndex            = 0xA215,  // Indicates the exposure index selected on the camera or input device at the time the image is captured.
-        SensingMethod            = 0xA217,  // Indicates the image sensor type on the camera or input device.
-        FileSource               = 0xA300,  // Indicates the image source.
-        SceneType                = 0xA301,  // Indicates the type of scene.
-        CFAPattern               = 0xA302,  // Indicates the color filter array (CFA) geometric pattern of the image sensor when a one-chip color area sensor is used.
-        CustomRendered           = 0xA401,  // Indicates the use of special processing on image data, such as rendering geared to output.
-        ExposureMode             = 0xA402,  // Indicates the exposure mode set when the image was shot.
-        WhiteBalance             = 0xA403,  // Indicates the white balance mode set when the image was shot.
-        DigitalZoomRatio         = 0xA404,  // Indicates the digital zoom ratio when the image was shot.
-        FocalLengthIn35mmFilm    = 0xA405,  // Indicates the equivalent focal length assuming a 35mm film camera, in mm.
-        SceneCaptureType         = 0xA406,  // Indicates the type of scene that was shot.
-        GainControl              = 0xA407,  // Indicates the degree of overall image gain adjustment.
-        Contrast                 = 0xA408,  // Indicates the direction of contrast processing applied by the camera when the image was shot.
-        Saturation               = 0xA409,  // Indicates the direction of saturation processing applied by the camera when the image was shot.
-        Sharpness                = 0xA40A,  // Indicates the direction of sharpness processing applied by the camera when the image was shot.
-        DeviceSettingDescription = 0xA40B,  // This tag indicates information on the picture-taking conditions of a particular camera model.
-        SubjectDistanceRange     = 0xA40C,  // Indicates the distance to the subject.
-        ImageUniqueID            = 0xA420,  // Indicates an identifier assigned uniquely to each image.
-
-        // GPS
-        GPSVersionID             = 0x0000,   // Indicates the version of GPSInfoIFD.
-        GPSLatitudeRef           = 0x0001,   // Indicates whether the latitude is north or south latitude.
-        GPSLatitude              = 0x0002,   // Indicates the latitude.
-        GPSLongitudeRef          = 0x0003,   // Indicates whether the longitude is east or west longitude.
-        GPSLongitude             = 0x0004,   // Indicates the longitude.
-        GPSAltitudeRef           = 0x0005,   // Indicates the altitude used as the reference altitude.
-        GPSAltitude              = 0x0006,   // Indicates the altitude based on the reference in GPSAltitudeRef.
-        GPSTimeStamp             = 0x0007,   // Indicates the time as UTC (Coordinated Universal Time).
-        GPSSatellites            = 0x0008,   // Indicates the GPS satellites used for measurements.
-        GPSStatus                = 0x0009,   // Indicates the status of the GPS receiver when the image is recorded.
-        GPSMeasureMode           = 0x000a,   // Indicates the GPS measurement mode.
-        GPSDOP                   = 0x000b,   // Indicates the GPS DOP (data degree of precision).
-        GPSSpeedRef              = 0x000c,   // Indicates the unit used to express the GPS receiver speed of movement.
-        GPSSpeed                 = 0x000d,   // Indicates the speed of GPS receiver movement.
-        GPSTrackRef              = 0x000e,   // Indicates the reference for giving the direction of GPS receiver movement.
-        GPSTrack                 = 0x000f,   // Indicates the direction of GPS receiver movement.
-        GPSImgDirectionRef       = 0x0010,   // Indicates the reference for giving the direction of the image when it is captured.
-        GPSImgDirection          = 0x0011,   // Indicates the direction of the image when it was captured.
-        GPSMapDatum              = 0x0012,   // Indicates the geodetic survey data used by the GPS receiver.
-        GPSDestLatitudeRef       = 0x0013,   // Indicates whether the latitude of the destination point is north or south latitude.
-        GPSDestLatitude          = 0x0014,   // Indicates the latitude of the destination point.
-        GPSDestLongitudeRef      = 0x0015,   // Indicates whether the longitude of the destination point is east or west longitude.
-        GPSDestLongitude         = 0x0016,   // Indicates the longitude of the destination point.
-        GPSDestBearingRef        = 0x0017,   // Indicates the reference used for giving the bearing to the destination point.
-        GPSDestBearing           = 0x0018,   // Indicates the bearing to the destination point.
-        GPSDestDistanceRef       = 0x0019,   // Indicates the unit used to express the distance to the destination point.
-        GPSDestDistance          = 0x001a,   // Indicates the distance to the destination point.
-        GPSProcessingMethod      = 0x001b,   // A character string recording the name of the method used for location finding.
-        GPSAreaInformation       = 0x001c,   // A character string recording the name of the GPS area.
-        GPSDateStamp             = 0x001d,   // A character string recording date and time information relative to UTC (Coordinated Universal Time).
-        GPSDifferential          = 0x001e,   // Indicates whether differential correction is applied to the GPS receiver.
-
-        // Canon
-        CanonLenseName           = 0x0095
+        // MakerNote lens tags (vendor-specific)
+        CanonLenseName              = 0x0095,
+        NikonLens                   = 0x0083,
+        FujiLensModel               = 0x8003,
+        OlympusLensModel            = 0x0207,
+        PentaxLensInfo              = 0x001d
     };
 
-    u16 parse16(const u8* p, bool isLittleEndian)
+    enum class MakerNoteVendor
     {
-        return isLittleEndian ? littleEndian::uload16(p) : bigEndian::uload16(p);
+        Unknown,
+        Canon,
+        Nikon,
+        Fujifilm,
+        Olympus,
+        Pentax,
+    };
+
+    struct MakerNoteLayout
+    {
+        MakerNoteVendor vendor = MakerNoteVendor::Unknown;
+        const u8* base = nullptr;
+        const u8* ifd = nullptr;
+        const u8* end = nullptr;
+        bool little = true;
+        bool valid = false;
+    };
+
+    void setParseError(Exif& exif, const char* message)
+    {
+        if (exif.status)
+            exif.status.setError(message);
     }
 
-    u32 parse32(const u8* p, bool isLittleEndian)
+    bool isTiffEndianMark(const u8* p)
     {
-        return isLittleEndian ? littleEndian::uload32(p) : bigEndian::uload32(p);
+        return (p[0] == 'I' && p[1] == 'I') || (p[0] == 'M' && p[1] == 'M');
     }
 
-    std::string parseAscii(const u8* start, u32 data, int components)
+    bool isTiffMagic(const u8* p, bool little)
     {
-        const char* s;
+        return (little ? littleEndian::uload16(p) : bigEndian::uload16(p)) == 0x002a;
+    }
 
-        if (components <= 4)
+    MakerNoteLayout resolveMakerNoteLayout(const u8* mn, const u8* mn_end, bool parent_little)
+    {
+        MakerNoteLayout layout;
+        layout.end = mn_end;
+        const size_t size = size_t(mn_end - mn);
+
+        if (size >= 10 && !std::memcmp(mn, "Canon", 5))
         {
-            s = reinterpret_cast<const char*>(&data);
+            layout.vendor = MakerNoteVendor::Canon;
+            layout.base = mn;
+            layout.ifd = mn + 10;
+            layout.little = parent_little;
+            layout.valid = layout.ifd < mn_end;
+            return layout;
         }
-        else
+
+        if (size >= 14 && !std::memcmp(mn, "Nikon", 5))
         {
-            s = reinterpret_cast<const char*>(start + data);
-        }
+            layout.vendor = MakerNoteVendor::Nikon;
+            if (isTiffEndianMark(mn + 6))
+                layout.little = (mn[6] == 'I');
+            else
+                layout.little = parent_little;
 
-        std::string value;
-        value.assign(s, components);
-
-        return value;
-    }
-
-    float parseRational(const u8* p, bool isLittleEndian)
-    {
-        u32 a = parse32(p + 0, isLittleEndian);
-        u32 b = parse32(p + 4, isLittleEndian);
-        return b ? float(a) / float(b) : 0;
-    }
-
-    struct Entry
-    {
-        u16 tag;
-        u16 format;
-        u32 length;
-        u32 data;
-
-        u8 valueByte;
-        u16 valueShort;
-        u32 valueLong;
-        std::string valueAscii;
-        float valueRational;
-
-        Entry(const u8* p, const u8* start, bool isLittleEndian)
-        {
-            tag    = parse16(p + 0, isLittleEndian);
-            format = parse16(p + 2, isLittleEndian);
-            length = parse32(p + 4, isLittleEndian);
-            data   = parse32(p + 8, isLittleEndian);
-
-            //printf("tag: %.4x  ", tag);
-
-            switch (format)
+            layout.base = mn + 6;
+            if (isTiffMagic(mn + 8, layout.little))
             {
-                case EXIF_BYTE:
-                    valueByte = p[8];
-                    break;
-                case EXIF_ASCII:
-                    valueAscii = parseAscii(start, data, length);
-                    break;
-                case EXIF_SHORT:
-                    valueShort = parse16(p + 8, isLittleEndian);
-                    break;
-                case EXIF_LONG:
-                    valueLong = data;
-                    break;
-                case EXIF_RATIONAL:
-                    valueRational = parseRational(start + data, isLittleEndian);
-                    break;
-                case EXIF_UNDEFINED:
-                case EXIF_SLONG:
-                case EXIF_SRATIONAL:
-                    // MANGO TODO
-                    break;
-                default:
-                    tag = 0xffff; // illegal value
-                    break;
+                const u32 ifd_offset = layout.little ? littleEndian::uload32(mn + 10)
+                                                     : bigEndian::uload32(mn + 10);
+                layout.ifd = layout.base + ifd_offset;
+                layout.valid = layout.ifd >= mn && layout.ifd < mn_end;
             }
+            return layout;
         }
 
-        void getByte(u8& value) const
+        if (size >= 20 && !std::memcmp(mn, "FUJIFILM", 8))
         {
-            if (format == EXIF_BYTE)
+            layout.vendor = MakerNoteVendor::Fujifilm;
+            if (isTiffEndianMark(mn + 12))
+                layout.little = (mn[12] == 'I');
+            else
+                layout.little = parent_little;
+
+            layout.base = mn + 12;
+            if (isTiffMagic(mn + 14, layout.little))
             {
-                value = valueByte;
+                const u32 ifd_offset = layout.little ? littleEndian::uload32(mn + 16)
+                                                     : bigEndian::uload32(mn + 16);
+                layout.ifd = layout.base + ifd_offset;
+                layout.valid = layout.ifd >= mn && layout.ifd < mn_end;
             }
+            return layout;
         }
 
-        void getAscii(std::string& value) const
+        if (size >= 10 && (!std::memcmp(mn, "OLYMP\0", 6) || !std::memcmp(mn, "OLYMPUS", 7)))
         {
-            if (format == EXIF_ASCII)
-            {
-                value = valueAscii;
-            }
+            layout.vendor = MakerNoteVendor::Olympus;
+            layout.base = mn;
+            layout.ifd = mn + 8;
+            layout.little = parent_little;
+            layout.valid = layout.ifd < mn_end;
+            return layout;
         }
-        
-        void getShort(u16& value) const
+
+        if (size >= 16 && !std::memcmp(mn, "PENTAX", 6))
         {
+            layout.vendor = MakerNoteVendor::Pentax;
+            if (isTiffEndianMark(mn + 8))
+                layout.little = (mn[8] == 'I');
+            else
+                layout.little = parent_little;
+
+            layout.base = mn + 8;
+            if (isTiffMagic(mn + 10, layout.little))
+            {
+                const u32 ifd_offset = layout.little ? littleEndian::uload32(mn + 12)
+                                                     : bigEndian::uload32(mn + 12);
+                layout.ifd = layout.base + ifd_offset;
+                layout.valid = layout.ifd >= mn && layout.ifd < mn_end;
+            }
+            return layout;
+        }
+
+        if (size >= 12 && !std::memcmp(mn, "AOC\0", 4))
+        {
+            layout.vendor = MakerNoteVendor::Pentax;
+            layout.base = mn;
+            layout.ifd = mn + 6;
+            layout.little = parent_little;
+            layout.valid = layout.ifd < mn_end;
+            return layout;
+        }
+
+        layout.vendor = MakerNoteVendor::Unknown;
+        layout.base = mn;
+        layout.ifd = mn;
+        layout.little = parent_little;
+        layout.valid = true;
+        return layout;
+    }
+
+    constexpr u32 MAX_IFD_ENTRIES = 1024;
+
+    struct TiffView
+    {
+        const u8* base;
+        const u8* begin;
+        const u8* end;
+        bool little;
+
+        bool contains(const u8* p, size_t size) const
+        {
+            return p >= begin && p + size <= end;
+        }
+
+        bool contains_offset(u32 offset, size_t size) const
+        {
+            const u8* p = base + offset;
+            return p >= begin && p + size <= end;
+        }
+
+        const u8* at(u32 offset) const
+        {
+            return base + offset;
+        }
+
+        u16 read16(const u8* p) const
+        {
+            return little ? littleEndian::uload16(p) : bigEndian::uload16(p);
+        }
+
+        u32 read32(const u8* p) const
+        {
+            return little ? littleEndian::uload32(p) : bigEndian::uload32(p);
+        }
+
+        s32 readS32(const u8* p) const
+        {
+            return s32(read32(p));
+        }
+
+        float readRational(const u8* p) const
+        {
+            u32 numerator = read32(p + 0);
+            u32 denominator = read32(p + 4);
+            return denominator ? float(numerator) / float(denominator) : 0.0f;
+        }
+
+        float readSRational(const u8* p) const
+        {
+            s32 numerator = readS32(p + 0);
+            s32 denominator = readS32(p + 4);
+            return denominator ? float(numerator) / float(denominator) : 0.0f;
+        }
+    };
+
+    static u32 typeSize(u16 format)
+    {
+        switch (format)
+        {
+            case EXIF_BYTE:
+            case EXIF_ASCII:
+            case EXIF_UNDEFINED:
+                return 1;
+            case EXIF_SHORT:
+                return 2;
+            case EXIF_LONG:
+            case EXIF_SLONG:
+                return 4;
+            case EXIF_RATIONAL:
+            case EXIF_SRATIONAL:
+                return 8;
+            default:
+                return 0;
+        }
+    }
+
+    struct IfdEntry
+    {
+        u16 tag = 0;
+        u16 format = 0;
+        u32 count = 0;
+        u32 value_or_offset = 0;
+        bool valid = false;
+
+        IfdEntry(const u8* entry, const TiffView& view)
+        {
+            if (!view.contains(entry, 12))
+                return;
+
+            tag = view.read16(entry + 0);
+            format = view.read16(entry + 2);
+            count = view.read32(entry + 4);
+            value_or_offset = view.read32(entry + 8);
+
+            const u32 size = typeSize(format);
+            valid = size > 0 && count > 0;
+        }
+
+        u32 byteSize() const
+        {
+            return typeSize(format) * count;
+        }
+
+        const u8* valuePtr(const u8* entry, const TiffView& view) const
+        {
+            const u32 nbytes = byteSize();
+            if (!nbytes)
+                return nullptr;
+
+            if (nbytes <= 4)
+                return entry + 8;
+
+            if (!view.contains_offset(value_or_offset, nbytes))
+                return nullptr;
+
+            return view.at(value_or_offset);
+        }
+
+        bool readAscii(std::string& value, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_ASCII)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            value.assign(reinterpret_cast<const char*>(data), count);
+            const size_t zero = value.find('\0');
+            if (zero != std::string::npos)
+                value.resize(zero);
+
+            return true;
+        }
+
+        bool readByte(u8& value, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_BYTE)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            value = data[0];
+            return true;
+        }
+
+        bool readBytes(u8* values, u32 max_count, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_BYTE && format != EXIF_UNDEFINED)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            const u32 copy_count = std::min(count, max_count);
+            std::memcpy(values, data, copy_count);
+            return true;
+        }
+
+        bool readShort(u16& value, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_SHORT)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            value = view.read16(data);
+            return true;
+        }
+
+        bool readLong(u32& value, const u8* entry, const TiffView& view) const
+        {
+            if (format == EXIF_LONG || format == EXIF_SLONG)
+            {
+                if (byteSize() <= 4)
+                {
+                    value = value_or_offset;
+                    return true;
+                }
+
+                const u8* data = valuePtr(entry, view);
+                if (!data)
+                    return false;
+
+                value = view.read32(data);
+                return true;
+            }
+
             if (format == EXIF_SHORT)
             {
-                value = valueShort;
+                u16 short_value = 0;
+                if (!readShort(short_value, entry, view))
+                    return false;
+
+                value = short_value;
+                return true;
             }
-        }
-        
-        void getLong(u32& value) const
-        {
-            if (format == EXIF_LONG)
-            {
-                value = valueLong;
-            }
-            else if (format == EXIF_SHORT)
-            {
-                value = valueShort;
-            }
+
+            return false;
         }
 
-        void getRational(float& value) const
+        bool readDimension(u32& value, const u8* entry, const TiffView& view) const
         {
-            if (format == EXIF_RATIONAL)
+            return readLong(value, entry, view);
+        }
+
+        bool readRational(float& value, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_RATIONAL)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            value = view.readRational(data);
+            return true;
+        }
+
+        bool readSRational(float& value, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_SRATIONAL)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            value = view.readSRational(data);
+            return true;
+        }
+
+        bool readSignedOrRational(float& value, const u8* entry, const TiffView& view) const
+        {
+            if (readSRational(value, entry, view))
+                return true;
+
+            return readRational(value, entry, view);
+        }
+
+        bool readRationalArray(float* values, u32 max_count, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_RATIONAL)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            const u32 copy_count = std::min(count, max_count);
+            for (u32 i = 0; i < copy_count; ++i)
             {
-                value = valueRational;
+                values[i] = view.readRational(data + i * 8);
             }
+
+            return true;
+        }
+
+        bool readUserComment(std::string& value, const u8* entry, const TiffView& view) const
+        {
+            if (format != EXIF_UNDEFINED && format != EXIF_ASCII)
+                return false;
+
+            const u8* data = valuePtr(entry, view);
+            if (!data)
+                return false;
+
+            if (count > 8 && !std::memcmp(data, "ASCII", 5))
+            {
+                value.assign(reinterpret_cast<const char*>(data + 8), count - 8);
+            }
+            else if (format == EXIF_ASCII)
+            {
+                return readAscii(value, entry, view);
+            }
+            else
+            {
+                value.assign(reinterpret_cast<const char*>(data), count);
+            }
+
+            const size_t zero = value.find('\0');
+            if (zero != std::string::npos)
+                value.resize(zero);
+
+            return true;
         }
     };
 
-    void initExif(Exif& exif)
+    bool readLensString(std::string& value, const IfdEntry& entry, const u8* item, const TiffView& view)
     {
-        // image data structure
-        exif.ImageWidth = 0;
-        exif.ImageLength = 0;
-        exif.BitsPerSample = 0;
-        exif.Compression = 0;
-        exif.PhotometricInterpretation = 0;
-        exif.Orientation = 1;
-        exif.SamplesPerPixel = 0;
-        exif.PlanarConfiguration = 0;
-        exif.YCbCrSubSampling = 0;
-        exif.YCbCrPositioning = 0;
-        exif.XResolution = 0;
-        exif.YResolution = 0;
-        exif.ResolutionUnit = 0;
+        if (entry.readAscii(value, item, view))
+            return !value.empty();
 
-        // recording offset
-        exif.StripOffsets = 0;
-        exif.RowsPerStrip = 0;
-        exif.StripByteCounts = 0;
-        exif.JPEGInterchangeFormat = 0;
-        exif.JPEGInterchangeFormatLength = 0;
+        if (entry.format != EXIF_UNDEFINED)
+            return false;
 
-        // image data characteristics
-        exif.TransferFunction = 0;
-        exif.WhitePoint = 0;
-        exif.PrimaryChromaticities = 0;
-        exif.YCbCrCoefficients = 0;
-        exif.ReferenceBlackWhite = 0;
+        const u8* data = entry.valuePtr(item, view);
+        if (!data)
+            return false;
 
-        exif.ExposureTime = 0;
-        exif.FNumber = 0;
-        exif.ExposureProgram = 0;
-        exif.ISOSpeedRatings = 0;
-        exif.CompressedBitsPerPixel = 0;
-        exif.ShutterSpeedValue = 0;
-        exif.ApertureValue = 0;
-        exif.BrightnessValue = 0;
-        exif.ExposureBiasValue = 0;
-        exif.MaxApertureValue = 0;
-        exif.SubjectDistance = 0;
-        exif.MeteringMode = 0;
-        exif.LightSource = 0;
-        exif.Flash = 0;
-        exif.FocalLength = 0;
-        exif.ColorSpace = 0;
-        exif.PixelXDimension = 0;
-        exif.PixelYDimension = 0;
-        exif.FlashEnergy = 0;
-        exif.FocalPlaneXResolution = 0;
-        exif.FocalPlaneYResolution = 0;
-        exif.FocalPlaneResolutionUnit = 0;
-        exif.ExposureIndex = 0;
-        exif.SensingMethod = 0;
-        exif.CustomRendered = 0;
-        exif.ExposureMode = 0;
-        exif.WhiteBalance = 0;
-        exif.DigitalZoomRatio = 0;
-        exif.FocalLengthIn35mmFilm = 0;
-        exif.SceneCaptureType = 0;
-        exif.GainControl = 0;
-        exif.Contrast = 0;
-        exif.Saturation = 0;
-        exif.Sharpness = 0;
-        exif.SubjectDistanceRange = 0;
+        value.assign(reinterpret_cast<const char*>(data), entry.count);
+        const size_t zero = value.find('\0');
+        if (zero != std::string::npos)
+            value.resize(zero);
 
-        // GPS
-        exif.GPSVersionID[0] = 0;
-        exif.GPSVersionID[1] = 0;
-        exif.GPSVersionID[2] = 0;
-        exif.GPSVersionID[3] = 0;
-        exif.GPSLatitude[0] = 0;
-        exif.GPSLatitude[1] = 0;
-        exif.GPSLatitude[2] = 0;
-        exif.GPSLongitude[0] = 0;
-        exif.GPSLongitude[1] = 0;
-        exif.GPSLongitude[2] = 0;
-        exif.GPSAltitudeRef = 0;
-        exif.GPSAltitude = 0;
-        exif.GPSTimeStamp[0] = 0;
-        exif.GPSTimeStamp[1] = 0;
-        exif.GPSTimeStamp[2] = 0;
-        exif.GPSDOP = 0;
-        exif.GPSSpeed = 0;
-        exif.GPSTrack = 0;
-        exif.GPSImgDirection = 0;
-        exif.GPSDestLatitude[0] = 0;
-        exif.GPSDestLatitude[1] = 0;
-        exif.GPSDestLatitude[2] = 0;
-        exif.GPSDestLongitude[0] = 0;
-        exif.GPSDestLongitude[1] = 0;
-        exif.GPSDestLongitude[2] = 0;
-        exif.GPSDestBearing = 0;
-        exif.GPSDestDistance = 0;
-        exif.GPSDifferential = 0;
+        return !value.empty();
     }
 
-    void parseGPS(Exif& exif, const u8* p, const u8* start, bool isLittleEndian)
+    void applyMakerNoteTag(Exif& exif, MakerNoteVendor vendor, u16 tag,
+                           const IfdEntry& entry, const u8* item, const TiffView& view)
     {
-        MANGO_UNREFERENCED(exif);
-
-        int count = parse16(p, isLittleEndian);
-        p += 2;
-        for (int i = 0; i < count; ++i)
-        {
-            Entry entry(p, start, isLittleEndian);
-
-            switch (entry.tag)
-            {
-                case 0xffff:
-                    break;
-
-                    /* // MANGO TODO
-                    // GPS
-                    u8           GPSVersionID[4];
-                    std::string  GPSLatitudeRef;
-                    float        GPSLatitude[3];
-                    std::string  GPSLongitudeRef;
-                    float        GPSLongitude[3];
-                    u8           GPSAltitudeRef;
-                    float        GPSAltitude;
-                    float        GPSTimeStamp[3];
-                    std::string  GPSSatellites;
-                    std::string  GPSStatus;
-                    std::string  GPSMeasureMode;
-                    float        GPSDOP;
-                    std::string  GPSSpeedRef;
-                    float        GPSSpeed;
-                    std::string  GPSTrackRef;
-                    float        GPSTrack;
-                    std::string  GPSImgDirectionRef;
-                    float        GPSImgDirection;
-                    std::string  GPSMapDatum;
-                    std::string  GPSDestLatitudeRef;
-                    float        GPSDestLatitude[3];
-                    std::string  GPSDestLongitudeRef;
-                    float        GPSDestLongitude[3];
-                    std::string  GPSDestBearingRef;
-                    float        GPSDestBearing;
-                    std::string  GPSDestDistanceRef;
-                    float        GPSDestDistance;
-                    std::string  GPSDateStamp;
-                    u16          GPSDifferential;
-                    */
-                default:
-                    //printf("gps tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length);
-                    break;
-            }
-
-            p += 12;
-        }
-    }
-
-    void parseMakerNote(Exif& exif, const u8* p, const u8* start, bool isLittleEndian)
-    {
-        // support MakerNote only for "Canon" manufacturer for now
-        //if (exif.Make != "Canon")
-        //    return;
-
-        int count = parse16(p, isLittleEndian);
-        if (count > 255)
-        {
-            // MakerNote is sometimes in different endianess, this bails out of any high-byte bits are set
+        if (!exif.LenseName.empty())
             return;
-        }
-        p += 2;
 
-        for (int i = 0; i < count; ++i)
+        std::string lens;
+
+        switch (vendor)
         {
-            Entry entry(p, start, isLittleEndian);
-            if (entry.format > 10)
-            {
-                // Sanity-check for corrupted files.
-                return;
-            }
+            case MakerNoteVendor::Canon:
+                if (tag == CanonLenseName)
+                    readLensString(lens, entry, item, view);
+                break;
 
-            switch (entry.tag)
-            {
-                case CanonLenseName:
-                    entry.getAscii(exif.LenseName);
-                    break;
+            case MakerNoteVendor::Nikon:
+                if (tag == NikonLens)
+                    readLensString(lens, entry, item, view);
+                break;
 
-                default:
-                    //printf("MakerNote tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length);
-                    break;
-            }
-            
-            p += 12;
+            case MakerNoteVendor::Fujifilm:
+                if (tag == FujiLensModel)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Olympus:
+                if (tag == OlympusLensModel)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Pentax:
+                if (tag == PentaxLensInfo)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Unknown:
+                if (tag == CanonLenseName)
+                    readLensString(lens, entry, item, view);
+                break;
+        }
+
+        if (!lens.empty())
+            exif.LenseName = std::move(lens);
+    }
+
+    void parseMakerNote(Exif& exif, const IfdEntry& maker_entry, const u8* entry_ptr, const TiffView& parent)
+    {
+        const u8* mn = maker_entry.valuePtr(entry_ptr, parent);
+        if (!mn)
+            return;
+
+        const u8* mn_end = mn + maker_entry.byteSize();
+        if (mn_end > parent.end)
+            return;
+
+        const MakerNoteLayout layout = resolveMakerNoteLayout(mn, mn_end, parent.little);
+        if (!layout.valid)
+            return;
+
+        TiffView view { layout.base, layout.ifd, layout.end, layout.little };
+        if (!view.contains(layout.ifd, 2))
+            return;
+
+        const u32 count = view.read16(layout.ifd);
+        if (count > MAX_IFD_ENTRIES)
+            return;
+
+        const u8* p = layout.ifd + 2;
+        if (!view.contains(p, count * 12))
+            return;
+
+        for (u32 i = 0; i < count; ++i)
+        {
+            const u8* item = p + i * 12;
+            IfdEntry entry(item, view);
+            if (!entry.valid)
+                continue;
+
+            applyMakerNoteTag(exif, layout.vendor, entry.tag, entry, item, view);
         }
     }
 
-#define EXIF(name, type) name: entry.get##type(exif.name); break
-
-    void parseIFD(Exif& exif, const u8* p, const u8* start, bool isLittleEndian)
+    bool parseGPS(Exif& exif, const TiffView& view, u32 offset)
     {
-        int count = parse16(p, isLittleEndian);
-        p += 2;
-        for (int i = 0; i < count; ++i)
+        const u8* ifd = view.at(offset);
+        if (!view.contains(ifd, 2))
         {
-            Entry entry(p, start, isLittleEndian);
+            setParseError(exif, "[Exif] GPS IFD out of bounds.");
+            return false;
+        }
+
+        const u32 count = view.read16(ifd);
+        if (count > MAX_IFD_ENTRIES)
+        {
+            setParseError(exif, "[Exif] GPS IFD has too many entries.");
+            return false;
+        }
+
+        const u8* p = ifd + 2;
+        if (!view.contains(p, count * 12))
+        {
+            setParseError(exif, "[Exif] GPS IFD entries out of bounds.");
+            return false;
+        }
+
+        for (u32 i = 0; i < count; ++i)
+        {
+            const u8* item = p + i * 12;
+            IfdEntry entry(item, view);
+            if (!entry.valid)
+                continue;
 
             switch (entry.tag)
             {
-                // image data structure
-                case EXIF(ImageWidth, Long);
-                case EXIF(ImageLength, Long);
-                case EXIF(BitsPerSample, Short);
-                case EXIF(Compression, Short);
-                case EXIF(PhotometricInterpretation, Short);
-                case EXIF(Orientation, Short);
-                case EXIF(SamplesPerPixel, Short);
-                case EXIF(PlanarConfiguration, Short);
-                case EXIF(YCbCrSubSampling, Short);
-                case EXIF(YCbCrPositioning, Short);
-                case EXIF(XResolution, Rational);
-                case EXIF(YResolution, Rational);
-                case EXIF(ResolutionUnit, Short);
-
-                // recording offset
-                case EXIF(StripOffsets, Long);
-                case EXIF(RowsPerStrip, Long);
-                case EXIF(StripByteCounts, Long);
-                case EXIF(JPEGInterchangeFormat, Long);
-                case EXIF(JPEGInterchangeFormatLength, Long);
-
-                // image data characteristics
-                case EXIF(TransferFunction, Short);
-                case EXIF(WhitePoint, Rational);
-                case EXIF(PrimaryChromaticities, Rational);
-                case EXIF(YCbCrCoefficients, Rational);
-                case EXIF(ReferenceBlackWhite, Rational);
-
-                // other tags
-                case EXIF(DateTime, Ascii);
-                case EXIF(ImageDescription, Ascii);
-                case EXIF(Make, Ascii);
-                case EXIF(Model, Ascii);
-                case EXIF(Software, Ascii);
-                case EXIF(Artist, Ascii);
-                case EXIF(Copyright, Ascii);
-
-                case EXIF(ExposureTime, Rational);
-                case EXIF(FNumber, Rational);
-                case EXIF(ExposureProgram, Short);
-                case EXIF(SpectralSensitivity, Ascii);
-                case EXIF(ISOSpeedRatings, Short);
-                case EXIF(DateTimeOriginal, Ascii);
-                case EXIF(DateTimeDigitized, Ascii);
-                case EXIF(CompressedBitsPerPixel, Rational);
-                case EXIF(ShutterSpeedValue, Rational);
-                case EXIF(ApertureValue, Rational);
-                case EXIF(BrightnessValue, Rational);
-                case EXIF(ExposureBiasValue, Rational);
-                case EXIF(MaxApertureValue, Rational);
-                case EXIF(SubjectDistance, Rational);
-                case EXIF(MeteringMode, Short);
-                case EXIF(LightSource, Short);
-                case EXIF(Flash, Short);
-                case EXIF(FocalLength, Rational);
-                //case EXIF(MakerNote, Ascii);
-                //case EXIF(UserComment, Ascii);
-                case EXIF(ColorSpace, Short);
-                case EXIF(PixelXDimension, Long); // MANGO TODO: could also be Short
-                case EXIF(PixelYDimension, Long); // MANGO TODO: could also be Short
-                case EXIF(FlashEnergy, Rational);
-                case EXIF(FocalPlaneXResolution, Rational);
-                case EXIF(FocalPlaneYResolution, Rational);
-                case EXIF(FocalPlaneResolutionUnit, Short);
-                case EXIF(ExposureIndex, Rational);
-                case EXIF(SensingMethod, Short);
-                case EXIF(CustomRendered, Short);
-                case EXIF(ExposureMode, Short);
-                case EXIF(WhiteBalance, Short);
-                case EXIF(DigitalZoomRatio, Rational);
-                case EXIF(FocalLengthIn35mmFilm, Short);
-                case EXIF(SceneCaptureType, Short);
-                case EXIF(GainControl, Short);
-                case EXIF(Contrast, Short);
-                case EXIF(Saturation, Short);
-                case EXIF(Sharpness, Short);
-                case EXIF(SubjectDistanceRange, Short);
-                case EXIF(ImageUniqueID, Ascii);
-
-#if 0
-                case ShutterSpeedValue:
-                {
-                    const u8* p = base + offset;
-                    u32 v0 = read32(p, endian);
-                    u32 v1 = read32(p, endian);
-                    double s = double(v0) / double(v1);
-                    float f = float(1.0 / pow(2.0, s));
-                    //printf(" (%f sec) ", f);
+                case GPSVersionID:
+                    entry.readBytes(exif.GPSVersionID, 4, item, view);
                     break;
-                }
-
-                case ExposureTime:
-                {
-                    const u8* p = base + offset;
-                    u32 v0 = read32(p, endian);
-                    u32 v1 = read32(p, endian);
-                    //printf(" (%i/%i sec) ", v0, v1);
+                case GPSLatitudeRef:
+                    entry.readAscii(exif.GPSLatitudeRef, item, view);
                     break;
-                }
-
-                case ResolutionUnit:
-                {
-                    //if (offset == 2) printf(" (inches)");
-                    //if (offset == 3) printf(" (centimeters)");
+                case GPSLatitude:
+                    entry.readRationalArray(exif.GPSLatitude, 3, item, view);
                     break;
-                }
-#endif
+                case GPSLongitudeRef:
+                    entry.readAscii(exif.GPSLongitudeRef, item, view);
+                    break;
+                case GPSLongitude:
+                    entry.readRationalArray(exif.GPSLongitude, 3, item, view);
+                    break;
+                case GPSAltitudeRef:
+                    entry.readByte(exif.GPSAltitudeRef, item, view);
+                    break;
+                case GPSAltitude:
+                    entry.readRational(exif.GPSAltitude, item, view);
+                    break;
+                case GPSTimeStamp:
+                    entry.readRationalArray(exif.GPSTimeStamp, 3, item, view);
+                    break;
+                case GPSSatellites:
+                    entry.readAscii(exif.GPSSatellites, item, view);
+                    break;
+                case GPSStatus:
+                    entry.readAscii(exif.GPSStatus, item, view);
+                    break;
+                case GPSMeasureMode:
+                    entry.readAscii(exif.GPSMeasureMode, item, view);
+                    break;
+                case GPSDOP:
+                    entry.readRational(exif.GPSDOP, item, view);
+                    break;
+                case GPSSpeedRef:
+                    entry.readAscii(exif.GPSSpeedRef, item, view);
+                    break;
+                case GPSSpeed:
+                    entry.readRational(exif.GPSSpeed, item, view);
+                    break;
+                case GPSTrackRef:
+                    entry.readAscii(exif.GPSTrackRef, item, view);
+                    break;
+                case GPSTrack:
+                    entry.readRational(exif.GPSTrack, item, view);
+                    break;
+                case GPSImgDirectionRef:
+                    entry.readAscii(exif.GPSImgDirectionRef, item, view);
+                    break;
+                case GPSImgDirection:
+                    entry.readRational(exif.GPSImgDirection, item, view);
+                    break;
+                case GPSMapDatum:
+                    entry.readAscii(exif.GPSMapDatum, item, view);
+                    break;
+                case GPSDestLatitudeRef:
+                    entry.readAscii(exif.GPSDestLatitudeRef, item, view);
+                    break;
+                case GPSDestLatitude:
+                    entry.readRationalArray(exif.GPSDestLatitude, 3, item, view);
+                    break;
+                case GPSDestLongitudeRef:
+                    entry.readAscii(exif.GPSDestLongitudeRef, item, view);
+                    break;
+                case GPSDestLongitude:
+                    entry.readRationalArray(exif.GPSDestLongitude, 3, item, view);
+                    break;
+                case GPSDestBearingRef:
+                    entry.readAscii(exif.GPSDestBearingRef, item, view);
+                    break;
+                case GPSDestBearing:
+                    entry.readRational(exif.GPSDestBearing, item, view);
+                    break;
+                case GPSDestDistanceRef:
+                    entry.readAscii(exif.GPSDestDistanceRef, item, view);
+                    break;
+                case GPSDestDistance:
+                    entry.readRational(exif.GPSDestDistance, item, view);
+                    break;
+                case GPSDateStamp:
+                    entry.readAscii(exif.GPSDateStamp, item, view);
+                    break;
+                case GPSDifferential:
+                    entry.readShort(exif.GPSDifferential, item, view);
+                    break;
+            }
+        }
+
+        return true;
+    }
+
+#define MANGO_EXIF_TAG(name, reader) \
+    case name: entry.reader(exif.name, item, view); break
+
+    bool parseIFD(Exif& exif, const TiffView& view, u32 offset)
+    {
+        const u8* ifd = view.at(offset);
+        if (!view.contains(ifd, 2))
+        {
+            setParseError(exif, "[Exif] IFD out of bounds.");
+            return false;
+        }
+
+        const u32 count = view.read16(ifd);
+        if (count > MAX_IFD_ENTRIES)
+        {
+            setParseError(exif, "[Exif] IFD has too many entries.");
+            return false;
+        }
+
+        const u8* p = ifd + 2;
+        if (!view.contains(p, count * 12))
+        {
+            setParseError(exif, "[Exif] IFD entries out of bounds.");
+            return false;
+        }
+
+        for (u32 i = 0; i < count; ++i)
+        {
+            const u8* item = p + i * 12;
+            IfdEntry entry(item, view);
+            if (!entry.valid)
+                continue;
+
+            switch (entry.tag)
+            {
+                MANGO_EXIF_TAG(ImageWidth, readLong);
+                MANGO_EXIF_TAG(ImageLength, readLong);
+                MANGO_EXIF_TAG(BitsPerSample, readShort);
+                MANGO_EXIF_TAG(Compression, readShort);
+                MANGO_EXIF_TAG(PhotometricInterpretation, readShort);
+                MANGO_EXIF_TAG(Orientation, readShort);
+                MANGO_EXIF_TAG(SamplesPerPixel, readShort);
+                MANGO_EXIF_TAG(PlanarConfiguration, readShort);
+                MANGO_EXIF_TAG(YCbCrSubSampling, readShort);
+                MANGO_EXIF_TAG(YCbCrPositioning, readShort);
+                MANGO_EXIF_TAG(XResolution, readRational);
+                MANGO_EXIF_TAG(YResolution, readRational);
+                MANGO_EXIF_TAG(ResolutionUnit, readShort);
+                MANGO_EXIF_TAG(StripOffsets, readLong);
+                MANGO_EXIF_TAG(RowsPerStrip, readLong);
+                MANGO_EXIF_TAG(StripByteCounts, readLong);
+                MANGO_EXIF_TAG(JPEGInterchangeFormat, readLong);
+                MANGO_EXIF_TAG(JPEGInterchangeFormatLength, readLong);
+                MANGO_EXIF_TAG(TransferFunction, readShort);
+                MANGO_EXIF_TAG(WhitePoint, readRational);
+                MANGO_EXIF_TAG(PrimaryChromaticities, readRational);
+                MANGO_EXIF_TAG(YCbCrCoefficients, readRational);
+                MANGO_EXIF_TAG(ReferenceBlackWhite, readRational);
+                MANGO_EXIF_TAG(DateTime, readAscii);
+                MANGO_EXIF_TAG(ImageDescription, readAscii);
+                MANGO_EXIF_TAG(Make, readAscii);
+                MANGO_EXIF_TAG(Model, readAscii);
+                MANGO_EXIF_TAG(Software, readAscii);
+                MANGO_EXIF_TAG(Artist, readAscii);
+                MANGO_EXIF_TAG(Copyright, readAscii);
+                MANGO_EXIF_TAG(ExposureTime, readRational);
+                MANGO_EXIF_TAG(FNumber, readRational);
+                MANGO_EXIF_TAG(ExposureProgram, readShort);
+                MANGO_EXIF_TAG(SpectralSensitivity, readAscii);
+                MANGO_EXIF_TAG(ISOSpeedRatings, readShort);
+                MANGO_EXIF_TAG(DateTimeOriginal, readAscii);
+                MANGO_EXIF_TAG(DateTimeDigitized, readAscii);
+                MANGO_EXIF_TAG(CompressedBitsPerPixel, readRational);
+                MANGO_EXIF_TAG(ShutterSpeedValue, readSignedOrRational);
+                MANGO_EXIF_TAG(ApertureValue, readSignedOrRational);
+                MANGO_EXIF_TAG(BrightnessValue, readSignedOrRational);
+                MANGO_EXIF_TAG(ExposureBiasValue, readSignedOrRational);
+                MANGO_EXIF_TAG(MaxApertureValue, readSignedOrRational);
+                MANGO_EXIF_TAG(SubjectDistance, readRational);
+                MANGO_EXIF_TAG(MeteringMode, readShort);
+                MANGO_EXIF_TAG(LightSource, readShort);
+                MANGO_EXIF_TAG(Flash, readShort);
+                MANGO_EXIF_TAG(FocalLength, readRational);
+                MANGO_EXIF_TAG(ColorSpace, readShort);
+                MANGO_EXIF_TAG(PixelXDimension, readDimension);
+                MANGO_EXIF_TAG(PixelYDimension, readDimension);
+                MANGO_EXIF_TAG(FlashEnergy, readRational);
+                MANGO_EXIF_TAG(FocalPlaneXResolution, readRational);
+                MANGO_EXIF_TAG(FocalPlaneYResolution, readRational);
+                MANGO_EXIF_TAG(FocalPlaneResolutionUnit, readShort);
+                MANGO_EXIF_TAG(ExposureIndex, readRational);
+                MANGO_EXIF_TAG(SensingMethod, readShort);
+                MANGO_EXIF_TAG(CustomRendered, readShort);
+                MANGO_EXIF_TAG(ExposureMode, readShort);
+                MANGO_EXIF_TAG(WhiteBalance, readShort);
+                MANGO_EXIF_TAG(DigitalZoomRatio, readRational);
+                MANGO_EXIF_TAG(FocalLengthIn35mmFilm, readShort);
+                MANGO_EXIF_TAG(SceneCaptureType, readShort);
+                MANGO_EXIF_TAG(GainControl, readShort);
+                MANGO_EXIF_TAG(Contrast, readShort);
+                MANGO_EXIF_TAG(Saturation, readShort);
+                MANGO_EXIF_TAG(Sharpness, readShort);
+                MANGO_EXIF_TAG(SubjectDistanceRange, readShort);
+                MANGO_EXIF_TAG(ImageUniqueID, readAscii);
 
                 case UserComment:
-                    //parseIFD(exif, start + entry.data, start, isLittleEndian);
+                    entry.readUserComment(exif.UserComment, item, view);
                     break;
 
                 case MakerNote:
-                    parseMakerNote(exif, start + entry.data, start, isLittleEndian);
+                    parseMakerNote(exif, entry, item, view);
                     break;
 
                 case Exif_IFD:
-                    parseIFD(exif, start + entry.data, start, isLittleEndian);
+                {
+                    u32 sub_offset = 0;
+                    if (entry.readLong(sub_offset, item, view))
+                        parseIFD(exif, view, sub_offset);
                     break;
+                }
 
                 case GPS_IFD:
-                    parseGPS(exif, start + entry.data, start, isLittleEndian);
+                {
+                    u32 sub_offset = 0;
+                    if (entry.readLong(sub_offset, item, view))
+                        parseGPS(exif, view, sub_offset);
                     break;
+                }
 
                 case Interoperability_IFD:
                     break;
 
                 default:
-                    //printf("tag: %.4x, format: %d, length: %d\n", entry.tag, entry.format, entry.length);
                     break;
             }
-
-            p += 12;
         }
+
+        return true;
     }
 
-#undef EXIF
+#undef MANGO_EXIF_TAG
 
 } // namespace
 
 namespace mango::image
 {
 
-    Exif::Exif()
-    {
-        initExif(*this);
-    }
-
     Exif::Exif(ConstMemory memory)
     {
-        initExif(*this);
-
         const u8* start = memory.address;
         const u8* end = memory.end();
 
-        const u8* p = start;
-        if (p > end - 8)
-            return; // ERROR: out of bytes
+        if (!memory.address || memory.size < 8)
+        {
+            status.setError("[Exif] Not enough data.");
+            return;
+        }
 
-        u16 endian = parse16(p + 0, true);
+        const u16 endian = littleEndian::uload16(start);
+        bool is_little_endian = false;
 
-        bool isLittleEndian;
         switch (endian)
         {
             case 0x4949:
-                isLittleEndian = true;
+                is_little_endian = true;
                 break;
             case 0x4d4d:
-                isLittleEndian = false;
+                is_little_endian = false;
                 break;
             default:
-                return; // ERROR: incorrect endian
-        }
-
-        u16 magic = parse16(p + 2, isLittleEndian);
-        switch (magic)
-        {
-            case 0x002a:
-                // TIFF / EXIF
-                break;
-            case 0x4f52:
-                // OLYMPUS / EXIF
-                break;
-            default:
-                // ERROR: incorrect magic
+                status.setError("[Exif] Invalid byte order.");
                 return;
         }
 
-        u32 offset = parse32(p + 4, isLittleEndian);
-        p += offset;
-        if (p > end)
-            return; // ERROR: out of bytes
+        TiffView view { start, start, end, is_little_endian };
 
-        parseIFD(*this, p, start, isLittleEndian);
+        const u16 magic = view.read16(start + 2);
+        switch (magic)
+        {
+            case 0x002a: // TIFF / EXIF
+            case 0x4f52: // Olympus ORF header in some APP1 blocks
+                break;
+            default:
+                status.setError("[Exif] Invalid TIFF header (magic {:#06x}).", magic);
+                return;
+        }
+
+        const u32 offset = view.read32(start + 4);
+        if (!view.contains_offset(offset, 2))
+        {
+            status.setError("[Exif] IFD offset out of bounds.");
+            return;
+        }
+
+        parseIFD(*this, view, offset);
     }
 
 } // namespace mango::image
