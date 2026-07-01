@@ -6,6 +6,7 @@
 
 #include <string>
 #include <mango/core/configure.hpp>
+#include <mango/core/exception.hpp>
 #include <mango/core/memory.hpp>
 
 namespace mango::image
@@ -13,6 +14,8 @@ namespace mango::image
 
     struct Exif
     {
+        Status      status;
+
         // image data structure
         u32         ImageWidth = 0;
         u32         ImageLength = 0;
@@ -124,8 +127,13 @@ namespace mango::image
         std::string GPSDateStamp;
         u16         GPSDifferential = 0;
 
-        // Canon
+        // MakerNote lens model (Canon, Nikon, Fuji, Olympus, Pentax, ...)
         std::string LenseName;
+
+        operator bool () const
+        {
+            return status;
+        }
 
         Exif() = default;
         Exif(ConstMemory memory);

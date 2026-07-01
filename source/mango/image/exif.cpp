@@ -128,8 +128,151 @@ namespace
         GPSDestDistance             = 0x001a,
         GPSDateStamp                = 0x001d,
         GPSDifferential             = 0x001e,
-        CanonLenseName              = 0x0095
+
+        // MakerNote lens tags (vendor-specific)
+        CanonLenseName              = 0x0095,
+        NikonLens                   = 0x0083,
+        FujiLensModel               = 0x8003,
+        OlympusLensModel            = 0x0207,
+        PentaxLensInfo              = 0x001d
     };
+
+    enum class MakerNoteVendor
+    {
+        Unknown,
+        Canon,
+        Nikon,
+        Fujifilm,
+        Olympus,
+        Pentax,
+    };
+
+    struct MakerNoteLayout
+    {
+        MakerNoteVendor vendor = MakerNoteVendor::Unknown;
+        const u8* base = nullptr;
+        const u8* ifd = nullptr;
+        const u8* end = nullptr;
+        bool little = true;
+        bool valid = false;
+    };
+
+    void setParseError(Exif& exif, const char* message)
+    {
+        if (exif.status)
+            exif.status.setError(message);
+    }
+
+    bool isTiffEndianMark(const u8* p)
+    {
+        return (p[0] == 'I' && p[1] == 'I') || (p[0] == 'M' && p[1] == 'M');
+    }
+
+    bool isTiffMagic(const u8* p, bool little)
+    {
+        return (little ? littleEndian::uload16(p) : bigEndian::uload16(p)) == 0x002a;
+    }
+
+    MakerNoteLayout resolveMakerNoteLayout(const u8* mn, const u8* mn_end, bool parent_little)
+    {
+        MakerNoteLayout layout;
+        layout.end = mn_end;
+        const size_t size = size_t(mn_end - mn);
+
+        if (size >= 10 && !std::memcmp(mn, "Canon", 5))
+        {
+            layout.vendor = MakerNoteVendor::Canon;
+            layout.base = mn;
+            layout.ifd = mn + 10;
+            layout.little = parent_little;
+            layout.valid = layout.ifd < mn_end;
+            return layout;
+        }
+
+        if (size >= 14 && !std::memcmp(mn, "Nikon", 5))
+        {
+            layout.vendor = MakerNoteVendor::Nikon;
+            if (isTiffEndianMark(mn + 6))
+                layout.little = (mn[6] == 'I');
+            else
+                layout.little = parent_little;
+
+            layout.base = mn + 6;
+            if (isTiffMagic(mn + 8, layout.little))
+            {
+                const u32 ifd_offset = layout.little ? littleEndian::uload32(mn + 10)
+                                                     : bigEndian::uload32(mn + 10);
+                layout.ifd = layout.base + ifd_offset;
+                layout.valid = layout.ifd >= mn && layout.ifd < mn_end;
+            }
+            return layout;
+        }
+
+        if (size >= 20 && !std::memcmp(mn, "FUJIFILM", 8))
+        {
+            layout.vendor = MakerNoteVendor::Fujifilm;
+            if (isTiffEndianMark(mn + 12))
+                layout.little = (mn[12] == 'I');
+            else
+                layout.little = parent_little;
+
+            layout.base = mn + 12;
+            if (isTiffMagic(mn + 14, layout.little))
+            {
+                const u32 ifd_offset = layout.little ? littleEndian::uload32(mn + 16)
+                                                     : bigEndian::uload32(mn + 16);
+                layout.ifd = layout.base + ifd_offset;
+                layout.valid = layout.ifd >= mn && layout.ifd < mn_end;
+            }
+            return layout;
+        }
+
+        if (size >= 10 && (!std::memcmp(mn, "OLYMP\0", 6) || !std::memcmp(mn, "OLYMPUS", 7)))
+        {
+            layout.vendor = MakerNoteVendor::Olympus;
+            layout.base = mn;
+            layout.ifd = mn + 8;
+            layout.little = parent_little;
+            layout.valid = layout.ifd < mn_end;
+            return layout;
+        }
+
+        if (size >= 16 && !std::memcmp(mn, "PENTAX", 6))
+        {
+            layout.vendor = MakerNoteVendor::Pentax;
+            if (isTiffEndianMark(mn + 8))
+                layout.little = (mn[8] == 'I');
+            else
+                layout.little = parent_little;
+
+            layout.base = mn + 8;
+            if (isTiffMagic(mn + 10, layout.little))
+            {
+                const u32 ifd_offset = layout.little ? littleEndian::uload32(mn + 12)
+                                                     : bigEndian::uload32(mn + 12);
+                layout.ifd = layout.base + ifd_offset;
+                layout.valid = layout.ifd >= mn && layout.ifd < mn_end;
+            }
+            return layout;
+        }
+
+        if (size >= 12 && !std::memcmp(mn, "AOC\0", 4))
+        {
+            layout.vendor = MakerNoteVendor::Pentax;
+            layout.base = mn;
+            layout.ifd = mn + 6;
+            layout.little = parent_little;
+            layout.valid = layout.ifd < mn_end;
+            return layout;
+        }
+
+        layout.vendor = MakerNoteVendor::Unknown;
+        layout.base = mn;
+        layout.ifd = mn;
+        layout.little = parent_little;
+        layout.valid = true;
+        return layout;
+    }
 
     constexpr u32 MAX_IFD_ENTRIES = 1024;
 
@@ -424,6 +567,71 @@ namespace
         }
     };
 
+    bool readLensString(std::string& value, const IfdEntry& entry, const u8* item, const TiffView& view)
+    {
+        if (entry.readAscii(value, item, view))
+            return !value.empty();
+
+        if (entry.format != EXIF_UNDEFINED)
+            return false;
+
+        const u8* data = entry.valuePtr(item, view);
+        if (!data)
+            return false;
+
+        value.assign(reinterpret_cast<const char*>(data), entry.count);
+        const size_t zero = value.find('\0');
+        if (zero != std::string::npos)
+            value.resize(zero);
+
+        return !value.empty();
+    }
+
+    void applyMakerNoteTag(Exif& exif, MakerNoteVendor vendor, u16 tag,
+                           const IfdEntry& entry, const u8* item, const TiffView& view)
+    {
+        if (!exif.LenseName.empty())
+            return;
+
+        std::string lens;
+
+        switch (vendor)
+        {
+            case MakerNoteVendor::Canon:
+                if (tag == CanonLenseName)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Nikon:
+                if (tag == NikonLens)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Fujifilm:
+                if (tag == FujiLensModel)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Olympus:
+                if (tag == OlympusLensModel)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Pentax:
+                if (tag == PentaxLensInfo)
+                    readLensString(lens, entry, item, view);
+                break;
+
+            case MakerNoteVendor::Unknown:
+                if (tag == CanonLenseName)
+                    readLensString(lens, entry, item, view);
+                break;
+        }
+
+        if (!lens.empty())
+            exif.LenseName = std::move(lens);
+    }
+
     void parseMakerNote(Exif& exif, const IfdEntry& maker_entry, const u8* entry_ptr, const TiffView& parent)
     {
         const u8* mn = maker_entry.valuePtr(entry_ptr, parent);
@@ -434,26 +642,19 @@ namespace
         if (mn_end > parent.end)
             return;
 
-        const u8* ifd = mn;
-        const u8* base = mn;
-
-        if (maker_entry.byteSize() >= 6 && !std::memcmp(mn, "Canon", 5))
-        {
-            if (maker_entry.byteSize() < 10)
-                return;
-
-            ifd = mn + 10;
-        }
-
-        TiffView view { base, ifd, mn_end, parent.little };
-        if (!view.contains(ifd, 2))
+        const MakerNoteLayout layout = resolveMakerNoteLayout(mn, mn_end, parent.little);
+        if (!layout.valid)
             return;
 
-        const u32 count = view.read16(ifd);
+        TiffView view { layout.base, layout.ifd, layout.end, layout.little };
+        if (!view.contains(layout.ifd, 2))
+            return;
+
+        const u32 count = view.read16(layout.ifd);
         if (count > MAX_IFD_ENTRIES)
             return;
 
-        const u8* p = ifd + 2;
+        const u8* p = layout.ifd + 2;
         if (!view.contains(p, count * 12))
             return;
 
@@ -464,28 +665,32 @@ namespace
             if (!entry.valid)
                 continue;
 
-            switch (entry.tag)
-            {
-                case CanonLenseName:
-                    entry.readAscii(exif.LenseName, item, view);
-                    break;
-            }
+            applyMakerNoteTag(exif, layout.vendor, entry.tag, entry, item, view);
         }
     }
 
-    void parseGPS(Exif& exif, const TiffView& view, u32 offset)
+    bool parseGPS(Exif& exif, const TiffView& view, u32 offset)
     {
         const u8* ifd = view.at(offset);
         if (!view.contains(ifd, 2))
-            return;
+        {
+            setParseError(exif, "[Exif] GPS IFD out of bounds.");
+            return false;
+        }
 
         const u32 count = view.read16(ifd);
         if (count > MAX_IFD_ENTRIES)
-            return;
+        {
+            setParseError(exif, "[Exif] GPS IFD has too many entries.");
+            return false;
+        }
 
         const u8* p = ifd + 2;
         if (!view.contains(p, count * 12))
-            return;
+        {
+            setParseError(exif, "[Exif] GPS IFD entries out of bounds.");
+            return false;
+        }
 
         for (u32 i = 0; i < count; ++i)
         {
@@ -585,24 +790,35 @@ namespace
                     break;
             }
         }
+
+        return true;
     }
 
 #define MANGO_EXIF_TAG(name, reader) \
     case name: entry.reader(exif.name, item, view); break
 
-    void parseIFD(Exif& exif, const TiffView& view, u32 offset)
+    bool parseIFD(Exif& exif, const TiffView& view, u32 offset)
     {
         const u8* ifd = view.at(offset);
         if (!view.contains(ifd, 2))
-            return;
+        {
+            setParseError(exif, "[Exif] IFD out of bounds.");
+            return false;
+        }
 
         const u32 count = view.read16(ifd);
         if (count > MAX_IFD_ENTRIES)
-            return;
+        {
+            setParseError(exif, "[Exif] IFD has too many entries.");
+            return false;
+        }
 
         const u8* p = ifd + 2;
         if (!view.contains(p, count * 12))
-            return;
+        {
+            setParseError(exif, "[Exif] IFD entries out of bounds.");
+            return false;
+        }
 
         for (u32 i = 0; i < count; ++i)
         {
@@ -714,6 +930,8 @@ namespace
                     break;
             }
         }
+
+        return true;
     }
 
 #undef MANGO_EXIF_TAG
@@ -729,7 +947,10 @@ namespace mango::image
         const u8* end = memory.end();
 
         if (!memory.address || memory.size < 8)
+        {
+            status.setError("[Exif] Not enough data.");
             return;
+        }
 
         const u16 endian = littleEndian::uload16(start);
         bool is_little_endian = false;
@@ -743,6 +964,7 @@ namespace mango::image
                 is_little_endian = false;
                 break;
             default:
+                status.setError("[Exif] Invalid byte order.");
                 return;
         }
 
@@ -755,12 +977,16 @@ namespace mango::image
             case 0x4f52: // Olympus ORF header in some APP1 blocks
                 break;
             default:
+                status.setError("[Exif] Invalid TIFF header (magic {:#06x}).", magic);
                 return;
         }
 
         const u32 offset = view.read32(start + 4);
         if (!view.contains_offset(offset, 2))
+        {
+            status.setError("[Exif] IFD offset out of bounds.");
             return;
+        }
 
         parseIFD(*this, view, offset);
     }
