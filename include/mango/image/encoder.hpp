@@ -23,13 +23,13 @@ namespace mango::image
 
     struct ImageEncodeOptions
     {
-        ConstMemory icc;          // jpg, png, jp2
+        ConstMemory icc;          // jpg, png, jp2, jxl
 
-        float quality = 0.90f;    // jpg, jp2, wp2, heif: [0.0, 1.0]
-        int compression = 5;      // png, wp2: [0, 10]
+        float quality = 0.90f;    // jpg, jp2, wp2, heif, jxl: [0.0, 1.0]
+        int compression = 5;      // png, wp2, jxl: [0, 10]
         bool parallel = true;     // png
         bool dithering = true;    // gif
-        bool lossless = false;    // webp, wp2, jp2, heif
+        bool lossless = false;    // webp, wp2, jp2, heif, jxl
 
         int astc_block_width = 4;
         int astc_block_height = 4;

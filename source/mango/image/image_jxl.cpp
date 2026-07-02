@@ -23,6 +23,46 @@ namespace
     // ImageDecoder
     // ------------------------------------------------------------
 
+    static bool hasAlphaChannel(const JxlBasicInfo& info)
+    {
+        return info.alpha_bits != 0 || info.num_extra_channels > 0;
+    }
+
+    static bool isFloatingPoint(const JxlBasicInfo& info)
+    {
+        return info.exponent_bits_per_sample != 0;
+    }
+
+    // libjxl float input/output is scene-linear. Scan the peak RGB value so HDR
+    // images get a sensible intensity_target in the codestream metadata.
+    static float scanPeakRGB(const Surface& surface)
+    {
+        const Format& format = surface.format;
+        float peak = 0.0f;
+
+        for (int y = 0; y < surface.height; ++y)
+        {
+            const u8* scan = surface.address<u8>(0, y);
+            const int pixel_bytes = format.bytes();
+
+            for (int x = 0; x < surface.width; ++x)
+            {
+                const u8* pixel = scan + x * pixel_bytes;
+
+                for (int c = 0; c < 3; ++c)
+                {
+                    if (!format.size[c])
+                        continue;
+
+                    const float* sample = reinterpret_cast<const float*>(pixel + format.offset[c] / 8);
+                    peak = std::max(peak, *sample);
+                }
+            }
+        }
+
+        return peak;
+    }
+
     struct Interface : ImageDecodeInterface
     {
         JxlDecoderPtr m_decoder;
@@ -31,6 +71,10 @@ namespace
         Surface m_surface;
         Buffer m_buffer;
         Buffer m_icc;
+
+        JxlBasicInfo m_info {};
+        JxlPixelFormat m_pixel_format {};
+        size_t m_bytes_per_pixel = 0;
 
         bool m_is_parsed = false;
         ImageDecodeStatus m_status;
@@ -58,8 +102,6 @@ namespace
 
             JxlDecoderSetInput(decoder, memory.address, memory.size);
 
-            JxlBasicInfo info;
-
             for (;;)
             {
                 JxlDecoderStatus status = JxlDecoderProcessInput(decoder);
@@ -75,21 +117,17 @@ namespace
 
                     case JXL_DEC_BASIC_INFO:
                     {
-                        if (JxlDecoderGetBasicInfo(decoder, &info) != JXL_DEC_SUCCESS)
+                        if (JxlDecoderGetBasicInfo(decoder, &m_info) != JXL_DEC_SUCCESS)
                         {
                             header.setError("JxlDecoderGetBasicInfo : FAILED");
                             return;
                         }
 
-                        uint32_t n = JxlResizableParallelRunnerSuggestThreads(info.xsize, info.ysize);
+                        uint32_t n = JxlResizableParallelRunnerSuggestThreads(m_info.xsize, m_info.ysize);
                         JxlResizableParallelRunnerSetThreads(runner, n);
 
-                        header.width = info.xsize;
-                        header.height = info.ysize;
-                        header.format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
-
-                        // Continue to the color encoding event so the color space is
-                        // available from header() (we subscribed to JXL_DEC_COLOR_ENCODING).
+                        header.width = m_info.xsize;
+                        header.height = m_info.ysize;
                         break;
                     }
 
@@ -110,21 +148,6 @@ namespace
         {
             JxlDecoder* decoder = m_decoder.get();
             ColorInfo& color = header.color;
-
-            // Forward the ICC profile of the decoded pixels when libjxl can provide one.
-            size_t icc_size = 0;
-            if (JxlDecoderGetICCProfileSize(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size) == JXL_DEC_SUCCESS && icc_size)
-            {
-                m_icc.resize(icc_size);
-                if (JxlDecoderGetColorAsICCProfile(decoder, JXL_COLOR_PROFILE_TARGET_DATA, m_icc.data(), m_icc.size()) == JXL_DEC_SUCCESS)
-                {
-                    icc = m_icc;
-                }
-                else
-                {
-                    m_icc.reset();
-                }
-            }
 
             // Map the structured color encoding of the decoded pixels (preferred for
             // identifying the nominal color space, including HDR PQ/HLG).
@@ -172,7 +195,72 @@ namespace
                 }
             }
 
-            header.linear = color.isLinear();
+            configureDecodeOutput();
+
+            // libjxl returns an ICC profile for DATA even for plain sRGB, but the decoded
+            // pixels are already in the correct output encoding (uint8 = gamma-encoded,
+            // float = scene-linear). Forwarding ICC makes imageview apply a second CMS
+            // transform and blows out SDR images.
+            icc = ConstMemory();
+            m_icc.reset();
+
+            const bool needs_icc = !isFloatingPoint(m_info) && (
+                color.transfer == TransferFunction::PQ ||
+                color.transfer == TransferFunction::HLG ||
+                color.transfer == TransferFunction::Unspecified ||
+                (color.primaries != ColorPrimaries::BT709 &&
+                 color.primaries != ColorPrimaries::Unspecified));
+
+            if (needs_icc)
+            {
+                size_t icc_size = 0;
+                if (JxlDecoderGetICCProfileSize(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &icc_size) == JXL_DEC_SUCCESS && icc_size)
+                {
+                    m_icc.resize(icc_size);
+                    if (JxlDecoderGetColorAsICCProfile(decoder, JXL_COLOR_PROFILE_TARGET_DATA, m_icc.data(), m_icc.size()) == JXL_DEC_SUCCESS)
+                    {
+                        icc = m_icc;
+                    }
+                    else
+                    {
+                        m_icc.reset();
+                    }
+                }
+            }
+        }
+
+        void configureDecodeOutput()
+        {
+            const bool fp = isFloatingPoint(m_info);
+
+            if (fp)
+            {
+                const bool has_alpha = hasAlphaChannel(m_info);
+                const uint32_t channels = has_alpha ? 4u : 3u;
+
+                header.format = has_alpha
+                    ? Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32, Format::LINEAR)
+                    : Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0, Format::LINEAR);
+                m_pixel_format = { channels, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
+
+                // libjxl always returns scene-linear pixels for float output.
+                header.linear = true;
+            }
+            else if (m_info.bits_per_sample > 8)
+            {
+                header.format = Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16);
+                m_pixel_format = { 4, JXL_TYPE_UINT16, JXL_NATIVE_ENDIAN, 0 };
+                header.linear = false;
+            }
+            else
+            {
+                // Match PNG convention: always 8-bit RGBA UNORM for the mango pipeline.
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                m_pixel_format = { 4, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
+                header.linear = false;
+            }
+
+            m_bytes_per_pixel = header.format.bytes();
         }
 
         ~Interface()
@@ -203,9 +291,6 @@ namespace
         {
             JxlDecoder* decoder = m_decoder.get();
 
-            JxlPixelFormat format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
-            size_t bpp = 16;
-
             for (;;)
             {
                 JxlDecoderStatus jxstat = JxlDecoderProcessInput(decoder);
@@ -223,42 +308,19 @@ namespace
                         break;
 
                     case JXL_DEC_COLOR_ENCODING:
-                    {
-                        // NOTE: disabled until this compiles on both macOS/BREW and Linux
-                        //       currently the API is different for same library version!
-                        /*
-                        size_t bytes = 0;
-
-                        if (JxlDecoderGetICCProfileSize(decoder, JXL_COLOR_PROFILE_TARGET_DATA, &bytes) != JXL_DEC_SUCCESS)
-                        {
-                            // Silently fail
-                            break;
-                        }
-
-                        m_icc.resize(bytes);
-
-                        if (JxlDecoderGetColorAsICCProfile(decoder, JXL_COLOR_PROFILE_TARGET_DATA, m_icc.data(), m_icc.size()) != JXL_DEC_SUCCESS)
-                        {
-                            // Silently fail
-                            m_icc.reset();
-                            break;
-                        }
-                        */
-
                         break;
-                    }
 
                     case JXL_DEC_NEED_IMAGE_OUT_BUFFER:
                     {
                         size_t bytes;
 
-                        if (JxlDecoderImageOutBufferSize(decoder, &format, &bytes) != JXL_DEC_SUCCESS)
+                        if (JxlDecoderImageOutBufferSize(decoder, &m_pixel_format, &bytes) != JXL_DEC_SUCCESS)
                         {
                             m_status.setError("JxlDecoderImageOutBufferSize : FAILED");
                             return;
                         }
 
-                        if (bytes != header.width * header.height * bpp)
+                        if (bytes != header.width * header.height * m_bytes_per_pixel)
                         {
                             m_status.setError("Incorrect buffer size request.");
                             return;
@@ -266,7 +328,7 @@ namespace
 
                         m_buffer.resize(bytes);
 
-                        if (JxlDecoderSetImageOutBuffer(decoder, &format, m_buffer.data(), m_buffer.size()) != JXL_DEC_SUCCESS)
+                        if (JxlDecoderSetImageOutBuffer(decoder, &m_pixel_format, m_buffer.data(), m_buffer.size()) != JXL_DEC_SUCCESS)
                         {
                             m_status.setError("JxlDecoderSetImageOutBuffer : FAILED");
                             return;
@@ -282,7 +344,8 @@ namespace
 
                     case JXL_DEC_SUCCESS:
                     {
-                        m_surface = Surface(header.width, header.height, header.format, header.width * 16, m_buffer.data());
+                        m_surface = Surface(header.width, header.height, header.format,
+                                            header.width * m_bytes_per_pixel, m_buffer.data());
                         return;
                     }
 
@@ -306,10 +369,87 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
+    struct JxlEncodeConfig
+    {
+        Format temp_format;
+        JxlPixelFormat pixel_format;
+        JxlBasicInfo basic_info;
+    };
+
+    JxlEncodeConfig makeEncodeConfig(const Surface& surface, bool lossless)
+    {
+        const bool has_alpha = surface.format.isAlpha();
+        const bool use_float = surface.format.isFloat();
+
+        JxlEncodeConfig config;
+        JxlEncoderInitBasicInfo(&config.basic_info);
+
+        config.basic_info.xsize = surface.width;
+        config.basic_info.ysize = surface.height;
+        config.basic_info.uses_original_profile = lossless ? JXL_TRUE : JXL_FALSE;
+
+        if (use_float)
+        {
+            config.temp_format = has_alpha
+                ? Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32)
+                : Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32);
+            config.pixel_format = { has_alpha ? 4u : 3u, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
+            config.basic_info.bits_per_sample = 32;
+            config.basic_info.exponent_bits_per_sample = 8;
+
+            if (has_alpha)
+            {
+                config.basic_info.num_extra_channels = 1;
+                config.basic_info.alpha_bits = 32;
+                config.basic_info.alpha_exponent_bits = 8;
+                config.basic_info.alpha_premultiplied = surface.format.isPreMultiplied() ? JXL_TRUE : JXL_FALSE;
+            }
+        }
+        else
+        {
+            int sample_bits = 8;
+            for (int i = 0; i < 4; ++i)
+            {
+                sample_bits = std::max(sample_bits, int(surface.format.size[i]));
+            }
+
+            if (sample_bits > 16)
+            {
+                sample_bits = 16;
+            }
+
+            if (sample_bits > 8)
+            {
+                config.temp_format = has_alpha
+                    ? Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16)
+                    : Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0);
+                config.pixel_format = { has_alpha ? 4u : 3u, JXL_TYPE_UINT16, JXL_NATIVE_ENDIAN, 0 };
+                config.basic_info.bits_per_sample = 16;
+            }
+            else
+            {
+                config.temp_format = has_alpha
+                    ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
+                    : Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
+                config.pixel_format = { has_alpha ? 4u : 3u, JXL_TYPE_UINT8, JXL_NATIVE_ENDIAN, 0 };
+            }
+
+            config.basic_info.exponent_bits_per_sample = 0;
+
+            if (has_alpha)
+            {
+                config.basic_info.num_extra_channels = 1;
+                config.basic_info.alpha_bits = sample_bits;
+                config.basic_info.alpha_exponent_bits = 0;
+                config.basic_info.alpha_premultiplied = surface.format.isPreMultiplied() ? JXL_TRUE : JXL_FALSE;
+            }
+        }
+
+        return config;
+    }
+
     ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
-        MANGO_UNREFERENCED(options);
-
         ImageEncodeStatus status;
 
         auto enc = JxlEncoderMake(nullptr);
@@ -321,39 +461,66 @@ namespace
             return status;
         }
 
-#if 1
-        Bitmap temp(surface, Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32));
-        JxlPixelFormat pixel_format = { 3, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
-#else
-        // MANGO TODO: doesn't work, fix
-        Bitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
-        JxlPixelFormat pixel_format = { 4, JXL_TYPE_FLOAT, JXL_NATIVE_ENDIAN, 0 };
-#endif
+        JxlEncodeConfig config = makeEncodeConfig(surface, options.lossless);
 
-        JxlBasicInfo basic_info;
-        JxlEncoderInitBasicInfo(&basic_info);
+        Bitmap temp(surface, config.temp_format);
 
-        basic_info.xsize = surface.width;
-        basic_info.ysize = surface.height;
-        basic_info.bits_per_sample = 32;
-        basic_info.exponent_bits_per_sample = 8;
-        basic_info.uses_original_profile = JXL_FALSE;
+        // Float encode assumes Rec.709 scene-linear input. Surface has no ColorInfo, so
+        // callers must linearize and convert wide-gamut sources beforehand (or pass
+        // options.icc for the original profile). Format::LINEAR only marks scene-linear
+        // float; integer input is assumed gamma-encoded sRGB.
+        if (surface.format.isFloat() && !surface.format.isLinear())
+        {
+            ColorInfo color;
+            color.transfer = TransferFunction::sRGB;
+            color.primaries = ColorPrimaries::BT709;
 
-        if (JxlEncoderSetBasicInfo(enc.get(), &basic_info) != JXL_ENC_SUCCESS)
+            LinearizeOptions linearize_options;
+            linearize_options.preserve_gamut = true;
+            linearize(temp, temp, color, linearize_options);
+        }
+
+        if (config.pixel_format.data_type == JXL_TYPE_FLOAT)
+        {
+            const float peak = scanPeakRGB(temp);
+            config.basic_info.intensity_target = peak > 1.01f ? peak * 80.0f : 255.0f;
+        }
+
+        if (JxlEncoderSetBasicInfo(enc.get(), &config.basic_info) != JXL_ENC_SUCCESS)
         {
             status.setError("JxlEncoderSetBasicInfo : FAILED");
             return status;
         }
 
-        JxlColorEncoding color_encoding = {};
-        //JxlColorEncodingSetToSRGB(&color_encoding, pixel_format.num_channels < 3);
-        //JxlColorEncodingSetToSRGB(&color_encoding, true);
-        JxlColorEncodingSetToSRGB(&color_encoding, false);
+        const bool is_gray = config.pixel_format.num_channels < 3;
 
-        if (JxlEncoderSetColorEncoding(enc.get(), &color_encoding) != JXL_ENC_SUCCESS)
+        if (options.icc.size > 0)
         {
-            status.setError("JxlEncoderSetColorEncoding : FAILED");
-            return status;
+            if (JxlEncoderSetICCProfile(enc.get(), options.icc.address, options.icc.size) != JXL_ENC_SUCCESS)
+            {
+                status.setError("JxlEncoderSetICCProfile : FAILED");
+                return status;
+            }
+        }
+        else
+        {
+            JxlColorEncoding color_encoding = {};
+
+            if (config.pixel_format.data_type == JXL_TYPE_FLOAT)
+            {
+                // Rec.709 primaries, linear transfer (libjxl "linear sRGB").
+                JxlColorEncodingSetToLinearSRGB(&color_encoding, is_gray);
+            }
+            else
+            {
+                JxlColorEncodingSetToSRGB(&color_encoding, is_gray);
+            }
+
+            if (JxlEncoderSetColorEncoding(enc.get(), &color_encoding) != JXL_ENC_SUCCESS)
+            {
+                status.setError("JxlEncoderSetColorEncoding : FAILED");
+                return status;
+            }
         }
 
         size_t image_pixels = temp.width * temp.height;
@@ -361,7 +528,40 @@ namespace
 
         JxlEncoderFrameSettings* frame_settings = JxlEncoderFrameSettingsCreate(enc.get(), nullptr);
 
-        if (JxlEncoderAddImageFrame(frame_settings, &pixel_format,
+        const int effort = std::clamp(options.compression, 1, 10);
+        if (JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_EFFORT, effort) != JXL_ENC_SUCCESS)
+        {
+            status.setError("JxlEncoderFrameSettingsSetOption(EFFORT) : FAILED");
+            return status;
+        }
+
+        if (options.lossless)
+        {
+            if (JxlEncoderSetFrameLossless(frame_settings, JXL_TRUE) != JXL_ENC_SUCCESS)
+            {
+                status.setError("JxlEncoderSetFrameLossless : FAILED");
+                return status;
+            }
+        }
+        else
+        {
+            if (JxlEncoderSetFrameLossless(frame_settings, JXL_FALSE) != JXL_ENC_SUCCESS)
+            {
+                status.setError("JxlEncoderSetFrameLossless : FAILED");
+                return status;
+            }
+
+            const float quality = std::clamp(options.quality, 0.0f, 1.0f) * 100.0f;
+            const float distance = JxlEncoderDistanceFromQuality(quality);
+
+            if (JxlEncoderSetFrameDistance(frame_settings, distance) != JXL_ENC_SUCCESS)
+            {
+                status.setError("JxlEncoderSetFrameDistance : FAILED");
+                return status;
+            }
+        }
+
+        if (JxlEncoderAddImageFrame(frame_settings, &config.pixel_format,
                                     reinterpret_cast<void*> (temp.image),
                                     image_bytes) != JXL_ENC_SUCCESS)
         {

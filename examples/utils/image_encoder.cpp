@@ -16,6 +16,7 @@ void printHelp(std::string_view program)
     printLine("    --output <filename>");
     printLine("    --compression <level:0..10>");
     printLine("    --quality <level:0..100>");
+    printLine("    --lossless");
     printLine("    --luminance");
     printLine("    --linear");
     printLine("    --info");
@@ -39,6 +40,7 @@ int main(int argc, const char* argv[])
     std::string output_filename;
     bool luminance = false;
     bool linear = false;
+    bool lossless = false;
 
     int index = 1;
 
@@ -123,6 +125,11 @@ int main(int argc, const char* argv[])
             ++index;
             luminance = true;
         }
+        else if (std::string_view(argv[index]) == "--lossless")
+        {
+            ++index;
+            lossless = true;
+        }
         else if (std::string_view(argv[index]) == "--linear")
         {
             ++index;
@@ -162,6 +169,8 @@ int main(int argc, const char* argv[])
         q.enqueue([=]
         {
             std::unique_ptr<Bitmap> bitmap;
+            ImageEncodeOptions encode_options = options;
+            encode_options.lossless = lossless;
 
             if (luminance)
             {
@@ -178,7 +187,7 @@ int main(int argc, const char* argv[])
                 }
             }
 
-            bitmap->save(output, options);
+            bitmap->save(output, encode_options);
         });
     }
 
