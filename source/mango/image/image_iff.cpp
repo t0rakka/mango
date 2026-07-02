@@ -1798,6 +1798,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".anim");
         registerImageDecoder(createInterface, ".lbm");
         registerImageDecoder(createInterface, ".ham");
+        registerImageDecoder(createInterface, ".ham6");
         registerImageDecoder(createInterface, ".ham8");
         registerImageDecoder(createInterface, ".ilbm");
         registerImageDecoder(createInterface, ".ehb");
