@@ -33,6 +33,32 @@ namespace
         return info.exponent_bits_per_sample != 0;
     }
 
+    // libjxl applies orientation on decode by default. Codestream xsize/ysize are
+    // pre-rotation; swap axes for 90°/270° transforms so header matches output pixels.
+    static bool orientationSwapsAxes(JxlOrientation orientation)
+    {
+        switch (orientation)
+        {
+            case JXL_ORIENT_TRANSPOSE:
+            case JXL_ORIENT_ROTATE_90_CW:
+            case JXL_ORIENT_ANTI_TRANSPOSE:
+            case JXL_ORIENT_ROTATE_90_CCW:
+                return true;
+            default:
+                return false;
+        }
+    }
+
+    static int orientedWidth(const JxlBasicInfo& info)
+    {
+        return orientationSwapsAxes(info.orientation) ? int(info.ysize) : int(info.xsize);
+    }
+
+    static int orientedHeight(const JxlBasicInfo& info)
+    {
+        return orientationSwapsAxes(info.orientation) ? int(info.xsize) : int(info.ysize);
+    }
+
     // libjxl float input/output is scene-linear. Scan the peak RGB value so HDR
     // images get a sensible intensity_target in the codestream metadata.
     static float scanPeakRGB(const Surface& surface)
@@ -126,8 +152,8 @@ namespace
                         uint32_t n = JxlResizableParallelRunnerSuggestThreads(m_info.xsize, m_info.ysize);
                         JxlResizableParallelRunnerSetThreads(runner, n);
 
-                        header.width = m_info.xsize;
-                        header.height = m_info.ysize;
+                        header.width = orientedWidth(m_info);
+                        header.height = orientedHeight(m_info);
                         break;
                     }
 
