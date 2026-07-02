@@ -1107,6 +1107,9 @@ endif ()
 
 if (LIBRARY_WEBP)
     find_module(mango WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
+    if (TARGET WebP::webpdemux)
+        target_link_libraries(mango ${INTERFACE} WebP::webpdemux)
+    endif ()
 endif ()
 
 if (LIBRARY_WP2)

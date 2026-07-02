@@ -420,7 +420,8 @@ namespace mango::image
         cmsHPROFILE profile = cmsOpenProfileFromMemTHR(context, icc.address, cmsUInt32Number(icc.size));
         if (!profile)
         {
-            MANGO_EXCEPTION("[ColorManager] Failed to open embedded ICC profile.");
+            printLine(Print::Warning, "[ColorManager] Failed to open embedded ICC profile; skipping color transform.");
+            return ColorProfile(nullptr);
         }
         return ColorProfile(profile);
     }
@@ -458,7 +459,8 @@ namespace mango::image
 
         if (!static_cast<cmsHPROFILE>(input) || !static_cast<cmsHPROFILE>(output))
         {
-            MANGO_EXCEPTION("[ColorManager] transform() received a null profile handle.");
+            printLine(Print::Warning, "[ColorManager] transform() received a null profile handle; skipping color transform.");
+            return;
         }
 
         cmsUInt32Number flags;
@@ -481,7 +483,8 @@ namespace mango::image
             intent, flags);
         if (!transform)
         {
-            MANGO_EXCEPTION("[ColorManager] cmsCreateTransform() failed.");
+            printLine(Print::Warning, "[ColorManager] cmsCreateTransform() failed; skipping color transform.");
+            return;
         }
 
         const cmsUInt32Number width = cmsUInt32Number(target.width);

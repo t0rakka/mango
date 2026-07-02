@@ -3,6 +3,7 @@
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
+#include <cstring>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/system.hpp>
@@ -11,6 +12,7 @@
 #if defined(MANGO_ENABLE_WEBP)
 
 #include <webp/decode.h>
+#include <webp/demux.h>
 #include <webp/encode.h>
 
 // https://developers.google.com/speed/webp/docs/api
@@ -119,6 +121,73 @@ namespace
         return ConstMemory(nullptr, 0);
     }
 
+    bool webpIsAnimated(ConstMemory memory)
+    {
+        ConstMemory vp8x = webpFindChunk(memory, u32_mask_rev('V', 'P', '8', 'X'));
+        if (vp8x.size < 1)
+        {
+            return false;
+        }
+
+        constexpr u8 ANIMATION_FLAG = 0x02;
+        return (vp8x[0] & ANIMATION_FLAG) != 0;
+    }
+
+    WEBP_CSP_MODE webpColorMode(const WebPFormat& wpformat)
+    {
+        if (wpformat.decode_func == WebPDecodeBGRAInto)
+        {
+            return MODE_BGRA;
+        }
+
+        // WebPAnimDecoder only supports 32-bit RGBA/BGRA output modes.
+        return MODE_RGBA;
+    }
+
+    bool webpDecodeAnimated(const Surface& dest, ConstMemory memory, const WebPFormat& wpformat)
+    {
+        WebPData webp_data;
+        webp_data.bytes = memory.address;
+        webp_data.size = memory.size;
+
+        WebPAnimDecoderOptions options;
+        if (!WebPAnimDecoderOptionsInit(&options))
+        {
+            return false;
+        }
+
+        options.color_mode = webpColorMode(wpformat);
+
+        WebPAnimDecoder* decoder = WebPAnimDecoderNew(&webp_data, &options);
+        if (!decoder)
+        {
+            return false;
+        }
+
+        uint8_t* canvas = nullptr;
+        int timestamp = 0;
+        bool ok = WebPAnimDecoderGetNext(decoder, &canvas, &timestamp) && canvas;
+
+        if (ok)
+        {
+            const int width = dest.width;
+            const int height = dest.height;
+            const size_t row_bytes = size_t(width) * 4;
+            const u8* src = canvas;
+            u8* image = dest.image;
+
+            for (int y = 0; y < height; ++y)
+            {
+                std::memcpy(image, src, row_bytes);
+                src += row_bytes;
+                image += dest.stride;
+            }
+        }
+
+        WebPAnimDecoderDelete(decoder);
+        return ok;
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -126,10 +195,13 @@ namespace
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
+        bool m_isAnimated = false;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
+            m_isAnimated = webpIsAnimated(m_memory);
+
             int width;
             int height;
             if (!WebPGetInfo(m_memory.address, m_memory.size, &width, &height))
@@ -180,8 +252,19 @@ namespace
 
             DecodeTargetBitmap target(dest, header.width, header.height, wpformat.format);
 
-            uint8_t* output = wpformat.decode(target, m_memory);
-            if (!output)
+            bool ok = false;
+
+            if (m_isAnimated)
+            {
+                ok = webpDecodeAnimated(target, m_memory, wpformat);
+            }
+            else
+            {
+                uint8_t* output = wpformat.decode(target, m_memory);
+                ok = output != nullptr;
+            }
+
+            if (!ok)
             {
                 status.setError("[ImageDecoder.WEBP] Decoding failed.");
             }

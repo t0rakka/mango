@@ -1237,6 +1237,11 @@ namespace mango::image
 
         image::ColorManager manager;
         image::ColorProfile profile = manager.create(icc);
+        if (!profile)
+        {
+            return;
+        }
+
         image::ColorProfile display = manager.createSRGB();
         manager.transform(surface, display, profile);
     }
