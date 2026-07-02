@@ -133,59 +133,20 @@ namespace
         return (vp8x[0] & ANIMATION_FLAG) != 0;
     }
 
-    WEBP_CSP_MODE webpColorMode(const WebPFormat& wpformat)
+    void webpCopyCanvas(const Surface& dest, const uint8_t* canvas)
     {
-        if (wpformat.decode_func == WebPDecodeBGRAInto)
+        const int width = dest.width;
+        const int height = dest.height;
+        const size_t row_bytes = size_t(width) * 4;
+        const u8* src = canvas;
+        u8* image = dest.image;
+
+        for (int y = 0; y < height; ++y)
         {
-            return MODE_BGRA;
+            std::memcpy(image, src, row_bytes);
+            src += row_bytes;
+            image += dest.stride;
         }
-
-        // WebPAnimDecoder only supports 32-bit RGBA/BGRA output modes.
-        return MODE_RGBA;
-    }
-
-    bool webpDecodeAnimated(const Surface& dest, ConstMemory memory, const WebPFormat& wpformat)
-    {
-        WebPData webp_data;
-        webp_data.bytes = memory.address;
-        webp_data.size = memory.size;
-
-        WebPAnimDecoderOptions options;
-        if (!WebPAnimDecoderOptionsInit(&options))
-        {
-            return false;
-        }
-
-        options.color_mode = webpColorMode(wpformat);
-
-        WebPAnimDecoder* decoder = WebPAnimDecoderNew(&webp_data, &options);
-        if (!decoder)
-        {
-            return false;
-        }
-
-        uint8_t* canvas = nullptr;
-        int timestamp = 0;
-        bool ok = WebPAnimDecoderGetNext(decoder, &canvas, &timestamp) && canvas;
-
-        if (ok)
-        {
-            const int width = dest.width;
-            const int height = dest.height;
-            const size_t row_bytes = size_t(width) * 4;
-            const u8* src = canvas;
-            u8* image = dest.image;
-
-            for (int y = 0; y < height; ++y)
-            {
-                std::memcpy(image, src, row_bytes);
-                src += row_bytes;
-                image += dest.stride;
-            }
-        }
-
-        WebPAnimDecoderDelete(decoder);
-        return ok;
     }
 
     // ------------------------------------------------------------
@@ -196,41 +157,141 @@ namespace
     {
         ConstMemory m_memory;
         bool m_isAnimated = false;
+        WebPAnimDecoder* m_animDecoder = nullptr;
+        int m_frame_counter = 0;
+        int m_frame_count = 0;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
             m_isAnimated = webpIsAnimated(m_memory);
 
-            int width;
-            int height;
-            if (!WebPGetInfo(m_memory.address, m_memory.size, &width, &height))
+            int width = 0;
+            int height = 0;
+
+            if (m_isAnimated)
+            {
+                WebPData webp_data;
+                webp_data.bytes = m_memory.address;
+                webp_data.size = m_memory.size;
+
+                WebPAnimDecoderOptions options;
+                if (!WebPAnimDecoderOptionsInit(&options))
+                {
+                    header.setError("[ImageDecoder.WEBP] Incorrect header.");
+                    return;
+                }
+
+                options.color_mode = MODE_RGBA;
+
+                m_animDecoder = WebPAnimDecoderNew(&webp_data, &options);
+                if (!m_animDecoder)
+                {
+                    header.setError("[ImageDecoder.WEBP] Incorrect header.");
+                    return;
+                }
+
+                WebPAnimInfo info;
+                if (!WebPAnimDecoderGetInfo(m_animDecoder, &info))
+                {
+                    header.setError("[ImageDecoder.WEBP] Incorrect header.");
+                    return;
+                }
+
+                width = int(info.canvas_width);
+                height = int(info.canvas_height);
+                m_frame_count = int(info.frame_count);
+            }
+            else if (!WebPGetInfo(m_memory.address, m_memory.size, &width, &height))
             {
                 header.setError("[ImageDecoder.WEBP] Incorrect header.");
+                return;
             }
-            else
-            {
-                header.width   = width;
-                header.height  = height;
-                header.depth   = 0;
-                header.levels  = 0;
-                header.faces   = 0;
-                header.format  = webpDefaultFormat(true).format;
-                header.compression = TextureCompression::NONE;
 
-                // WebP pixel data is sRGB (the default). Forward an embedded ICC profile
-                // when present; it then defines the color space.
-                icc = webpFindChunk(m_memory, u32_mask_rev('I', 'C', 'C', 'P'));
-                if (icc.size)
-                {
-                    header.color.primaries = ColorPrimaries::Unspecified;
-                    header.color.transfer = TransferFunction::Unspecified;
-                }
+            header.width   = width;
+            header.height  = height;
+            header.depth   = 0;
+            header.levels  = 0;
+            header.faces   = 0;
+            header.frames  = m_frame_count;
+            header.format  = webpDefaultFormat(true).format;
+            header.compression = TextureCompression::NONE;
+
+            // WebP pixel data is sRGB (the default). Forward an embedded ICC profile
+            // when present; it then defines the color space.
+            icc = webpFindChunk(m_memory, u32_mask_rev('I', 'C', 'C', 'P'));
+            if (icc.size)
+            {
+                header.color.primaries = ColorPrimaries::Unspecified;
+                header.color.transfer = TransferFunction::Unspecified;
             }
         }
 
         ~Interface()
         {
+            if (m_animDecoder)
+            {
+                WebPAnimDecoderDelete(m_animDecoder);
+            }
+        }
+
+        ImageDecodeStatus decodeAnimated(const Surface& dest, const WebPFormat& wpformat)
+        {
+            ImageDecodeStatus status;
+
+            if (!m_animDecoder)
+            {
+                status.setError("[ImageDecoder.WEBP] Decoding failed.");
+                return status;
+            }
+
+            if (!WebPAnimDecoderHasMoreFrames(m_animDecoder))
+            {
+                WebPAnimDecoderReset(m_animDecoder);
+                m_frame_counter = 0;
+            }
+
+            uint8_t* canvas = nullptr;
+            int timestamp = 0;
+            if (!WebPAnimDecoderGetNext(m_animDecoder, &canvas, &timestamp) || !canvas)
+            {
+                status.setError("[ImageDecoder.WEBP] Decoding failed.");
+                return status;
+            }
+
+            webpCopyCanvas(dest, canvas);
+
+            status.current_frame_index = m_frame_counter;
+
+            int duration_ms = 100;
+            const WebPDemuxer* demux = WebPAnimDecoderGetDemuxer(m_animDecoder);
+            if (demux)
+            {
+                WebPIterator iter;
+                if (WebPDemuxGetFrame(demux, m_frame_counter + 1, &iter))
+                {
+                    if (iter.duration > 0)
+                    {
+                        duration_ms = iter.duration;
+                    }
+                    WebPDemuxReleaseIterator(&iter);
+                }
+            }
+
+            status.frame_delay_numerator = duration_ms;
+            status.frame_delay_denominator = 1000;
+
+            if (m_frame_count > 0)
+            {
+                m_frame_counter = (m_frame_counter + 1) % m_frame_count;
+            }
+
+            status.next_frame_index = m_frame_counter;
+
+            MANGO_UNREFERENCED(wpformat);
+            MANGO_UNREFERENCED(timestamp);
+
+            return status;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -256,19 +317,20 @@ namespace
 
             if (m_isAnimated)
             {
-                ok = webpDecodeAnimated(target, m_memory, wpformat);
+                status = decodeAnimated(target, wpformat);
+                ok = status.success;
             }
             else
             {
                 uint8_t* output = wpformat.decode(target, m_memory);
                 ok = output != nullptr;
+                if (!ok)
+                {
+                    status.setError("[ImageDecoder.WEBP] Decoding failed.");
+                }
             }
 
-            if (!ok)
-            {
-                status.setError("[ImageDecoder.WEBP] Decoding failed.");
-            }
-            else
+            if (ok)
             {
                 target.resolve();
             }
