@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
@@ -21,6 +21,7 @@ namespace
     // ------------------------------------------------------------
 
 #if 0
+    // NOTE: Not used but kept for reference
     const Color g_cga_palette [] =
     {
         Color(0x00, 0x00, 0x00, 0xff), // black
@@ -66,6 +67,18 @@ namespace
     // .pcx parser
     // ------------------------------------------------------------
 
+    /*
+
+    PC Paintbrush Version and Description:
+
+    0  Version 2.5 with fixed EGA palette information
+    2  Version 2.8 with modifiable EGA palette information    
+    3  Version 2.8 without palette information
+    4  PC Paintbrush for Windows
+    5  Version 3.0 of PC Paintbrush, PC Paintbrush Plus, PC Paintbrush Plus for Windows, Publisher's Paintbrush, and all 24-bit image files
+
+    */
+
     struct HeaderPCX
     {
         u8      Manufacturer;
@@ -78,7 +91,6 @@ namespace
         u16     Ymax;
         u16     HDpi;
         u16     VDpi;
-        const u8* ColorMap;
         u8      Reserved;
         u8      NPlanes;
         u16     BytesPerLine;
@@ -86,6 +98,7 @@ namespace
         u16     HscreenSize;
         u16     VscreenSize;
 
+        const u8* ColorMap = nullptr;
         bool isPaletteMarker = false;
 
         ImageHeader header;
@@ -486,32 +499,76 @@ namespace
                     {
                         case 1:
                         {
+                            /*
+                            int numColors = 1 << (m_pcx_header.BitsPerPixel * m_pcx_header.NPlanes);
+                            printLine("BitsPerPixel: {}", m_pcx_header.BitsPerPixel);
+                            printLine("NumBitPlanes: {}", m_pcx_header.NPlanes);
+                            printLine("MaxNumberOfColors: {}", numColors);
+                            */
+
+                            // 2: monochrome
+                            // 4: CGA
+                            // 8: EGA
+                            // 16: EGA and VGA
+                            // 256: VGA 
+
                             Palette palette(4);
 
+                            const u8* color_map = m_pcx_header.ColorMap;
+
+                            // Get the CGA background color
+                            int background_color = color_map[0] >> 4; // 0 to 15
+
+                            // Get the CGA foreground palette
+                            int color_burst_enable = (color_map[3] & 0x80) >> 7;
+                            //int palette_value = (color_map[3] & 0x40) >> 6;
+                            //int intensity_value = (color_map[3] & 0x20) >> 5;
+
                             /*
-                            if (m_pcx_header.isPaletteMarker)
+                            printLine("CGA background color: {}", background_color);
+                            printLine("CGA color burst enable: {}", color_burst_enable);
+                            printLine("CGA palette value: {}", palette_value);
+                            printLine("CGA intensity value: {}", intensity_value);
+                            */
+
+                            if (color_burst_enable)
                             {
-                                // read palette
-                                const u8* pal = m_memory.address + m_memory.size - 768;
-                                for (u32 i = 0; i < palette.size; ++i)
+                                // Bits 2:1:0 in index: color burst:palette:intensity
+                                static const u8 cga_pals[8 * 3] =
                                 {
-                                    palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
-                                    pal += 3;
+                                    2, 4, 6,  10, 12, 14,
+                                    3, 5, 7,  11, 13, 15,
+                                    3, 4, 7,  11, 12, 15,
+                                    3, 4, 7,  11, 12, 15
+                                };
+
+                                int idx = color_map[3] >> 5; // PB 3.0
+
+                                if (m_pcx_header.PaletteInfo) // PB 4.0
+                                {
+                                    // Pick green palette if G > B in slot 1
+                                    int i = color_map[5] >= color_map[4];
+                                    // Pick bright palette if max(G,B) > 200
+                                    idx = i * 2 + (color_map[4 + i] > 200);
                                 }
+
+                                idx *= 3;
+
+                                palette[0] = g_ega_palette[cga_pals[idx + 0]];
+                                palette[1] = g_ega_palette[cga_pals[idx + 1]];
+                                palette[2] = g_ega_palette[background_color];
+                                palette[3] = g_ega_palette[cga_pals[idx + 2]];
                             }
                             else
                             {
-                                // read palette
-                                const u8* pal = m_pcx_header.ColorMap;
-                                for (u32 i = 0; i < palette.size; ++i)
-                                {
-                                    palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
-                                    pal += 3;
-                                }
+                                palette[0] = g_ega_palette[0]; // black
+                                palette[1] = g_ega_palette[15]; // white
                             }
-                            */
 
-#if 1
+                            *target.palette = palette;
+
+
+#if 0
                             // NOTE: This is a hack to get the correct palette for the 2-bit mode
                             //       The actual palette is stored in the EGA palette bytes
                             //       We need to extract the CGA settings from the EGA palette bytes
@@ -519,32 +576,36 @@ namespace
                             const u8* palette_data = m_pcx_header.ColorMap;
 
                             // Extract CGA settings from EGA palette bytes
-                            const int background_color = palette_data[0] >> 4;  // 0-15
+                            //const int background_color = palette_data[0] >> 4;  // 0-15
                             const int color_burst = (palette_data[3] & 0x80) >> 7;  // 0: color or 1: monochrome
                             const int palette_select = (palette_data[3] & 0x40) >> 6;  // 0: yellow or 1: white
                             const int intensity = (palette_data[3] & 0x20) >> 5;  // 0: dim or 1: bright
                             //printLine("background: {}, color_burst: {}, palette_select: {}, intensity: {}", background_color, color_burst, palette_select, intensity);
 
                             // Configure the 4-color palette based on CGA settings
-                            palette[3] = g_ega_palette[background_color];  // background
+                            palette[3] = g_ega_palette[background_color]; // background
 
-                            if (color_burst == 1)  // color mode
+                            if (color_burst == 1)
                             {
-                                if (palette_select == 0)  // yellow palette
+                                // color mode
+                                if (palette_select == 0)
                                 {
+                                    // yellow palette
                                     palette[1] = g_ega_palette[intensity ? 10 : 2];   // green
                                     palette[2] = g_ega_palette[intensity ? 12 : 4];   // red
                                     palette[0] = g_ega_palette[intensity ? 14 : 6];   // yellow/brown
                                 }
-                                else  // white palette
+                                else
                                 {
+                                    // white palette
                                     palette[1] = g_ega_palette[intensity ? 11 : 3];   // cyan
                                     palette[2] = g_ega_palette[intensity ? 13 : 5];   // magenta
                                     palette[0] = g_ega_palette[intensity ? 15 : 7];   // white/light gray
                                 }
                             }
-                            else  // monochrome mode
+                            else
                             {
+                                // monochrome mode
                                 // In monochrome, we use intensity levels of the background color
                                 const int base_color = background_color & 7;
                                 palette[1] = g_ega_palette[base_color];
