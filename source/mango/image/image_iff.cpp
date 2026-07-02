@@ -181,7 +181,7 @@ namespace
     }
 
     static
-    void unpack_rgb8(Memory dest, ConstMemory source, u32 pixels)
+    bool unpack_rgb8(Memory dest, ConstMemory source, u32 pixels)
     {
         u32* ptr = reinterpret_cast<u32*>(dest.address);
         const u8* s = source.address;
@@ -198,6 +198,25 @@ namespace
             u32 color = (v >> 8) | 0xff000000;
             u32 count = v & 0x7f;
 
+            // counts > 127 use the RGBN-style extension: 0 in the 7-bit field, then an
+            // 8-bit count, then (if still zero) a 16-bit big-endian count.
+            if (!count)
+            {
+                if (s >= s_end)
+                    break;
+                count = *s++;
+                if (!count)
+                {
+                    if (s + 2 > s_end)
+                        break;
+                    count = bigEndian::uload16(s);
+                    s += 2;
+                }
+            }
+
+            if (!count)
+                break;
+
             // a run must never write past the destination pixel count
             if (count > pixels)
                 count = pixels;
@@ -210,6 +229,8 @@ namespace
             ptr += count;
             pixels -= count;
         }
+
+        return pixels == 0;
     }
 
     static
@@ -271,14 +292,17 @@ namespace
     }
 
     static
-    void decode_rgb8(const Surface& dest, ConstMemory source, u32 xsize, u32 ysize)
+    void decode_rgb8(ImageDecodeStatus& status, const Surface& dest, ConstMemory source, u32 xsize, u32 ysize)
     {
         u32 count = xsize * ysize;
 
         Format format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
         Bitmap temp(xsize, ysize, format);
 
-        unpack_rgb8(Memory(temp.image, count * 4), source, count);
+        if (!unpack_rgb8(Memory(temp.image, count * 4), source, count))
+        {
+            status.setError("[ImageDecoder.IFF] Truncated RGB8 RLE stream.");
+        }
 
         dest.blit(0, 0, temp);
     }
@@ -1201,6 +1225,21 @@ namespace
 
         void resolveFormat()
         {
+            // BMHD.nPlanes is 25 for RGB8 and 13 for RGBN by convention; it is not the
+            // storage bpp. Deriving format from it can yield indexed layouts and crash
+            // when decode_rgb8() blits true-colour into an indexed destination.
+            if (m_signature == SIGNATURE_RGB8)
+            {
+                header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                return;
+            }
+
+            if (m_signature == SIGNATURE_RGBN)
+            {
+                header.format = Format(16, Format::UNORM, Format::BGRA, 4, 4, 4, 4);
+                return;
+            }
+
             if (m_ham)
             {
                 header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
@@ -1638,7 +1677,7 @@ namespace
                 case SIGNATURE_PBM:
                     break;
                 case SIGNATURE_RGB8:
-                    decode_rgb8(dest, m_body, xsize, ysize);
+                    decode_rgb8(status, dest, m_body, xsize, ysize);
                     return status;
                 case SIGNATURE_RGBN:
                     decode_rgbn(dest, m_body, xsize, ysize);
@@ -1803,6 +1842,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".ilbm");
         registerImageDecoder(createInterface, ".ehb");
         registerImageDecoder(createInterface, ".rgbn");
+        registerImageDecoder(createInterface, ".rgb8");
     }
 
 } // namespace mango::image
