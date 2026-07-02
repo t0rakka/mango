@@ -8,6 +8,11 @@
 #include <mango/core/compress.hpp>
 #include <mango/image/image.hpp>
 #include <mango/math/math.hpp>
+#include <zlib.h>
+
+#include <cstring>
+#include <map>
+#include <vector>
 
 namespace
 {
@@ -41,6 +46,117 @@ namespace
         ZIP = 2,
         ZIP_PRED = 3
     };
+
+    struct ZlibChannelResult
+    {
+        bool success = false;
+        const u8* next = nullptr;
+    };
+
+    static
+    ZlibChannelResult psd_inflate_channel(const u8* src, const u8* end, u8* dest, size_t dest_size)
+    {
+        ZlibChannelResult result;
+
+        if (!src || !end || src >= end || !dest || !dest_size)
+        {
+            return result;
+        }
+
+        z_stream stream {};
+        stream.next_in = const_cast<Bytef*>(src);
+        stream.avail_in = uInt(end - src);
+        stream.next_out = dest;
+        stream.avail_out = uInt(dest_size);
+
+        if (inflateInit(&stream) != Z_OK)
+        {
+            return result;
+        }
+
+        int state = Z_OK;
+        while (stream.avail_out > 0 && state == Z_OK)
+        {
+            state = inflate(&stream, Z_SYNC_FLUSH);
+            if (state == Z_STREAM_END)
+            {
+                break;
+            }
+
+            if (state != Z_OK)
+            {
+                inflateEnd(&stream);
+                return result;
+            }
+        }
+
+        inflateEnd(&stream);
+
+        if (stream.avail_out != 0)
+        {
+            return result;
+        }
+
+        result.success = true;
+        result.next = src + (stream.next_in - const_cast<Bytef*>(src));
+        return result;
+    }
+
+    static
+    void psd_undo_prediction(u8* data, int width, int height, int bits)
+    {
+        if (!data || width < 1 || height < 1)
+        {
+            return;
+        }
+
+        const size_t bytes_per_scan = div_ceil(width * bits, 8);
+
+        switch (bits)
+        {
+            case 1:
+            case 8:
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    u8* row = data + y * bytes_per_scan;
+                    for (size_t x = 1; x < bytes_per_scan; ++x)
+                    {
+                        row[x] = u8(row[x] + row[x - 1]);
+                    }
+                }
+                break;
+            }
+
+            case 16:
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    u8* row = data + y * bytes_per_scan;
+                    for (int x = 1; x < width; ++x)
+                    {
+                        const u16 prev = bigEndian::uload16(row + (x - 1) * 2);
+                        const u16 cur = bigEndian::uload16(row + x * 2);
+                        bigEndian::ustore16(row + x * 2, u16(prev + cur));
+                    }
+                }
+                break;
+            }
+
+            case 32:
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    u8* row = data + y * bytes_per_scan;
+                    for (size_t x = 1; x < bytes_per_scan; ++x)
+                    {
+                        row[x] = u8(row[x] + row[x - 1]);
+                    }
+                }
+                break;
+            }
+        }
+    }
 
     struct PackBits
     {
@@ -86,9 +202,155 @@ namespace
         }
     };
 
+    struct LayerChannelInfo
+    {
+        int id = 0;
+        u32 data_length = 0;
+    };
+
+    struct LayerRecord
+    {
+        int top = 0;
+        int left = 0;
+        int bottom = 0;
+        int right = 0;
+        std::vector<LayerChannelInfo> channels;
+        u8 opacity = 255;
+        u8 flags = 0;
+
+        int width() const { return right - left; }
+        int height() const { return bottom - top; }
+        bool visible() const { return (flags & 0x02) != 0; }
+    };
+
+    static
+    void blend_pixel_rgba8(u8* dst, u8 r, u8 g, u8 b, u8 a, u8 opacity)
+    {
+        const u32 sa = (u32(a) * opacity) / 255;
+        if (!sa)
+        {
+            return;
+        }
+
+        const u32 da = dst[3];
+        const u32 inv_sa = 255 - sa;
+        const u32 out_a = sa + (da * inv_sa) / 255;
+        if (!out_a)
+        {
+            return;
+        }
+
+        dst[0] = u8((r * sa + u32(dst[0]) * da * inv_sa / 255) / out_a);
+        dst[1] = u8((g * sa + u32(dst[1]) * da * inv_sa / 255) / out_a);
+        dst[2] = u8((b * sa + u32(dst[2]) * da * inv_sa / 255) / out_a);
+        dst[3] = u8(out_a);
+    }
+
+    static
+    bool decode_channel_plane(Compression compression, int version, int width, int height, int bits,
+        const u8*& data, const u8* end, u8* dest, size_t dest_size, ImageDecodeStatus& status)
+    {
+        const size_t bytes_per_scan = div_ceil(width * bits, 8);
+        const size_t plane_size = size_t(height) * bytes_per_scan;
+
+        if (dest_size < plane_size)
+        {
+            status.setError("[ImageDecoder.PSD] Channel plane buffer too small.");
+            return false;
+        }
+
+        switch (compression)
+        {
+            case Compression::RAW:
+            {
+                if (size_t(end - data) < plane_size)
+                {
+                    status.setError("[ImageDecoder.PSD] Truncated raw channel data.");
+                    return false;
+                }
+
+                std::memcpy(dest, data, plane_size);
+                data += plane_size;
+                break;
+            }
+
+            case Compression::RLE:
+            {
+                const size_t table_bytes = size_t(height) * (version == 1 ? 2 : 4);
+                if (size_t(end - data) < table_bytes)
+                {
+                    status.setError("[ImageDecoder.PSD] Truncated RLE length table.");
+                    return false;
+                }
+
+                PackBits packbits(1, height);
+                const u8* rle_data = packbits.parse(data, 1, height, version);
+
+                for (int y = 0; y < height; ++y)
+                {
+                    const u32 bytes = packbits.sizes[y];
+                    const u8* src = rle_data + packbits.offsets[0];
+                    packbits.offsets[0] += bytes;
+
+                    if (src < rle_data || src + bytes > end)
+                    {
+                        status.setError("[ImageDecoder.PSD] Truncated RLE channel data.");
+                        return false;
+                    }
+
+                    Memory output(dest + y * bytes_per_scan, bytes_per_scan);
+                    ConstMemory input(src, bytes);
+
+                    if (!packbits_decompress(output, input))
+                    {
+                        status.setError("[ImageDecoder.PSD] packbits decompression failed.");
+                        return false;
+                    }
+                }
+
+                data = rle_data + packbits.offsets[0];
+                break;
+            }
+
+            case Compression::ZIP:
+            case Compression::ZIP_PRED:
+            {
+                const bool use_prediction = compression == Compression::ZIP_PRED ||
+                    (compression == Compression::ZIP && bits == 32);
+
+                ZlibChannelResult inflated = psd_inflate_channel(data, end, dest, plane_size);
+                if (!inflated.success)
+                {
+                    status.setError("[ImageDecoder.PSD] ZIP channel decompression failed.");
+                    return false;
+                }
+
+                data = inflated.next;
+
+                if (use_prediction)
+                {
+                    psd_undo_prediction(dest, width, height, bits);
+                }
+
+                break;
+            }
+
+            default:
+                status.setError("[ImageDecoder.PSD] Unsupported channel compression ({}).", int(compression));
+                return false;
+        }
+
+#ifdef MANGO_LITTLE_ENDIAN
+        byteswap(Memory(dest, plane_size), bits);
+#endif
+
+        return true;
+    }
+
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
+        ConstMemory m_layers;
 
         const u8* m_palette = nullptr;
 
@@ -262,6 +524,7 @@ namespace
                 return;
             }
             ConstMemory layer_data(p, layer_size);
+            m_layers = layer_data;
             p += layer_size;
 
             if (p + 2 > end)
@@ -274,12 +537,9 @@ namespace
             {
                 case Compression::RAW:
                 case Compression::RLE:
-                    break;
                 case Compression::ZIP:
                 case Compression::ZIP_PRED:
-                    // MANGO TODO: need psd files with these compressions
-                    header.setError("[ImageDecoder.PSD] Unsupported compression ({}).", int(m_compression));
-                    return;
+                    break;
                 default:
                     header.setError("[ImageDecoder.PSD] Incorrect compression ({}).", int(m_compression));
                     return;
@@ -417,6 +677,210 @@ namespace
             }
         }
 
+        bool parse_layer_records(std::vector<LayerRecord>& layers, const u8*& channel_data) const
+        {
+            layers.clear();
+            channel_data = nullptr;
+
+            if (m_layers.size < 6)
+            {
+                return false;
+            }
+
+            const u8* base = m_layers.address;
+            const u8* const section_end = m_layers.end();
+
+            u32 info_length = bigEndian::uload32(base);
+            if (info_length < 2 || base + 4 + info_length > section_end)
+            {
+                return false;
+            }
+
+            const u8* p = base + 4;
+            const u8* const info_end = base + 4 + info_length;
+            const s16 layer_count = s16(bigEndian::uload16(p)); p += 2;
+            if (!layer_count)
+            {
+                return false;
+            }
+
+            const int layer_total = std::abs(int(layer_count));
+
+            for (int i = 0; i < layer_total; ++i)
+            {
+                if (p + 18 > info_end)
+                {
+                    return false;
+                }
+
+                LayerRecord layer;
+                layer.top = bigEndian::uload32(p + 0); p += 4;
+                layer.left = bigEndian::uload32(p + 0); p += 4;
+                layer.bottom = bigEndian::uload32(p + 0); p += 4;
+                layer.right = bigEndian::uload32(p + 0); p += 4;
+
+                const int width = layer.width();
+                const int height = layer.height();
+
+                const u16 channel_count = bigEndian::uload16(p); p += 2;
+                if (!channel_count || channel_count > 56)
+                {
+                    return false;
+                }
+
+                layer.channels.resize(channel_count);
+                for (u16 c = 0; c < channel_count; ++c)
+                {
+                    if (p + 6 > info_end)
+                    {
+                        return false;
+                    }
+
+                    layer.channels[c].id = s16(bigEndian::uload16(p)); p += 2;
+                    layer.channels[c].data_length = bigEndian::uload32(p); p += 4;
+                }
+
+                if (p + 16 > info_end)
+                {
+                    return false;
+                }
+
+                p += 8; // blend mode signature + key
+                layer.opacity = p[0]; p += 1;
+                p += 1; // clipping
+                layer.flags = p[0]; p += 1;
+                p += 1; // filler
+
+                const u32 extra_length = bigEndian::uload32(p); p += 4;
+                if (extra_length > u32(info_end - p))
+                {
+                    return false;
+                }
+
+                p += extra_length;
+                layers.push_back(layer);
+            }
+
+            // Channel image data follows the entire layer info block (records, global
+            // layer mask, and any tagged blocks), not immediately after the records.
+            channel_data = info_end;
+            return !layers.empty();
+        }
+
+        bool decode_layers(Bitmap& dest, ImageDecodeStatus& status)
+        {
+            if (m_color_mode != ColorMode::RGB && m_color_mode != ColorMode::GRAYSCALE)
+            {
+                return false;
+            }
+
+            if (m_bits != 8)
+            {
+                return false;
+            }
+
+            std::vector<LayerRecord> layers;
+            const u8* channel_data = nullptr;
+            if (!parse_layer_records(layers, channel_data))
+            {
+                return false;
+            }
+
+            const u8* p = channel_data;
+            const u8* const end = m_layers.end();
+
+            std::memset(dest.image, 0, dest.stride * dest.height);
+
+            // Layer records are stored top-to-front; composite bottom-up.
+            for (int i = int(layers.size()) - 1; i >= 0; --i)
+            {
+                const LayerRecord& layer = layers[i];
+                const int width = layer.width();
+                const int height = layer.height();
+                const size_t plane_size = size_t(width) * size_t(height);
+
+                std::map<int, std::vector<u8>> planes;
+
+                for (const LayerChannelInfo& channel : layer.channels)
+                {
+                    if (p + channel.data_length > end)
+                    {
+                        status.setError("[ImageDecoder.PSD] Truncated layer channel data.");
+                        return false;
+                    }
+
+                    const u8* const channel_start = p;
+
+                    if (width <= 0 || height <= 0)
+                    {
+                        p = channel_start + channel.data_length;
+                        continue;
+                    }
+
+                    if (channel.data_length < 2)
+                    {
+                        status.setError("[ImageDecoder.PSD] Invalid layer channel length ({}).", channel.data_length);
+                        return false;
+                    }
+
+                    const u16 compression_code = bigEndian::uload16(p);
+                    const Compression compression = Compression(compression_code);
+                    p += 2;
+
+                    std::vector<u8> plane(plane_size);
+                    if (!decode_channel_plane(compression, m_version, width, height, m_bits,
+                        p, channel_start + channel.data_length, plane.data(), plane.size(), status))
+                    {
+                        return false;
+                    }
+
+                    p = channel_start + channel.data_length;
+                    planes[channel.id] = std::move(plane);
+                }
+
+                const std::vector<u8>* r = planes.count(0) ? &planes[0] : nullptr;
+                const std::vector<u8>* g = planes.count(1) ? &planes[1] : nullptr;
+                const std::vector<u8>* b = planes.count(2) ? &planes[2] : nullptr;
+                const std::vector<u8>* a = planes.count(-1) ? &planes[-1] : (planes.count(3) ? &planes[3] : nullptr);
+
+                if (width <= 0 || height <= 0)
+                {
+                    continue;
+                }
+
+                for (int y = 0; y < height; ++y)
+                {
+                    const int doc_y = layer.top + y;
+                    if (doc_y < 0 || doc_y >= dest.height)
+                    {
+                        continue;
+                    }
+
+                    u8* scan = dest.image + doc_y * dest.stride;
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        const int doc_x = layer.left + x;
+                        if (doc_x < 0 || doc_x >= dest.width)
+                        {
+                            continue;
+                        }
+
+                        const int i = y * width + x;
+                        const u8 rv = r ? (*r)[i] : 0;
+                        const u8 gv = g ? (*g)[i] : rv;
+                        const u8 bv = b ? (*b)[i] : rv;
+                        const u8 av = a ? (*a)[i] : 255;
+
+                        blend_pixel_rgba8(scan + doc_x * 4, rv, gv, bv, av, layer.opacity);
+                    }
+                }
+            }
+
+            printLine(Print::Info, "  Composited {} layer(s).", layers.size());
+            return true;
+        }
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(face);
@@ -442,6 +906,16 @@ namespace
 
             Bitmap temp(width, height, header.format);
             Buffer buffer(channels * bytes_per_scan);
+
+            if (decode_layers(temp, status))
+            {
+                dest.blit(0, 0, temp);
+                return status;
+            }
+
+            // Layer compositing is preferred when present, but fall back to the merged
+            // composite when parsing or decoding individual layers fails.
+            status = ImageDecodeStatus();
 
             switch (m_compression)
             {
@@ -525,14 +999,55 @@ namespace
                 }
 
                 case Compression::ZIP:
-                {
-                    // MANGO TODO: need example files
-                    break;
-                }
-
                 case Compression::ZIP_PRED:
                 {
-                    // MANGO TODO: need example files
+                    // Each channel is an independent zlib stream. Photoshop stores 32-bit
+                    // files as ZIP with prediction even when the header says ZIP only.
+                    const bool use_prediction = m_compression == Compression::ZIP_PRED ||
+                        (m_compression == Compression::ZIP && m_bits == 32);
+
+                    Buffer planes(size_t(m_channels) * bytes_per_channel);
+                    const u8* zip_end = data_end;
+
+                    for (int channel = 0; channel < m_channels; ++channel)
+                    {
+                        if (p >= zip_end)
+                        {
+                            status.setError("[ImageDecoder.PSD] Truncated ZIP image data.");
+                            return status;
+                        }
+
+                        u8* dest = planes + size_t(channel) * bytes_per_channel;
+                        ZlibChannelResult inflated = psd_inflate_channel(p, zip_end, dest, bytes_per_channel);
+                        if (!inflated.success)
+                        {
+                            status.setError("[ImageDecoder.PSD] ZIP decompression failed.");
+                            return status;
+                        }
+
+                        p = inflated.next;
+
+                        if (use_prediction)
+                        {
+                            psd_undo_prediction(dest, width, height, m_bits);
+                        }
+                    }
+
+                    for (int y = 0; y < height; ++y)
+                    {
+                        for (int channel = 0; channel < channels; ++channel)
+                        {
+                            const u8* src = planes + size_t(channel) * bytes_per_channel + y * bytes_per_scan;
+                            u8* dst = buffer + channel * bytes_per_scan;
+                            std::memcpy(dst, src, bytes_per_scan);
+                        }
+
+#ifdef MANGO_LITTLE_ENDIAN
+                        byteswap(buffer, m_bits);
+#endif
+                        resolve(temp.image + y * temp.stride, buffer, width, channels);
+                    }
+
                     break;
                 }
             }
@@ -664,22 +1179,45 @@ namespace
         {
             MANGO_UNREFERENCED(channels);
 
-            // MANGO TODO: 16, 32 bits
-            // MANGO TODO: different nr of channels
-            if (m_bits == 8)
+            switch (m_bits)
             {
-                for (int i = 0; i < width; ++i)
+                case 8:
                 {
-                    int c = src[width * 0];
-                    int m = src[width * 1];
-                    int y = src[width * 2];
-                    int k = src[width * 3];
-                    dest[0] = (c * k) / 255;
-                    dest[1] = (m * k) / 255;
-                    dest[2] = (y * k) / 255;
-                    dest[3] = 0xff;
-                    ++src;
-                    dest += 4;
+                    for (int i = 0; i < width; ++i)
+                    {
+                        int c = src[width * 0];
+                        int m = src[width * 1];
+                        int y = src[width * 2];
+                        int k = src[width * 3];
+                        dest[0] = (c * k) / 255;
+                        dest[1] = (m * k) / 255;
+                        dest[2] = (y * k) / 255;
+                        dest[3] = 0xff;
+                        ++src;
+                        dest += 4;
+                    }
+                    break;
+                }
+
+                case 16:
+                {
+                    u16* d = reinterpret_cast<u16*>(dest);
+                    const u16* s = reinterpret_cast<const u16*>(src);
+
+                    for (int i = 0; i < width; ++i)
+                    {
+                        u32 c = s[width * 0];
+                        u32 m = s[width * 1];
+                        u32 y = s[width * 2];
+                        u32 k = s[width * 3];
+                        d[0] = u16((c * k) / 65535);
+                        d[1] = u16((m * k) / 65535);
+                        d[2] = u16((y * k) / 65535);
+                        d[3] = 0xffff;
+                        ++s;
+                        d += 4;
+                    }
+                    break;
                 }
             }
         }

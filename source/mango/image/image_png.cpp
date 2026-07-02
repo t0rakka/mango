@@ -3889,13 +3889,31 @@ namespace
         if (m_number_of_frames > 0)
         {
             Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
-            TemporaryBitmap bitmap(area, m_header.format);
-            blend(bitmap, *temp);
 
-            if (dest.format != bitmap.format)
+            if (m_header.format.isIndexed() && !dest.format.isIndexed())
             {
-                bitmap.palette = &m_palette;
-                dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
+                // Compositing indexed APNG frames onto an RGBA canvas: resolve the frame
+                // to RGBA first so we never quantize the destination surface.
+                *temp->palette = m_palette;
+                Bitmap frame_rgba(m_frame.width, m_frame.height,
+                    Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+                image::resolve(frame_rgba, *temp);
+                blend(area, frame_rgba);
+            }
+            else
+            {
+                TemporaryBitmap bitmap(area, m_header.format);
+                blend(bitmap, *temp);
+
+                if (dest.format != bitmap.format)
+                {
+                    bitmap.palette = &m_palette;
+                    dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
+                }
+                else if (dest.format.isIndexed() && dest.palette)
+                {
+                    *dest.palette = m_palette;
+                }
             }
         }
 
