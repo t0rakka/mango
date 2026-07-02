@@ -161,7 +161,7 @@ namespace
             const bool isLuminance = (BitsPerPixel == 1 && NPlanes == 1);
 
             const bool isIndexed = !isTrueColor && !isLuminance && (
-                (BitsPerPixel == 1 && NPlanes == 4) ||
+                (BitsPerPixel == 1 && (NPlanes == 3 || NPlanes == 4)) ||
                 (BitsPerPixel == 2 && NPlanes == 1) ||
                 (BitsPerPixel == 4 && NPlanes == 1) ||
                 (BitsPerPixel == 8 && NPlanes == 1));
@@ -278,6 +278,33 @@ namespace
                 image[x + 1] = ((data >> 5) & 0x01) | ((data >> 3) & 0x02);
                 image[x + 2] = ((data >> 3) & 0x01) | ((data >> 1) & 0x02);
                 image[x + 3] = ((data >> 1) & 0x01) | ((data << 1) & 0x02);
+            }
+
+            buffer += scansize;
+            image += stride;
+        }
+    }
+
+    void decode3(const Surface& s, u8* buffer, int scansize)
+    {
+        const int width = s.width;
+        const int height = s.height;
+        const size_t stride = s.stride;
+        u8* image = s.image;
+
+        const int sn = scansize / 3;
+
+        for (int y = 0; y < height; ++y)
+        {
+            for (int x = 0; x < width; ++x)
+            {
+                const u8* src = buffer + (x >> 3);
+                const u8 mask = 0x80 >> (x & 7);
+                int index = 0;
+                if (src[sn * 0] & mask) index |= 1;
+                if (src[sn * 1] & mask) index |= 2;
+                if (src[sn * 2] & mask) index |= 4;
+                image[x] = u8(index);
             }
 
             buffer += scansize;
@@ -460,6 +487,21 @@ namespace
                             // 1 bpp monochrome -> 8-bit luminance (no palette).
                             decode1(target, buffer, scansize);
                             break;
+                        case 3:
+                        {
+                            Palette palette(8);
+
+                            const u8* pal = m_pcx_header.ColorMap;
+                            for (u32 i = 0; i < palette.size; ++i)
+                            {
+                                palette[i] = Color(pal[0], pal[1], pal[2], 0xff);
+                                pal += 3;
+                            }
+
+                            *target.palette = palette;
+                            decode3(target, buffer, scansize);
+                            break;
+                        }
                         case 4:
                         {
                             Palette palette(16);
