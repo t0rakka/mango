@@ -965,8 +965,16 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
                 endif ()
             endif ()
 
-            apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
-            return ()
+            if (NOT ImportedTarget STREQUAL "")
+                apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
+                return ()
+            endif ()
+
+            # FindJXR.cmake (vcpkg jxrlib) exposes JXR_INCLUDE_DIRS / JXR_LIBRARIES only
+            if (DEFINED ${Prefix}_INCLUDE_DIRS AND DEFINED ${Prefix}_LIBRARIES)
+                apply_manual_target(${Target} ${Interface} ${Prefix})
+                return ()
+            endif ()
         endif ()
     endif ()
 
@@ -1099,7 +1107,7 @@ if (LIBRARY_ISAL)
 endif ()
 
 if (LIBRARY_JXR)
-    find_module(mango JXR ${INTERFACE} OPTIONAL jxrlib "" "" 0)
+    find_module(mango JXR ${INTERFACE} OPTIONAL jxrlib JXR "" 0)
 endif ()
 
 if (LIBRARY_JXL)
@@ -1470,7 +1478,7 @@ if (BUILD_EXAMPLES)
 
     add_subdirectory(examples)
 
-    if (WIN32)
+    if (WIN32 AND BUILD_SHARED_LIBS)
         foreach (x ${EXAMPLE_BINARY_FOLDERS})
 
             get_filename_component(folder_name ${x} NAME)
@@ -1482,6 +1490,17 @@ if (BUILD_EXAMPLES)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:mango>" "${destination_folder}"
                 DEPENDS mango
             )
+
+            get_directory_property(example_targets DIRECTORY ${x} BUILDSYSTEM_TARGETS)
+            foreach (target ${example_targets})
+                if (NOT TARGET ${target})
+                    continue()
+                endif ()
+                get_target_property(target_type ${target} TYPE)
+                if (target_type STREQUAL "EXECUTABLE")
+                    add_dependencies(${target} copy_mango_to_${folder_name})
+                endif ()
+            endforeach ()
         endforeach ()
     endif ()
 

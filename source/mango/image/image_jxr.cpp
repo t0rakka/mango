@@ -6,7 +6,6 @@
 #include <cstdio>
 #include <cstring>
 #include <vector>
-#include <unistd.h>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
@@ -291,6 +290,97 @@ namespace
     }
 
     // ------------------------------------------------------------
+    // custom WMPStream <- ConstMemoryStream (decode)
+    // ------------------------------------------------------------
+    //
+    // libjxr bitstream IO expects CreateWS_File read semantics: fread must
+    // return the full request or fail. CreateWS_Memory returns success on
+    // partial EOF reads, which leaves stale data in the bitstream buffer.
+
+    struct InputContext
+    {
+        ConstMemoryStream stream;
+
+        InputContext(ConstMemory memory)
+            : stream(memory)
+        {
+        }
+    };
+
+    static
+    ERR CloseInputStream(WMPStream** ppWS)
+    {
+        if (ppWS && *ppWS)
+        {
+            delete reinterpret_cast<InputContext*>((*ppWS)->state.pvObj);
+            delete *ppWS;
+            *ppWS = nullptr;
+        }
+        return WMP_errSuccess;
+    }
+
+    static
+    Bool EOSInputStream(WMPStream* pWS)
+    {
+        auto* ctx = reinterpret_cast<InputContext*>(pWS->state.pvObj);
+        return ctx->stream.offset() >= ctx->stream.size();
+    }
+
+    static
+    ERR ReadInputStream(WMPStream* pWS, void* pv, size_t cb)
+    {
+        auto* ctx = reinterpret_cast<InputContext*>(pWS->state.pvObj);
+        if (!cb)
+            return WMP_errSuccess;
+
+        const u64 bytes = ctx->stream.read(pv, u64(cb));
+        return bytes == cb ? WMP_errSuccess : WMP_errFileIO;
+    }
+
+    static
+    ERR WriteInputStream(WMPStream* pWS, const void* pv, size_t cb)
+    {
+        MANGO_UNREFERENCED(pWS);
+        MANGO_UNREFERENCED(pv);
+        MANGO_UNREFERENCED(cb);
+        return WMP_errFileIO;
+    }
+
+    static
+    ERR SetPosInputStream(WMPStream* pWS, size_t offPos)
+    {
+        auto* ctx = reinterpret_cast<InputContext*>(pWS->state.pvObj);
+        ctx->stream.seek(s64(offPos), Stream::SeekMode::Begin);
+        return WMP_errSuccess;
+    }
+
+    static
+    ERR GetPosInputStream(WMPStream* pWS, size_t* poffPos)
+    {
+        auto* ctx = reinterpret_cast<InputContext*>(pWS->state.pvObj);
+        *poffPos = size_t(ctx->stream.offset());
+        return WMP_errSuccess;
+    }
+
+    static
+    ERR CreateInputStream(WMPStream** ppWS, ConstMemory memory)
+    {
+        auto* ctx = new InputContext(memory);
+        auto* pWS = new WMPStream {};
+
+        pWS->state.pvObj = ctx;
+        pWS->Close = CloseInputStream;
+        pWS->EOS = EOSInputStream;
+        pWS->Read = ReadInputStream;
+        pWS->Write = WriteInputStream;
+        pWS->SetPos = SetPosInputStream;
+        pWS->GetPos = GetPosInputStream;
+
+        *ppWS = pWS;
+        return WMP_errSuccess;
+    }
+
+    // ------------------------------------------------------------
     // encoder quality tables (from JxrEncApp.c)
     // ------------------------------------------------------------
 
@@ -492,7 +582,7 @@ namespace
     struct Interface : ImageDecodeInterface
     {
         Buffer m_memory;
-        std::string m_temp_path;
+        WMPStream* m_input_stream = nullptr;
         PKCodecFactory* m_codec_factory = nullptr;
         PKImageDecode* m_decoder = nullptr;
         PKFormatConverter* m_converter = nullptr;
@@ -525,11 +615,8 @@ namespace
                 m_converter->Release(&m_converter);
             if (m_decoder)
                 m_decoder->Release(&m_decoder);
-            if (!m_temp_path.empty())
-            {
-                std::remove(m_temp_path.c_str());
-                m_temp_path.clear();
-            }
+            if (m_input_stream)
+                CloseInputStream(&m_input_stream);
             if (m_codec_factory)
                 m_codec_factory->Release(&m_codec_factory);
         }
@@ -539,27 +626,14 @@ namespace
             if (!check(PKCreateCodecFactory(&m_codec_factory, WMP_SDK_VERSION), "PKCreateCodecFactory", status))
                 return false;
 
-            char path[] = "/tmp/mango-jxr-XXXXXX.jxr";
-            int fd = mkstemps(path, 4);
-            if (fd < 0)
-            {
-                status.setError("[JXR] Failed to create temporary file.");
+            ConstMemory input = m_memory;
+            if (!check(CreateInputStream(&m_input_stream, input), "CreateInputStream", status))
                 return false;
-            }
 
-            if (write(fd, m_memory.data(), m_memory.size()) != ssize_t(m_memory.size()))
-            {
-                close(fd);
-                std::remove(path);
-                status.setError("[JXR] Failed to write temporary file.");
+            if (!check(m_codec_factory->CreateCodec(&IID_PKImageWmpDecode, (void**)&m_decoder), "CreateCodec", status))
                 return false;
-            }
-            close(fd);
 
-            m_temp_path = path;
-
-            if (!check(PKCodecFactory_CreateDecoderFromFile(m_temp_path.c_str(), &m_decoder),
-                "CreateDecoderFromFile", status))
+            if (!check(m_decoder->Initialize(m_decoder, m_input_stream), "Initialize", status))
                 return false;
 
             PKPixelFormatGUID source_guid;
@@ -686,7 +760,9 @@ namespace
             if (!check(PKAllocAligned((void**)&pixels, bytes, 128), "PKAllocAligned", status))
                 return status;
 
-            PKRect rect = { 0, 0, header.width, header.height };
+            PKRect rect = { 0, 0,
+                (I32)m_decoder->WMP.wmiI.cROIWidth,
+                (I32)m_decoder->WMP.wmiI.cROIHeight };
 
             if (!check(m_converter->Copy(m_converter, &rect, pixels, stride), "Copy", status))
             {
