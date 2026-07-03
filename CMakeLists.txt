@@ -1001,6 +1001,19 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
         return ()
     endif ()
 
+    # Arch Linux jxrlib ships headers and libs but no pkg-config or cmake config
+    if (${Prefix} STREQUAL "JXR")
+        find_path(JXR_INCLUDE_DIRS NAMES JXRGlue.h PATH_SUFFIXES jxrlib)
+        find_library(JXR_JPEGXR_LIBRARY NAMES jpegxr)
+        find_library(JXR_JXRGLUE_LIBRARY NAMES jxrglue)
+
+        if (JXR_INCLUDE_DIRS AND JXR_JPEGXR_LIBRARY AND JXR_JXRGLUE_LIBRARY)
+            set(JXR_LIBRARIES ${JXR_JXRGLUE_LIBRARY} ${JXR_JPEGXR_LIBRARY})
+            apply_manual_target(${Target} ${Interface} ${Prefix})
+            return ()
+        endif ()
+    endif ()
+
     if (NOT PackageName STREQUAL "")
         check_required(${Prefix} ${PackageName})
     endif ()

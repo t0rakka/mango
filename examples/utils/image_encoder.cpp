@@ -73,6 +73,7 @@ int main(int argc, const char* argv[])
                 else
                 {
                     printLine("Unsupported output format: {}", extension);
+                    return 1;
                 }
             }
             else
