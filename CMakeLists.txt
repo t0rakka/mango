@@ -32,6 +32,7 @@ OPTION(LIBRARY_LZ4          "Enable LZ4 compression support"            ON)
 OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
 OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 
+OPTION(LIBRARY_JXR          "Enable JPEG XR image codec support"        ON)
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
 OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
@@ -61,6 +62,7 @@ OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 # Option to disable every optional library
 option(LIBRARY_DISABLE,     "Disable ALL optional libraries"            OFF)
 if (LIBRARY_DISABLE)
+    set(LIBRARY_JXR    OFF)
     set(LIBRARY_JXL    OFF)
     set(LIBRARY_JP2    OFF)
     set(LIBRARY_WEBP   OFF)
@@ -963,8 +965,16 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
                 endif ()
             endif ()
 
-            apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
-            return ()
+            if (NOT ImportedTarget STREQUAL "")
+                apply_cmake_target(${Target} ${Interface} ${Prefix} ${PackageName} ${ImportedTarget})
+                return ()
+            endif ()
+
+            # FindJXR.cmake (vcpkg jxrlib) exposes JXR_INCLUDE_DIRS / JXR_LIBRARIES only
+            if (DEFINED ${Prefix}_INCLUDE_DIRS AND DEFINED ${Prefix}_LIBRARIES)
+                apply_manual_target(${Target} ${Interface} ${Prefix})
+                return ()
+            endif ()
         endif ()
     endif ()
 
@@ -989,6 +999,19 @@ function (find_module Target Prefix Interface Mode ModuleName PackageName Import
     if (MANUAL_OVERRIDE_FOUND)
         apply_manual_target(${Target} ${Interface} ${Prefix})
         return ()
+    endif ()
+
+    # Arch Linux jxrlib ships headers and libs but no pkg-config or cmake config
+    if (${Prefix} STREQUAL "JXR")
+        find_path(JXR_INCLUDE_DIRS NAMES JXRGlue.h PATH_SUFFIXES jxrlib)
+        find_library(JXR_JPEGXR_LIBRARY NAMES jpegxr)
+        find_library(JXR_JXRGLUE_LIBRARY NAMES jxrglue)
+
+        if (JXR_INCLUDE_DIRS AND JXR_JPEGXR_LIBRARY AND JXR_JXRGLUE_LIBRARY)
+            set(JXR_LIBRARIES ${JXR_JXRGLUE_LIBRARY} ${JXR_JPEGXR_LIBRARY})
+            apply_manual_target(${Target} ${Interface} ${Prefix})
+            return ()
+        endif ()
     endif ()
 
     if (NOT PackageName STREQUAL "")
@@ -1094,6 +1117,10 @@ endif ()
 
 if (LIBRARY_ISAL)
     find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+endif ()
+
+if (LIBRARY_JXR)
+    find_module(mango JXR ${INTERFACE} OPTIONAL jxrlib JXR "" 0)
 endif ()
 
 if (LIBRARY_JXL)
@@ -1464,7 +1491,7 @@ if (BUILD_EXAMPLES)
 
     add_subdirectory(examples)
 
-    if (WIN32)
+    if (WIN32 AND BUILD_SHARED_LIBS)
         foreach (x ${EXAMPLE_BINARY_FOLDERS})
 
             get_filename_component(folder_name ${x} NAME)
@@ -1476,6 +1503,17 @@ if (BUILD_EXAMPLES)
                 COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:mango>" "${destination_folder}"
                 DEPENDS mango
             )
+
+            get_directory_property(example_targets DIRECTORY ${x} BUILDSYSTEM_TARGETS)
+            foreach (target ${example_targets})
+                if (NOT TARGET ${target})
+                    continue()
+                endif ()
+                get_target_property(target_type ${target} TYPE)
+                if (target_type STREQUAL "EXECUTABLE")
+                    add_dependencies(${target} copy_mango_to_${folder_name})
+                endif ()
+            endforeach ()
         endforeach ()
     endif ()
 

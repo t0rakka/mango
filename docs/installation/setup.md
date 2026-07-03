@@ -19,7 +19,7 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
 ### OPTIONAL Libraries
 
-    sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev
+    sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev
 
 ### OPTIONAL Libraries (OpenGL)
 
@@ -58,7 +58,7 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 
 ### OPTIONAL Libraries
 
-    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2
+    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib
 
 ### OPTIONAL Libraries (OpenGL)
 
@@ -90,7 +90,7 @@ On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
 
 ### OPTIONAL Libraries
 
-    brew install jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2
+    brew install jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib
 
 ### OPTIONAL Libraries (Import3D)
 
@@ -133,7 +133,7 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
 ### OPTIONAL Libraries
 
-    vcpkg install libjxl openjpeg libwebp libavif libheif libraw isal lz4 bzip2
+    vcpkg install libjxl openjpeg libwebp libavif libheif libraw isal lz4 bzip2 jxrlib
 
 ### OPTIONAL Libraries (Vulkan)
 
