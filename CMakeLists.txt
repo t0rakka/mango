@@ -32,6 +32,7 @@ OPTION(LIBRARY_LZ4          "Enable LZ4 compression support"            ON)
 OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
 OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 
+OPTION(LIBRARY_JXR          "Enable JPEG XR image codec support"        ON)
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
 OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
 OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
@@ -61,6 +62,7 @@ OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 # Option to disable every optional library
 option(LIBRARY_DISABLE,     "Disable ALL optional libraries"            OFF)
 if (LIBRARY_DISABLE)
+    set(LIBRARY_JXR    OFF)
     set(LIBRARY_JXL    OFF)
     set(LIBRARY_JP2    OFF)
     set(LIBRARY_WEBP   OFF)
@@ -1094,6 +1096,10 @@ endif ()
 
 if (LIBRARY_ISAL)
     find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+endif ()
+
+if (LIBRARY_JXR)
+    find_module(mango JXR ${INTERFACE} OPTIONAL jxrlib "" "" 0)
 endif ()
 
 if (LIBRARY_JXL)
