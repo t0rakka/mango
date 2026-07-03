@@ -575,6 +575,13 @@ namespace
         return config;
     }
 
+    static
+    Format mangoFormatStripAlpha(Format format)
+    {
+        format.size[3] = 0;
+        return format;
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -589,6 +596,7 @@ namespace
 
         PKPixelFormatGUID m_output_guid = GUID_PKPixelFormatDontCare;
         Format m_output_format;
+        bool m_bitstream_has_alpha = false;
 
         Interface(ConstMemory memory)
         {
@@ -636,6 +644,8 @@ namespace
             if (!check(m_decoder->Initialize(m_decoder, m_input_stream), "Initialize", status))
                 return false;
 
+            m_bitstream_has_alpha = (m_decoder->WMP.wmiSCP.uAlphaMode != 0);
+
             PKPixelFormatGUID source_guid;
             if (!check(m_decoder->GetPixelFormat(m_decoder, &source_guid), "GetPixelFormat", status))
                 return false;
@@ -658,6 +668,8 @@ namespace
                 return false;
 
             m_output_format = mangoFormatForOutput(m_output_guid);
+            if (!m_bitstream_has_alpha)
+                m_output_format = mangoFormatStripAlpha(m_output_format);
 
             if (!check(m_codec_factory->CreateFormatConverter(&m_converter), "CreateFormatConverter", status))
                 return false;
@@ -704,7 +716,7 @@ namespace
                 return false;
 
             U8 alpha_mode = 0;
-            if (!!(output_info.grBit & PK_pixfmtHasAlpha))
+            if (m_bitstream_has_alpha && !!(output_info.grBit & PK_pixfmtHasAlpha))
                 alpha_mode = 2;
 
             m_decoder->WMP.wmiSCP.bfBitstreamFormat = SPATIAL;
