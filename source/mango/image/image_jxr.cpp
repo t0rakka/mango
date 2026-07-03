@@ -748,32 +748,23 @@ namespace
                 return status;
             }
 
+            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
+
             PKPixelInfo output_info;
             output_info.pGUIDPixFmt = &m_output_guid;
             if (!check(PixelFormatLookup(&output_info, LOOKUP_FORWARD), "PixelFormatLookup", status))
-                return status;
-
-            const u32 stride = computeStride(output_info, u32(header.width));
-            const size_t bytes = size_t(stride) * header.height;
-
-            u8* pixels = nullptr;
-            if (!check(PKAllocAligned((void**)&pixels, bytes, 128), "PKAllocAligned", status))
                 return status;
 
             PKRect rect = { 0, 0,
                 (I32)m_decoder->WMP.wmiI.cROIWidth,
                 (I32)m_decoder->WMP.wmiI.cROIHeight };
 
-            if (!check(m_converter->Copy(m_converter, &rect, pixels, stride), "Copy", status))
-            {
-                PKFreeAligned((void**)&pixels);
+            const u32 stride = computeStride(output_info, u32(header.width));
+            if (!check(m_converter->Copy(m_converter, &rect, target.image, stride), "Copy", status))
                 return status;
-            }
 
-            Surface temp(header.width, header.height, m_output_format, stride, pixels);
-            dest.blit(0, 0, temp);
-
-            PKFreeAligned((void**)&pixels);
+            target.resolve();
+            status.direct = target.isDirect();
 
             return status;
         }
