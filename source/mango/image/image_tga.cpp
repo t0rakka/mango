@@ -190,6 +190,11 @@ namespace
             return (image_type & 8) != 0;
         }
 
+        bool hasAlphaChannel() const
+        {
+            return (descriptor & DESCRIPTOR_ALPHA) != 0;
+        }
+
         int getBytesPerPixel() const
         {
             return pixel_size >> 3;
@@ -306,6 +311,55 @@ namespace
         }
 
         return true;
+    }
+
+    static
+    void fixupAlphaChannel(const Surface& surface, const HeaderTGA& header)
+    {
+        if (header.pixel_size != 32)
+            return;
+
+        const bool has_alpha = header.hasAlphaChannel();
+        u8* image = const_cast<u8*>(surface.image);
+
+        // When the header does not advertise an alpha channel, the fourth byte is
+        // file padding and must be treated as opaque.
+        bool force_opaque = !has_alpha;
+
+        // Legacy files (e.g. Truevision samples) may set the attribute-bits field
+        // but leave every alpha byte at zero. Only apply a file-wide fix when no
+        // pixel has any alpha at all; otherwise preserve per-pixel alpha, including
+        // legitimate alpha==0 at edges.
+        if (has_alpha)
+        {
+            u8 max_alpha = 0;
+            bool has_rgb = false;
+
+            for (int y = 0; y < surface.height; ++y)
+            {
+                const u8* scan = image + y * surface.stride;
+
+                for (int x = 0; x < surface.width; ++x)
+                {
+                    const u8* pixel = scan + x * 4;
+                    max_alpha = std::max(max_alpha, pixel[3]);
+                    has_rgb |= (pixel[0] | pixel[1] | pixel[2]) != 0;
+                }
+            }
+
+            force_opaque = (max_alpha == 0 && has_rgb);
+        }
+
+        if (!force_opaque)
+            return;
+
+        for (int y = 0; y < surface.height; ++y)
+        {
+            u8* scan = image + y * surface.stride;
+
+            for (int x = 0; x < surface.width; ++x)
+                scan[x * 4 + 3] = 0xff;
+        }
     }
 
     // ------------------------------------------------------------
@@ -499,6 +553,10 @@ namespace
             }
 
             target.resolve();
+
+            // Operate on the final destination; resolve() may have blitted out of a temp.
+            fixupAlphaChannel(surface, m_targa_header);
+
             status.direct = target.isDirect();
 
             return status;
