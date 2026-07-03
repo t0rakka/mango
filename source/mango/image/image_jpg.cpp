@@ -81,6 +81,8 @@ namespace mango::image
         registerImageDecoder(createInterface, ".jpeg");
         registerImageDecoder(createInterface, ".jfif");
         registerImageDecoder(createInterface, ".mpo");
+        registerImageDecoder(createInterface, ".jpe");
+        registerImageDecoder(createInterface, ".jps");
         registerImageEncoder(imageEncode, ".jpg");
         registerImageEncoder(imageEncode, ".jpeg");
     }
