@@ -323,6 +323,48 @@ namespace
     using ImageProcessFunc = void (*)(const Surface& surface, const opj_image_t& image);
 
     static
+    Format storageFormatForComponents(u32 components, bool has_alpha)
+    {
+        switch (components)
+        {
+            case 1:
+                return LuminanceFormat(8, Format::UNORM, 8, 0);
+
+            case 2:
+                return LuminanceFormat(16, Format::UNORM, 8, 8);
+
+            case 3:
+                return Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
+
+            case 4:
+                return has_alpha
+                    ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
+                    : Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
+
+            default:
+                return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+    }
+
+    // Mango pipeline convention (PNG/JXL): color images are reported as 8-bit RGBA.
+    // Opaque RGB is decoded into 24-bit storage and expanded on resolve.
+    static
+    Format headerFormatForComponents(u32 components)
+    {
+        switch (components)
+        {
+            case 1:
+                return LuminanceFormat(8, Format::UNORM, 8, 0);
+
+            case 2:
+                return LuminanceFormat(16, Format::UNORM, 8, 8);
+
+            default:
+                return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+    }
+
+    static
     void process_generic_1_comp(const Surface& surface, const opj_image_t& image)
     {
         int width = surface.width;
@@ -389,7 +431,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
+            u8* dest = surface.image + y * stride;
 
             s32* src0 = image.comps[0].data + (y / image.comps[0].dy) * image.comps[0].w;
             s32* src1 = image.comps[1].data + (y / image.comps[1].dy) * image.comps[1].w;
@@ -416,7 +458,6 @@ namespace
                 u32 r = s0;
                 u32 g = s1;
                 u32 b = s2;
-                u32 a = 0xff;
 
                 if (is_yuv)
                 {
@@ -430,7 +471,10 @@ namespace
                     b = byteclamp(b);
                 }
 
-                dest[x] = makeRGBA(r, g, b, a);
+                u8* pixel = dest + x * 3;
+                pixel[0] = u8(r);
+                pixel[1] = u8(g);
+                pixel[2] = u8(b);
             }
         }
     }
@@ -442,52 +486,65 @@ namespace
         int height = surface.height;
         size_t stride = surface.stride;
 
-        bool is_yuv = (image.comps[0].dx == 1 && image.comps[0].dy == 1) &&
-                       image.comps[1].dx != 1;
+        int alpha_idx = -1;
+        u32 color_idx[3] {};
+        u32 color_count = 0;
+
+        for (u32 i = 0; i < image.numcomps; ++i)
+        {
+            if (image.comps[i].alpha)
+            {
+                alpha_idx = int(i);
+            }
+            else if (color_count < 3)
+            {
+                color_idx[color_count++] = i;
+            }
+        }
+
+        if (alpha_idx < 0 || color_count < 3)
+        {
+            process_generic_3_comp(surface, image);
+            return;
+        }
+
+        bool is_yuv = (image.comps[color_idx[0]].dx == 1 && image.comps[color_idx[0]].dy == 1) &&
+                       image.comps[color_idx[1]].dx != 1;
+
+        const opj_image_comp_t& comp_r = image.comps[color_idx[0]];
+        const opj_image_comp_t& comp_g = image.comps[color_idx[1]];
+        const opj_image_comp_t& comp_b = image.comps[color_idx[2]];
+        const opj_image_comp_t& comp_a = image.comps[alpha_idx];
 
         for (int y = 0; y < height; ++y)
         {
             u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
 
-            s32* src0 = image.comps[0].data + (y / image.comps[0].dy) * image.comps[0].w;
-            s32* src1 = image.comps[1].data + (y / image.comps[1].dy) * image.comps[1].w;
-            s32* src2 = image.comps[2].data + (y / image.comps[2].dy) * image.comps[2].w;
-            s32* src3 = image.comps[3].data + (y / image.comps[3].dy) * image.comps[3].w;
+            s32* src_r = comp_r.data + (y / comp_r.dy) * comp_r.w;
+            s32* src_g = comp_g.data + (y / comp_g.dy) * comp_g.w;
+            s32* src_b = comp_b.data + (y / comp_b.dy) * comp_b.w;
+            s32* src_a = comp_a.data + (y / comp_a.dy) * comp_a.w;
 
-            u32 prec0 = image.comps[0].prec;
-            u32 prec1 = image.comps[1].prec;
-            u32 prec2 = image.comps[2].prec;
-            u32 prec3 = image.comps[3].prec;
-
-            u32 bias0 = image.comps[0].sgnd ? 1 << (prec0 - 1) : 0;
-            u32 bias1 = image.comps[1].sgnd ? 1 << (prec1 - 1) : 0;
-            u32 bias2 = image.comps[2].sgnd ? 1 << (prec2 - 1) : 0;
-            u32 bias3 = image.comps[3].sgnd ? 1 << (prec3 - 1) : 0;
+            u32 bias_r = comp_r.sgnd ? 1 << (comp_r.prec - 1) : 0;
+            u32 bias_g = comp_g.sgnd ? 1 << (comp_g.prec - 1) : 0;
+            u32 bias_b = comp_b.sgnd ? 1 << (comp_b.prec - 1) : 0;
+            u32 bias_a = comp_a.sgnd ? 1 << (comp_a.prec - 1) : 0;
 
             for (int x = 0; x < width; ++x)
             {
-                u32 s0 = src0[x / image.comps[0].dx];
-                u32 s1 = src1[x / image.comps[1].dx];
-                u32 s2 = src2[x / image.comps[2].dx];
-                u32 s3 = src3[x / image.comps[3].dx];
-
-                s0 = u32_scale(s0 + bias0, prec0, 8);
-                s1 = u32_scale(s1 + bias1, prec1, 8);
-                s2 = u32_scale(s2 + bias2, prec2, 8);
-                s3 = u32_scale(s3 + bias3, prec3, 8);
-
-                u32 r = s0;
-                u32 g = s1;
-                u32 b = s2;
-                u32 a = s3;
+                u32 r = u32_scale(src_r[x / comp_r.dx] + bias_r, comp_r.prec, 8);
+                u32 g = u32_scale(src_g[x / comp_g.dx] + bias_g, comp_g.prec, 8);
+                u32 b = u32_scale(src_b[x / comp_b.dx] + bias_b, comp_b.prec, 8);
+                u32 a = u32_scale(src_a[x / comp_a.dx] + bias_a, comp_a.prec, 8);
 
                 if (is_yuv)
                 {
-                    s32 cb = s1;
-                    s32 cr = s2;
-                    r = s0 + ((cr * 91750 - 11711232) >> 16);
-                    g = s0 + ((cb * -22479 + cr * -46596 + 8874368) >> 16);
-                    b = s0 + ((cb * 115671 - 14773120) >> 16);
+                    s32 cb = g;
+                    s32 cr = b;
+                    u32 y0 = r;
+                    r = y0 + ((cr * 91750 - 11711232) >> 16);
+                    g = y0 + ((cb * -22479 + cr * -46596 + 8874368) >> 16);
+                    b = y0 + ((cb * 115671 - 14773120) >> 16);
                     r = byteclamp(r);
                     g = byteclamp(g);
                     b = byteclamp(b);
@@ -549,7 +606,7 @@ namespace
 
         for (int y = 0; y < height; ++y)
         {
-            u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
+            u8* dest = surface.image + y * stride;
 
             s32* src0 = image.comps[0].data + y * image.comps[0].w;
             s32* src1 = image.comps[1].data + y * image.comps[1].w;
@@ -557,11 +614,9 @@ namespace
 
             for (int x = 0; x < width; ++x)
             {
-                s32 r = src0[x];
-                s32 g = src1[x];
-                s32 b = src2[x];
-                s32 a = 0xff;
-                dest[x] = makeRGBA(r, g, b, a);
+                dest[x * 3 + 0] = u8(src0[x]);
+                dest[x * 3 + 1] = u8(src1[x]);
+                dest[x * 3 + 2] = u8(src2[x]);
             }
         }
     }
@@ -573,21 +628,43 @@ namespace
         int height = surface.height;
         size_t stride = surface.stride;
 
+        int alpha_idx = -1;
+        u32 color_idx[3] {};
+        u32 color_count = 0;
+
+        for (u32 i = 0; i < image.numcomps; ++i)
+        {
+            if (image.comps[i].alpha)
+            {
+                alpha_idx = int(i);
+            }
+            else if (color_count < 3)
+            {
+                color_idx[color_count++] = i;
+            }
+        }
+
+        if (alpha_idx < 0 || color_count < 3)
+        {
+            process_unorm_8bit_rgb(surface, image);
+            return;
+        }
+
         for (int y = 0; y < height; ++y)
         {
             u32* dest = reinterpret_cast<u32*>(surface.image + y * stride);
 
-            s32* src0 = image.comps[0].data + y * image.comps[0].w;
-            s32* src1 = image.comps[1].data + y * image.comps[1].w;
-            s32* src2 = image.comps[2].data + y * image.comps[2].w;
-            s32* src3 = image.comps[3].data + y * image.comps[3].w;
+            s32* src_r = image.comps[color_idx[0]].data + y * image.comps[color_idx[0]].w;
+            s32* src_g = image.comps[color_idx[1]].data + y * image.comps[color_idx[1]].w;
+            s32* src_b = image.comps[color_idx[2]].data + y * image.comps[color_idx[2]].w;
+            s32* src_a = image.comps[alpha_idx].data + y * image.comps[alpha_idx].w;
 
             for (int x = 0; x < width; ++x)
             {
-                s32 r = src0[x];
-                s32 g = src1[x];
-                s32 b = src2[x];
-                s32 a = src3[x];
+                s32 r = src_r[x];
+                s32 g = src_g[x];
+                s32 b = src_b[x];
+                s32 a = src_a[x];
                 dest[x] = makeRGBA(r, g, b, a);
             }
         }
@@ -639,6 +716,7 @@ namespace
     struct Interface : ImageDecodeInterface
     {
         ImageProcessFunc m_process_func = nullptr;
+        Format m_storage_format;
         MemoryStreamReader m_memory_reader;
 
         opj_codec_t* m_codec = nullptr;
@@ -688,42 +766,9 @@ namespace
                 return;
             }
 
-            // ICC color profile
-            icc.address = m_image->icc_profile_buf;
-            icc.size = m_image->icc_profile_len;
-
             u32 width = m_image->x1 - m_image->x0;
             u32 height = m_image->y1 - m_image->y0;
             u32 components = m_image->numcomps;
-
-            Format format;
-
-            switch (components)
-            {
-                case 1:
-                    format = LuminanceFormat(8, Format::UNORM, 8, 0);
-                    m_process_func = process_generic_1_comp;
-                    break;
-
-                case 2:
-                    format = LuminanceFormat(16, Format::UNORM, 8, 8);
-                    m_process_func = process_generic_2_comp;
-                    break;
-
-                case 3:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    m_process_func = process_generic_3_comp;
-                    break;
-
-                case 4:
-                    format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                    m_process_func = process_generic_4_comp;
-                    break;
-
-                default:
-                    header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
-                    return;
-            }
 
             printLine(Print::Info, "[image]");
             printLine(Print::Info, "  dimensions: {} x {}", width, height);
@@ -734,6 +779,7 @@ namespace
             bool is_signed = false;
             bool is_subsampled = false;
             bool is_8bit = true;
+            bool has_alpha = false;
 
             for (u32 i = 0; i < components; ++i)
             {
@@ -741,6 +787,11 @@ namespace
 
                 printLine(Print::Info, "  #{}: {} x {}, bits: {}, alpha: {}, sgnd: {}, dx: {}, dy: {}", 
                     i, comp.w, comp.h, comp.prec, comp.alpha, comp.sgnd, comp.dx, comp.dy);
+
+                if (comp.alpha)
+                {
+                    has_alpha = true;
+                }
 
                 if (comp.w != width || comp.h != height || comp.dx != 1 || comp.dy != 1)
                 {
@@ -758,16 +809,43 @@ namespace
                 }
             }
 
+            if (components < 1 || components > 4)
+            {
+                header.setError("[ImageDecoder.JP2] Incorrect number of components ({}).", components);
+                return;
+            }
+
+            Format format = headerFormatForComponents(components);
+            m_storage_format = storageFormatForComponents(components, has_alpha);
+
+            switch (components)
+            {
+                case 1:
+                    m_process_func = process_generic_1_comp;
+                    break;
+
+                case 2:
+                    m_process_func = process_generic_2_comp;
+                    break;
+
+                case 3:
+                    m_process_func = process_generic_3_comp;
+                    break;
+
+                case 4:
+                    m_process_func = has_alpha ? process_generic_4_comp : process_generic_3_comp;
+                    break;
+            }
+
             bool is_standard = is_8bit && !is_signed && !is_subsampled;
 
             switch (m_image->color_space)
             {
                 case OPJ_CLRSPC_UNKNOWN:
-                    header.setError("[ImageDecoder.JP2] Unknown color space ({}).", int(m_image->color_space));
-                    return;
-
                 case OPJ_CLRSPC_UNSPECIFIED:
-                    // Determine heuristically
+                    // OpenJPEG reports UNKNOWN when the codestream omits an enumerated
+                    // colour space (common for ICC-tagged JP2 such as relax.jp2).
+                    // Determine heuristically from component count and layout.
                     switch (components)
                     {
                         case 1:
@@ -791,7 +869,7 @@ namespace
                         case 4:
                             if (is_standard)
                             {
-                                m_process_func = process_unorm_8bit_rgba;
+                                m_process_func = has_alpha ? process_unorm_8bit_rgba : process_unorm_8bit_rgb;
                             }
                             break;
                     }
@@ -806,9 +884,13 @@ namespace
                     if (is_standard)
                     {
                         if (components == 3)
+                        {
                             m_process_func = process_unorm_8bit_rgb;
+                        }
                         else
-                            m_process_func = process_unorm_8bit_rgba;
+                        {
+                            m_process_func = has_alpha ? process_unorm_8bit_rgba : process_unorm_8bit_rgb;
+                        }
                     }
                     break;
 
@@ -850,11 +932,15 @@ namespace
             header.format  = format;
             header.compression = TextureCompression::NONE;
 
-            // JPEG 2000 enumerated color spaces (sRGB / grayscale / sYCC) are all sRGB
-            // transfer, which is the default. An embedded ICC profile, when present, defines
-            // the color space exactly and is forwarded above.
-            if (m_image->icc_profile_len)
+            // OpenJPEG applies the codestream MCT and returns display-ready 8-bit
+            // components for standard layouts (same values opj_decompress writes).
+            // Forwarding the embedded ICC for a second lcms transform corrupts the
+            // image (e.g. relax.jp2). Only expose ICC on non-standard decode paths.
+            if (!is_standard && m_image->icc_profile_len)
             {
+                icc.address = m_image->icc_profile_buf;
+                icc.size = m_image->icc_profile_len;
+
                 header.color.primaries = ColorPrimaries::Unspecified;
                 header.color.transfer = TransferFunction::Unspecified;
             }
@@ -907,9 +993,10 @@ namespace
 
             if (m_process_func)
             {
-                Bitmap bitmap(header.width, header.height, header.format);
-                m_process_func(bitmap, *m_image);
-                dest.blit(0, 0, bitmap);
+                DecodeTargetBitmap target(dest, header.width, header.height, m_storage_format);
+                m_process_func(target, *m_image);
+                target.resolve();
+                status.direct = target.isDirect();
             }
 
             return status;
