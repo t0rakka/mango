@@ -592,40 +592,100 @@ namespace
     }
 
     static
-    std::unique_ptr<Bitmap> decodePlanarRgbBlock(ConstMemory block, int width, int height)
+    bool parseStdPixBlock(ConstMemory block, PictRect& src_rect, size_t& data_offset)
+    {
+        if (block.size < 68)
+        {
+            return false;
+        }
+
+        BigEndianConstPointer p = block.address;
+
+        p += 2; // version
+        p += 36; // matrix
+        p += 4; // matte size
+        p += 8; // matte rect
+        p += 2; // transfer mode
+
+        if (!readPictRect(p, block, src_rect))
+        {
+            return false;
+        }
+
+        p += 4; // accuracy
+        u32 mask_size = p.read32();
+        if (p + mask_size > block.end())
+        {
+            return false;
+        }
+
+        p += mask_size;
+
+        size_t payload_offset = size_t(p - block.address);
+        data_offset = payload_offset;
+
+        if (payload_offset + 8 <= block.size)
+        {
+            u32 atom_size = bigEndian::uload32(block.address + payload_offset);
+            if (atom_size >= 8 && payload_offset + atom_size <= block.size)
+            {
+                data_offset = payload_offset + atom_size;
+            }
+        }
+
+        return true;
+    }
+
+    static
+    std::unique_ptr<Bitmap> decodeChunkyRgbBlock(ConstMemory block, int width, int height, size_t data_offset)
     {
         if (width < 1 || height < 1)
         {
             return nullptr;
         }
 
-        const size_t plane_bytes = size_t(width) * size_t(height);
-        const size_t need = plane_bytes * 3;
+        const size_t stride = size_t(width) * 3;
+        const size_t need = stride * size_t(height);
 
-        static const size_t offsets [] = { 0, 100, 154, 200, 256, 300, 400, 512 };
-
-        for (size_t start : offsets)
+        if (data_offset + need > block.size)
         {
-            if (start + need > block.size)
+            return nullptr;
+        }
+
+        const u8* pixels = block.address + data_offset;
+
+        auto output = std::make_unique<Bitmap>(width, height,
+            Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* row = pixels + size_t(y) * stride;
+            Color* dest = output->address<Color>(0, y);
+
+            for (int x = 0; x < width; ++x)
             {
-                continue;
+                dest[x] = Color(row[x * 3 + 0], row[x * 3 + 1], row[x * 3 + 2], 255);
             }
+        }
 
-            const u8* base = block.address + start;
-            auto output = std::make_unique<Bitmap>(width, height,
-                Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+        return output;
+    }
 
-            for (int y = 0; y < height; ++y)
-            {
-                Color* dest = output->address<Color>(0, y);
-                for (int x = 0; x < width; ++x)
-                {
-                    size_t i = size_t(y) * width + x;
-                    dest[x] = Color(base[i], base[plane_bytes + i], base[plane_bytes * 2 + i], 255);
-                }
-            }
+    static
+    std::unique_ptr<Bitmap> decodeQtImageBlock(ConstMemory block, int width, int height)
+    {
+        PictRect src_rect;
+        size_t data_offset = 0;
 
-            return output;
+        if (parseStdPixBlock(block, src_rect, data_offset) && src_rect.valid())
+        {
+            width = src_rect.width();
+            height = src_rect.height();
+        }
+
+        if (auto bitmap = decodeChunkyRgbBlock(block, width, height, data_offset))
+        {
+            return bitmap;
         }
 
         return nullptr;
@@ -1030,15 +1090,15 @@ namespace
                 }
             }
 
-            auto planar = decodePlanarRgbBlock(block, frame.width(), frame.height());
+            auto qt_image = decodeQtImageBlock(block, frame.width(), frame.height());
             p = block_start + 4 + length;
 
-            if (!planar)
+            if (!qt_image)
             {
                 return false;
             }
 
-            blitTileToCanvas(*canvas, frame, frame, *planar);
+            blitTileToCanvas(*canvas, frame, frame, *qt_image);
             has_content = true;
             return true;
         }
