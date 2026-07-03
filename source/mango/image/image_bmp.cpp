@@ -1147,6 +1147,30 @@ namespace
             return std::move(header);
         }
 
+        // Some writers set bfOffBits to the end of the DIB header (start of palette)
+        // instead of after the palette. Bump the pixel offset past the color table.
+        if (header.bitsPerPixel <= 8 && header.palette)
+        {
+            int components = header.paletteComponents;
+            if (!components)
+            {
+                components = 4;
+            }
+
+            u32 colors = header.paletteSize;
+            if (!colors)
+            {
+                colors = 1u << header.bitsPerPixel;
+            }
+
+            size_t computed = size_t(header.headerSize) + size_t(colors) * size_t(components);
+
+            if (offset < computed)
+            {
+                offset = computed;
+            }
+        }
+
         Palette palette;
         Palette* ptr_palette = nullptr; // not supported
 
