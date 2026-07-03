@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <vector>
 #include <mango/core/pointer.hpp>
@@ -15,6 +15,7 @@
 //   ANIM op 5 ("Byte Vertical Delta Compression") is the most common method.
 // - HAM-E (Black Belt Systems): a 4-plane hires ILBM reinterpreted by an external decoder,
 //   programmed via "magic cookie" trigger scanlines.
+// - Maya IFF (Alias|Wavefront flib): FOR4/CIMG tiled RGBA (Nuke iffReader, OIIO iffinput).
 
 namespace
 {
@@ -768,6 +769,7 @@ namespace
         SIGNATURE_PBM = 2,
         SIGNATURE_RGB8 = 3,
         SIGNATURE_RGBN = 4,
+        SIGNATURE_CIMG = 5,
     };
 
     struct ChunkBMHD
@@ -919,6 +921,177 @@ namespace
     }
 
     // ------------------------------------------------------------
+    // Maya IFF (FOR4/CIMG)
+    // ------------------------------------------------------------
+
+    enum : u32
+    {
+        MAYA_RGB_FLAG   = 1,
+        MAYA_ALPHA_FLAG = 2,
+    };
+
+    struct ChunkTBHD
+    {
+        u32 width = 0;
+        u32 height = 0;
+        u32 flags = 0;
+        u16 datatype = 0;
+        u16 tiles = 0;
+        u32 compress = 0;
+        int depth = 0;
+
+        bool parse(BigEndianConstPointer p, size_t size)
+        {
+            if (size < 24)
+                return false;
+
+            width = p.read32();
+            height = p.read32();
+            p += 4;
+            flags = p.read32();
+            datatype = p.read16();
+            tiles = p.read16();
+            compress = p.read32();
+
+            depth = 0;
+            if (flags & MAYA_RGB_FLAG)
+                depth += 3;
+            if (flags & MAYA_ALPHA_FLAG)
+                depth += 1;
+
+            return width > 0 && height > 0 && depth > 0;
+        }
+    };
+
+    static
+    void maya_decompress_rle(u8* data, int delta, int num_bytes,
+                             const u8* compressed, size_t compressed_size, size_t& index)
+    {
+        int to = 0;
+
+        while (to < num_bytes)
+        {
+            if (index >= compressed_size)
+            {
+                while (to < num_bytes)
+                    data[delta * to++] = 0;
+                break;
+            }
+
+            u8 code = compressed[index++];
+            int count = (code & 0x7f) + 1;
+
+            if (to + count > num_bytes)
+                count = num_bytes - to;
+
+            if (code & 0x80)
+            {
+                if (index >= compressed_size)
+                    break;
+
+                u8 value = compressed[index++];
+                for (int i = 0; i < count; ++i)
+                    data[delta * to++] = value;
+            }
+            else
+            {
+                for (int i = 0; i < count; ++i)
+                {
+                    if (index >= compressed_size)
+                        break;
+                    data[delta * to++] = compressed[index++];
+                }
+            }
+        }
+    }
+
+    static
+    bool maya_decode_tile_rle(std::vector<u8>& tile, int pixels, int depth,
+                            const u8* data, size_t data_size)
+    {
+        tile.resize(size_t(pixels) * depth);
+
+        static const int offsets[] = { 0, 1, 2, 3 };
+
+        size_t index = 0;
+
+        if (depth > 4)
+            return false;
+
+        for (int c = 0; c < depth; ++c)
+        {
+            maya_decompress_rle(tile.data() + offsets[c], depth, pixels,
+                                data, data_size, index);
+        }
+
+        return true;
+    }
+
+    static
+    bool maya_decode_tile(std::vector<u8>& tile, int pixels, int depth,
+                         const u8* data, size_t data_size)
+    {
+        const size_t needed = size_t(pixels) * depth;
+
+        if (data_size >= needed)
+        {
+            tile.resize(needed);
+            std::memcpy(tile.data(), data, needed);
+            return true;
+        }
+
+        return maya_decode_tile_rle(tile, pixels, depth, data, data_size);
+    }
+
+    static
+    void maya_blit_tile(u8* dest, int stride, int depth,
+                        int x0, int y0, int tile_width, int tile_height,
+                        const u8* tile)
+    {
+        for (int y = 0; y < tile_height; ++y)
+        {
+            u8* out = dest + (y0 + y) * stride + x0 * 4;
+            const u8* from = tile + y * tile_width * depth;
+
+            for (int x = 0; x < tile_width; ++x)
+            {
+                switch (depth)
+                {
+                    case 4:
+                        out[0] = from[2];
+                        out[1] = from[1];
+                        out[2] = from[0];
+                        out[3] = from[3];
+                        break;
+                    case 3:
+                        out[0] = from[2];
+                        out[1] = from[1];
+                        out[2] = from[0];
+                        out[3] = 0xff;
+                        break;
+                    default:
+                        out[0] = from[0];
+                        out[1] = from[0];
+                        out[2] = from[0];
+                        out[3] = 0xff;
+                        break;
+                }
+
+                from += depth;
+                out += 4;
+            }
+        }
+    }
+
+    static
+    const u8* align_for4(const u8* chunk_end, const u8* file_base)
+    {
+        size_t offset = size_t(chunk_end - file_base);
+        offset = (offset + 3) & ~size_t(3);
+        return file_base + offset;
+    }
+
+    // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
 
@@ -928,6 +1101,9 @@ namespace
 
         Signature m_signature;
         ChunkBMHD m_bmhd;
+        ChunkTBHD m_tbhd;
+        const u8* m_tbmp_begin = nullptr;
+        const u8* m_tbmp_end = nullptr;
         u32 m_camg = 0;
         bool m_ham = false;
         bool m_ehb = false;
@@ -969,18 +1145,31 @@ namespace
         {
             BigEndianConstPointer p = data;
 
-            u32 s0 = p.read32();
+            u32 wrapper = p.read32();
             p += 4;
-            u32 s1 = p.read32();
+            u32 type = p.read32();
 
-            if (s0 != u32_mask_rev('F','O','R','M'))
+            if (wrapper == u32_mask_rev('F','O','R','4'))
             {
+                if (type == u32_mask_rev('C','I','M','G'))
+                {
+                    m_signature = SIGNATURE_CIMG;
+                    return p;
+                }
+
                 const char* c = reinterpret_cast<const char*>(p - 4);
                 header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
                 return nullptr;
             }
 
-            switch (s1)
+            if (wrapper != u32_mask_rev('F','O','R','M'))
+            {
+                const char* c = reinterpret_cast<const char*>(data);
+                header.setError("[ImageDecoder.IFF] Incorrect signature ({}{}{}{}).", c[0], c[1], c[2], c[3]);
+                return nullptr;
+            }
+
+            switch (type)
             {
                 case u32_mask_rev('I','L','B','M'):
                     m_signature = SIGNATURE_IFF;
@@ -1015,6 +1204,127 @@ namespace
             return p;
         }
 
+        void parseCimg(const u8* data, const u8* end)
+        {
+            const u8* cursor = data;
+            bool found_tbhd = false;
+
+            while (cursor + 8 <= end)
+            {
+                u32 id = bigEndian::uload32(cursor);
+                u32 size = bigEndian::uload32(cursor + 4);
+                const u8* body = cursor + 8;
+                const size_t avail = size_t(end - body);
+                const size_t payload = std::min<size_t>(size, avail);
+
+                if (id == u32_mask_rev('T','B','H','D'))
+                {
+                    if (m_tbhd.parse(body, payload))
+                    {
+                        found_tbhd = true;
+                        header.width = m_tbhd.width;
+                        header.height = m_tbhd.height;
+                        header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    }
+                }
+                else if (id == u32_mask_rev('F','O','R','4') && payload >= 4)
+                {
+                    if (bigEndian::uload32(body) == u32_mask_rev('T','B','M','P'))
+                    {
+                        m_tbmp_begin = body + 4;
+                        m_tbmp_end = body + payload;
+                        break;
+                    }
+                }
+
+                cursor = body + payload + (payload & 1);
+            }
+
+            if (!found_tbhd)
+            {
+                header.setError("[ImageDecoder.IFF] Missing TBHD chunk.");
+                return;
+            }
+
+            if (!m_tbmp_begin)
+            {
+                header.setError("[ImageDecoder.IFF] Missing TBMP group.");
+                return;
+            }
+
+            if (m_tbhd.datatype != 0)
+            {
+                header.setError("[ImageDecoder.IFF] Unsupported datatype ({}).", m_tbhd.datatype);
+                return;
+            }
+
+            if (m_tbhd.compress > 1)
+            {
+                header.setError("[ImageDecoder.IFF] Unsupported compression ({}).", m_tbhd.compress);
+            }
+        }
+
+        ImageDecodeStatus decodeCimg(const Surface& dest)
+        {
+            ImageDecodeStatus status;
+
+            if (!m_tbmp_begin || dest.width < int(m_tbhd.width) || dest.height < int(m_tbhd.height))
+            {
+                status.setError("[ImageDecoder.IFF] Invalid decode target.");
+                return status;
+            }
+
+            const u8* cursor = m_tbmp_begin;
+
+            while (cursor + 8 <= m_tbmp_end)
+            {
+                u32 id = bigEndian::uload32(cursor);
+                u32 size = bigEndian::uload32(cursor + 4);
+                const u8* body = cursor + 8;
+                const size_t avail = size_t(m_tbmp_end - body);
+                const size_t payload = std::min<size_t>(size, avail);
+
+                if (id == u32_mask_rev('R','G','B','A') && payload >= 8)
+                {
+                    BigEndianConstPointer p(body);
+
+                    u16 x1 = p.read16();
+                    u16 y1 = p.read16();
+                    u16 x2 = p.read16();
+                    u16 y2 = p.read16();
+
+                    const int tile_width = int(x2) - int(x1) + 1;
+                    const int tile_height = int(y2) - int(y1) + 1;
+
+                    if (tile_width <= 0 || tile_height <= 0)
+                    {
+                        status.setError("[ImageDecoder.IFF] Invalid tile coordinates.");
+                        return status;
+                    }
+
+                    const u8* pixel_data = body + 8;
+                    const size_t pixel_size = payload - 8;
+
+                    std::vector<u8> tile;
+                    if (!maya_decode_tile(tile, tile_width * tile_height, m_tbhd.depth,
+                                         pixel_data, pixel_size))
+                    {
+                        status.setError("[ImageDecoder.IFF] Failed to decode tile.");
+                        return status;
+                    }
+
+                    maya_blit_tile(dest.image, dest.stride, m_tbhd.depth,
+                                   x1, y1, tile_width, tile_height, tile.data());
+                }
+
+                const u8* chunk_end = body + payload + (payload & 1);
+                cursor = align_for4(chunk_end, m_memory.address);
+            }
+
+            status.direct = true;
+            return status;
+        }
+
         void parse()
         {
             const u8* data = m_memory.address;
@@ -1031,6 +1341,12 @@ namespace
             if (!data)
             {
                 // incorrect signature
+                return;
+            }
+
+            if (m_signature == SIGNATURE_CIMG)
+            {
+                parseCimg(data, memory_end);
                 return;
             }
 
@@ -1656,6 +1972,9 @@ namespace
                 return status;
             }
 
+            if (m_signature == SIGNATURE_CIMG)
+                return decodeCimg(dest);
+
             if (m_anim)
             {
                 return decodeAnim(dest);
@@ -1843,6 +2162,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".ehb");
         registerImageDecoder(createInterface, ".rgbn");
         registerImageDecoder(createInterface, ".rgb8");
+        registerImageDecoder(createInterface, ".cimg");
     }
 
 } // namespace mango::image
