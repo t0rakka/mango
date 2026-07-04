@@ -1617,10 +1617,28 @@ namespace
         const u8* file_end = memory.end();
         u32 avail = u32(file_end - start);
 
+        auto ends_with_eoi = [](const u8* p, u32 len) -> bool
+        {
+            return len >= 2 && p[len - 2] == 0xff && p[len - 1] == 0xd9;
+        };
+
         // Old-style JPEG: interchange segment is often header-only; entropy data follows in strips.
         if (stated_length && strip_offset && strip_offset == offset + stated_length)
         {
             return stated_length;
+        }
+
+        if (stated_length && stated_length <= avail)
+        {
+            if (strip_offset && strip_offset >= offset + stated_length)
+            {
+                return stated_length;
+            }
+
+            if (ends_with_eoi(start, stated_length))
+            {
+                return stated_length;
+            }
         }
 
         u32 length = stated_length;
@@ -1629,17 +1647,22 @@ namespace
             length = avail;
         }
 
-        auto ends_with_eoi = [](const u8* p, u32 len) -> bool
-        {
-            return len >= 2 && p[len - 2] == 0xff && p[len - 1] == 0xd9;
-        };
-
         if (ends_with_eoi(start, length))
         {
             return length;
         }
 
-        for (const u8* q = start + 1; q < file_end; ++q)
+        const u8* scan_end = file_end;
+        if (stated_length && stated_length <= avail)
+        {
+            scan_end = start + stated_length;
+        }
+        else if (strip_offset && strip_offset > offset)
+        {
+            scan_end = memory.address + strip_offset;
+        }
+
+        for (const u8* q = start + 1; q < scan_end; ++q)
         {
             if (q[-1] == 0xff && q[0] == 0xd9)
             {
@@ -2526,200 +2549,186 @@ namespace
 
         bool decompress_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
-            if (m_context.photometric == 2 ||
-                m_context.photometric == u32(PhotometricInterpretation::YCBCR))
+            if (m_context.photometric == 2)
             {
                 options.jpeg_colorspace_rgb = true;
             }
 
             std::function<ImageDecodeStatus(ConstMemory, Surface)> decodeJPEG;
 
-            u32 first_block_offset = 0;
-            u32 first_block_bytes = 0;
-            if (!m_context.tile_offsets.empty())
+            auto writeDHT = [] (Buffer& buffer, u8 id, const u8* table)
             {
-                first_block_offset = u32(m_context.tile_offsets[0]);
-                first_block_bytes = u32(m_context.tile_byte_counts[0]);
-            }
-            else if (!m_context.strip_offsets.empty())
+                u8 num_codes = 0;
+
+                for (int j = 0; j < 16; ++j)
+                {
+                    num_codes += table[j];
+                }
+
+                if (num_codes > 200)
+                {
+                    return;
+                }
+
+                u16 length = 3 + 16 + num_codes;
+
+                u8* p = buffer.append(2 + length);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DHT);
+                bigEndian::ustore16(p + 2, length);
+                p[4] = id;
+
+                std::memcpy(p + 5, table, 16 + num_codes);
+            };
+
+            auto writeDQT = [] (Buffer& buffer, u8 id, const u8* table)
             {
-                first_block_offset = u32(m_context.strip_offsets[0]);
-                first_block_bytes = u32(m_context.strip_byte_counts[0]);
-            }
+                u8* p = buffer.append(69);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_DQT);
+                bigEndian::ustore16(p + 2, 0x43); // length
+                p[4] = id; // Table ID + precision (0 = 8-bit)
 
-            auto setup_decode_from_jif = [&, this](u32 block_offset, u32 block_bytes, bool allow_without_tables) -> bool
+                std::memcpy(p + 5, table, 64);
+            };
+
+            auto writeSOF1 = [](Buffer& buffer, int width, int height, u32 h_sub, u32 v_sub)
             {
-                if (!m_context.jpeg_interchange_format)
-                {
-                    return false;
-                }
+                const u8 y_sampling = u8((std::min(h_sub, u32(15)) << 4) | std::min(v_sub, u32(15)));
 
-                const bool jif_is_complete_block =
-                    m_context.jpeg_interchange_format == block_offset &&
-                    (m_context.jpeg_interchange_format_length == 0 ||
-                     m_context.jpeg_interchange_format_length == block_bytes);
+                u8* p = buffer.append(10);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_SOF1);
+                bigEndian::ustore16(p + 2, 0x11); // length
+                p[4] = 0x08; // Sample precision (8 bits)
+                bigEndian::ustore16(p + 5, height);
+                bigEndian::ustore16(p + 7, width);
+                p[9] = 0x03; // Number of components
 
-                if (!jif_is_complete_block && !allow_without_tables)
-                {
-                    return false;
-                }
+                p = buffer.append(3);
+                p[0] = 0x01;
+                p[1] = y_sampling;
+                p[2] = 0x00;
 
-                printLine(Print::Info, "  Using JPEG from JPEGInterchangeFormat");
+                p = buffer.append(3);
+                p[0] = 0x02;
+                p[1] = 0x11;
+                p[2] = 0x01;
 
-                u32 header_length = resolve_jpeg_interchange_length(
-                    m_memory, m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length, block_offset);
-                printLine(Print::Info, "  JPEG length: {} (tag: {})", header_length, m_context.jpeg_interchange_format_length);
+                p = buffer.append(3);
+                p[0] = 0x03;
+                p[1] = 0x11;
+                p[2] = 0x02;
+            };
 
-                const u8* header_ptr = m_memory.address + m_context.jpeg_interchange_format;
-                const bool header_is_complete = header_length >= 2 &&
-                    header_ptr[header_length - 2] == 0xff &&
-                    header_ptr[header_length - 1] == 0xd9;
+            auto writeSOS = [] (Buffer& buffer)
+            {
+                u8* p = buffer.append(14);
+                bigEndian::ustore16(p + 0, jpeg::MARKER_SOS);
+                bigEndian::ustore16(p + 2, 0x0c); // length
+                p[4] = 0x03; // Number of components
 
-                if (header_is_complete)
-                {
-                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                    {
-                        MANGO_UNREFERENCED(memory);
+                p[5] = 0x01;
+                p[6] = 0x00;
 
-                        ConstMemory jpeg_memory(m_memory.address + m_context.jpeg_interchange_format, header_length);
-                        ImageDecodeInterface tempInterface;
-                        jpeg::Parser parser(&tempInterface, jpeg_memory, jpeg::Parser::RELAXED_PARSER);
-                        return parser.decode(surface, options);
-                    };
-                }
-                else
-                {
-                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                    {
-                        Buffer buffer;
-                        buffer.append(ConstMemory(m_memory.address + m_context.jpeg_interchange_format, header_length));
-                        buffer.append(memory);
+                p[7] = 0x02;
+                p[8] = 0x11;
 
-                        u8 eoi[2] = { 0xff, 0xd9 };
-                        buffer.append(ConstMemory(eoi, 2));
+                p[9] = 0x03;
+                p[10] = 0x22;
 
-                        ImageDecodeInterface tempInterface;
-                        jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
-                        return parser.decode(surface, options);
-                    };
-                }
-
-                return true;
+                p[11] = 0x00;
+                p[12] = 0x3f;
+                p[13] = 0x00;
             };
 
             if (m_context.compression == u32(Compression::JPEG_LEGACY))
             {
-                // compression = 6: JPEG_LEGACY
-
-                auto writeDHT = [] (Buffer& buffer, u8 id, const u8* table)
+                if (m_context.jpeg_interchange_format)
                 {
-                    u8 num_codes = 0;
-
-                    for (int j = 0; j < 16; ++j)
+                    // Mode A: JIF carries frame/tables; strip/tile data is entropy.
+                    u32 block_offset = 0;
+                    u32 block_bytes = 0;
+                    if (!m_context.tile_offsets.empty())
                     {
-                        num_codes += table[j];
+                        block_offset = u32(m_context.tile_offsets[0]);
+                        block_bytes = u32(m_context.tile_byte_counts[0]);
+                    }
+                    else if (!m_context.strip_offsets.empty())
+                    {
+                        block_offset = u32(m_context.strip_offsets[0]);
+                        block_bytes = u32(m_context.strip_byte_counts[0]);
                     }
 
-                    if (num_codes > 200) 
+                    u32 header_length = m_context.jpeg_interchange_format_length;
+                    if (!header_length)
                     {
-                        // Skip invalid tables
-                        return;
+                        header_length = resolve_jpeg_interchange_length(
+                            m_memory, m_context.jpeg_interchange_format, 0, block_offset);
                     }
 
-                    u16 length = 3 + 16 + num_codes;
-    
-                    u8* p = buffer.append(2 + length);
-                    bigEndian::ustore16(p + 0, jpeg::MARKER_DHT);
-                    bigEndian::ustore16(p + 2, length);
-                    p[4] = id;
+                    const u8* header_ptr = m_memory.address + m_context.jpeg_interchange_format;
+                    const bool header_is_complete = header_length >= 2 &&
+                        header_ptr[header_length - 2] == 0xff &&
+                        header_ptr[header_length - 1] == 0xd9;
 
-                    std::memcpy(p + 5, table, 16 + num_codes);
-                };
+                    const bool jif_is_complete_block =
+                        m_context.jpeg_interchange_format == block_offset &&
+                        (m_context.jpeg_interchange_format_length == 0 ||
+                         m_context.jpeg_interchange_format_length == block_bytes);
 
-                auto writeDQT = [] (Buffer& buffer, u8 id, const u8* table)
+                    ConstMemory jif_memory(m_memory.address + m_context.jpeg_interchange_format, header_length);
+
+                    if (header_is_complete && jif_is_complete_block)
+                    {
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                        {
+                            MANGO_UNREFERENCED(memory);
+
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, jif_memory, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
+                    else
+                    {
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                        {
+                            Buffer entropy;
+                            for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
+                            {
+                                u32 offset = m_context.jpeg_dc_tables[i];
+                                writeDHT(entropy, 0x00 | u8(i), m_memory.address + offset);
+                            }
+
+                            for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
+                            {
+                                u32 offset = m_context.jpeg_ac_tables[i];
+                                writeDHT(entropy, 0x10 | u8(i), m_memory.address + offset);
+                            }
+
+                            writeSOS(entropy);
+                            entropy.append(memory);
+
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, jif_memory, jpeg::Parser::RELAXED_PARSER);
+                            parser.setMemory(entropy);
+                            return parser.decode(surface, options);
+                        };
+                    }
+                }
+                else
                 {
-                    u8* p = buffer.append(69);
-                    bigEndian::ustore16(p + 0, jpeg::MARKER_DQT);
-                    bigEndian::ustore16(p + 2, 0x43); // length
-                    p[4] = id; // Table ID + precision (0 = 8-bit)
-    
-                    std::memcpy(p + 5, table, 64);
-                };
-
-                auto writeSOF1 = [] (Buffer& buffer, int width, int height)
-                {
-                    u8* p = buffer.append(10);
-                    bigEndian::ustore16(p + 0, jpeg::MARKER_SOF1);
-                    bigEndian::ustore16(p + 2, 0x11); // length
-                    p[4] = 0x08; // Sample precision (8 bits)
-                    bigEndian::ustore16(p + 5, height);
-                    bigEndian::ustore16(p + 7, width);
-                    p[9] = 0x03; // Number of components
-
-                    // Component 1: Y (luminance) - full resolution
-                    p = buffer.append(3);
-                    p[0] = 0x01; // Component ID
-                    p[1] = 0x22; // Sampling factors (2:2) to match YCbCrSubSampling
-                    p[2] = 0x00; // Quantization table 0
-
-                    // Component 2: Cb (chrominance) - subsampled by 2:2  
-                    p = buffer.append(3);
-                    p[0] = 0x02; // Component ID
-                    p[1] = 0x11; // Sampling factors (1:1) relative to Y
-                    p[2] = 0x01; // Quantization table 1
-
-                    // Component 3: Cr (chrominance) - subsampled by 2:2
-                    p = buffer.append(3);
-                    p[0] = 0x03; // Component ID
-                    p[1] = 0x11; // Sampling factors (1:1) relative to Y  
-                    p[2] = 0x02; // Quantization table 2
-                };
-
-                auto writeSOS = [] (Buffer& buffer)
-                {
-                    u8* p = buffer.append(14);
-                    bigEndian::ustore16(p + 0, jpeg::MARKER_SOS);
-                    bigEndian::ustore16(p + 2, 0x0c); // length
-                    p[4] = 0x03; // Number of components
-
-                    // Component 1: Y  
-                    p[5] = 0x01; // Component ID
-                    p[6] = 0x00; // DC table 0, AC table 0
-
-                    // Component 2: Cb
-                    p[7] = 0x02; // Component ID  
-                    p[8] = 0x11; // DC table 1, AC table 1
-
-                    // Component 3: Cr
-                    p[9] = 0x03; // Component ID
-                    p[10] = 0x22; // DC table 2, AC table 2
-
-                    // Scan parameters
-                    p[11] = 0x00; // Spectral selection start (0)
-                    p[12] = 0x3f; // Spectral selection end (63)  
-                    p[13] = 0x00; // Successive approximation
-                };
-
-                const bool has_jpeg_tables = !m_context.jpeg_qt_tables.empty() ||
-                    !m_context.jpeg_dc_tables.empty() ||
-                    !m_context.jpeg_ac_tables.empty();
-
-                if (!setup_decode_from_jif(first_block_offset, first_block_bytes, !has_jpeg_tables))
-                {
-                    //
-                    // Mode B: Reconstruct JPEG from TIFF tags
-                    //
+                    // Mode B: no JIF; rebuild JPEG from TIFF JPEG tags per strip/tile.
+                    u32 h_sub;
+                    u32 v_sub;
+                    getYCbCrSubsampling(h_sub, v_sub);
 
                     decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                     {
                         Buffer buffer;
 
-                        // SOI
                         u8* soi = buffer.append(2);
                         bigEndian::ustore16(soi, jpeg::MARKER_SOI);
 
-                        // SOF1 (Extended sequential DCT)
-                        writeSOF1(buffer, m_context.width, m_context.height);
+                        writeSOF1(buffer, surface.width, surface.height, h_sub, v_sub);
 
                         for (size_t i = 0; i < m_context.jpeg_qt_tables.size(); ++i)
                         {
@@ -2740,41 +2749,33 @@ namespace
                         }
 
                         writeSOS(buffer);
-
                         buffer.append(memory);
 
-                        // EOI
                         u8* eoi = buffer.append(2);
                         bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
 
                         ImageDecodeInterface tempInterface;
                         jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
-
-                        ImageDecodeStatus status = parser.decode(surface, options);
-                        return status;
+                        return parser.decode(surface, options);
                     };
                 }
             }
             else
             {
-                // compression = 7: JPEG_MODERN
-                if (m_context.jpeg_tables.size > 0)
-                {
-                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                    {
-                        ImageDecodeInterface tempInterface;
-                        jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
-                        parser.setMemory(memory);
-
-                        ImageDecodeStatus status = parser.decode(surface, options);
-                        return status;
-                    };
-                }
-                else if (!setup_decode_from_jif(first_block_offset, first_block_bytes, true))
+                // compression = 7: JPEG
+                if (m_context.jpeg_tables.size == 0)
                 {
                     printLine(Print::Error, "JPEGTables not found for Compression=7");
                     return false;
                 }
+
+                decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                {
+                    ImageDecodeInterface tempInterface;
+                    jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
+                    parser.setMemory(memory);
+                    return parser.decode(surface, options);
+                };
             }
 
             // Check if using tiles or strips
