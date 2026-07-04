@@ -1470,6 +1470,7 @@ namespace mango::image::jpeg
 
         u16 length = bigEndian::uload16(p + 0);
         m_precision = p[2];
+        decodeState.precision = m_precision;
         m_height = bigEndian::uload16(p + 3);
         m_width  = bigEndian::uload16(p + 5);
         m_components = p[7];
@@ -1875,7 +1876,7 @@ namespace mango::image::jpeg
 
         restartCounter = restartInterval;
 
-        m_request_blitting = is_lossless || is_multiscan;
+        m_request_blitting = is_multiscan;
 
         if (decodeState.is_arithmetic)
         {
@@ -2999,33 +3000,30 @@ namespace mango::image::jpeg
 
     void StreamDecoder::decodeLossless()
     {
-        // NOTE: need more test files to make this more conformant
-        // NOTE: color sub-sampling is not supported (need test files)
-
         int predictor = decodeState.spectral_start;
         int pointTransform = decodeState.successive_low;
 
         auto decodeFunction = huff_decode_mcu_lossless;
-        int* previousDC = decodeState.huffman.last_dc_value;
 
         if (decodeState.is_arithmetic)
         {
             decodeFunction = arith_decode_mcu_lossless;
-            previousDC = decodeState.arithmetic.last_dc_value;
         }
 
-        const int xsize = m_sink.surface->width;
-        const int ysize = m_sink.surface->height;
-        const int xlast = xsize - 1;
+        const int xsize = m_width;
+        const int ysize = m_height;
         const int n_components = decodeState.comps_in_scan;
 
-        int initPredictor = 1 << (m_precision - pointTransform - 1);
+        const int initPredictor = 1 << (m_precision - pointTransform - 1);
+        const int sample_mask = 0xffff;
 
         std::vector<int> scanLineCache[JPEG_MAX_BLOCKS_IN_MCU];
+        std::vector<int> prevRowCache[JPEG_MAX_BLOCKS_IN_MCU];
 
         for (int i = 0; i < n_components; ++i)
         {
-            scanLineCache[i] = std::vector<int>(xsize + 1, 0);
+            scanLineCache[i] = std::vector<int>(xsize, 0);
+            prevRowCache[i] = std::vector<int>(xsize, 0);
         }
 
         bool first = true;
@@ -3041,65 +3039,107 @@ namespace mango::image::jpeg
 
             for (int x = 0; x < xsize; ++x)
             {
-                s16 data[JPEG_MAX_BLOCKS_IN_MCU];
+                int data[JPEG_MAX_BLOCKS_IN_MCU];
+                const bool init = first;
 
                 decodeFunction(data, &decodeState);
-                bool restarted = handleRestart();
-                bool init = restarted | first;
-                first = false;
+
+                if (handleRestart())
+                {
+                    first = true;
+                }
+                else
+                {
+                    first = false;
+                }
 
                 for (int currentComponent = 0; currentComponent < n_components; ++currentComponent)
                 {
-                    // predictors
                     int* cache = scanLineCache[currentComponent].data();
-                    int a = data[currentComponent];
-                    int b = cache[x + 1];
-                    int c = cache[x + 0];
+                    const int* prev_row = prevRowCache[currentComponent].data();
+                    int P = initPredictor;
+                    int sample = 0;
 
-                    int s;
+                    if (!decodeState.is_arithmetic)
+                    {
+                        if (!init)
+                        {
+                            if (x == 0)
+                            {
+                                P = (y > 0) ? cache[0] : initPredictor;
+                            }
+                            else
+                            {
+                                const int Ra = cache[x - 1];
+                                const int Rb = cache[x];
+                                const int Rc = (y > 0) ? prev_row[x - 1] : initPredictor;
 
-                    if (init)
-                        s = initPredictor;
-                    else if (predictor == 0)
-                        s = 0;
-                    else if (x == xlast)
-                        s = cache[0];
-                    else if (predictor == 1 || y == 0 || restarted)
-                        s = a;
-                    else if (predictor == 2)
-                        s = b;
-                    else if (predictor == 3)
-                        s = c;
-                    else if (predictor == 4)
-                        s = a + b - c;
-                    else if (predictor == 5)
-                        s = a + ((b - c) >> 1);
-                    else if (predictor == 6)
-                        s = b + ((a - c) >> 1);
-                    else if (predictor == 7)
-                        s = (a + b) >> 1;
+                                switch (predictor)
+                                {
+                                    case 0:
+                                        P = 0;
+                                        break;
+                                    case 1:
+                                        P = Ra;
+                                        break;
+                                    case 2:
+                                        P = Rb;
+                                        break;
+                                    case 3:
+                                        P = Rc;
+                                        break;
+                                    case 4:
+                                        P = Ra + Rb - Rc;
+                                        break;
+                                    case 5:
+                                        P = Ra + ((Rb - Rc) >> 1);
+                                        break;
+                                    case 6:
+                                        P = Rb + ((Ra - Rc) >> 1);
+                                        break;
+                                    case 7:
+                                        P = (Ra + Rb) >> 1;
+                                        break;
+                                }
+                            }
+                        }
+
+                        const int diff = data[currentComponent];
+                        sample = (diff + P) & sample_mask;
+                    }
                     else
-                        s = 0;
+                    {
+                        sample = data[currentComponent] & sample_mask;
+                    }
 
-                    previousDC[currentComponent] = s;
+                    cache[x] = sample;
 
-                    cache[x] = data[currentComponent];
-                    data[currentComponent] = data[currentComponent] >> (m_precision - 8);
+                    if (pointTransform > 0)
+                    {
+                        sample <<= pointTransform;
+                    }
+
+                    data[currentComponent] = s16(sample >> (m_precision - 8));
                 }
 
                 if (n_components == 1)
                 {
-                    image[0] = u8_clamp(data[0] + 128);
+                    image[0] = u8_clamp(data[0]);
                     image += 1;
                 }
                 else
                 {
-                    image[0] = u8_clamp(data[0] + 128); // red
-                    image[1] = u8_clamp(data[1] + 128); // green
-                    image[2] = u8_clamp(data[2] + 128); // blue
+                    image[0] = u8_clamp(data[0]); // red
+                    image[1] = u8_clamp(data[1]); // green
+                    image[2] = u8_clamp(data[2]); // blue
                     image[3] = 0xff;
                     image += 4;
                 }
+            }
+
+            for (int i = 0; i < n_components; ++i)
+            {
+                prevRowCache[i] = scanLineCache[i];
             }
         }
     }

@@ -144,7 +144,7 @@ namespace mango::image::jpeg
     // arithmetic decoder
     // ----------------------------------------------------------------------------
 
-    void arith_decode_mcu_lossless(s16* output, DecodeState* state)
+    void arith_decode_mcu_lossless(s32* output, DecodeState* state)
     {
         ArithmeticDecoder& arithmetic = state->arithmetic;
         BitBuffer& buffer = state->buffer;
@@ -210,7 +210,7 @@ namespace mango::image::jpeg
                 arithmetic.last_dc_value[ci] += v;
             }
 
-            output[j] = s16(arithmetic.last_dc_value[ci]);
+            output[j] = arithmetic.last_dc_value[ci];
         }
     }
 

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -314,6 +314,7 @@ namespace mango::image::jpeg
         int spectral_end;
         int successive_high;
         int successive_low;
+        int precision = 8;
 
         void restart()
         {
@@ -610,14 +611,14 @@ namespace mango::image::jpeg
     // functions
     // ----------------------------------------------------------------------------
 
-    void huff_decode_mcu_lossless       (s16* output, DecodeState* state);
+    void huff_decode_mcu_lossless       (s32* output, DecodeState* state);
     void huff_decode_mcu                (s16* output, DecodeState* state);
     void huff_decode_dc_first           (s16* output, DecodeState* state);
     void huff_decode_dc_refine          (s16* output, DecodeState* state);
     void huff_decode_ac_first           (s16* output, DecodeState* state);
     void huff_decode_ac_refine          (s16* output, DecodeState* state);
 
-    void arith_decode_mcu_lossless      (s16* output, DecodeState* state);
+    void arith_decode_mcu_lossless      (s32* output, DecodeState* state);
     void arith_decode_mcu               (s16* output, DecodeState* state);
     void arith_decode_dc_first          (s16* output, DecodeState* state);
     void arith_decode_dc_refine         (s16* output, DecodeState* state);

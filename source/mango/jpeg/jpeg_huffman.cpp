@@ -262,7 +262,7 @@ namespace mango::image::jpeg
     // huffman decoding functions
     // ----------------------------------------------------------------------------
 
-    void huff_decode_mcu_lossless(s16* output, DecodeState* state)
+    void huff_decode_mcu_lossless(s32* output, DecodeState* state)
     {
         HuffmanDecoder& huffman = state->huffman;
         BitBuffer& buffer = state->buffer;
@@ -275,11 +275,18 @@ namespace mango::image::jpeg
             int s = dc->decode(buffer);
             if (s)
             {
-                s = buffer.receive(s);
+                // Lossless JPEG: category 16 means 2^(P-1), not receive(16).
+                if (s == 16)
+                {
+                    s = 1 << (state->precision - 1);
+                }
+                else
+                {
+                    s = buffer.receive(s);
+                }
             }
 
-            s += huffman.last_dc_value[block->pred];
-            output[j] = s16(s);
+            output[j] = s;
         }
     }
 

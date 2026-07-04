@@ -293,6 +293,7 @@ namespace
         GeoKeyDirectoryTag = 34735,
         GeoAsciiParamsTag = 34737,
         GDAL_METADATA = 42113,
+        GraphicsMagickPhotometricInterpretation = 65535, // vendor tag; PhotometricInterpretation when IFD is unsorted
     };
 
     static inline
@@ -512,7 +513,7 @@ namespace
                 printLine(Print::Info, "      value: {}", context.photometric);
                 break;
 
-            case Tag(u16(65535)):
+            case Tag::GraphicsMagickPhotometricInterpretation:
             {
                 // GraphicsMagick can write PhotometricInterpretation at tag 65535 when the IFD is unsorted.
                 if (!context.photometric_specified)
@@ -1987,13 +1988,20 @@ namespace
                 case PhotometricInterpretation::CIELAB:
                     //return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 case PhotometricInterpretation::TRANSPARENCY_MASK:
-                case PhotometricInterpretation::YCBCR:
                 case PhotometricInterpretation::ICCLAB:
                 case PhotometricInterpretation::ITULAB:
                 case PhotometricInterpretation::CFA:
                 case PhotometricInterpretation::LINEAR_RAW:
                     // MANGO TODO: support different sample formats per channel
                     header.setError("Unsupported PhotometricInterpretation: {}", m_context.photometric);
+                    return Format();
+
+                case PhotometricInterpretation::YCBCR:
+                    if (m_context.samples_per_pixel == 3)
+                    {
+                        return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                    }
+                    header.setError("Unsupported number of channels: {}", m_context.samples_per_pixel);
                     return Format();
 
                 default:
@@ -2070,6 +2078,16 @@ namespace
                 m_context.samples_per_pixel == 4 &&
                 m_context.sample_bits > 8;
 
+            const bool planar_ycbcr =
+                m_context.photometric == u32(PhotometricInterpretation::YCBCR) &&
+                m_context.planar_configuration == 2 &&
+                m_context.samples_per_pixel == 3;
+
+            const bool chunky_ycbcr =
+                m_context.photometric == u32(PhotometricInterpretation::YCBCR) &&
+                m_context.planar_configuration == 1 &&
+                m_context.samples_per_pixel == 3;
+
             std::unique_ptr<Bitmap> wide_cmyk_buffer;
             if (separated_planar_wide_cmyk)
             {
@@ -2094,6 +2112,14 @@ namespace
                     status.setError("JPEG decoding failed");
                     return status;
                 }
+            }
+            else if (planar_ycbcr)
+            {
+                decodePlanarYCbCr(status, dest);
+            }
+            else if (chunky_ycbcr)
+            {
+                decodeChunkyYCbCr(status, dest);
             }
             else if (m_context.tile_offsets.size() > 0)
             {
@@ -2238,6 +2264,197 @@ namespace
             return status;
         }
 
+        static void tiff_ycbcr_to_rgb(u8& r, u8& g, u8& b, int y, int cb, int cr)
+        {
+            const int r_offs = (cr * 91750 - 11711232) >> 16;
+            const int g_offs = (cb * -22479 + cr * -46596 + 8874368) >> 16;
+            const int b_offs = (cb * 115671 - 14773120) >> 16;
+            r = u8_clamp(y + r_offs);
+            g = u8_clamp(y + g_offs);
+            b = u8_clamp(b + b_offs);
+        }
+
+        static void convertPlanarYCbCrToRgba(Surface& surface, int width, int height,
+            const Surface& y_plane, const Surface& cb_plane, const Surface& cr_plane,
+            u32 h_sub, u32 v_sub)
+        {
+            const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
+            const u32 chroma_h = u32((height + int(v_sub) - 1) / int(v_sub));
+
+            for (int y = 0; y < height; ++y)
+            {
+                u8* drow = surface.image + surface.stride * y;
+                const u8* yrow = y_plane.image + y_plane.stride * y;
+                const u8* cbrow = cb_plane.image + cb_plane.stride * (y / int(v_sub));
+                const u8* crrow = cr_plane.image + cr_plane.stride * (y / int(v_sub));
+
+                for (int x = 0; x < width; ++x)
+                {
+                    const int yv = yrow[x];
+                    const int cb = cbrow[x / int(h_sub)];
+                    const int cr = crrow[x / int(h_sub)];
+                    u8 r;
+                    u8 g;
+                    u8 b;
+                    tiff_ycbcr_to_rgb(r, g, b, yv, cb, cr);
+                    u8* d = drow + x * 4;
+                    d[0] = r;
+                    d[1] = g;
+                    d[2] = b;
+                    d[3] = 0xff;
+                }
+            }
+
+            MANGO_UNREFERENCED(chroma_w);
+            MANGO_UNREFERENCED(chroma_h);
+        }
+
+        static void convertChunkyYCbCrToRgba(Surface& surface, const u8* packed, int width, int height, u32 h_sub, u32 v_sub)
+        {
+            if (h_sub < 1) h_sub = 1;
+            if (v_sub < 1) v_sub = 1;
+
+            const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
+            const u32 macro_row_bytes = v_sub * u32(width) + 2 * chroma_w;
+
+            for (int y0 = 0; y0 < height; y0 += int(v_sub))
+            {
+                const u8* macro = packed + (y0 / int(v_sub)) * macro_row_bytes;
+                const u8* y_src = macro;
+                const u8* cb_src = y_src + v_sub * u32(width);
+                const u8* cr_src = cb_src + chroma_w;
+
+                for (int dy = 0; dy < int(v_sub) && y0 + dy < height; ++dy)
+                {
+                    u8* drow = surface.image + surface.stride * (y0 + dy);
+
+                    for (int x = 0; x < width; ++x)
+                    {
+                        const int yv = y_src[dy * width + x];
+                        const int cb = cb_src[x / int(h_sub)];
+                        const int cr = cr_src[x / int(h_sub)];
+                        u8 r;
+                        u8 g;
+                        u8 b;
+                        tiff_ycbcr_to_rgb(r, g, b, yv, cb, cr);
+                        u8* d = drow + x * 4;
+                        d[0] = r;
+                        d[1] = g;
+                        d[2] = b;
+                        d[3] = 0xff;
+                    }
+                }
+            }
+        }
+
+        void getYCbCrSubsampling(u32& h_sub, u32& v_sub) const
+        {
+            if (m_context.y_cb_cr_sub_sampling.size() >= 2)
+            {
+                h_sub = std::max(u32(1), u32(m_context.y_cb_cr_sub_sampling[0]));
+                v_sub = std::max(u32(1), u32(m_context.y_cb_cr_sub_sampling[1]));
+            }
+            else
+            {
+                h_sub = 2;
+                v_sub = 2;
+            }
+        }
+
+        void decodePlanarYCbCr(ImageDecodeStatus& status, Surface dest)
+        {
+            u32 h_sub;
+            u32 v_sub;
+            getYCbCrSubsampling(h_sub, v_sub);
+
+            const int width = header.width;
+            const int height = header.height;
+            const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
+            const u32 chroma_h = u32((height + int(v_sub) - 1) / int(v_sub));
+
+            Bitmap y_plane(width, height, LuminanceFormat(8, Format::UNORM, 8, 0));
+            Bitmap cb_plane(int(chroma_w), int(chroma_h), LuminanceFormat(8, Format::UNORM, 8, 0));
+            Bitmap cr_plane(int(chroma_w), int(chroma_h), LuminanceFormat(8, Format::UNORM, 8, 0));
+
+            const Surface planes[3] = { y_plane, cb_plane, cr_plane };
+            const int plane_width[3] = { width, int(chroma_w), int(chroma_w) };
+
+            if (m_context.strip_byte_counts.size() != m_context.strip_offsets.size() ||
+                m_context.strip_byte_counts.empty())
+            {
+                status.setError("Incorrect or missing strip data.");
+                return;
+            }
+
+            const u32 strips_per_spatial_region = u32(m_context.strip_offsets.size() / m_context.samples_per_pixel);
+
+            for (u32 spatial_strip = 0; spatial_strip < strips_per_spatial_region; ++spatial_strip)
+            {
+                const u32 y = spatial_strip * m_context.rows_per_strip;
+                const u32 y_strip_height = std::min(m_context.rows_per_strip, u32(header.height) - y);
+                const u32 chroma_y = y / v_sub;
+                const u32 chroma_strip_height = std::min((y_strip_height + v_sub - 1) / v_sub, chroma_h - chroma_y);
+
+                for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
+                {
+                    const size_t strip_index = channel * strips_per_spatial_region + spatial_strip;
+                    const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
+                    const u32 bytes = m_context.strip_byte_counts[strip_index];
+
+                    const int plane_w = plane_width[channel];
+                    const u32 plane_y = (channel == 0) ? y : chroma_y;
+                    const u32 plane_h = (channel == 0) ? y_strip_height : chroma_strip_height;
+
+                    Surface strip(planes[channel], 0, int(plane_y), plane_w, int(plane_h));
+                    decodeRect(status, strip, ConstMemory(src, bytes), plane_w, int(plane_h), channel);
+                }
+            }
+
+            convertPlanarYCbCrToRgba(dest, width, height, y_plane, cb_plane, cr_plane, h_sub, v_sub);
+        }
+
+        void decodeChunkyYCbCr(ImageDecodeStatus& status, Surface dest)
+        {
+            u32 h_sub;
+            u32 v_sub;
+            getYCbCrSubsampling(h_sub, v_sub);
+
+            const int width = header.width;
+            const int height = header.height;
+            const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
+            const u32 macro_row_bytes = v_sub * u32(width) + 2 * chroma_w;
+            const u32 macro_rows_total = u32((height + int(v_sub) - 1) / int(v_sub));
+
+            Buffer packed(macro_row_bytes * macro_rows_total);
+            Surface packed_surface(width, int(macro_rows_total), LuminanceFormat(8, Format::UNORM, 8, 0), macro_row_bytes, packed.data());
+
+            if (m_context.strip_byte_counts.size() != m_context.strip_offsets.size() ||
+                m_context.strip_byte_counts.empty())
+            {
+                status.setError("Incorrect or missing strip data.");
+                return;
+            }
+
+            u32 y = 0;
+
+            for (size_t i = 0; i < m_context.strip_offsets.size(); ++i)
+            {
+                const u32 strip_height = std::min(m_context.rows_per_strip, u32(header.height) - y);
+                const u32 macro_y = y / v_sub;
+                const u32 macro_strip_rows = (strip_height + v_sub - 1) / v_sub;
+
+                const u8* src = m_memory.address + m_context.strip_offsets[i];
+                const u32 bytes = m_context.strip_byte_counts[i];
+
+                Surface strip(packed_surface, 0, int(macro_y), width, int(macro_strip_rows));
+                decodeRect(status, strip, ConstMemory(src, bytes), width, int(strip_height));
+
+                y += strip_height;
+            }
+
+            convertChunkyYCbCrToRgba(dest, packed.data(), width, height, h_sub, v_sub);
+        }
+
         static void convertSeparatedPlanarCmykInBufferToRgba(Surface& surface, int width, int height)
         {
             const u8* lookup = math::get_linear_to_srgb_table();
@@ -2309,12 +2526,86 @@ namespace
 
         bool decompress_jpeg(DecodeTargetBitmap& target, ImageDecodeOptions options, int level, int depth, int face)
         {
-            if (m_context.photometric == 2)
+            if (m_context.photometric == 2 ||
+                m_context.photometric == u32(PhotometricInterpretation::YCBCR))
             {
                 options.jpeg_colorspace_rgb = true;
             }
 
             std::function<ImageDecodeStatus(ConstMemory, Surface)> decodeJPEG;
+
+            u32 first_block_offset = 0;
+            u32 first_block_bytes = 0;
+            if (!m_context.tile_offsets.empty())
+            {
+                first_block_offset = u32(m_context.tile_offsets[0]);
+                first_block_bytes = u32(m_context.tile_byte_counts[0]);
+            }
+            else if (!m_context.strip_offsets.empty())
+            {
+                first_block_offset = u32(m_context.strip_offsets[0]);
+                first_block_bytes = u32(m_context.strip_byte_counts[0]);
+            }
+
+            auto setup_decode_from_jif = [&, this](u32 block_offset, u32 block_bytes, bool allow_without_tables) -> bool
+            {
+                if (!m_context.jpeg_interchange_format)
+                {
+                    return false;
+                }
+
+                const bool jif_is_complete_block =
+                    m_context.jpeg_interchange_format == block_offset &&
+                    (m_context.jpeg_interchange_format_length == 0 ||
+                     m_context.jpeg_interchange_format_length == block_bytes);
+
+                if (!jif_is_complete_block && !allow_without_tables)
+                {
+                    return false;
+                }
+
+                printLine(Print::Info, "  Using JPEG from JPEGInterchangeFormat");
+
+                u32 header_length = resolve_jpeg_interchange_length(
+                    m_memory, m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length, block_offset);
+                printLine(Print::Info, "  JPEG length: {} (tag: {})", header_length, m_context.jpeg_interchange_format_length);
+
+                const u8* header_ptr = m_memory.address + m_context.jpeg_interchange_format;
+                const bool header_is_complete = header_length >= 2 &&
+                    header_ptr[header_length - 2] == 0xff &&
+                    header_ptr[header_length - 1] == 0xd9;
+
+                if (header_is_complete)
+                {
+                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                    {
+                        MANGO_UNREFERENCED(memory);
+
+                        ConstMemory jpeg_memory(m_memory.address + m_context.jpeg_interchange_format, header_length);
+                        ImageDecodeInterface tempInterface;
+                        jpeg::Parser parser(&tempInterface, jpeg_memory, jpeg::Parser::RELAXED_PARSER);
+                        return parser.decode(surface, options);
+                    };
+                }
+                else
+                {
+                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                    {
+                        Buffer buffer;
+                        buffer.append(ConstMemory(m_memory.address + m_context.jpeg_interchange_format, header_length));
+                        buffer.append(memory);
+
+                        u8 eoi[2] = { 0xff, 0xd9 };
+                        buffer.append(ConstMemory(eoi, 2));
+
+                        ImageDecodeInterface tempInterface;
+                        jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                        return parser.decode(surface, options);
+                    };
+                }
+
+                return true;
+            };
 
             if (m_context.compression == u32(Compression::JPEG_LEGACY))
             {
@@ -2413,61 +2704,7 @@ namespace
                     !m_context.jpeg_dc_tables.empty() ||
                     !m_context.jpeg_ac_tables.empty();
 
-                u32 strip_offset = m_context.strip_offsets.empty() ? 0 : u32(m_context.strip_offsets[0]);
-                u32 strip_bytes = m_context.strip_byte_counts.empty() ? 0 : u32(m_context.strip_byte_counts[0]);
-                const bool jif_is_complete_strip =
-                    m_context.jpeg_interchange_format != 0 &&
-                    m_context.jpeg_interchange_format == strip_offset &&
-                    (m_context.jpeg_interchange_format_length == 0 ||
-                     m_context.jpeg_interchange_format_length == strip_bytes);
-
-                if (m_context.jpeg_interchange_format != 0 &&
-                    (jif_is_complete_strip || !has_jpeg_tables))
-                {
-                    //
-                    // Mode A: Copy JPEG from JPEGInterchangeFormat
-                    //
-                    printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
-
-                    u32 header_length = resolve_jpeg_interchange_length(
-                        m_memory, m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length, strip_offset);
-                    printLine(Print::Info, "  Header length: {} (tag: {})", header_length, m_context.jpeg_interchange_format_length);
-
-                    const u8* header_ptr = m_memory.address + m_context.jpeg_interchange_format;
-                    const bool header_is_complete = header_length >= 2 &&
-                        header_ptr[header_length - 2] == 0xff &&
-                        header_ptr[header_length - 1] == 0xd9;
-
-                    if (header_is_complete)
-                    {
-                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                        {
-                            MANGO_UNREFERENCED(memory);
-
-                            ConstMemory jpeg_memory(m_memory.address + m_context.jpeg_interchange_format, header_length);
-                            ImageDecodeInterface tempInterface;
-                            jpeg::Parser parser(&tempInterface, jpeg_memory, jpeg::Parser::RELAXED_PARSER);
-                            return parser.decode(surface, options);
-                        };
-                    }
-                    else
-                    {
-                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                        {
-                            Buffer buffer;
-                            buffer.append(ConstMemory(m_memory.address + m_context.jpeg_interchange_format, header_length));
-                            buffer.append(memory);
-
-                            u8 eoi[2] = { 0xff, 0xd9 };
-                            buffer.append(ConstMemory(eoi, 2));
-
-                            ImageDecodeInterface tempInterface;
-                            jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
-                            return parser.decode(surface, options);
-                        };
-                    }
-                }
-                else
+                if (!setup_decode_from_jif(first_block_offset, first_block_bytes, !has_jpeg_tables))
                 {
                     //
                     // Mode B: Reconstruct JPEG from TIFF tags
@@ -2521,21 +2758,23 @@ namespace
             else
             {
                 // compression = 7: JPEG_MODERN
-                if (m_context.jpeg_tables.size == 0)
+                if (m_context.jpeg_tables.size > 0)
+                {
+                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                    {
+                        ImageDecodeInterface tempInterface;
+                        jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
+                        parser.setMemory(memory);
+
+                        ImageDecodeStatus status = parser.decode(surface, options);
+                        return status;
+                    };
+                }
+                else if (!setup_decode_from_jif(first_block_offset, first_block_bytes, true))
                 {
                     printLine(Print::Error, "JPEGTables not found for Compression=7");
                     return false;
                 }
-
-                decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                {
-                    ImageDecodeInterface tempInterface;
-                    jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
-                    parser.setMemory(memory);
-
-                    ImageDecodeStatus status = parser.decode(surface, options);
-                    return status;
-                };
             }
 
             // Check if using tiles or strips
@@ -2958,7 +3197,27 @@ namespace
             u32 bytes_per_row = 0;
             u32 expanded_bytes_per_row = 0;
 
-            if (m_context.planar_configuration == 1)
+            const bool chunky_ycbcr =
+                m_context.photometric == u32(PhotometricInterpretation::YCBCR) &&
+                m_context.planar_configuration == 1 &&
+                m_context.samples_per_pixel == 3;
+
+            u32 ycbcr_macro_row_bytes = 0;
+            u32 ycbcr_macro_rows = 0;
+
+            if (chunky_ycbcr)
+            {
+                u32 h_sub;
+                u32 v_sub;
+                getYCbCrSubsampling(h_sub, v_sub);
+
+                const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
+                ycbcr_macro_row_bytes = v_sub * u32(width) + 2 * chroma_w;
+                ycbcr_macro_rows = (u32(height) + v_sub - 1) / v_sub;
+                bytes_per_row = ycbcr_macro_row_bytes;
+                expanded_bytes_per_row = ycbcr_macro_row_bytes;
+            }
+            else if (m_context.planar_configuration == 1)
             {
                 // Chunky format contains all channels
                 bytes_per_row = (width * sample_bits * m_context.samples_per_pixel + 7) / 8;
@@ -3240,6 +3499,58 @@ namespace
             }
 
             Buffer scanline(expanded_bytes_per_row);
+
+            const bool plane_direct =
+                m_context.planar_configuration == 2 &&
+                m_context.samples_per_pixel > 1 &&
+                target.format.bytes() == 1;
+
+            if (plane_direct)
+            {
+                for (int y = 0; y < height; ++y)
+                {
+                    u8* dest = target.image + target.stride * y;
+                    const u8* src = memory.address + y * expanded_bytes_per_row;
+
+                    if (m_context.predictor == 1)
+                    {
+                        std::memcpy(dest, src, expanded_bytes_per_row);
+                    }
+                    else if (m_context.predictor == 2)
+                    {
+                        dest[0] = src[0];
+                        for (u32 i = 1; i < expanded_bytes_per_row; ++i)
+                        {
+                            dest[i] = u8(src[i] + dest[i - 1]);
+                        }
+                    }
+                    else
+                    {
+                        resolvePlanarScanline(dest, src, expanded_bytes_per_row,
+                            m_context.samples_per_pixel, channel, expanded_sample_bits);
+                    }
+                }
+                return;
+            }
+
+            if (chunky_ycbcr)
+            {
+                for (u32 mr = 0; mr < ycbcr_macro_rows; ++mr)
+                {
+                    u8* dest = target.image + target.stride * mr;
+                    const u8* src = memory.address + mr * ycbcr_macro_row_bytes;
+
+                    if (m_context.predictor == 1)
+                    {
+                        std::memcpy(dest, src, ycbcr_macro_row_bytes);
+                    }
+                    else
+                    {
+                        resolveChunkyScanline(dest, src, ycbcr_macro_row_bytes, m_context.samples_per_pixel);
+                    }
+                }
+                return;
+            }
 
             for (int y = 0; y < height; ++y)
             {
