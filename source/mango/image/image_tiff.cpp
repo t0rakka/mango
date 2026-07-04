@@ -1696,6 +1696,86 @@ namespace
         return length;
     }
 
+    void resolve_strip_byte_counts(IFDContext& ctx, size_t file_size)
+    {
+        if (!ctx.strip_byte_counts.empty() || ctx.strip_offsets.empty())
+        {
+            return;
+        }
+
+        if (ctx.strip_offsets.size() == 1)
+        {
+            u64 offset = ctx.strip_offsets[0];
+            if (offset < file_size)
+            {
+                ctx.strip_byte_counts.push_back(file_size - offset);
+            }
+            return;
+        }
+
+        for (size_t i = 0; i < ctx.strip_offsets.size(); ++i)
+        {
+            u64 start = ctx.strip_offsets[i];
+            u64 end = (i + 1 < ctx.strip_offsets.size())
+                ? ctx.strip_offsets[i + 1]
+                : file_size;
+            if (end > start)
+            {
+                ctx.strip_byte_counts.push_back(end - start);
+            }
+        }
+    }
+
+    static float tiff_lab_decode_L(u32 v, int bits)
+    {
+        if (bits <= 8)
+        {
+            return float(v) * 100.0f / 255.0f;
+        }
+        return float(v) * 100.0f / 65535.0f;
+    }
+
+    static float tiff_lab_decode_A(u32 v, int bits)
+    {
+        if (bits <= 8)
+        {
+            // libtiff passes a* as (signed char)pp[1] for 8-bit CIELAB.
+            return float(s8(v));
+        }
+        // 16-bit: chrominance is signed, scaled by 256 (TIFFCIELab16ToXYZ).
+        return float(s16(v)) / 256.0f;
+    }
+
+    static float tiff_lab_decode_B(u32 v, int bits)
+    {
+        return tiff_lab_decode_A(v, bits);
+    }
+
+    static void tiff_lab_to_rgb(float L, float A, float B, float& r, float& g, float& b)
+    {
+        float y = (L + 16.0f) / 116.0f;
+        float x = A / 500.0f + y;
+        float z = y - B / 200.0f;
+
+        auto f = [] (float t)
+        {
+            const float t3 = t * t * t;
+            return (t3 > 0.008856f) ? t3 : (t - 16.0f / 116.0f) / 7.787f;
+        };
+
+        x = 0.95047f * f(x);
+        y = 1.00000f * f(y);
+        z = 1.08883f * f(z);
+
+        r = x *  3.2406f + y * -1.5372f + z * -0.4986f;
+        g = x * -0.9689f + y *  1.8758f + z *  0.0415f;
+        b = x *  0.0557f + y * -0.2040f + z *  1.0570f;
+
+        r = linear_to_srgb(std::clamp(r, 0.0f, 1.0f));
+        g = linear_to_srgb(std::clamp(g, 0.0f, 1.0f));
+        b = linear_to_srgb(std::clamp(b, 0.0f, 1.0f));
+    }
+
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
@@ -1720,6 +1800,50 @@ namespace
 
         ~Interface()
         {
+        }
+
+        bool is_tiled_via_strips() const
+        {
+            if (m_context.tile_width == 0 || m_context.tile_length == 0)
+            {
+                return false;
+            }
+
+            if (!m_context.tile_offsets.empty())
+            {
+                return false;
+            }
+
+            if (m_context.strip_offsets.empty())
+            {
+                return false;
+            }
+
+            const u32 xtiles = div_ceil(m_context.width, m_context.tile_width);
+            const u32 ytiles = div_ceil(m_context.height, m_context.tile_length);
+            size_t expected = size_t(xtiles) * ytiles;
+
+            if (m_context.planar_configuration == 2)
+            {
+                expected *= m_context.samples_per_pixel;
+            }
+
+            return m_context.strip_offsets.size() == expected &&
+                   m_context.strip_byte_counts.size() == expected;
+        }
+
+        u64 tile_data_offset(size_t i) const
+        {
+            return m_context.tile_offsets.empty()
+                ? m_context.strip_offsets[i]
+                : m_context.tile_offsets[i];
+        }
+
+        u64 tile_data_bytes(size_t i) const
+        {
+            return m_context.tile_byte_counts.empty()
+                ? m_context.strip_byte_counts[i]
+                : m_context.tile_byte_counts[i];
         }
 
         void parseIFDs()
@@ -1885,6 +2009,8 @@ namespace
                 header.color.transfer = TransferFunction::Linear;
             }
 
+            resolve_strip_byte_counts(m_context, m_memory.size);
+
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 
@@ -2032,10 +2158,11 @@ namespace
                     return Format();
 
                 case PhotometricInterpretation::CIELAB:
-                    //return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-                case PhotometricInterpretation::TRANSPARENCY_MASK:
                 case PhotometricInterpretation::ICCLAB:
                 case PhotometricInterpretation::ITULAB:
+                    return Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
+                case PhotometricInterpretation::TRANSPARENCY_MASK:
                 case PhotometricInterpretation::CFA:
                 case PhotometricInterpretation::LINEAR_RAW:
                     // MANGO TODO: support different sample formats per channel
@@ -2167,36 +2294,42 @@ namespace
             {
                 decodeChunkyYCbCr(status, dest);
             }
-            else if (m_context.tile_offsets.size() > 0)
+            else if (m_context.tile_offsets.size() > 0 || is_tiled_via_strips())
             {
-                // tiles
+                // tiles (classic TileOffsets, or legacy SGI tiles stored in StripOffsets)
 
-                if (m_context.tile_byte_counts.size() != m_context.tile_offsets.size() ||
-                    m_context.tile_byte_counts.empty())
+                if (!is_tiled_via_strips())
                 {
-                    // We could try to infer the tiles from the remaining data in the file but we drop broken files.
-                    status.setError("Incorrect or missing tile data.");
-                    return status;
+                    if (m_context.tile_byte_counts.size() != m_context.tile_offsets.size() ||
+                        m_context.tile_byte_counts.empty())
+                    {
+                        // We could try to infer the tiles from the remaining data in the file but we drop broken files.
+                        status.setError("Incorrect or missing tile data.");
+                        return status;
+                    }
                 }
 
                 const u32 tile_width = m_context.tile_width;
                 const u32 tile_length = m_context.tile_length;
                 const u32 xtiles = div_ceil(header.width, tile_width);
                 const u32 ytiles = div_ceil(header.height, tile_length);
+                const size_t num_tiles = m_context.tile_offsets.empty()
+                    ? m_context.strip_offsets.size()
+                    : m_context.tile_offsets.size();
 
                 if (m_context.planar_configuration == 1)
                 {
                     // chunky format
     
-                    for (size_t i = 0; i < m_context.tile_offsets.size(); ++i)
+                    for (size_t i = 0; i < num_tiles; ++i)
                     {
-                        ConstMemory memory(m_memory.address + m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+                        ConstMemory memory(m_memory.address + tile_data_offset(i), tile_data_bytes(i));
 
                         u32 x = (u32(i) % xtiles) * tile_width;
                         u32 y = (u32(i) / xtiles) * tile_length;
     
                         printLine(Print::Info, "    [Tile] {}, {}", x, y);
-                        printLine(Print::Info, "      offset: {}, length: {} bytes", m_context.tile_offsets[i], m_context.tile_byte_counts[i]);
+                        printLine(Print::Info, "      offset: {}, length: {} bytes", tile_data_offset(i), tile_data_bytes(i));
     
                         Surface tile(target, x, y, tile_width, tile_length);
                         decodeRect(status, tile, memory, tile_width, tile_length);
@@ -2209,7 +2342,6 @@ namespace
                     // MANGO TODO: clear the target surface correctly
                     std::memset(target.image, 0, target.stride * header.height);
 
-                    // MANGO TODO: verify count == m_context.tile_offsets.size()
                     size_t count = xtiles * ytiles;
 
                     for (size_t i = 0; i < count; ++i)
@@ -2220,7 +2352,7 @@ namespace
                         for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
                         {
                             size_t index = channel * count + i;
-                            ConstMemory memory(m_memory.address + m_context.tile_offsets[index], m_context.tile_byte_counts[index]);
+                            ConstMemory memory(m_memory.address + tile_data_offset(index), tile_data_bytes(index));
 
                             Surface tile(target, x, y, tile_width, tile_length);
                             decodeRect(status, tile, memory, tile_width, tile_length, channel);
@@ -2963,8 +3095,10 @@ namespace
             }
 
             // Check if using tiles or strips
-            bool use_tiles = !m_context.tile_offsets.empty();
-            size_t num_data_blocks = use_tiles ? m_context.tile_offsets.size() : m_context.strip_offsets.size();
+            bool use_tiles = !m_context.tile_offsets.empty() || is_tiled_via_strips();
+            size_t num_data_blocks = use_tiles
+                ? (m_context.tile_offsets.empty() ? m_context.strip_offsets.size() : m_context.tile_offsets.size())
+                : m_context.strip_offsets.size();
 
             printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
 
@@ -2984,8 +3118,8 @@ namespace
                     u32 tile_w = std::min(m_context.tile_width, header.width - tile_x);
                     u32 tile_h = std::min(m_context.tile_length, header.height - tile_y);
 
-                    const u8* tile_data = m_memory.address + m_context.tile_offsets[i];
-                    u32 tile_bytes = m_context.tile_byte_counts[i];
+                    const u8* tile_data = m_memory.address + tile_data_offset(i);
+                    u32 tile_bytes = u32(tile_data_bytes(i));
 
                     printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
 
@@ -3661,7 +3795,13 @@ namespace
             // RGB can be decoded directly, other formats need to be resolved.
             // RGBA (4 samples) used to force the u8 repack path below — wrong for float/half
             // where scanline bytes must be copied as-is into the destination surface.
-            bool is_direct = m_context.samples_per_pixel < 4;
+            // CIELAB is stored as 3 (or 3+N) byte chunky samples; never blit it directly into RGBA.
+            const bool is_cielab =
+                m_context.photometric == u32(PhotometricInterpretation::CIELAB) ||
+                m_context.photometric == u32(PhotometricInterpretation::ICCLAB) ||
+                m_context.photometric == u32(PhotometricInterpretation::ITULAB);
+
+            bool is_direct = m_context.samples_per_pixel < 4 && !is_cielab;
             if (m_context.planar_configuration == 1 &&
                 m_context.photometric == u32(PhotometricInterpretation::RGB) &&
                 !m_context.sample_format.empty() &&
@@ -3676,7 +3816,7 @@ namespace
                 is_direct = false;
             }
 
-            // Planar: each decodeRect pass is one plane. The scratch scanline is single-channel width;
+            // Planar: each decodeRect pass is one plane.
             // resolvePlanarScanline interleaves into a multi-channel layout and must write the surface.
             if (m_context.planar_configuration == 2)
             {
@@ -3753,7 +3893,79 @@ namespace
 
                 if (!is_direct)
                 {
-                    if (m_context.photometric == u32(PhotometricInterpretation::RGB))
+                    if (is_cielab)
+                    {
+                        const u32 lab_channels = m_context.samples_per_pixel - u32(m_context.extra_samples.size());
+                        const u32 chunky_bpp = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
+
+                        size_t base = 0;
+
+                        if (expanded_sample_bits <= 8)
+                        {
+                            for (int x = 0; x < width; ++x)
+                            {
+                                float L = tiff_lab_decode_L(scanline[base + 0], 8);
+                                float A = tiff_lab_decode_A(scanline[base + 1], 8);
+                                float B = tiff_lab_decode_B(scanline[base + 2], 8);
+                                int a = 0xff;
+
+                                if (lab_channels < m_context.samples_per_pixel)
+                                {
+                                    a = scanline[base + lab_channels];
+                                }
+                                else if (m_context.associated_alpha)
+                                {
+                                    a = scanline[base + m_context.associated_alpha_index];
+                                }
+
+                                float r;
+                                float g;
+                                float b;
+                                tiff_lab_to_rgb(L, A, B, r, g, b);
+
+                                target.image[x * 4 + 0] = u8_clamp(int(r * 255.0f + 0.5f));
+                                target.image[x * 4 + 1] = u8_clamp(int(g * 255.0f + 0.5f));
+                                target.image[x * 4 + 2] = u8_clamp(int(b * 255.0f + 0.5f));
+                                target.image[x * 4 + 3] = u8(a);
+
+                                base += chunky_bpp;
+                            }
+                        }
+                        else
+                        {
+                            for (int x = 0; x < width; ++x)
+                            {
+                                const u8* p = scanline.data() + base;
+
+                                float L = tiff_lab_decode_L(uload16(p + 0), 16);
+                                float A = tiff_lab_decode_A(uload16(p + 2), 16);
+                                float B = tiff_lab_decode_B(uload16(p + 4), 16);
+                                int a = 0xff;
+
+                                if (lab_channels < m_context.samples_per_pixel)
+                                {
+                                    a = int(uload16(p + lab_channels * 2) >> 8);
+                                }
+                                else if (m_context.associated_alpha)
+                                {
+                                    a = int(uload16(p + m_context.associated_alpha_index * 2) >> 8);
+                                }
+
+                                float r;
+                                float g;
+                                float b;
+                                tiff_lab_to_rgb(L, A, B, r, g, b);
+
+                                target.image[x * 4 + 0] = u8_clamp(int(r * 255.0f + 0.5f));
+                                target.image[x * 4 + 1] = u8_clamp(int(g * 255.0f + 0.5f));
+                                target.image[x * 4 + 2] = u8_clamp(int(b * 255.0f + 0.5f));
+                                target.image[x * 4 + 3] = u8(a);
+
+                                base += chunky_bpp;
+                            }
+                        }
+                    }
+                    else if (m_context.photometric == u32(PhotometricInterpretation::RGB))
                     {
                         const u32 chunky_bpp_rgb = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
                         size_t base = 0;
@@ -3861,14 +4073,6 @@ namespace
                     {
                         resolve_wide_palette_chunky_row(target.image, scanline.data(), width);
                     }
-                    /*
-                    else if (m_context.photometric == u32(PhotometricInterpretation::CIELAB))
-                    {
-                        for (int x = 0; x < width; ++x)
-                        {
-                        }
-                    }
-                    */
                 }
 
                 memory.address += expanded_bytes_per_row;
