@@ -2687,6 +2687,27 @@ namespace
                             return parser.decode(surface, options);
                         };
                     }
+                    else if (block_offset == m_context.jpeg_interchange_format + header_length)
+                    {
+                        // Strip/tile follows JIF header contiguously: one JPEG bitstream.
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                        {
+                            Buffer buffer;
+                            buffer.append(jif_memory);
+                            buffer.append(memory);
+
+                            if (memory.size < 2 ||
+                                bigEndian::uload16(memory.address + memory.size - 2) != jpeg::MARKER_EOI)
+                            {
+                                u8* eoi = buffer.append(2);
+                                bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
+                            }
+
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
                     else
                     {
                         decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
@@ -2704,7 +2725,13 @@ namespace
                                 writeDHT(entropy, 0x10 | u8(i), m_memory.address + offset);
                             }
 
-                            writeSOS(entropy);
+                            // Strip/tile data often includes its own SOS; don't duplicate it.
+                            const bool strip_has_sos = memory.size >= 2 &&
+                                bigEndian::uload16(memory.address) == jpeg::MARKER_SOS;
+                            if (!strip_has_sos)
+                            {
+                                writeSOS(entropy);
+                            }
                             entropy.append(memory);
 
                             ImageDecodeInterface tempInterface;
@@ -2748,11 +2775,21 @@ namespace
                             writeDHT(buffer, 0x10 | u8(i), m_memory.address + offset);
                         }
 
-                        writeSOS(buffer);
+                        const bool strip_has_sos = memory.size >= 2 &&
+                            bigEndian::uload16(memory.address) == jpeg::MARKER_SOS;
+                        if (!strip_has_sos)
+                        {
+                            writeSOS(buffer);
+                        }
                         buffer.append(memory);
 
-                        u8* eoi = buffer.append(2);
-                        bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
+                        const bool strip_has_eoi = memory.size >= 2 &&
+                            bigEndian::uload16(memory.address + memory.size - 2) == jpeg::MARKER_EOI;
+                        if (!strip_has_eoi)
+                        {
+                            u8* eoi = buffer.append(2);
+                            bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
+                        }
 
                         ImageDecodeInterface tempInterface;
                         jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
