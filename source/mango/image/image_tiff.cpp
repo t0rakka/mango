@@ -1604,6 +1604,51 @@ namespace
         return true;
     }
 
+    static
+    u32 resolve_jpeg_interchange_length(ConstMemory memory, u32 offset, u32 stated_length, u32 strip_offset = 0)
+    {
+        if (!offset || offset >= memory.size)
+        {
+            return 0;
+        }
+
+        const u8* start = memory.address + offset;
+        const u8* file_end = memory.end();
+        u32 avail = u32(file_end - start);
+
+        // Old-style JPEG: interchange segment is often header-only; entropy data follows in strips.
+        if (stated_length && strip_offset && strip_offset == offset + stated_length)
+        {
+            return stated_length;
+        }
+
+        u32 length = stated_length;
+        if (!length || length > avail)
+        {
+            length = avail;
+        }
+
+        auto ends_with_eoi = [](const u8* p, u32 len) -> bool
+        {
+            return len >= 2 && p[len - 2] == 0xff && p[len - 1] == 0xd9;
+        };
+
+        if (ends_with_eoi(start, length))
+        {
+            return length;
+        }
+
+        for (const u8* q = start + 1; q < file_end; ++q)
+        {
+            if (q[-1] == 0xff && q[0] == 0xd9)
+            {
+                return u32(q + 1 - start);
+            }
+        }
+
+        return length;
+    }
+
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
@@ -2364,45 +2409,63 @@ namespace
                     p[13] = 0x00; // Successive approximation
                 };
 
-                if (m_context.jpeg_interchange_format != 0)
+                const bool has_jpeg_tables = !m_context.jpeg_qt_tables.empty() ||
+                    !m_context.jpeg_dc_tables.empty() ||
+                    !m_context.jpeg_ac_tables.empty();
+
+                u32 strip_offset = m_context.strip_offsets.empty() ? 0 : u32(m_context.strip_offsets[0]);
+                u32 strip_bytes = m_context.strip_byte_counts.empty() ? 0 : u32(m_context.strip_byte_counts[0]);
+                const bool jif_is_complete_strip =
+                    m_context.jpeg_interchange_format != 0 &&
+                    m_context.jpeg_interchange_format == strip_offset &&
+                    (m_context.jpeg_interchange_format_length == 0 ||
+                     m_context.jpeg_interchange_format_length == strip_bytes);
+
+                if (m_context.jpeg_interchange_format != 0 &&
+                    (jif_is_complete_strip || !has_jpeg_tables))
                 {
                     //
                     // Mode A: Copy JPEG from JPEGInterchangeFormat
                     //
                     printLine(Print::Info, "  Using headers from JPEGInterchangeFormat");
 
-                    const u8* header_data = m_memory.address + m_context.jpeg_interchange_format;
-                    u32 header_length = m_context.jpeg_interchange_format_length;
-                    printLine(Print::Info, "  Header length: {}", header_length);
+                    u32 header_length = resolve_jpeg_interchange_length(
+                        m_memory, m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length, strip_offset);
+                    printLine(Print::Info, "  Header length: {} (tag: {})", header_length, m_context.jpeg_interchange_format_length);
 
-                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                    const u8* header_ptr = m_memory.address + m_context.jpeg_interchange_format;
+                    const bool header_is_complete = header_length >= 2 &&
+                        header_ptr[header_length - 2] == 0xff &&
+                        header_ptr[header_length - 1] == 0xd9;
+
+                    if (header_is_complete)
                     {
-                        Buffer buffer;
-
-                        for (size_t i = 0; i < m_context.jpeg_dc_tables.size(); ++i)
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                         {
-                            u32 offset = m_context.jpeg_dc_tables[i];
-                            writeDHT(buffer, 0x00 | u8(i), m_memory.address + offset);
-                        }
+                            MANGO_UNREFERENCED(memory);
 
-                        for (size_t i = 0; i < m_context.jpeg_ac_tables.size(); ++i)
+                            ConstMemory jpeg_memory(m_memory.address + m_context.jpeg_interchange_format, header_length);
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, jpeg_memory, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
+                    else
+                    {
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                         {
-                            u32 offset = m_context.jpeg_ac_tables[i];
-                            writeDHT(buffer, 0x10 | u8(i), m_memory.address + offset);
-                        }
+                            Buffer buffer;
+                            buffer.append(ConstMemory(m_memory.address + m_context.jpeg_interchange_format, header_length));
+                            buffer.append(memory);
 
-                        writeSOS(buffer);
-                        buffer.append(memory);
+                            u8 eoi[2] = { 0xff, 0xd9 };
+                            buffer.append(ConstMemory(eoi, 2));
 
-                        ConstMemory jpeg_memory(m_memory.address + m_context.jpeg_interchange_format, m_context.jpeg_interchange_format_length);
-
-                        ImageDecodeInterface tempInterface;
-                        jpeg::Parser parser(&tempInterface, jpeg_memory, jpeg::Parser::RELAXED_PARSER);
-                        parser.setMemory(buffer);
-
-                        ImageDecodeStatus status = parser.decode(surface, options);
-                        return status;
-                    };
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
                 }
                 else
                 {
@@ -2984,10 +3047,18 @@ namespace
                         Buffer temp(memory.size);
                         u8_reverse_bits(temp, memory);
                         success = ccitt_group3_decompress(expanded_buffer, temp, width, height, is_2d);
+                        if (!success)
+                        {
+                            success = ccitt_rle_decompress(expanded_buffer, temp, width, height, false);
+                        }
                     }
                     else
                     {
                         success = ccitt_group3_decompress(expanded_buffer, memory, width, height, is_2d);
+                        if (!success)
+                        {
+                            success = ccitt_rle_decompress(expanded_buffer, memory, width, height, false);
+                        }
                     }
 
                     if (!success)

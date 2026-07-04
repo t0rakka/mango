@@ -250,12 +250,20 @@ struct State
             consumeBits(8);
         }
 
-        while (getBits(1) == 0)
+        while (true)
+        {
+            if (!ensureBits(1))
+                goto noEOLFound;
+            if (getBits(1) != 0)
+                break;
             consumeBits(1);
+        }
         consumeBits(1); // EOL bit
         EOLcnt = 0; // reset EOL counter/flag
         return Expand::Success;      // existing EOL skipped
     noEOLFound:
+        if (sp.mode & FAXMODE_NOEOL)
+            return Expand::EndOfFile;
         sp.mode |= FAXMODE_NOEOL;
         return Expand::Retry;
     }
