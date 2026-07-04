@@ -151,16 +151,25 @@ namespace
                 return;
             }
 
-            if (paletteSize > 256)
+            if (bitsPerPixel <= 8)
             {
-                setError("Incorrect palette size ({})", paletteSize);
-                return;
-            }
+                if (paletteSize > 256)
+                {
+                    setError("Incorrect palette size ({})", paletteSize);
+                    return;
+                }
 
-            if (importantColorCount > 256)
+                if (importantColorCount > 256)
+                {
+                    setError("Incorrect palette size ({})", importantColorCount);
+                    return;
+                }
+            }
+            else
             {
-                setError("Incorrect palette size ({})", importantColorCount);
-                return;
+                // biClrUsed / biClrImportant are unused for truecolor BMPs
+                paletteSize = 0;
+                importantColorCount = 0;
             }
 
             switch (compression)

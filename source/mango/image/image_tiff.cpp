@@ -114,6 +114,7 @@ namespace
         u32 height = 0;
         u16 compression = 1;
         u16 photometric = 2;
+        bool photometric_specified = false;
         u16 resolution_unit = 0;
         float x_position = 0;
         float y_position = 0;
@@ -503,7 +504,34 @@ namespace
             }
 
             TIFF_CASE_UNSIGNED(Compression, compression);
-            TIFF_CASE_UNSIGNED(PhotometricInterpretation, photometric);
+
+            case Tag::PhotometricInterpretation:
+                context.photometric = u16(getUnsigned(p, type));
+                context.photometric_specified = true;
+                printLine(Print::Info, "    [PhotometricInterpretation]");
+                printLine(Print::Info, "      value: {}", context.photometric);
+                break;
+
+            case Tag(u16(65535)):
+            {
+                // GraphicsMagick can write PhotometricInterpretation at tag 65535 when the IFD is unsorted.
+                if (!context.photometric_specified)
+                {
+                    u32 v = getUnsigned(p, type);
+                    if (v <= u32(PhotometricInterpretation::YCBCR) ||
+                        v == u32(PhotometricInterpretation::CFA) ||
+                        v == u32(PhotometricInterpretation::LOGL) ||
+                        v == u32(PhotometricInterpretation::LOGLUV) ||
+                        v == u32(PhotometricInterpretation::LINEAR_RAW))
+                    {
+                        context.photometric = u16(v);
+                        printLine(Print::Info, "    [PhotometricInterpretation] (tag 65535)");
+                        printLine(Print::Info, "      value: {}", context.photometric);
+                    }
+                }
+                break;
+            }
+
             TIFF_CASE_UNSIGNED(FillOrder, fill_order);
 
             case Tag::DocumentName:
@@ -722,8 +750,8 @@ namespace
                     //              1: associated alpha (premultiplied color)
                     if (context.extra_samples[i] == 1)
                     {
-                        // found associated alpha in extra samples
                         context.associated_alpha = true;
+                        // Absolute channel index is resolved in parseIFDs() once SamplesPerPixel is known.
                         context.associated_alpha_index = i;
                     }
                 }
@@ -1698,6 +1726,28 @@ namespace
             }
 
             m_context.sample_bits = sample_bits;
+
+            if (!m_context.extra_samples.empty())
+            {
+                for (size_t i = 0; i < m_context.extra_samples.size(); ++i)
+                {
+                    if (m_context.extra_samples[i] == 1)
+                    {
+                        const u32 color_channels = m_context.samples_per_pixel - u32(m_context.extra_samples.size());
+                        m_context.associated_alpha_index = color_channels + i;
+                        m_context.associated_alpha = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!m_context.photometric_specified &&
+                m_context.photometric == u32(PhotometricInterpretation::RGB) &&
+                m_context.ink_set == 1 &&
+                m_context.samples_per_pixel == 4)
+            {
+                m_context.photometric = u16(PhotometricInterpretation::SEPARATED);
+            }
 
             if (m_context.photometric == u32(PhotometricInterpretation::PALETTE))
             {
@@ -3111,10 +3161,9 @@ namespace
                 is_direct = false;
             }
 
-            // Planar SEPARATED (CMYK): each decodeRect pass is one plate. is_direct must be true so samples
-            // accumulate in the surface; CMYK→RGB runs once after all plates are decoded (see decode()).
-            if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
-                m_context.planar_configuration == 2)
+            // Planar: each decodeRect pass is one plane. The scratch scanline is single-channel width;
+            // resolvePlanarScanline interleaves into a multi-channel layout and must write the surface.
+            if (m_context.planar_configuration == 2)
             {
                 is_direct = true;
             }
