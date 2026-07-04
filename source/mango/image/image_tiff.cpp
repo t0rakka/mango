@@ -1013,21 +1013,21 @@ namespace
         u8* dest_ptr = output.address;
         u8* dest_end = output.address + output.size;
 
-        s32 data = 0;
-        s32 data_bits = 0;
-        s32 codesize = 9;
-        s32 codemask = (1 << codesize) - 1;
+        u64 data = 0;
+        int data_bits = 0;
+        int codesize = 9;
+        int codemask = (1 << codesize) - 1;
 
         auto GetNextCode = [&]() -> int
         {
-            // MSB-first: check transitions before reading (original TIFF style)
+            // MSB-first: widen before reading when the next dictionary index needs it.
             if (is_msb_first)
             {
                 if ((next_table_entry == 511 && codesize == 9) ||
                     (next_table_entry == 1023 && codesize == 10) ||
                     (next_table_entry == 2047 && codesize == 11))
                 {
-                    codesize++;
+                    ++codesize;
                     codemask = (1 << codesize) - 1;
                 }
             }
@@ -1035,14 +1035,14 @@ namespace
             // Fill bit buffer (adaptive: MSB-first or LSB-first)
             while (data_bits < codesize && src_ptr < src_end)
             {
-                s32 byte_val = *src_ptr++;
+                const u8 byte_val = *src_ptr++;
                 if (!is_msb_first)
                 {
-                    data = data | (byte_val << data_bits);  // LSB-first: new bits at top
+                    data |= u64(byte_val) << data_bits;
                 }
                 else
                 {
-                    data = (data << 8) | byte_val;  // MSB-first: standard TIFF
+                    data = (data << 8) | byte_val;
                 }
                 data_bits += 8;
             }
@@ -1157,6 +1157,7 @@ namespace
                 next_table_entry = 258;
                 codesize = 9;
                 codemask = (1 << codesize) - 1;
+                OldCode = -1;
                 Code = GetNextCode();
                 if (Code < 0 || Code == EoiCode)
                     break;
@@ -2598,6 +2599,9 @@ namespace
     
                         Surface strip(target, 0, y, header.width, strip_height);
                         decodeRect(status, strip, ConstMemory(src, bytes), header.width, strip_height);
+
+                        if (!status)
+                            return status;
     
                         y += strip_height;
                     }
@@ -3929,6 +3933,7 @@ namespace
 
                 case Compression::LZW:
                 {
+                    std::memset(buffer, 0, uncompressed_bytes);
                     bool success = lzw_decompress(buffer, memory);
                     if (!success)
                     {
@@ -4074,7 +4079,17 @@ namespace
                 is_direct = true;
             }
 
-            Buffer scanline(expanded_bytes_per_row);
+            const bool cielab_inplace =
+                !is_direct && is_cielab &&
+                m_context.planar_configuration == 1 &&
+                expanded_sample_bits <= 8 &&
+                m_context.predictor <= 2;
+
+            Buffer scanline;
+            if (!cielab_inplace)
+            {
+                scanline.resize(expanded_bytes_per_row);
+            }
 
             const bool plane_direct =
                 m_context.planar_configuration == 2 &&
@@ -4130,7 +4145,9 @@ namespace
 
             for (int y = 0; y < height; ++y)
             {
-                u8* dest = is_direct ? target.image : scanline.data();
+                u8* dest = is_direct ? target.image
+                    : cielab_inplace ? const_cast<u8*>(memory.address)
+                    : scanline.data();
 
                 if (m_context.planar_configuration == 1)
                 {
@@ -4148,6 +4165,7 @@ namespace
                     {
                         const u32 lab_channels = m_context.samples_per_pixel - u32(m_context.extra_samples.size());
                         const u32 chunky_bpp = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
+                        const u8* row = cielab_inplace ? memory.address : scanline.data();
 
                         float X0;
                         float Y0;
@@ -4163,17 +4181,17 @@ namespace
                                 float X;
                                 float Y;
                                 float Z;
-                                tiff_cielab8_to_xyz(scanline[base + 0], s8(scanline[base + 1]), s8(scanline[base + 2]),
+                                tiff_cielab8_to_xyz(row[base + 0], s8(row[base + 1]), s8(row[base + 2]),
                                     X0, Y0, Z0, X, Y, Z);
                                 int a = 0xff;
 
                                 if (lab_channels < m_context.samples_per_pixel)
                                 {
-                                    a = scanline[base + lab_channels];
+                                    a = row[base + lab_channels];
                                 }
                                 else if (m_context.associated_alpha)
                                 {
-                                    a = scanline[base + m_context.associated_alpha_index];
+                                    a = row[base + m_context.associated_alpha_index];
                                 }
 
                                 u8 r;
@@ -4193,7 +4211,7 @@ namespace
                         {
                             for (int x = 0; x < width; ++x)
                             {
-                                const u8* p = scanline.data() + base;
+                                const u8* p = row + base;
 
                                 float X;
                                 float Y;
