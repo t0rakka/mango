@@ -510,13 +510,13 @@ namespace
         switch (fourcc)
         {
             case FOURCC_DXT1:
-            case FOURCC_DXT2:
                 compression = TextureCompression::DXT1;
                 break;
+            case FOURCC_DXT2:
             case FOURCC_DXT3:
-            case FOURCC_DXT4:
                 compression = TextureCompression::DXT3;
                 break;
+            case FOURCC_DXT4:
             case FOURCC_DXT5:
             case FOURCC_RXGB:
                 compression = TextureCompression::DXT5;
@@ -672,6 +672,7 @@ namespace
 
         Format format;
         u32 compression = TextureCompression::NONE;
+        bool premultiplied = false;
 
         const char* error = nullptr;
 
@@ -810,6 +811,8 @@ namespace
                 case FOURCC_ASTC8x5:
                 case FOURCC_ASTC8x6:
                 case FOURCC_ASTC10x5:
+                    if (fourCC == FOURCC_DXT2 || fourCC == FOURCC_DXT4)
+                        premultiplied = true;
                     compression = fourcc_to_compression(fourCC);
                     break;
 
@@ -1050,6 +1053,8 @@ namespace
                 header.format = pixelFormat.format;
                 header.compression = TextureCompression::NONE;
             }
+
+            header.premultiplied = pixelFormat.premultiplied;
 
             // Keep the transfer function consistent with the resolved linear flag (DXGI
             // _SRGB formats and the DDS color-space flag drive header.linear above).
