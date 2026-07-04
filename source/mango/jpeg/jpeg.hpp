@@ -481,6 +481,11 @@ namespace mango::image::jpeg
 
         bool m_rgb_colorspace = false;
         bool m_relaxed_parser = false;
+        Buffer m_source_icc;
+        bool m_cmyk_store_mode = false;
+        bool m_cmyk_icc_applied = false;
+
+        ConstMemory getCmykIcc() const;
 
         int m_precision; // 8 or 12 bits
         int m_components; // 1..4
@@ -560,10 +565,16 @@ namespace mango::image::jpeg
         ~StreamDecoder();
 
         void setMemory(ConstMemory memory);
+        void setSourceIcc(ConstMemory icc);
 
         bool isLossless() const
         {
             return is_lossless;
+        }
+
+        bool cmykIccApplied() const
+        {
+            return m_cmyk_icc_applied;
         }
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
@@ -607,10 +618,16 @@ namespace mango::image::jpeg
         ~Parser();
 
         void setMemory(ConstMemory memory);
+        void setSourceIcc(ConstMemory icc);
 
         bool isLossless() const
         {
             return m_base.isLossless();
+        }
+
+        bool cmykIccApplied() const
+        {
+            return m_base.cmykIccApplied();
         }
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
@@ -641,6 +658,10 @@ namespace mango::image::jpeg
     void process_y_24bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_y_32bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
     void process_cmyk_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+
+    // CMYK scanlines stored as C,M,Y,K in RGBA byte slots; converts in-place to display sRGB.
+    bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc);
+    void simple_cmyk_surface_to_rgba(Surface& surface);
     void process_ycbcr_8bit             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
 
     void process_rgb_bgr               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);

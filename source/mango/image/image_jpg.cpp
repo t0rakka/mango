@@ -51,6 +51,12 @@ namespace
             MANGO_UNREFERENCED(face);
 
             ImageDecodeStatus status = m_parser.decode(dest, options);
+
+            if (m_parser.cmykIccApplied())
+            {
+                icc = ConstMemory();
+            }
+
             return status;
         }
     };

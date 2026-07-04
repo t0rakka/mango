@@ -3,6 +3,8 @@
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
+#include <lcms2.h>
+#include <mango/core/print.hpp>
 
 namespace mango::image::jpeg
 {
@@ -214,6 +216,215 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
             g = lookup[g];
             b = lookup[b];
             d[x] = image::makeRGBA(r, g, b, 0xff);
+        }
+    }
+}
+
+void process_cmyk_store_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+{
+    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+
+    for (int i = 0; i < state->blocks; ++i)
+    {
+        Block& block = state->block[i];
+        state->idct(result + i * 64, data, block.qt);
+        data += 64;
+    }
+
+    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
+    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+
+    u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
+
+    for (int channel = 0; channel < 4; ++channel)
+    {
+        int offset = state->frame[channel].offset * 64;
+        int hsf = state->frame[channel].hsf;
+        int vsf = state->frame[channel].vsf;
+
+        for (int yblock = 0; yblock < vsf; ++yblock)
+        {
+            for (int xblock = 0; xblock < hsf; ++xblock)
+            {
+                u8* source = result + offset + (yblock * hsf + xblock) * 64;
+                u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
+
+                if (hmax != hsf || vmax != vsf)
+                {
+                    int xscale = hmax / hsf;
+                    int yscale = vmax / vsf;
+
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        for (int x = 0; x < 8; ++x)
+                        {
+                            u8 sample = *source++;
+                            std::memset(d + x * xscale, sample, xscale);
+                        }
+
+                        d += hmax * 8;
+
+                        for (int s = 1; s < yscale; ++s)
+                        {
+                            std::memcpy(d, d - hmax * 8, xscale * 8);
+                            d += hmax * 8;
+                        }
+                    }
+                }
+                else
+                {
+                    for (int y = 0; y < 8; ++y)
+                    {
+                        std::memcpy(d, source, 8);
+                        source += 8;
+                        d += hmax * 8;
+                    }
+                }
+            }
+        }
+    }
+
+    const ColorSpace colorspace = state->colorspace;
+
+    for (int y = 0; y < height; ++y)
+    {
+        u8* source0 = temp + 0 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source1 = temp + 1 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source2 = temp + 2 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u8* source3 = temp + 3 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+        u32* d = reinterpret_cast<u32*>(dest + y * stride);
+
+        for (int x = 0; x < width; ++x)
+        {
+            u8 y0 = source0[x];
+            u8 cb = source1[x];
+            u8 cr = source2[x];
+            u8 ck = source3[x];
+
+            int C;
+            int M;
+            int Y;
+            int K;
+
+            switch (colorspace)
+            {
+                case ColorSpace::CMYK:
+                    C = y0;
+                    M = cb;
+                    Y = cr;
+                    K = ck;
+                    break;
+                case ColorSpace::YCCK:
+                    C = 255 - (y0 + ((5734 * cr - 735052) >> 12));
+                    M = 255 - (y0 + ((-1410 * cb - 2925 * cr + 554844) >> 12));
+                    Y = 255 - (y0 + ((7258 * cb - 929038) >> 12));
+                    K = ck;
+                    break;
+                default:
+                case ColorSpace::YCBCR:
+                    C = 0;
+                    M = 0;
+                    Y = 0;
+                    K = 0;
+                    break;
+            }
+
+            d[x] = image::makeRGBA(u8(C), u8(M), u8(Y), u8(K));
+        }
+    }
+}
+
+bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc)
+{
+    const Format rgba_u8(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
+    if (!icc.address || !icc.size || surface.format != rgba_u8)
+    {
+        return false;
+    }
+
+    cmsHPROFILE input = cmsOpenProfileFromMem(icc.address, icc.size);
+    if (!input)
+    {
+        printLine(Print::Warning, "[JPEG] CMYK ICC profile open failed.");
+        return false;
+    }
+
+    cmsHPROFILE output = cmsCreate_sRGBProfile();
+    if (!output)
+    {
+        cmsCloseProfile(input);
+        printLine(Print::Warning, "[JPEG] sRGB profile creation failed.");
+        return false;
+    }
+
+    cmsHTRANSFORM transform = cmsCreateTransform(
+        input, TYPE_CMYK_8,
+        output, TYPE_RGBA_8,
+        INTENT_PERCEPTUAL, cmsFLAGS_BLACKPOINTCOMPENSATION);
+
+    cmsCloseProfile(input);
+    cmsCloseProfile(output);
+
+    if (!transform)
+    {
+        printLine(Print::Warning, "[JPEG] CMYK to sRGB transform failed.");
+        return false;
+    }
+
+    const cmsUInt32Number width = cmsUInt32Number(surface.width);
+
+    for (int y = 0; y < surface.height; ++y)
+    {
+        u8* row = surface.image + y * surface.stride;
+        cmsDoTransform(transform, row, row, width);
+    }
+
+    cmsDeleteTransform(transform);
+
+    for (int y = 0; y < surface.height; ++y)
+    {
+        u8* row = surface.image + y * surface.stride;
+
+        for (int x = 0; x < surface.width; ++x)
+        {
+            row[x * 4 + 3] = 0xff;
+        }
+    }
+
+    return true;
+}
+
+void simple_cmyk_surface_to_rgba(Surface& surface)
+{
+    const Format rgba_u8(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
+    if (surface.format != rgba_u8)
+    {
+        return;
+    }
+
+    const u8* lookup = math::get_linear_to_srgb_table();
+
+    for (int y = 0; y < surface.height; ++y)
+    {
+        u8* row = surface.image + y * surface.stride;
+
+        for (int x = 0; x < surface.width; ++x)
+        {
+            u8* p = row + x * 4;
+            const int C = p[0];
+            const int M = p[1];
+            const int Y = p[2];
+            const int K = p[3];
+            const int r = (C * K + 127) / 255;
+            const int g = (M * K + 127) / 255;
+            const int b = (Y * K + 127) / 255;
+
+            p[0] = lookup[r];
+            p[1] = lookup[g];
+            p[2] = lookup[b];
+            p[3] = 0xff;
         }
     }
 }

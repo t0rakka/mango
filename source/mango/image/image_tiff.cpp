@@ -145,7 +145,7 @@ namespace
         std::vector<float> s_max_sample_value;
 
         std::vector<u64> extra_samples;
-        bool associated_alpha = true;
+        bool associated_alpha = false;
         size_t associated_alpha_index = 0;
 
         u32 ink_set = 1;
@@ -1696,6 +1696,122 @@ namespace
         return length;
     }
 
+    bool is_complete_jpeg(ConstMemory memory)
+    {
+        return memory.size >= 4 &&
+            memory.address[0] == 0xff && memory.address[1] == 0xd8 &&
+            memory.address[memory.size - 2] == 0xff && memory.address[memory.size - 1] == 0xd9;
+    }
+
+    bool jpeg_contains_marker(ConstMemory memory, u8 marker)
+    {
+        const u8* p = memory.address;
+        const u8* end = memory.address + memory.size;
+
+        if (!p || memory.size < 4 || p[0] != 0xff || p[1] != 0xd8)
+        {
+            return false;
+        }
+
+        p += 2;
+
+        while (p + 4 <= end)
+        {
+            if (p[0] != 0xff)
+            {
+                ++p;
+                continue;
+            }
+
+            u8 m = p[1];
+
+            if (m == 0xd9 || m == 0xda)
+            {
+                break;
+            }
+
+            u16 len = bigEndian::uload16(p + 2);
+
+            if (m == marker)
+            {
+                return true;
+            }
+
+            p += 2 + len;
+        }
+
+        return false;
+    }
+
+    // Photoshop compression=7 often stores DQT/DHT in JPEGTables while each strip is an
+    // otherwise complete JPEG (SOI..EOI) that references those tables but omits them.
+    bool merge_jpeg_with_tables(ConstMemory strip, ConstMemory tables, Buffer& buffer)
+    {
+        buffer.reset();
+
+        if (!strip.address || strip.size < 4 || strip.address[0] != 0xff || strip.address[1] != 0xd8)
+        {
+            return false;
+        }
+
+        const bool need_dqt = !jpeg_contains_marker(strip, 0xdb);
+        const bool need_dht = !jpeg_contains_marker(strip, 0xc4);
+
+        if (!need_dqt && !need_dht)
+        {
+            return false;
+        }
+
+        if (!tables.address || tables.size < 4)
+        {
+            return false;
+        }
+
+        buffer.append(strip.address, 2); // SOI
+
+        const u8* p = tables.address + 2;
+        const u8* end = tables.address + tables.size;
+
+        while (p + 4 <= end)
+        {
+            if (p[0] != 0xff)
+            {
+                ++p;
+                continue;
+            }
+
+            u8 m = p[1];
+
+            if (m == 0xd9)
+            {
+                break;
+            }
+
+            if (m == 0xd8)
+            {
+                p += 2;
+                continue;
+            }
+
+            u16 len = bigEndian::uload16(p + 2);
+
+            if (p + 2 + len > end)
+            {
+                break;
+            }
+
+            if ((m == 0xdb && need_dqt) || (m == 0xc4 && need_dht))
+            {
+                buffer.append(p, 2 + len);
+            }
+
+            p += 2 + len;
+        }
+
+        buffer.append(strip.address + 2, strip.size - 2);
+        return true;
+    }
+
     void resolve_strip_byte_counts(IFDContext& ctx, size_t file_size)
     {
         if (!ctx.strip_byte_counts.empty() || ctx.strip_offsets.empty())
@@ -1726,54 +1842,131 @@ namespace
         }
     }
 
-    static float tiff_lab_decode_L(u32 v, int bits)
+    static void tiff_cielab16_to_xyz(u32 l, s32 a, s32 b,
+        float X0, float Y0, float Z0, float& X, float& Y, float& Z)
     {
-        if (bits <= 8)
+        // libtiff TIFFCIELab16ToXYZ (D50 reference white).
+        float L = float(l) * 100.0f / 65535.0f;
+        float cby;
+        float tmp;
+
+        if (L < 8.856f)
         {
-            return float(v) * 100.0f / 255.0f;
+            Y = (L * Y0) / 903.292f;
+            cby = 7.787f * (Y / Y0) + 16.0f / 116.0f;
         }
-        return float(v) * 100.0f / 65535.0f;
-    }
-
-    static float tiff_lab_decode_A(u32 v, int bits)
-    {
-        if (bits <= 8)
+        else
         {
-            // libtiff passes a* as (signed char)pp[1] for 8-bit CIELAB.
-            return float(s8(v));
+            cby = (L + 16.0f) / 116.0f;
+            Y = Y0 * cby * cby * cby;
         }
-        // 16-bit: chrominance is signed, scaled by 256 (TIFFCIELab16ToXYZ).
-        return float(s16(v)) / 256.0f;
-    }
 
-    static float tiff_lab_decode_B(u32 v, int bits)
-    {
-        return tiff_lab_decode_A(v, bits);
-    }
-
-    static void tiff_lab_to_rgb(float L, float A, float B, float& r, float& g, float& b)
-    {
-        float y = (L + 16.0f) / 116.0f;
-        float x = A / 500.0f + y;
-        float z = y - B / 200.0f;
-
-        auto f = [] (float t)
+        tmp = float(a) / 256.0f / 500.0f + cby;
+        if (tmp < 0.2069f)
         {
-            const float t3 = t * t * t;
-            return (t3 > 0.008856f) ? t3 : (t - 16.0f / 116.0f) / 7.787f;
+            X = X0 * (tmp - 0.13793f) / 7.787f;
+        }
+        else
+        {
+            X = X0 * tmp * tmp * tmp;
+        }
+
+        tmp = cby - float(b) / 256.0f / 200.0f;
+        if (tmp < 0.2069f)
+        {
+            Z = Z0 * (tmp - 0.13793f) / 7.787f;
+        }
+        else
+        {
+            Z = Z0 * tmp * tmp * tmp;
+        }
+    }
+
+    static void tiff_cielab8_to_xyz(u8 l, s8 a, s8 b, float X0, float Y0, float Z0, float& X, float& Y, float& Z)
+    {
+        tiff_cielab16_to_xyz(u32(l) * 257, s32(a) * 256, s32(b) * 256, X0, Y0, Z0, X, Y, Z);
+    }
+
+    struct CielabDisplayLuts
+    {
+        static constexpr int range = 1500;
+
+        float Yr2r[range + 1];
+        float rstep;
+        float gstep;
+        float bstep;
+
+        CielabDisplayLuts()
+        {
+            constexpr float YCR = 100.0f;
+            constexpr float Y0 = 1.0f;
+            constexpr float inv_gamma = 1.0f / 2.4f;
+
+            rstep = (YCR - Y0) / float(range);
+            gstep = rstep;
+            bstep = rstep;
+
+            for (int i = 0; i <= range; ++i)
+            {
+                const float v = 255.0f * std::pow(float(i) / float(range), inv_gamma);
+                Yr2r[i] = v;
+            }
+        }
+    };
+
+    static const CielabDisplayLuts& tiff_cielab_luts()
+    {
+        static const CielabDisplayLuts luts;
+        return luts;
+    }
+
+    static void tiff_xyz_to_display_rgb(float X, float Y, float Z, u8& r, u8& g, u8& b)
+    {
+        // libtiff display_sRGB + TIFFXYZToRGB (1500-step LUT).
+        constexpr float m[9] =
+        {
+            3.2410f, -1.5374f, -0.4986f,
+            -0.9692f, 1.8760f, 0.0416f,
+            0.0556f, -0.2040f, 1.0570f,
         };
 
-        x = 0.95047f * f(x);
-        y = 1.00000f * f(y);
-        z = 1.08883f * f(z);
+        constexpr float YCR = 100.0f;
+        constexpr float Y0 = 1.0f;
 
-        r = x *  3.2406f + y * -1.5372f + z * -0.4986f;
-        g = x * -0.9689f + y *  1.8758f + z *  0.0415f;
-        b = x *  0.0557f + y * -0.2040f + z *  1.0570f;
+        float Yr = m[0] * X + m[1] * Y + m[2] * Z;
+        float Yg = m[3] * X + m[4] * Y + m[5] * Z;
+        float Yb = m[6] * X + m[7] * Y + m[8] * Z;
 
-        r = linear_to_srgb(std::clamp(r, 0.0f, 1.0f));
-        g = linear_to_srgb(std::clamp(g, 0.0f, 1.0f));
-        b = linear_to_srgb(std::clamp(b, 0.0f, 1.0f));
+        Yr = std::clamp(Yr, Y0, YCR);
+        Yg = std::clamp(Yg, Y0, YCR);
+        Yb = std::clamp(Yb, Y0, YCR);
+
+        auto to_channel = [] (float Yl, float step, const float* lut) -> u8
+        {
+            size_t i = size_t((Yl - Y0) / step);
+            i = std::min(size_t(CielabDisplayLuts::range), i);
+            return u8(std::clamp(lut[i] + 0.5f, 0.0f, 255.0f));
+        };
+
+        r = to_channel(Yr, tiff_cielab_luts().rstep, tiff_cielab_luts().Yr2r);
+        g = to_channel(Yg, tiff_cielab_luts().gstep, tiff_cielab_luts().Yr2r);
+        b = to_channel(Yb, tiff_cielab_luts().bstep, tiff_cielab_luts().Yr2r);
+    }
+
+    static void tiff_cielab_ref_white(const IFDContext& ctx, float& X0, float& Y0, float& Z0)
+    {
+        float wx = 0.3457f;
+        float wy = 0.3585f;
+
+        if (ctx.white_point.y > 0.0f)
+        {
+            wx = ctx.white_point.x;
+            wy = ctx.white_point.y;
+        }
+
+        Y0 = 100.0f;
+        X0 = wx / wy * Y0;
+        Z0 = (1.0f - wx - wy) / wy * Y0;
     }
 
     struct Interface : ImageDecodeInterface
@@ -1830,6 +2023,24 @@ namespace
 
             return m_context.strip_offsets.size() == expected &&
                    m_context.strip_byte_counts.size() == expected;
+        }
+
+        bool suppress_icc_after_decode() const
+        {
+            // Decoded pixels are already display RGBA; don't apply source-space ICC profiles.
+            if (m_context.compression == u32(Compression::JPEG_LEGACY) ||
+                m_context.compression == u32(Compression::JPEG_MODERN))
+            {
+                if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) ||
+                    m_context.photometric == u32(PhotometricInterpretation::YCBCR))
+                {
+                    return true;
+                }
+            }
+
+            return m_context.photometric == u32(PhotometricInterpretation::CIELAB) ||
+                   m_context.photometric == u32(PhotometricInterpretation::ICCLAB) ||
+                   m_context.photometric == u32(PhotometricInterpretation::ITULAB);
         }
 
         u64 tile_data_offset(size_t i) const
@@ -1996,7 +2207,7 @@ namespace
             // Forward the ICC profile at header() time (decode() also sets it). Color space:
             // integer RGB/grayscale TIFF is sRGB by convention (the default); floating-point
             // samples carry linear scene data. An embedded ICC profile defines it exactly.
-            icc = m_context.icc_profile;
+            icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
 
             if (m_context.icc_profile.size)
             {
@@ -2437,7 +2648,7 @@ namespace
             target.resolve();
 
             // Store ICC profile into the ImageDecodeInterface
-            icc = m_context.icc_profile;
+            icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
 
             return status;
         }
@@ -2749,6 +2960,20 @@ namespace
                 options.jpeg_colorspace_rgb = true;
             }
 
+            ConstMemory separated_icc;
+            if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED))
+            {
+                separated_icc = m_context.icc_profile;
+            }
+
+            auto prepare_jpeg_parser = [&](jpeg::Parser& parser)
+            {
+                if (separated_icc.size)
+                {
+                    parser.setSourceIcc(separated_icc);
+                }
+            };
+
             std::function<ImageDecodeStatus(ConstMemory, Surface)> decodeJPEG;
 
             auto writeDHT = [] (Buffer& buffer, u8 id, const u8* table)
@@ -2879,6 +3104,7 @@ namespace
 
                             ImageDecodeInterface tempInterface;
                             jpeg::Parser parser(&tempInterface, jif_memory, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
                             return parser.decode(surface, options);
                         };
                     }
@@ -2900,6 +3126,7 @@ namespace
 
                             ImageDecodeInterface tempInterface;
                             jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
                             return parser.decode(surface, options);
                         };
                     }
@@ -2931,6 +3158,7 @@ namespace
 
                             ImageDecodeInterface tempInterface;
                             jpeg::Parser parser(&tempInterface, jif_memory, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
                             parser.setMemory(entropy);
                             return parser.decode(surface, options);
                         };
@@ -2988,6 +3216,7 @@ namespace
 
                         ImageDecodeInterface tempInterface;
                         jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                        prepare_jpeg_parser(parser);
                         return parser.decode(surface, options);
                     };
                 }
@@ -3000,7 +3229,26 @@ namespace
                     decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
                     {
                         ImageDecodeInterface tempInterface;
+
+                        Buffer bitstream_buffer;
+                        if (merge_jpeg_with_tables(memory, m_context.jpeg_tables, bitstream_buffer))
+                        {
+                            ConstMemory bitstream(bitstream_buffer);
+                            jpeg::Parser parser(&tempInterface, bitstream, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
+                            return parser.decode(surface, options);
+                        }
+
+                        // Strip is a complete JPEG and already carries its own tables.
+                        if (is_complete_jpeg(memory))
+                        {
+                            jpeg::Parser parser(&tempInterface, memory, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
+                            return parser.decode(surface, options);
+                        }
+
                         jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
+                        prepare_jpeg_parser(parser);
                         parser.setMemory(memory);
                         return parser.decode(surface, options);
                     };
@@ -3043,6 +3291,7 @@ namespace
 
                             ImageDecodeInterface tempInterface;
                             jpeg::Parser parser(&tempInterface, jif_memory, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
                             return parser.decode(surface, options);
                         };
                     }
@@ -3063,6 +3312,7 @@ namespace
 
                             ImageDecodeInterface tempInterface;
                             jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
                             return parser.decode(surface, options);
                         };
                     }
@@ -3083,6 +3333,7 @@ namespace
 
                             ImageDecodeInterface tempInterface;
                             jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            prepare_jpeg_parser(parser);
                             return parser.decode(surface, options);
                         };
                     }
@@ -3681,7 +3932,7 @@ namespace
                     bool success = lzw_decompress(buffer, memory);
                     if (!success)
                     {
-                        printLine(Print::Error, "[LZW] Decompression failed");
+                        status.setError("[LZW] Decompression failed.");
                         return;
                     }
 
@@ -3898,15 +4149,22 @@ namespace
                         const u32 lab_channels = m_context.samples_per_pixel - u32(m_context.extra_samples.size());
                         const u32 chunky_bpp = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
 
+                        float X0;
+                        float Y0;
+                        float Z0;
+                        tiff_cielab_ref_white(m_context, X0, Y0, Z0);
+
                         size_t base = 0;
 
                         if (expanded_sample_bits <= 8)
                         {
                             for (int x = 0; x < width; ++x)
                             {
-                                float L = tiff_lab_decode_L(scanline[base + 0], 8);
-                                float A = tiff_lab_decode_A(scanline[base + 1], 8);
-                                float B = tiff_lab_decode_B(scanline[base + 2], 8);
+                                float X;
+                                float Y;
+                                float Z;
+                                tiff_cielab8_to_xyz(scanline[base + 0], s8(scanline[base + 1]), s8(scanline[base + 2]),
+                                    X0, Y0, Z0, X, Y, Z);
                                 int a = 0xff;
 
                                 if (lab_channels < m_context.samples_per_pixel)
@@ -3918,14 +4176,14 @@ namespace
                                     a = scanline[base + m_context.associated_alpha_index];
                                 }
 
-                                float r;
-                                float g;
-                                float b;
-                                tiff_lab_to_rgb(L, A, B, r, g, b);
+                                u8 r;
+                                u8 g;
+                                u8 bv;
+                                tiff_xyz_to_display_rgb(X, Y, Z, r, g, bv);
 
-                                target.image[x * 4 + 0] = u8_clamp(int(r * 255.0f + 0.5f));
-                                target.image[x * 4 + 1] = u8_clamp(int(g * 255.0f + 0.5f));
-                                target.image[x * 4 + 2] = u8_clamp(int(b * 255.0f + 0.5f));
+                                target.image[x * 4 + 0] = r;
+                                target.image[x * 4 + 1] = g;
+                                target.image[x * 4 + 2] = bv;
                                 target.image[x * 4 + 3] = u8(a);
 
                                 base += chunky_bpp;
@@ -3937,9 +4195,11 @@ namespace
                             {
                                 const u8* p = scanline.data() + base;
 
-                                float L = tiff_lab_decode_L(uload16(p + 0), 16);
-                                float A = tiff_lab_decode_A(uload16(p + 2), 16);
-                                float B = tiff_lab_decode_B(uload16(p + 4), 16);
+                                float X;
+                                float Y;
+                                float Z;
+                                tiff_cielab16_to_xyz(uload16(p + 0), s16(uload16(p + 2)), s16(uload16(p + 4)),
+                                    X0, Y0, Z0, X, Y, Z);
                                 int a = 0xff;
 
                                 if (lab_channels < m_context.samples_per_pixel)
@@ -3951,14 +4211,14 @@ namespace
                                     a = int(uload16(p + m_context.associated_alpha_index * 2) >> 8);
                                 }
 
-                                float r;
-                                float g;
-                                float b;
-                                tiff_lab_to_rgb(L, A, B, r, g, b);
+                                u8 r;
+                                u8 g;
+                                u8 bv;
+                                tiff_xyz_to_display_rgb(X, Y, Z, r, g, bv);
 
-                                target.image[x * 4 + 0] = u8_clamp(int(r * 255.0f + 0.5f));
-                                target.image[x * 4 + 1] = u8_clamp(int(g * 255.0f + 0.5f));
-                                target.image[x * 4 + 2] = u8_clamp(int(b * 255.0f + 0.5f));
+                                target.image[x * 4 + 0] = r;
+                                target.image[x * 4 + 1] = g;
+                                target.image[x * 4 + 2] = bv;
                                 target.image[x * 4 + 3] = u8(a);
 
                                 base += chunky_bpp;

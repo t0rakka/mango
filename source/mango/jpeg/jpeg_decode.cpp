@@ -16,6 +16,8 @@
 namespace mango::image::jpeg
 {
 
+    void process_cmyk_store_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+
     // ----------------------------------------------------------------------------
     // utilities
     // ----------------------------------------------------------------------------
@@ -949,6 +951,11 @@ namespace mango::image::jpeg
         detectUltraHDR(memory);
     }
 
+    void Parser::setSourceIcc(ConstMemory icc)
+    {
+        m_base.setSourceIcc(icc);
+    }
+
     void Parser::detectUltraHDR(ConstMemory memory)
     {
         if (!m_base.header)
@@ -1176,6 +1183,31 @@ namespace mango::image::jpeg
     {
         m_memory = memory;
         parse(m_memory, false);
+    }
+
+    void StreamDecoder::setSourceIcc(ConstMemory icc)
+    {
+        m_source_icc.reset();
+
+        if (icc.address && icc.size)
+        {
+            m_source_icc.append(icc);
+        }
+    }
+
+    ConstMemory StreamDecoder::getCmykIcc() const
+    {
+        if (icc_buffer.size())
+        {
+            return icc_buffer;
+        }
+
+        if (m_source_icc.size())
+        {
+            return m_source_icc;
+        }
+
+        return ConstMemory();
     }
 
     bool StreamDecoder::isJPEG(ConstMemory memory) const
@@ -2826,7 +2858,16 @@ namespace mango::image::jpeg
                 break;
 
             case 4:
-                processState.process = process_cmyk;
+                if (getCmykIcc().size)
+                {
+                    processState.process = process_cmyk_store_rgba;
+                    m_cmyk_store_mode = true;
+                }
+                else
+                {
+                    processState.process = process_cmyk;
+                    m_cmyk_store_mode = false;
+                }
                 id = "CMYK";
                 break;
         }
@@ -2847,6 +2888,8 @@ namespace mango::image::jpeg
     ImageDecodeStatus StreamDecoder::decode(const Surface& target, const ImageDecodeOptions& options)
     {
         m_decode_status = ImageDecodeStatus();
+        m_cmyk_store_mode = false;
+        m_cmyk_icc_applied = false;
 
         if (!scan_memory.address || !header)
         {
@@ -2870,6 +2913,12 @@ namespace mango::image::jpeg
 
         // configure multithreading
         m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
+
+        if (m_components == 4 && getCmykIcc().size)
+        {
+            // CMYK ICC path stores plates in the surface before a single-pass color transform.
+            m_hardware_concurrency = 1;
+        }
 
         if (is_lossless)
         {
@@ -2949,6 +2998,34 @@ namespace mango::image::jpeg
             // lossless writes the working surface in one pass (no band blits)
             Surface source(*m_sink.surface, 0, 0, m_width, m_height);
             m_sink.target->blit(0, 0, source);
+        }
+        else if (m_components == 4 && m_cmyk_store_mode)
+        {
+            ConstMemory profile = getCmykIcc();
+            Surface surface = m_decode_status.direct
+                ? Surface(*m_sink.surface, 0, 0, m_width, m_height)
+                : Surface(*m_sink.surface, 0, 0, m_width, m_height);
+
+            if (profile.size && transform_cmyk_surface_to_srgb(surface, profile))
+            {
+                m_cmyk_icc_applied = true;
+                icc_buffer.reset();
+                m_source_icc.reset();
+
+                if (!m_decode_status.direct)
+                {
+                    m_sink.target->blit(0, 0, surface);
+                }
+            }
+            else
+            {
+                simple_cmyk_surface_to_rgba(surface);
+
+                if (!m_decode_status.direct)
+                {
+                    m_sink.target->blit(0, 0, surface);
+                }
+            }
         }
 
         blockVector.resize(0);
