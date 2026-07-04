@@ -373,7 +373,7 @@ namespace mango::image::jpeg
 
         void finalize(const ImageDecodeRect& rect, bool force_blit = false) const
         {
-            if (!direct || force_blit)
+            if ((!direct || force_blit) && surface != target)
             {
                 Surface source(*surface, rect.x, rect.y, rect.width, rect.height);
                 target->blit(rect.x, rect.y, source);

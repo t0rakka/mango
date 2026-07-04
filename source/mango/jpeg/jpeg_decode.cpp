@@ -1876,7 +1876,7 @@ namespace mango::image::jpeg
 
         restartCounter = restartInterval;
 
-        m_request_blitting = is_multiscan;
+        m_request_blitting = is_multiscan || is_lossless;
 
         if (decodeState.is_arithmetic)
         {
