@@ -100,12 +100,12 @@ int mangoMain(const mango::CommandLine& commands)
         ImageHeader header = decoder.header();
         if (header.format.isIndexed())
         {
-            printLine("Decoding INDEXED image.");
+            printLine("Decoding INDEXED image.\n");
         }
         else
         {
             printLine("Decoding RGBA image.");
-            printLine("  Format.bits: {}", header.format.bits);
+            printLine("  Format.bits: {}\n", header.format.bits);
         }
 
         bitmap = std::make_unique<Bitmap>(header);

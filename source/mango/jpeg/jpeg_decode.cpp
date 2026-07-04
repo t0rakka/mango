@@ -3027,6 +3027,7 @@ namespace mango::image::jpeg
         }
 
         bool first = true;
+        bool firstRowOfInterval = true;
 
         for (int y = 0; y < ysize; ++y)
         {
@@ -3047,6 +3048,7 @@ namespace mango::image::jpeg
                 if (handleRestart())
                 {
                     first = true;
+                    firstRowOfInterval = true;
                 }
                 else
                 {
@@ -3064,15 +3066,21 @@ namespace mango::image::jpeg
                     {
                         if (!init)
                         {
-                            if (x == 0)
+                            if (firstRowOfInterval)
                             {
-                                P = (y > 0) ? cache[0] : initPredictor;
+                                // First row of scan/restart interval always uses horizontal predictor (1).
+                                P = cache[x - 1];
+                            }
+                            else if (x == 0)
+                            {
+                                // First column of remaining rows uses vertical predictor (2).
+                                P = prev_row[0];
                             }
                             else
                             {
                                 const int Ra = cache[x - 1];
-                                const int Rb = cache[x];
-                                const int Rc = (y > 0) ? prev_row[x - 1] : initPredictor;
+                                const int Rb = prev_row[x];
+                                const int Rc = prev_row[x - 1];
 
                                 switch (predictor)
                                 {
@@ -3140,6 +3148,11 @@ namespace mango::image::jpeg
             for (int i = 0; i < n_components; ++i)
             {
                 prevRowCache[i] = scanLineCache[i];
+            }
+
+            if (!first)
+            {
+                firstRowOfInterval = false;
             }
         }
     }
