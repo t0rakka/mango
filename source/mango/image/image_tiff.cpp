@@ -170,6 +170,8 @@ namespace
         std::vector<u64> jpeg_dc_tables;
         std::vector<u64> jpeg_ac_tables;
         std::vector<u64> y_cb_cr_sub_sampling;
+        float y_cb_cr_coefficients[3] = { 0.299f, 0.587f, 0.114f };
+        float reference_black_white[6] = { 0.f, 255.f, 128.f, 255.f, 128.f, 255.f };
 
         // compression 7: JPEG_MODERN
         ConstMemory jpeg_tables;
@@ -273,6 +275,7 @@ namespace
         JPEGQTables = 519,
         JPEGDCTables = 520,
         JPEGACTables = 521,
+        YCbCrCoefficients = 529,
         YCbCrSubSampling = 530,
         ReferenceBlackWhite = 532,
         JPEGTables = 347,
@@ -617,10 +620,30 @@ namespace
             TIFF_CASE_UNSIGNED(Group4Options, group4_options);
 
             case Tag::ReferenceBlackWhite:
-                //context.reference_black_white = getRational(p, memory, type, is_big_tiff);
-                //printLine(Print::Info, "    [ReferenceBlackWhite]");
-                //printLine(Print::Info, "      value: {}", context.reference_black_white);
+            {
+                std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
+                if (values.size() >= 6)
+                {
+                    for (int i = 0; i < 6; ++i)
+                    {
+                        context.reference_black_white[i] = values[i];
+                    }
+                }
                 break;
+            }
+
+            case Tag::YCbCrCoefficients:
+            {
+                std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
+                if (values.size() >= 3)
+                {
+                    for (int i = 0; i < 3; ++i)
+                    {
+                        context.y_cb_cr_coefficients[i] = values[i];
+                    }
+                }
+                break;
+            }
 
             TIFF_CASE_UNSIGNED(PlanarConfiguration, planar_configuration);
             TIFF_CASE_UNSIGNED(Predictor, predictor);
@@ -2287,19 +2310,53 @@ namespace
             return status;
         }
 
-        static void tiff_ycbcr_to_rgb(u8& r, u8& g, u8& b, int y, int cb, int cr)
+        static void tiff_ycbcr_to_rgb(u8& r, u8& g, u8& b, int Y, int Cb, int Cr,
+            const float luma[3], const float ref[6])
         {
-            const int r_offs = (cr * 91750 - 11711232) >> 16;
-            const int g_offs = (cb * -22479 + cr * -46596 + 8874368) >> 16;
-            const int b_offs = (cb * 115671 - 14773120) >> 16;
-            r = u8_clamp(y + r_offs);
-            g = u8_clamp(y + g_offs);
-            b = u8_clamp(b + b_offs);
+            constexpr int SHIFT = 16;
+            constexpr int32_t ONE_HALF = 1 << (SHIFT - 1);
+
+            auto fix = [] (double x) -> int32_t
+            {
+                return int32_t(x * double(1 << SHIFT) + 0.5);
+            };
+
+            auto code2v = [] (float c, float rb, float rw, float cr) -> float
+            {
+                const float denom = (rw != rb) ? (rw - rb) : 1.0f;
+                return (c - rb) * cr / denom;
+            };
+
+            const float lumaR = luma[0];
+            const float lumaG = luma[1];
+            const float lumaB = luma[2];
+
+            const float f1 = 2.0f - 2.0f * lumaR;
+            const int32_t D1 = fix(std::clamp(f1, 0.0f, 2.0f));
+            const float f2 = lumaR * f1 / lumaG;
+            const int32_t D2 = -fix(std::clamp(f2, 0.0f, 2.0f));
+            const float f3 = 2.0f - 2.0f * lumaB;
+            const int32_t D3 = fix(std::clamp(f3, 0.0f, 2.0f));
+            const float f4 = lumaB * f3 / lumaG;
+            const int32_t D4 = -fix(std::clamp(f4, 0.0f, 2.0f));
+
+            const int32_t Yi = int32_t(std::clamp(code2v(float(Y), ref[0], ref[1], 255.0f), -128.0f * 32, 128.0f * 32));
+            const int32_t Cbi = int32_t(std::clamp(
+                code2v(float(Cb - 128), ref[2] - 128.0f, ref[3] - 128.0f, 127.0f), -128.0f * 32, 128.0f * 32));
+            const int32_t Cri = int32_t(std::clamp(
+                code2v(float(Cr - 128), ref[4] - 128.0f, ref[5] - 128.0f, 127.0f), -128.0f * 32, 128.0f * 32));
+
+            int i = Yi + ((D1 * Cri + ONE_HALF) >> SHIFT);
+            r = u8_clamp(i);
+            i = Yi + ((D2 * Cri + D4 * Cbi + ONE_HALF) >> SHIFT);
+            g = u8_clamp(i);
+            i = Yi + ((D3 * Cbi + ONE_HALF) >> SHIFT);
+            b = u8_clamp(i);
         }
 
         static void convertPlanarYCbCrToRgba(Surface& surface, int width, int height,
             const Surface& y_plane, const Surface& cb_plane, const Surface& cr_plane,
-            u32 h_sub, u32 v_sub)
+            u32 h_sub, u32 v_sub, const float luma[3], const float ref[6])
         {
             const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
             const u32 chroma_h = u32((height + int(v_sub) - 1) / int(v_sub));
@@ -2319,7 +2376,7 @@ namespace
                     u8 r;
                     u8 g;
                     u8 b;
-                    tiff_ycbcr_to_rgb(r, g, b, yv, cb, cr);
+                    tiff_ycbcr_to_rgb(r, g, b, yv, cb, cr, luma, ref);
                     u8* d = drow + x * 4;
                     d[0] = r;
                     d[1] = g;
@@ -2332,39 +2389,43 @@ namespace
             MANGO_UNREFERENCED(chroma_h);
         }
 
-        static void convertChunkyYCbCrToRgba(Surface& surface, const u8* packed, int width, int height, u32 h_sub, u32 v_sub)
+        static void convertChunkyYCbCrToRgba(Surface& surface, const u8* packed, int width, int height,
+            u32 h_sub, u32 v_sub, const float luma[3], const float ref[6])
         {
             if (h_sub < 1) h_sub = 1;
             if (v_sub < 1) v_sub = 1;
 
             const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
-            const u32 macro_row_bytes = v_sub * u32(width) + 2 * chroma_w;
+            const u32 mcu_bytes = h_sub * v_sub + 2;
+            const u32 macro_row_bytes = chroma_w * mcu_bytes;
 
             for (int y0 = 0; y0 < height; y0 += int(v_sub))
             {
                 const u8* macro = packed + (y0 / int(v_sub)) * macro_row_bytes;
-                const u8* y_src = macro;
-                const u8* cb_src = y_src + v_sub * u32(width);
-                const u8* cr_src = cb_src + chroma_w;
 
-                for (int dy = 0; dy < int(v_sub) && y0 + dy < height; ++dy)
+                for (int x0 = 0; x0 < width; x0 += int(h_sub))
                 {
-                    u8* drow = surface.image + surface.stride * (y0 + dy);
+                    const u8* mcu = macro + (x0 / int(h_sub)) * mcu_bytes;
+                    const int cb = mcu[h_sub * v_sub + 0];
+                    const int cr = mcu[h_sub * v_sub + 1];
 
-                    for (int x = 0; x < width; ++x)
+                    for (int dy = 0; dy < int(v_sub) && y0 + dy < height; ++dy)
                     {
-                        const int yv = y_src[dy * width + x];
-                        const int cb = cb_src[x / int(h_sub)];
-                        const int cr = cr_src[x / int(h_sub)];
-                        u8 r;
-                        u8 g;
-                        u8 b;
-                        tiff_ycbcr_to_rgb(r, g, b, yv, cb, cr);
-                        u8* d = drow + x * 4;
-                        d[0] = r;
-                        d[1] = g;
-                        d[2] = b;
-                        d[3] = 0xff;
+                        u8* drow = surface.image + surface.stride * (y0 + dy);
+
+                        for (int dx = 0; dx < int(h_sub) && x0 + dx < width; ++dx)
+                        {
+                            const int yv = mcu[dy * int(h_sub) + dx];
+                            u8 r;
+                            u8 g;
+                            u8 b;
+                            tiff_ycbcr_to_rgb(r, g, b, yv, cb, cr, luma, ref);
+                            u8* d = drow + (x0 + dx) * 4;
+                            d[0] = r;
+                            d[1] = g;
+                            d[2] = b;
+                            d[3] = 0xff;
+                        }
                     }
                 }
             }
@@ -2433,7 +2494,8 @@ namespace
                 }
             }
 
-            convertPlanarYCbCrToRgba(dest, width, height, y_plane, cb_plane, cr_plane, h_sub, v_sub);
+            convertPlanarYCbCrToRgba(dest, width, height, y_plane, cb_plane, cr_plane, h_sub, v_sub,
+                m_context.y_cb_cr_coefficients, m_context.reference_black_white);
         }
 
         void decodeChunkyYCbCr(ImageDecodeStatus& status, Surface dest)
@@ -2445,7 +2507,7 @@ namespace
             const int width = header.width;
             const int height = header.height;
             const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
-            const u32 macro_row_bytes = v_sub * u32(width) + 2 * chroma_w;
+            const u32 macro_row_bytes = chroma_w * (h_sub * v_sub + 2);
             const u32 macro_rows_total = u32((height + int(v_sub) - 1) / int(v_sub));
 
             Buffer packed(macro_row_bytes * macro_rows_total);
@@ -2475,7 +2537,8 @@ namespace
                 y += strip_height;
             }
 
-            convertChunkyYCbCrToRgba(dest, packed.data(), width, height, h_sub, v_sub);
+            convertChunkyYCbCrToRgba(dest, packed.data(), width, height, h_sub, v_sub,
+                m_context.y_cb_cr_coefficients, m_context.reference_black_white);
         }
 
         static void convertSeparatedPlanarCmykInBufferToRgba(Surface& surface, int width, int height)
@@ -2800,19 +2863,103 @@ namespace
             else
             {
                 // compression = 7: JPEG
-                if (m_context.jpeg_tables.size == 0)
+                if (m_context.jpeg_tables.size > 0)
+                {
+                    decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                    {
+                        ImageDecodeInterface tempInterface;
+                        jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
+                        parser.setMemory(memory);
+                        return parser.decode(surface, options);
+                    };
+                }
+                else if (m_context.jpeg_interchange_format)
+                {
+                    // Lossless / complete-JIF compression=7 files often omit JPEGTables.
+                    u32 block_offset = 0;
+                    u32 block_bytes = 0;
+                    if (!m_context.tile_offsets.empty())
+                    {
+                        block_offset = u32(m_context.tile_offsets[0]);
+                        block_bytes = u32(m_context.tile_byte_counts[0]);
+                    }
+                    else if (!m_context.strip_offsets.empty())
+                    {
+                        block_offset = u32(m_context.strip_offsets[0]);
+                        block_bytes = u32(m_context.strip_byte_counts[0]);
+                    }
+
+                    u32 header_length = m_context.jpeg_interchange_format_length;
+                    if (!header_length)
+                    {
+                        header_length = resolve_jpeg_interchange_length(
+                            m_memory, m_context.jpeg_interchange_format, 0, block_offset);
+                    }
+
+                    const u8* header_ptr = m_memory.address + m_context.jpeg_interchange_format;
+                    const bool header_is_complete = header_length >= 2 &&
+                        header_ptr[header_length - 2] == 0xff &&
+                        header_ptr[header_length - 1] == 0xd9;
+
+                    ConstMemory jif_memory(m_memory.address + m_context.jpeg_interchange_format, header_length);
+
+                    if (header_is_complete)
+                    {
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                        {
+                            MANGO_UNREFERENCED(memory);
+
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, jif_memory, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
+                    else if (block_offset == m_context.jpeg_interchange_format + header_length)
+                    {
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                        {
+                            Buffer buffer;
+                            buffer.append(jif_memory);
+                            buffer.append(memory);
+
+                            if (memory.size < 2 ||
+                                bigEndian::uload16(memory.address + memory.size - 2) != jpeg::MARKER_EOI)
+                            {
+                                u8* eoi = buffer.append(2);
+                                bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
+                            }
+
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
+                    else
+                    {
+                        decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
+                        {
+                            Buffer buffer;
+                            buffer.append(jif_memory);
+                            buffer.append(memory);
+
+                            if (memory.size < 2 ||
+                                bigEndian::uload16(memory.address + memory.size - 2) != jpeg::MARKER_EOI)
+                            {
+                                u8* eoi = buffer.append(2);
+                                bigEndian::ustore16(eoi, jpeg::MARKER_EOI);
+                            }
+
+                            ImageDecodeInterface tempInterface;
+                            jpeg::Parser parser(&tempInterface, buffer, jpeg::Parser::RELAXED_PARSER);
+                            return parser.decode(surface, options);
+                        };
+                    }
+                }
+                else
                 {
                     printLine(Print::Error, "JPEGTables not found for Compression=7");
                     return false;
                 }
-
-                decodeJPEG = [=, this] (ConstMemory memory, Surface surface) -> ImageDecodeStatus
-                {
-                    ImageDecodeInterface tempInterface;
-                    jpeg::Parser parser(&tempInterface, m_context.jpeg_tables, jpeg::Parser::RELAXED_PARSER);
-                    parser.setMemory(memory);
-                    return parser.decode(surface, options);
-                };
             }
 
             // Check if using tiles or strips
@@ -3250,7 +3397,7 @@ namespace
                 getYCbCrSubsampling(h_sub, v_sub);
 
                 const u32 chroma_w = u32((width + int(h_sub) - 1) / int(h_sub));
-                ycbcr_macro_row_bytes = v_sub * u32(width) + 2 * chroma_w;
+                ycbcr_macro_row_bytes = chroma_w * (h_sub * v_sub + 2);
                 ycbcr_macro_rows = (u32(height) + v_sub - 1) / v_sub;
                 bytes_per_row = ycbcr_macro_row_bytes;
                 expanded_bytes_per_row = ycbcr_macro_row_bytes;
