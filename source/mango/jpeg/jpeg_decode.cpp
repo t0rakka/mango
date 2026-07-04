@@ -1692,11 +1692,12 @@ namespace mango::image::jpeg
         printLine(Print::Info, "  {} MCUs ({} x {}) -> ({} x {})", mcus, xmcu, ymcu, xmcu * xblock, ymcu * yblock);
         printLine(Print::Info, "  Image: {} x {}", m_width, m_height);
 
-        // configure header
+        // configure header (matches decode() storage: 8-bit L8 or RGBA)
         header.width  = m_width;
         header.height = m_height;
-        header.format = m_components > 1 ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
-                                         : LuminanceFormat(8, Format::UNORM, 8, 0);
+        header.format = m_components > 1
+            ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
+            : LuminanceFormat(8, Format::UNORM, 8, 0);
 
         MANGO_UNREFERENCED(length);
     }
@@ -1875,8 +1876,6 @@ namespace mango::image::jpeg
         bool refine_scan = (decodeState.successive_high != 0);
 
         restartCounter = restartInterval;
-
-        m_request_blitting = is_multiscan || is_lossless;
 
         if (decodeState.is_arithmetic)
         {
@@ -2885,6 +2884,9 @@ namespace mango::image::jpeg
                 sf.sample = SampleType::U8_RGBA;
                 sf.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
             }
+
+            // must decode in scan order for predictors
+            m_hardware_concurrency = 1;
         }
         else if (m_components == 4)
         {
@@ -2910,7 +2912,6 @@ namespace mango::image::jpeg
         m_sink.target = &target;
         m_sink.surface = &target;
         m_sink.direct = m_decode_status.direct;
-        m_request_blitting = false;
 
         std::unique_ptr<Bitmap> temp;
 
@@ -2938,22 +2939,16 @@ namespace mango::image::jpeg
             return m_decode_status;
         }
 
-        if (is_progressive || is_multiscan)
+        if ((is_progressive || is_multiscan) && !is_lossless)
         {
             finishProgressive();
         }
 
-        if (m_request_blitting)
+        if (is_lossless && !m_sink.direct)
         {
-            ImageDecodeRect rect;
-
-            rect.x = 0;
-            rect.y = 0;
-            rect.width = m_width;
-            rect.height = m_height;
-            rect.progress = 1.0f;
-
-            blit_and_update(rect, true);
+            // lossless writes the working surface in one pass (no band blits)
+            Surface source(*m_sink.surface, 0, 0, m_width, m_height);
+            m_sink.target->blit(0, 0, source);
         }
 
         blockVector.resize(0);
@@ -3905,9 +3900,9 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::blit_and_update(const ImageDecodeRect& rect, bool force_blit)
+    void StreamDecoder::blit_and_update(const ImageDecodeRect& rect)
     {
-        m_sink.finalize(rect, force_blit);
+        m_sink.finalize(rect);
     }
 
 } // namespace mango::image::jpeg

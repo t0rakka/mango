@@ -23,7 +23,8 @@ namespace
         Interface(ConstMemory memory)
             : m_parser(this, memory)
         {
-            async = true;
+            // lossless must decode in scan order; band callbacks are not used
+            async = !m_parser.isLossless();
             header = m_parser.header;
             icc = m_parser.icc_buffer;
             exif = m_parser.exif_memory;

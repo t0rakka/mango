@@ -371,9 +371,9 @@ namespace mango::image::jpeg
         bool direct = true;                // when true, writes land directly in target
         ImageDecodeInterface* interface = nullptr;
 
-        void finalize(const ImageDecodeRect& rect, bool force_blit = false) const
+        void finalize(const ImageDecodeRect& rect) const
         {
-            if ((!direct || force_blit) && surface != target)
+            if (!direct && surface != target)
             {
                 Surface source(*surface, rect.x, rect.y, rect.width, rect.height);
                 target->blit(rect.x, rect.y, source);
@@ -473,7 +473,6 @@ namespace mango::image::jpeg
         ImageDecodeStatus m_decode_status;
 
         BlitSink m_sink;                    // output binding (working surface + delivery)
-        bool m_request_blitting = false;
 
         int m_aligned_width;
         int m_aligned_height;
@@ -540,7 +539,7 @@ namespace mango::image::jpeg
 
         void process_range(int y0, int y1, const s16* data);
         void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
-        void blit_and_update(const ImageDecodeRect& rect, bool force_blit = false);
+        void blit_and_update(const ImageDecodeRect& rect);
 
         int getTaskSize(int count) const;
         void configureCPU(SampleType sample, const ImageDecodeOptions& options);
@@ -561,6 +560,11 @@ namespace mango::image::jpeg
         ~StreamDecoder();
 
         void setMemory(ConstMemory memory);
+
+        bool isLossless() const
+        {
+            return is_lossless;
+        }
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
@@ -603,6 +607,11 @@ namespace mango::image::jpeg
         ~Parser();
 
         void setMemory(ConstMemory memory);
+
+        bool isLossless() const
+        {
+            return m_base.isLossless();
+        }
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
