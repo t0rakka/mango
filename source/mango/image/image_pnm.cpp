@@ -631,6 +631,38 @@ namespace
         return status;
     }
 
+    // ------------------------------------------------------------
+    // Detect PNM format extension
+    // ------------------------------------------------------------
+
+    static bool isPnmWhitespace(u8 c)
+    {
+        return c == ' ' || c == '\t' || c == '\n' || c == '\r';
+    }
+
+    static const char* getFormatExtensionPNM(ConstMemory memory)
+    {
+        if (memory.size < 3)
+            return nullptr;
+
+        const u8* p = memory.address;
+        if (p[0] != 'P')
+            return nullptr;
+
+        if (!isPnmWhitespace(p[2]))
+            return nullptr;
+
+        switch (p[1])
+        {
+            case '1': case '4': return ".pbm";
+            case '2': case '5': return ".pgm";
+            case '3': case '6': return ".ppm";
+            case '7': return ".pam";
+            case 'f': case 'F': return ".pfm";
+            default: return nullptr;
+        }
+    }
+
 } // namespace
 
 namespace mango::image
@@ -638,13 +670,21 @@ namespace mango::image
 
     void registerImageCodecPNM()
     {
+        // decoders
         registerImageDecoder(createInterface, ".pbm");
         registerImageDecoder(createInterface, ".pgm");
         registerImageDecoder(createInterface, ".ppm");
+        registerImageDecoder(createInterface, ".pnm");
         registerImageDecoder(createInterface, ".pam");
         registerImageDecoder(createInterface, ".pfm");
 
+        // encoders
         registerImageEncoder(imageEncodePFM, ".pfm");
+    }
+
+    const char* detectImageCodecPNM(ConstMemory memory)
+    {
+        return getFormatExtensionPNM(memory);
     }
 
 } // namespace mango::image

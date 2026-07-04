@@ -9,6 +9,11 @@
 #include <mango/image/image.hpp>
 #include <mango/filesystem/filesystem.hpp>
 
+namespace mango::image
+{
+    const char* detectImageCodecPNM(ConstMemory memory);
+}
+
 namespace
 {
     using namespace mango;
@@ -22,7 +27,6 @@ namespace
 
     std::string getImageFormatExtension(ConstMemory memory)
     {
-
         // Recognize image format from header signature
         struct Signature
         {
@@ -87,6 +91,10 @@ namespace
                 }
             }
         }
+
+        // Custom detection
+        if (const char* pnm = image::detectImageCodecPNM(memory))
+            return pnm;
 
         return "";
     }
