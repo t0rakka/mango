@@ -345,37 +345,43 @@ public:
 
         ConcurrentQueue q;
 
-        for (int y = 0; y < height; ++y)
+        const int block = 8;
+
+        for (int y0 = 0; y0 < height; y0 += block)
         {
-            q.enqueue([&, y]
+            q.enqueue([&, y0]
             {
-                u32* scan = s.address<u32>(0, y);
-
-                for (int x = 0; x < width; ++x)
+                const int y1 = std::min(y0 + block, height);
+                for (int y = y0; y < y1; ++y)
                 {
-                    const float waveY = curve[x];
-                    u32 color = backgroundColor(x, y, waveY, time);
+                    u32* scan = s.address<u32>(0, y);
 
-                    float r, g, b;
-                    unpack(color, r, g, b);
-
-                    const size_t i = size_t(y) * size_t(width) + size_t(x);
-                    r = std::min(1.0f, r + m_phosphorR[i] * 0.65f);
-                    g = std::min(1.0f, g + m_phosphorG[i] * 0.65f);
-                    b = std::min(1.0f, b + m_phosphorB[i] * 0.65f);
-
-                    // hot core on the trace
-                    const float dy = std::abs(float(y) - waveY);
-                    if (dy < 2.5f)
+                    for (int x = 0; x < width; ++x)
                     {
-                        const float core = std::exp(-dy * dy * 0.9f);
-                        r = std::min(1.0f, r + core * 0.9f);
-                        g = std::min(1.0f, g + core * 0.55f);
-                        b = std::min(1.0f, b + core * 0.15f);
+                        const float waveY = curve[x];
+                        u32 color = backgroundColor(x, y, waveY, time);
+    
+                        float r, g, b;
+                        unpack(color, r, g, b);
+    
+                        const size_t i = size_t(y) * size_t(width) + size_t(x);
+                        r = std::min(1.0f, r + m_phosphorR[i] * 0.65f);
+                        g = std::min(1.0f, g + m_phosphorG[i] * 0.65f);
+                        b = std::min(1.0f, b + m_phosphorB[i] * 0.65f);
+    
+                        // hot core on the trace
+                        const float dy = std::abs(float(y) - waveY);
+                        if (dy < 2.5f)
+                        {
+                            const float core = std::exp(-dy * dy * 0.9f);
+                            r = std::min(1.0f, r + core * 0.9f);
+                            g = std::min(1.0f, g + core * 0.55f);
+                            b = std::min(1.0f, b + core * 0.15f);
+                        }
+    
+                        color = packColor(r, g, b);
+                        scan[x] = applyCrt(x, y, color, time);
                     }
-
-                    color = packColor(r, g, b);
-                    scan[x] = applyCrt(x, y, color, time);
                 }
             });
         }
