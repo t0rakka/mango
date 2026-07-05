@@ -21,6 +21,8 @@ namespace mango::vulkan
         {
             RGBA_DIRECT,
             BGRA_DIRECT,
+            RGBA_FLOAT,
+            BGRA_FLOAT,
             RGBA_PALETTE,
             BGRA_PALETTE,
         };
@@ -37,7 +39,9 @@ namespace mango::vulkan
         image::Format m_format;
         size_t m_stride = 0;
         bool m_is_rgba = true;
+        bool m_is_float = false;
         bool m_is_palette = false;
+        float m_exposure = 1.0f;
         u32 m_palette[256] = {};
 
         VkBuffer m_stagingBuffer = VK_NULL_HANDLE;
@@ -107,6 +111,10 @@ namespace mango::vulkan
 
         int contentWidth() const { return m_width; }
         int contentHeight() const { return m_height; }
+        bool isFloat() const { return m_is_float; }
+
+        void setExposure(float exposure) { m_exposure = exposure; }
+        float exposure() const { return m_exposure; }
 
         void setPalette(const image::Palette& palette);
 

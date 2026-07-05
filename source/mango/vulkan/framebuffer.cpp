@@ -45,6 +45,30 @@ namespace
         }
     )";
 
+    const char* g_fragment_shader_float = R"(#version 450
+        layout(location = 0) in vec2 vTexcoord;
+        layout(location = 0) out vec4 outColor;
+
+        layout(set = 0, binding = 0) uniform sampler2D u_Texture;
+
+        layout(push_constant) uniform PushConstants
+        {
+            layout(offset = 16) float u_Exposure;
+        } pc;
+
+        vec3 tonemapSdr(vec3 color)
+        {
+            color = max(color, 0.0) * pc.u_Exposure;
+            return color / (1.0 + color);
+        }
+
+        void main()
+        {
+            vec4 src = texture(u_Texture, vTexcoord);
+            outColor = vec4(tonemapSdr(src.rgb), 1.0);
+        }
+    )";
+
     const char* g_resolve_fragment_shader = R"(#version 450
         layout(location = 0) in vec2 vTexcoord;
         layout(location = 0) out vec4 outColor;
@@ -134,24 +158,42 @@ namespace mango::vulkan
             case RGBA_DIRECT:
                 m_format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                 m_is_rgba = true;
+                m_is_float = false;
                 m_is_palette = false;
                 break;
 
             case BGRA_DIRECT:
                 m_format = Format(32, Format::UNORM, Format::BGRA, 8, 8, 8, 8);
                 m_is_rgba = false;
+                m_is_float = false;
+                m_is_palette = false;
+                break;
+
+            case RGBA_FLOAT:
+                m_format = Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32);
+                m_is_rgba = true;
+                m_is_float = true;
+                m_is_palette = false;
+                break;
+
+            case BGRA_FLOAT:
+                m_format = Format(128, Format::FLOAT32, Format::BGRA, 32, 32, 32, 32);
+                m_is_rgba = false;
+                m_is_float = true;
                 m_is_palette = false;
                 break;
 
             case RGBA_PALETTE:
                 m_format = IndexedFormat(8);
                 m_is_rgba = true;
+                m_is_float = false;
                 m_is_palette = true;
                 break;
 
             case BGRA_PALETTE:
                 m_format = IndexedFormat(8);
                 m_is_rgba = false;
+                m_is_float = false;
                 m_is_palette = true;
                 break;
         }
@@ -388,6 +430,8 @@ namespace mango::vulkan
 
     void VulkanFramebuffer::createTexture()
     {
+        const VkFormat vkFormat = m_is_float ? VK_FORMAT_R32G32B32A32_SFLOAT : VK_FORMAT_R8G8B8A8_UNORM;
+
         const VkImageUsageFlags usage = m_is_palette
             ? (VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT | VK_IMAGE_USAGE_SAMPLED_BIT)
             : (VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_SAMPLED_BIT);
@@ -396,7 +440,7 @@ namespace mango::vulkan
         {
             .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
             .imageType = VK_IMAGE_TYPE_2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .format = vkFormat,
             .extent = { u32(m_width), u32(m_height), 1 },
             .mipLevels = 1,
             .arrayLayers = 1,
@@ -435,7 +479,7 @@ namespace mango::vulkan
             .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
             .image = m_texture,
             .viewType = VK_IMAGE_VIEW_TYPE_2D,
-            .format = VK_FORMAT_R8G8B8A8_UNORM,
+            .format = vkFormat,
             .components = swizzle,
             .subresourceRange =
             {
@@ -578,7 +622,7 @@ namespace mango::vulkan
     {
         Compiler compiler;
         Shader vs = compiler.compile(g_vertex_shader, ShaderStage::Vertex);
-        Shader fs = compiler.compile(g_fragment_shader, ShaderStage::Fragment);
+        Shader fs = compiler.compile(m_is_float ? g_fragment_shader_float : g_fragment_shader, ShaderStage::Fragment);
 
         if (!vs.valid() || !fs.valid())
         {
@@ -605,20 +649,34 @@ namespace mango::vulkan
 
         vkCreateDescriptorSetLayout(m_device, &layoutInfo, nullptr, &m_descriptorLayout);
 
-        VkPushConstantRange pushRange =
+        VkPushConstantRange pushRanges[2];
+        u32 pushRangeCount = 1;
+
+        pushRanges[0] =
         {
             .stageFlags = VK_SHADER_STAGE_VERTEX_BIT,
             .offset = 0,
             .size = sizeof(float) * 4,
         };
 
+        if (m_is_float)
+        {
+            pushRanges[1] =
+            {
+                .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+                .offset = sizeof(float) * 4,
+                .size = sizeof(float),
+            };
+            pushRangeCount = 2;
+        }
+
         VkPipelineLayoutCreateInfo pipelineLayoutInfo =
         {
             .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
             .setLayoutCount = 1,
             .pSetLayouts = &m_descriptorLayout,
-            .pushConstantRangeCount = 1,
-            .pPushConstantRanges = &pushRange,
+            .pushConstantRangeCount = pushRangeCount,
+            .pPushConstantRanges = pushRanges,
         };
 
         vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
@@ -1482,7 +1540,22 @@ namespace mango::vulkan
 
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
-        vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform), transform);
+
+        if (m_is_float)
+        {
+            const float pushConstants[5] =
+            {
+                transform[0], transform[1], transform[2], transform[3], m_exposure,
+            };
+
+            vkCmdPushConstants(cmd, m_pipelineLayout,
+                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
+                0, sizeof(pushConstants), pushConstants);
+        }
+        else
+        {
+            vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT, 0, sizeof(transform), transform);
+        }
 
         VkBuffer buffers[] = { m_vertexBuffer };
         VkDeviceSize offsets[] = { 0 };

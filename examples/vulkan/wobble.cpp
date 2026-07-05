@@ -11,6 +11,7 @@
 
 using namespace mango;
 using namespace mango::image;
+using namespace mango::math;
 using namespace mango::vulkan;
 
 struct Wave
@@ -31,44 +32,25 @@ float waveHeight(int x, double time, const Wave& wave)
 }
 
 static
-void unpack(u32 c, float& r, float& g, float& b)
+float32x4 lerpColor(float32x4 a, float32x4 b, float t)
 {
-    r = float((c >>  0) & 0xff) / 255.0f;
-    g = float((c >>  8) & 0xff) / 255.0f;
-    b = float((c >> 16) & 0xff) / 255.0f;
-}
-
-static
-u32 packColor(float r, float g, float b)
-{
-    r = std::clamp(r, 0.0f, 1.0f);
-    g = std::clamp(g, 0.0f, 1.0f);
-    b = std::clamp(b, 0.0f, 1.0f);
-    return makeRGBA(u32(r * 255.0f + 0.5f), u32(g * 255.0f + 0.5f), u32(b * 255.0f + 0.5f), 255);
-}
-
-static
-u32 lerpColor(u32 a, u32 b, float t)
-{
-    float ar, ag, ab;
-    float br, bg, bb;
-    unpack(a, ar, ag, ab);
-    unpack(b, br, bg, bb);
     t = std::clamp(t, 0.0f, 1.0f);
-    const float inv = 1.0f - t;
-    return packColor(ar * inv + br * t, ag * inv + bg * t, ab * inv + bb * t);
+    return a + (b - a) * t;
+}
+
+static
+void phosphorGreen(float intensity, float& r, float& g, float& b)
+{
+    r = intensity * (0.18f + 0.10f * intensity);
+    g = intensity * (1.12f + 0.12f * intensity);
+    b = intensity * 0.22f;
 }
 
 static
 void hsvTint(float& r, float& g, float& b, float shift)
 {
-    // cheap RGB swirl — good enough for demoscene vibes
-    const float nr = r + shift * (g - b);
-    const float ng = g + shift * (b - r);
-    const float nb = b + shift * (r - g);
-    r = nr;
-    g = ng;
-    b = nb;
+    const float lum = std::max(r, std::max(g, b));
+    phosphorGreen(lum * (1.0f + shift * 0.12f), r, g, b);
 }
 
 class WobbleWindow : public VulkanFramebuffer
@@ -142,8 +124,8 @@ protected:
             const int cx = x;
             const int cy = int(curve[x]);
 
-            const float sweepGlow = std::exp(-std::abs(float(x) - sweep) * 0.035f) * 0.35f;
-            const float pulse = 0.75f + 0.25f * std::sin(float(time) * 3.1f + x * 0.04f);
+            const float sweepGlow = std::exp(-std::abs(float(x) - sweep) * 0.035f) * 0.42f;
+            const float pulse = 0.80f + 0.20f * std::sin(float(time) * 3.1f + x * 0.04f);
 
             for (int dy = -10; dy <= 10; ++dy)
             {
@@ -154,7 +136,7 @@ protected:
                 }
 
                 const float dist = std::abs(float(dy));
-                float intensity = std::exp(-dist * dist * 0.11f) * pulse;
+                float intensity = std::exp(-dist * dist * 0.10f) * pulse;
                 intensity += sweepGlow * std::exp(-dist * dist * 0.05f);
 
                 if (intensity < 0.01f)
@@ -162,54 +144,56 @@ protected:
                     continue;
                 }
 
-                float tr = 1.0f;
-                float tg = 0.55f + 0.35f * std::sin(float(time) * 0.7f + x * 0.01f);
-                float tb = 0.15f;
-
-                tr = 1.0f;
-                tg = 0.42f + 0.18f * std::sin(float(time) * 1.3f);
-                tb = 0.05f;
-
-                hsvTint(tr, tg, tb, 0.12f * std::sin(float(time) * 0.5f + x * 0.02f));
+                const float shimmer = 0.94f + 0.06f * std::sin(float(time) * 1.3f + x * 0.02f);
+                float tr, tg, tb;
+                phosphorGreen(intensity * shimmer, tr, tg, tb);
 
                 const size_t i = size_t(py) * size_t(width) + size_t(cx);
-                m_phosphorR[i] = std::min(2.5f, m_phosphorR[i] + tr * intensity);
-                m_phosphorG[i] = std::min(2.5f, m_phosphorG[i] + tg * intensity);
-                m_phosphorB[i] = std::min(2.5f, m_phosphorB[i] + tb * intensity);
+                m_phosphorR[i] = std::min(4.0f, m_phosphorR[i] + tr);
+                m_phosphorG[i] = std::min(4.0f, m_phosphorG[i] + tg);
+                m_phosphorB[i] = std::min(4.0f, m_phosphorB[i] + tb);
             }
         }
     }
 
-    u32 backgroundColor(int x, int y, float waveY, double time) const
+    float32x4 backgroundColor(int x, int y, float waveY, double time) const
     {
-        const float tint = 0.10f * std::sin(float(time) * 0.45f);
+        MANGO_UNREFERENCED(x);
+        const float tint = 0.05f * std::sin(float(time) * 0.45f);
 
-        const u32 solidBelow = makeRGBA(4, 3, 18, 255);
-        const u32 gradTop = makeRGBA(22, 2, 42, 255);
-        const u32 gradMid = makeRGBA(255, 88, 12, 255);
-        const u32 gradWave = makeRGBA(0, 220, 255, 255);
+        const float32x4 solidBelow(2.0f / 255.0f, 10.0f / 255.0f, 6.0f / 255.0f, 1.0f);
+        const float32x4 gradTop(6.0f / 255.0f, 22.0f / 255.0f, 18.0f / 255.0f, 1.0f);
+        const float32x4 gradMid(16.0f / 255.0f, 72.0f / 255.0f, 32.0f / 255.0f, 1.0f);
+        const float32x4 gradWave(72.0f / 255.0f, 210.0f / 255.0f, 88.0f / 255.0f, 1.0f);
 
         if (float(y) < waveY)
         {
             const float t = float(y) / std::max(waveY, 1.0f);
-            u32 c = lerpColor(gradTop, gradMid, std::min(t * 1.6f, 1.0f));
-            c = lerpColor(c, gradWave, std::max(0.0f, (t - 0.55f) / 0.45f));
+            float32x4 c = lerpColor(gradTop, gradMid, std::min(t * 1.3f, 1.0f));
+            c = lerpColor(c, gradWave, std::max(0.0f, (t - 0.45f) / 0.55f));
 
-            float r, g, b;
-            unpack(c, r, g, b);
+            if (t > 0.72f)
+            {
+                const float32x4 warm(140.0f / 255.0f, 220.0f / 255.0f, 70.0f / 255.0f, 1.0f);
+                c = lerpColor(c, warm, (t - 0.72f) / 0.28f * 0.40f);
+            }
+
+            float r = c.x;
+            float g = c.y;
+            float b = c.z;
             hsvTint(r, g, b, tint);
-            return packColor(r, g, b);
+            return float32x4(r, g, b, 1.0f);
         }
 
         return solidBelow;
     }
 
-    u32 applyCrt(int x, int y, u32 color, double time) const
+    float32x4 applyCrt(int x, int y, float32x4 color, double time) const
     {
-        float r, g, b;
-        unpack(color, r, g, b);
+        float r = color.x;
+        float g = color.y;
+        float b = color.z;
 
-        // grid
         const bool majorX = (x % kGridX) == 0;
         const bool majorY = (y % kGridY) == 0;
         const bool minorX = (x % (kGridX / 2)) == 0;
@@ -226,39 +210,39 @@ protected:
         }
 
         const float gridPulse = 0.5f + 0.5f * std::sin(float(time) * 2.0f + x * 0.02f + y * 0.03f);
-        r += grid * (0.25f + 0.75f * gridPulse);
-        g += grid * (0.45f + 0.40f * gridPulse);
-        b += grid * 0.20f;
+        r += grid * 0.06f * gridPulse;
+        g += grid * (0.26f + 0.14f * gridPulse);
+        b += grid * (0.10f + 0.08f * gridPulse);
 
-        // scanlines
         if (y & 1)
         {
-            r *= 0.90f;
-            g *= 0.90f;
-            b *= 0.90f;
+            r *= 0.93f;
+            g *= 0.93f;
+            b *= 0.93f;
         }
 
-        // vignette
         const float w = float(m_fbWidth);
         const float h = float(m_fbHeight);
         const float dx = (float(x) - w * 0.5f) / (w * 0.5f);
         const float dy = (float(y) - h * 0.5f) / (h * 0.5f);
-        const float vig = 1.0f - 0.42f * (dx * dx + dy * dy);
+        const float vig = 1.0f - 0.32f * (dx * dx + dy * dy);
         r *= vig;
         g *= vig;
         b *= vig;
 
         const float corner = std::exp(-float(x) * 0.004f - float(y) * 0.006f);
-        r += corner * 0.10f;
-        g += corner * 0.03f;
+        r += corner * 0.03f;
+        g += corner * 0.09f;
+        b += corner * 0.04f;
 
-        return packColor(r, g, b);
+        return float32x4(std::max(r, 0.0f), std::max(g, 0.0f), std::max(b, 0.0f), 1.0f);
     }
 
 public:
     WobbleWindow(VkInstance instance, int width, int height)
-        : VulkanFramebuffer(instance, width, height)
+        : VulkanFramebuffer(instance, width, height, RGBA_FLOAT)
     {
+        setExposure(1.35f);
     }
 
     void onKeyPress(Keycode key, u32 mask) override
@@ -292,7 +276,7 @@ public:
         Surface s = lock();
         render(s, info.time, float(info.dt));
         unlock();
-        present(VulkanFramebuffer::FILTER_NEAREST);
+        present(VulkanFramebuffer::FILTER_BILINEAR);
     }
 
     void render(Surface s, double time, float dt)
@@ -329,32 +313,29 @@ public:
                 const int y1 = std::min(y0 + block, height);
                 for (int y = y0; y < y1; ++y)
                 {
-                    u32* scan = s.address<u32>(0, y);
+                    float32x4* scan = s.address<float32x4>(0, y);
 
                     for (int x = 0; x < width; ++x)
                     {
                         const float waveY = curve[x];
-                        u32 color = backgroundColor(x, y, waveY, time);
-    
-                        float r, g, b;
-                        unpack(color, r, g, b);
-    
+                        float32x4 color = backgroundColor(x, y, waveY, time);
+
                         const size_t i = size_t(y) * size_t(width) + size_t(x);
-                        r = std::min(1.0f, r + m_phosphorR[i] * 0.65f);
-                        g = std::min(1.0f, g + m_phosphorG[i] * 0.65f);
-                        b = std::min(1.0f, b + m_phosphorB[i] * 0.65f);
-    
-                        // hot core on the trace
+                        color.x += m_phosphorR[i] * 0.82f;
+                        color.y += m_phosphorG[i] * 0.82f;
+                        color.z += m_phosphorB[i] * 0.82f;
+
                         const float dy = std::abs(float(y) - waveY);
                         if (dy < 2.5f)
                         {
-                            const float core = std::exp(-dy * dy * 0.9f);
-                            r = std::min(1.0f, r + core * 0.9f);
-                            g = std::min(1.0f, g + core * 0.55f);
-                            b = std::min(1.0f, b + core * 0.15f);
+                            const float core = std::exp(-dy * dy * 0.85f);
+                            float cr, cg, cb;
+                            phosphorGreen(core, cr, cg, cb);
+                            color.x += cr * 1.4f;
+                            color.y += cg * 1.4f;
+                            color.z += cb * 1.4f;
                         }
-    
-                        color = packColor(r, g, b);
+
                         scan[x] = applyCrt(x, y, color, time);
                     }
                 }
