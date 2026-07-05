@@ -29,10 +29,13 @@ public:
     DemoWindow(int width, int height)
         : OpenGLFramebuffer(width, height)
     {
-        setTitle("[DemoWindow] Initializing...");
     }
 
     ~DemoWindow()
+    {
+    }
+
+    void onContextReady() override
     {
     }
 

@@ -45,14 +45,14 @@ namespace mango
     // OpenGLContextWGL
     // -----------------------------------------------------------------------
 
-    struct OpenGLContextWGL : OpenGLContextHandle
+    struct OpenGLContextWGL : OpenGLContext
     {
         HDC m_hdc { NULL };
         HGLRC m_hrc { NULL };
 
         WindowContext* window;
 
-        OpenGLContextWGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+        OpenGLContextWGL(OpenGLWindow* theContext, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* theShared)
             : window(static_cast<WindowContext*>(theContext->backend()))
         {
             MANGO_UNREFERENCED(flags);
@@ -63,7 +63,7 @@ namespace mango
             m_hdc = ::GetDC(window->hwnd);
 
             // Configure attributes
-            OpenGLContext::Config config;
+            OpenGLWindow::Config config;
             if (configPtr)
             {
                 // Override defaults
@@ -132,11 +132,11 @@ namespace mango
             // Create ARB extended context
             if (wglCreateContextAttribsARB && wglExtensions.find("WGL_ARB_create_context") != std::string::npos)
             {
-                printLine(Print::Info, "[OpenGLContext] WGL_ARB_create_context : ENABLE");
+                printLine(Print::Info, "[OpenGLWindow] WGL_ARB_create_context : ENABLE");
 
                 if (wglChoosePixelFormatARB && wglExtensions.find("WGL_ARB_pixel_format") != std::string::npos)
                 {
-                    printLine(Print::Info, "[OpenGLContext] WGL_ARB_pixel_format : ENABLE");
+                    printLine(Print::Info, "[OpenGLWindow] WGL_ARB_pixel_format : ENABLE");
 
                     std::vector<int> formatAttribs;
 
@@ -155,21 +155,21 @@ namespace mango
                     {
                         if (config.red > 8 || config.green > 8 || config.blue > 8)
                         {
-                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA_FLOAT");
+                            printLine(Print::Info, "[OpenGLWindow] WGL_PIXEL_TYPE_ARB : RGBA_FLOAT");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_FLOAT_ARB);
                             isHDR = true;
                         }
                         else
                         {
-                            printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA");
+                            printLine(Print::Info, "[OpenGLWindow] WGL_PIXEL_TYPE_ARB : RGBA");
                             formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                             formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
                         }
                     }
                     else
                     {
-                        printLine(Print::Info, "[OpenGLContext] WGL_PIXEL_TYPE_ARB : RGBA");
+                        printLine(Print::Info, "[OpenGLWindow] WGL_PIXEL_TYPE_ARB : RGBA");
                         formatAttribs.push_back(WGL_PIXEL_TYPE_ARB);
                         formatAttribs.push_back(WGL_TYPE_RGBA_ARB);
 
@@ -204,7 +204,7 @@ namespace mango
                     {
                         if (config.samples > 1)
                         {
-                            printLine(Print::Info, "[OpenGLContext] WGL_ARB_multisample : {}", config.samples);
+                            printLine(Print::Info, "[OpenGLWindow] WGL_ARB_multisample : {}", config.samples);
                             formatAttribs.push_back(WGL_SAMPLE_BUFFERS_ARB);
                             formatAttribs.push_back(GL_TRUE);
 
@@ -215,7 +215,7 @@ namespace mango
 
                     if (wglExtensions.find("WGL_EXT_colorspace") != std::string::npos)
                     {
-                        printLine(Print::Info, "[OpenGLContext] WGL_EXT_colorspace : ENABLE");
+                        printLine(Print::Info, "[OpenGLWindow] WGL_EXT_colorspace : ENABLE");
                         if (isHDR)
                         {
                             formatAttribs.push_back(WGL_COLORSPACE_EXT);
@@ -231,7 +231,7 @@ namespace mango
                     {
                         if (wglExtensions.find("WGL_ARB_framebuffer_sRGB") != std::string::npos)
                         {
-                            printLine(Print::Info, "[OpenGLContext] WGL_ARB_framebuffer_sRGB : ENABLE");
+                            printLine(Print::Info, "[OpenGLWindow] WGL_ARB_framebuffer_sRGB : ENABLE");
                             formatAttribs.push_back(WGL_FRAMEBUFFER_SRGB_CAPABLE_EXT);
                         }
                     }
@@ -275,7 +275,7 @@ namespace mango
             }
             else
             {
-                printLine(Print::Info, "[OpenGLContext] WGL_ARB_create_context : DISABLE");
+                printLine(Print::Info, "[OpenGLWindow] WGL_ARB_create_context : DISABLE");
             }
 
             if (shared)
@@ -337,7 +337,7 @@ namespace mango
         }
     };
 
-    OpenGLContextHandle* createOpenGLContextWGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContext* createOpenGLContextWGL(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared)
     {
         auto* context = new OpenGLContextWGL(parent, width, height, flags, configPtr, shared);
         return context;

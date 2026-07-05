@@ -33,18 +33,31 @@ const char* fragment_shader_source = R"(
     }
 )";
 
-class TestWindow : public OpenGLContext
+class TestWindow : public OpenGLWindow
 {
 protected:
     GLuint m_program = 0;
     GLuint m_vao = 0;
     GLuint m_vbo = 0;
+    bool m_sRGB = false;
 
 public:
-    TestWindow(const OpenGLContext::Config& config, bool sRGB)
-        : OpenGLContext(1280, 800, 0, &config)
+    TestWindow(const OpenGLWindow::Config& config, bool sRGB)
+        : OpenGLWindow(1280, 800, 0, &config)
+        , m_sRGB(sRGB)
     {
-        if (sRGB)
+    }
+
+    ~TestWindow()
+    {
+        glDeleteProgram(m_program);
+        glDeleteBuffers(1, &m_vbo);
+        glDeleteVertexArrays(1, &m_vao);
+    }
+
+    void onContextReady() override
+    {
+        if (m_sRGB)
         {
             glEnable(GL_FRAMEBUFFER_SRGB);
         }
@@ -67,13 +80,6 @@ public:
 
         glEnableVertexAttribArray(0);
         glVertexAttribPointer(0, 2, GL_FLOAT, GL_FALSE, 8, reinterpret_cast<const void*>(0));
-    }
-
-    ~TestWindow()
-    {
-        glDeleteProgram(m_program);
-        glDeleteBuffers(1, &m_vbo);
-        glDeleteVertexArrays(1, &m_vao);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
@@ -115,7 +121,7 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    OpenGLContext::Config config;
+    OpenGLWindow::Config config;
 
     bool sRGB = false;
 

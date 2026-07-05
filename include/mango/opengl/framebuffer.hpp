@@ -16,7 +16,7 @@ namespace mango
     // OpenGLFramebuffer
     // -------------------------------------------------------------------
 
-    class OpenGLFramebuffer : public OpenGLContext
+    class OpenGLFramebuffer : public OpenGLWindow
     {
     private:
         int m_width;

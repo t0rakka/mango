@@ -732,8 +732,8 @@ namespace mango
 
         // NOTE: the window is created un-mapped (not visible). This is required by Vulkan
         // so that nothing is shown while the application configures itself; the caller
-        // makes the window visible with setVisible(true). The OpenGL context does this
-        // automatically once the context is current.
+        // makes the window visible with setVisible(true). OpenGLWindow does this
+        // automatically after onContextReady() when enterEventLoop() is called.
         xcb_flush(connection);
 
         const xcb_query_extension_reply_t* randr = xcb_get_extension_data(connection, &xcb_randr_id);

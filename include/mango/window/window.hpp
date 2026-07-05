@@ -259,7 +259,7 @@ namespace mango
         EventLoopState m_event_loop;
 
         // Construct the backend for the active window system (see getWindowSystem).
-        // Concrete window types (OpenGLContext, VulkanWindow) call this from their
+        // Concrete window types (OpenGLWindow, VulkanWindow) call this from their
         // constructors.
         void createBackend(int width, int height, u32 flags, const char* title);
 

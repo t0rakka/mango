@@ -50,7 +50,7 @@ namespace
         }
     }
 
-    std::vector<EGLint> buildConfigAttribs(const mango::OpenGLContext::Config& config)
+    std::vector<EGLint> buildConfigAttribs(const mango::OpenGLWindow::Config& config)
     {
         std::vector<EGLint> attribs;
 
@@ -134,7 +134,7 @@ namespace
         return choice;
     }
 
-    EGLConfigChoice chooseEGLConfigWithRetry(EGLDisplay display, mango::OpenGLContext::Config& config,
+    EGLConfigChoice chooseEGLConfigWithRetry(EGLDisplay display, mango::OpenGLWindow::Config& config,
                                              EGLNativeWindowType native_window)
     {
         EGLConfigChoice choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
@@ -195,7 +195,7 @@ namespace mango
     // OpenGLContextEGL
     // -----------------------------------------------------------------------
 
-    struct OpenGLContextEGL : OpenGLContextHandle
+    struct OpenGLContextEGL : OpenGLContext
     {
         EGLDisplay egl_display = EGL_NO_DISPLAY;
         EGLContext egl_context = EGL_NO_CONTEXT;
@@ -203,7 +203,7 @@ namespace mango
 
         WindowBackend* window;
 
-        OpenGLContextEGL(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* theShared)
+        OpenGLContextEGL(OpenGLWindow* theContext, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* theShared)
             : window(theContext->backend())
         {
             // Native display: nullptr selects EGL_DEFAULT_DISPLAY (X11); Wayland
@@ -225,7 +225,7 @@ namespace mango
             }
 
             // override defaults
-            OpenGLContext::Config config;
+            OpenGLWindow::Config config;
             if (configPtr)
             {
                 // Override defaults
@@ -361,7 +361,7 @@ namespace mango
         }
     };
 
-    OpenGLContextHandle* createOpenGLContextEGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContext* createOpenGLContextEGL(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared)
     {
         auto* context = new OpenGLContextEGL(parent, width, height, flags, configPtr, shared);
         return context;

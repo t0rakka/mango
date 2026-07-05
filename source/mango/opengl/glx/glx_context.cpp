@@ -31,10 +31,10 @@ namespace mango
         return 0;
     }
 
-    GLXConfiguration::GLXConfiguration(Display* display, int screen, const OpenGLContext::Config* pConfig)
+    GLXConfiguration::GLXConfiguration(Display* display, int screen, const OpenGLWindow::Config* pConfig)
     {
         // resolve configuration
-        OpenGLContext::Config config;
+        OpenGLWindow::Config config;
         if (pConfig)
         {
             // override defaults
@@ -66,14 +66,14 @@ namespace mango
         int version_minor;
         if (!glXQueryVersion(display, &version_major, &version_minor))
         {
-            MANGO_EXCEPTION("[OpenGLContext] glXQueryVersion() failed.");
+            MANGO_EXCEPTION("[OpenGLWindow] glXQueryVersion() failed.");
         }
 
         printLine(Print::Info, "GLX version: {}.{}", version_major, version_minor);
 
         if (version_major * 10 + version_minor < 13)
         {
-            MANGO_EXCEPTION("[OpenGLContext] Invalid GLX version).");
+            MANGO_EXCEPTION("[OpenGLWindow] Invalid GLX version).");
         }
 
         // Configure attributes
@@ -106,7 +106,7 @@ namespace mango
 
         if (!numFBConfigs || !fbconfigs)
         {
-            MANGO_EXCEPTION("[OpenGLContext] glXChooseFBConfig() failed.");
+            MANGO_EXCEPTION("[OpenGLWindow] glXChooseFBConfig() failed.");
         }
 
         selected = fbconfigs[0];

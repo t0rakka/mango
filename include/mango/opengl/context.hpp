@@ -60,13 +60,12 @@
 #if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB) || defined(MANGO_ENABLE_WAYLAND)
 
     // -----------------------------------------------------------------------
-    // GLX | EGL (Linux: backends coexist, context API chosen at runtime)
+    // GLX / EGL (Linux)
     // -----------------------------------------------------------------------
+    // GLX: Xlib / XCB.  EGL: Wayland (and X11 when OpenGLWindow::EGL is set).
+    // glx.h is not included here (pulls in Xlib and collides with Window, etc.);
+    // GLX backends include it in their .cpp files.
 
-    // GLX serves the X11 backends (Xlib/Xcb); EGL serves Wayland and any X11
-    // backend explicitly requesting it. Both context macros may be defined at
-    // once; createOpenGLContext() picks the implementation from the window's
-    // runtime WindowSystem.
     #if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
         #define MANGO_OPENGL_CONTEXT_GLX
     #endif
@@ -81,14 +80,6 @@
     #include <GL/gl.h>
     #include <GL/glext.h>
 
-    // NOTE: <GL/glx.h> transitively includes <X11/Xlib.h>, which pollutes the
-    // global namespace with identifiers such as "Time", "Status", "Window",
-    // "Bool", "Cursor", "Font", etc. These collide with mango (and user) symbols
-    // wherever the public OpenGL API is included. The GLX/Xlib headers are only
-    // required by the X11/XCB context implementations, so they are included
-    // directly in those translation files and deliberately kept out of this
-    // public header.
-
 #endif
 
 // -----------------------------------------------------------------------
@@ -102,13 +93,13 @@ namespace mango
 {
 
     // -------------------------------------------------------------------
-    // OpenGLContextHandle
+    // OpenGLContext
     // -------------------------------------------------------------------
 
-    struct OpenGLContextHandle
+    struct OpenGLContext
     {
-        OpenGLContextHandle() {}
-        virtual ~OpenGLContextHandle() {}
+        OpenGLContext() {}
+        virtual ~OpenGLContext() {}
 
         virtual void makeCurrent() = 0;
         virtual void swapBuffers() = 0;
@@ -119,10 +110,10 @@ namespace mango
     };
 
     // -------------------------------------------------------------------
-    // OpenGLContext
+    // OpenGLWindow
     // -------------------------------------------------------------------
 
-    class OpenGLContext : public Window
+    class OpenGLWindow : public Window
     {
     public:
         enum Flags : u32
@@ -150,18 +141,19 @@ namespace mango
         };
 
     protected:
-        std::unique_ptr<OpenGLContextHandle> m_context;
+        std::unique_ptr<OpenGLContext> m_context;
         std::set<std::string> m_extensions;
         bool m_is_gles = false;
         int m_version = 0;
+        bool m_context_ready = false;
 
         void initExtensionMask();
-        void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared);
+        void initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLWindow* shared);
 
     public:
-        OpenGLContext(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
-        OpenGLContext(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLContext* shared = nullptr);
-        ~OpenGLContext();
+        OpenGLWindow(int width, int height, u32 flags = 0, const Config* config = nullptr, OpenGLWindow* shared = nullptr);
+        OpenGLWindow(math::int32x2 extent, u32 flags = 0, const Config* config = nullptr, OpenGLWindow* shared = nullptr);
+        ~OpenGLWindow();
 
         bool isExtension(const std::string& name) const;
         bool isGLES() const;
@@ -175,6 +167,12 @@ namespace mango
         void toggleFullscreen() override;
         bool isFullscreen() const override;
         math::int32x2 getWindowSize() const override;
+
+        void enterEventLoop();
+        void enterEventLoop(const EventLoopConfig& config);
+
+        // Called once before the window is shown and the event loop starts.
+        virtual void onContextReady();
 
         // extension masks
 

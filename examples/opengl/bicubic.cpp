@@ -20,11 +20,15 @@ public:
         : OpenGLFramebuffer(bitmap.width, bitmap.height)
         , m_bitmap(bitmap)
     {
+    }
+
+    void onContextReady() override
+    {
         setTitle("Bicubic");
 
         int32x2 screen = getScreenSize();
         printLine("screen: {} x {}", screen.x, screen.y);
-        printLine("Image: {} x {}", bitmap.width, bitmap.height);
+        printLine("Image: {} x {}", m_bitmap.width, m_bitmap.height);
     }
 
     void onKeyPress(Keycode code, u32 mask) override
