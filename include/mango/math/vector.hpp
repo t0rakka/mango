@@ -1185,7 +1185,7 @@ namespace mango::math
     // ------------------------------------------------------------------
 
     template <typename ScalarType, typename StorageType, int... IndicesA, int... IndicesB>
-    static constexpr
+    constexpr
     auto operator * (const ShuffleAccessor<ScalarType, StorageType, IndicesA...>& a,
                      const ShuffleAccessor<ScalarType, StorageType, IndicesB...>& b) noexcept
     {
@@ -1195,7 +1195,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator * (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      ScalarType s) noexcept
     {
@@ -1204,7 +1204,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator * (ScalarType s,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
@@ -1213,7 +1213,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator / (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      ScalarType s) noexcept
     {
@@ -1222,7 +1222,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator + (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      ScalarType s) noexcept
     {
@@ -1231,7 +1231,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator + (ScalarType s,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
@@ -1240,7 +1240,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1248,7 +1248,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      ScalarType s) noexcept
     {
@@ -1257,7 +1257,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices>
-    static constexpr
+    constexpr
     auto operator - (ScalarType s,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& a) noexcept
     {
@@ -1268,7 +1268,7 @@ namespace mango::math
     // ScalarAccessor and ShuffleAccessor combinations
 
     template <typename ScalarType, typename StorageType, int Index, int... Indices>
-    static constexpr
+    constexpr
     auto operator * (const ScalarAccessor<ScalarType, StorageType, Index>& a,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
@@ -1277,7 +1277,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices, int Index>
-    static constexpr
+    constexpr
     auto operator * (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
     {
@@ -1286,7 +1286,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int Index, int... Indices>
-    static constexpr
+    constexpr
     auto operator / (const ScalarAccessor<ScalarType, StorageType, Index>& a,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
@@ -1295,7 +1295,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices, int Index>
-    static constexpr
+    constexpr
     auto operator / (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
     {
@@ -1304,7 +1304,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int Index, int... Indices>
-    static constexpr
+    constexpr
     auto operator + (const ScalarAccessor<ScalarType, StorageType, Index>& a,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
@@ -1313,7 +1313,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices, int Index>
-    static constexpr
+    constexpr
     auto operator + (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
     {
@@ -1322,7 +1322,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int Index, int... Indices>
-    static constexpr
+    constexpr
     auto operator - (const ScalarAccessor<ScalarType, StorageType, Index>& a,
                      const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
@@ -1331,7 +1331,7 @@ namespace mango::math
     }
 
     template <typename ScalarType, typename StorageType, int... Indices, int Index>
-    static constexpr
+    constexpr
     auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a,
                      const ScalarAccessor<ScalarType, StorageType, Index>& b) noexcept
     {
@@ -1343,7 +1343,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator * (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1352,7 +1352,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator * (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1361,7 +1361,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator / (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1370,7 +1370,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator / (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1379,7 +1379,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator + (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1388,7 +1388,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator + (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1397,7 +1397,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator - (T a, const ShuffleAccessor<ScalarType, StorageType, Indices...>& b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
@@ -1406,7 +1406,7 @@ namespace mango::math
 
     template <typename T, typename ScalarType, typename StorageType, int... Indices>
         requires std::is_arithmetic_v<T>
-    static constexpr
+    constexpr
     auto operator - (const ShuffleAccessor<ScalarType, StorageType, Indices...>& a, T b) noexcept
     {
         using TargetType = Vector<ScalarType, sizeof...(Indices)>;
