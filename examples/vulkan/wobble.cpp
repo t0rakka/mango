@@ -276,7 +276,7 @@ public:
         Surface s = lock();
         render(s, info.time, float(info.dt));
         unlock();
-        present(VulkanFramebuffer::FILTER_BILINEAR);
+        present(VulkanFramebuffer::FILTER_NEAREST);
     }
 
     void render(Surface s, double time, float dt)
