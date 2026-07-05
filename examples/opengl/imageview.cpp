@@ -21,6 +21,10 @@ public:
         : OpenGLFramebuffer(bitmap.width, bitmap.height, bitmap.palette ? RGBA_PALETTE : RGBA_DIRECT)
         , m_bitmap(bitmap)
     {
+    }
+
+    void onContextReady() override
+    {
         setTitle("OpenGLFramebuffer");
 
         // upload image into the framebuffer
@@ -28,14 +32,14 @@ public:
         s.blit(0, 0, m_bitmap);
         unlock();
 
-        if (bitmap.palette)
+        if (m_bitmap.palette)
         {
-            setPalette(*bitmap.palette);
+            setPalette(*m_bitmap.palette);
         }
 
         int32x2 screen = getScreenSize();
         printLine("screen: {} x {}", screen.x, screen.y);
-        printLine("Image: {} x {}", bitmap.width, bitmap.height);
+        printLine("Image: {} x {}", m_bitmap.width, m_bitmap.height);
     }
 
     void onKeyPress(Keycode code, u32 mask) override

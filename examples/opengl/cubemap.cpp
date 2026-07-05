@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
@@ -196,7 +196,7 @@ const float skyboxVertices [] =
 
 } // namespace
 
-GLuint createTexture2D(const std::string& filename, bool mipmap)
+GLuint createTexture2D(const std::string& filename, bool mipmap, bool srgb = true)
 {
     GLuint texture = 0;
 
@@ -218,7 +218,8 @@ GLuint createTexture2D(const std::string& filename, bool mipmap)
         ImageDecodeOptions options;
         ImageDecodeStatus status = decoder.decode(bitmap, options, 0, 0, 0);
 
-        glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.image);
+        GLenum internalFormat = srgb ? GL_SRGB8_ALPHA8 : GL_RGBA;
+        glTexImage2D(GL_TEXTURE_2D, 0, internalFormat, width, height, 0, GL_RGBA, GL_UNSIGNED_BYTE, bitmap.image);
 
         if (mipmap)
         {
@@ -260,11 +261,6 @@ GLuint createTextureCube(const std::string& filename)
             glBindTexture(GL_TEXTURE_CUBE_MAP, texture);
 
             Format format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
-
-#if 1
-
-            // easy and fast: 9 ms
-
             Bitmap bitmap(width, height, format);
 
             for (int face = 0; face < 6; ++face)
@@ -272,38 +268,8 @@ GLuint createTextureCube(const std::string& filename)
                 ImageDecodeOptions options;
                 ImageDecodeStatus status = decoder.decode(bitmap, options, 0, 0, face);
 
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, bitmap.image);
+                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA16F, width, height, 0, GL_RGBA, GL_HALF_FLOAT, bitmap.image);
             }
-
-#else
-
-            // complicated and not well optimized: 24 ms
-
-            int stride = width * format.bytes();
-            int size = height * stride;
-
-            GLuint buffer[6];
-            glGenBuffers(6, buffer);
-
-            for (int face = 0; face < 6; ++face)
-            {
-                glBindBuffer(GL_PIXEL_UNPACK_BUFFER, buffer[face]);
-                glBufferData(GL_PIXEL_UNPACK_BUFFER, size, nullptr, GL_STATIC_DRAW);
-
-                u8* data = reinterpret_cast<u8*>(glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY));
-                Surface surface(width, height, format, stride, data);
-
-                ImageDecodeOptions options;
-                ImageDecodeStatus status = decoder.decode(surface, options, 0, 0, face);
-
-                glUnmapBuffer(GL_PIXEL_UNPACK_BUFFER);
-                glTexImage2D(GL_TEXTURE_CUBE_MAP_POSITIVE_X + face, 0, GL_RGBA, width, height, 0, GL_RGBA, GL_HALF_FLOAT, nullptr);
-            }
-
-            glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
-            glDeleteBuffers(6, buffer);
-
-#endif
 
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MIN_FILTER, GL_LINEAR);
             glTexParameteri(GL_TEXTURE_CUBE_MAP, GL_TEXTURE_MAG_FILTER, GL_LINEAR);
@@ -319,7 +285,7 @@ GLuint createTextureCube(const std::string& filename)
     return texture;
 }
 
-class DemoWindow : public OpenGLContext
+class DemoWindow : public OpenGLWindow
 {
 protected:
     GLuint meshVAO = 0;
@@ -336,9 +302,29 @@ protected:
 
 public:
     DemoWindow()
-        : OpenGLContext(1280, 800)
+        : OpenGLWindow(1280, 800)
+    {
+    }
+
+    ~DemoWindow()
+    {
+        glDeleteVertexArrays(1, &meshVAO);
+        glDeleteBuffers(1, &meshVBO);
+        glDeleteProgram(meshProgram);
+        glDeleteTextures(1, &meshTexture);
+
+        glDeleteVertexArrays(1, &skyboxVAO);
+        glDeleteBuffers(1, &skyboxVBO);
+        glDeleteProgram(skyboxProgram);
+        glDeleteTextures(1, &skyboxTexture);
+    }
+
+    void onContextReady() override
     {
         setTitle("OpenGL Cubemap");
+
+        // Default framebuffer is sRGB; shader output is linear (EXR cubemap).
+        glEnable(GL_FRAMEBUFFER_SRGB);
 
         // mesh
         glGenVertexArrays(1, &meshVAO);
@@ -374,7 +360,7 @@ public:
         }
         else
         {
-            skyboxTexture = createTexture2D("data/KernerEnvLatLong.exr", false);
+            skyboxTexture = createTexture2D("data/KernerEnvLatLong.exr", false, false);
             skyboxProgram = opengl::createProgram(vs_skybox, fs_skybox_latlong);
             skyboxSamplerType = GL_TEXTURE_2D;
         }
@@ -384,19 +370,6 @@ public:
 
         glUseProgram(skyboxProgram);
         glUniform1i(glGetUniformLocation(skyboxProgram, "skybox"), 0);
-    }
-
-    ~DemoWindow()
-    {
-        glDeleteVertexArrays(1, &meshVAO);
-        glDeleteBuffers(1, &meshVBO);
-        glDeleteProgram(meshProgram);
-        glDeleteTextures(1, &meshTexture);
-
-        glDeleteVertexArrays(1, &skyboxVAO);
-        glDeleteBuffers(1, &skyboxVBO);
-        glDeleteProgram(skyboxProgram);
-        glDeleteTextures(1, &skyboxTexture);
     }
 
     void onKeyPress(Keycode code, u32 mask) override

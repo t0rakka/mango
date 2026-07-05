@@ -15,12 +15,12 @@
 namespace mango
 {
 
-    struct OpenGLContextCocoa : OpenGLContextHandle
+    struct OpenGLContextCocoa : OpenGLContext
     {
         WindowContext* window_context;
         id ctx = nil;
 
-        OpenGLContextCocoa(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* theShared)
+        OpenGLContextCocoa(OpenGLWindow* theContext, int width, int height, u32 flags, const OpenGLWindow::Config* pConfig, OpenGLWindow* theShared)
             : window_context(static_cast<WindowContext*>(theContext->backend()))
         {
             NSWindow* win = (__bridge NSWindow*)window_context->ns_window;
@@ -36,7 +36,7 @@ namespace mango
             window_context->attachContentView(theContext, (__bridge void*)view);
             [view release];
 
-            OpenGLContext::Config config;
+            OpenGLWindow::Config config;
             if (pConfig)
             {
                 config = *pConfig;
@@ -152,7 +152,7 @@ namespace mango
         }
     };
 
-    OpenGLContextHandle* createOpenGLContextCocoa(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContext* createOpenGLContextCocoa(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared)
     {
         return new OpenGLContextCocoa(parent, width, height, flags, configPtr, shared);
     }

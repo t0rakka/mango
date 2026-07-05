@@ -14,7 +14,7 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
-    const OpenGLContext::InternalFormat g_format_table[] =
+    const OpenGLWindow::InternalFormat g_format_table[] =
     {
         // 1.0
         { 0x1903, Format(  8, Format::UNORM, Format::R,    8, 0, 0, 0), "RED" },
@@ -156,7 +156,7 @@ namespace mango
     // -----------------------------------------------------------------------
 
     static
-    void init_ext(OpenGLContext& context)
+    void init_ext(OpenGLWindow& context)
     {
         const char* names[] =
         {
@@ -178,7 +178,7 @@ namespace mango
     }
 
     static
-    void init_core(OpenGLContext& context, int version)
+    void init_core(OpenGLWindow& context, int version)
     {
         int table[] =
         {
@@ -203,16 +203,16 @@ namespace mango
     // context creation
     // -----------------------------------------------------------------------
 
-    OpenGLContextHandle* createOpenGLContextWGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
-    OpenGLContextHandle* createOpenGLContextCocoa(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
-    OpenGLContextHandle* createOpenGLContextGLX_Xlib(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
-    OpenGLContextHandle* createOpenGLContextGLX_Xcb(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
-    OpenGLContextHandle* createOpenGLContextEGL(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    OpenGLContext* createOpenGLContextWGL(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared);
+    OpenGLContext* createOpenGLContextCocoa(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared);
+    OpenGLContext* createOpenGLContextGLX_Xlib(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared);
+    OpenGLContext* createOpenGLContextGLX_Xcb(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared);
+    OpenGLContext* createOpenGLContextEGL(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared);
 
-    using CreateContext = OpenGLContextHandle* (*)(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared);
+    using CreateContext = OpenGLContext* (*)(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared);
 
     static
-    OpenGLContextHandle* createOpenGLContext(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContext* createOpenGLContext(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared)
     {
         CreateContext create = nullptr;
 
@@ -227,7 +227,7 @@ namespace mango
 #if defined(MANGO_OPENGL_CONTEXT_GLX) || defined(MANGO_OPENGL_CONTEXT_EGL)
         // Linux: the X11/Wayland backends coexist; pick the GL context
         // implementation from the window's runtime WindowSystem. EGL is used for
-        // Wayland and whenever the caller requests it explicitly (OpenGLContext::EGL).
+        // Wayland and whenever the caller requests it explicitly (OpenGLWindow::EGL).
         const WindowSystem ws = Window::getWindowSystem();
 
     #if defined(MANGO_ENABLE_XLIB)
@@ -244,14 +244,14 @@ namespace mango
     #endif
 
     #if defined(MANGO_OPENGL_CONTEXT_EGL)
-        if (ws == WindowSystem::Wayland || (flags & OpenGLContext::EGL) || !create)
+        if (ws == WindowSystem::Wayland || (flags & OpenGLWindow::EGL) || !create)
         {
             create = createOpenGLContextEGL;
         }
     #endif
 #endif
 
-        OpenGLContextHandle* context = nullptr;
+        OpenGLContext* context = nullptr;
         if (create)
         {
             context = create(parent, width, height, flags, configPtr, shared);
@@ -261,35 +261,34 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // OpenGLContext
+    // OpenGLWindow
     // -----------------------------------------------------------------------
 
-    OpenGLContext::OpenGLContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+    OpenGLWindow::OpenGLWindow(int width, int height, u32 flags, const Config* configPtr, OpenGLWindow* shared)
         : Window(width, height, flags | API_OPENGL)
     {
         initContext(width, height, flags, configPtr, shared);
     }
 
-    OpenGLContext::OpenGLContext(math::int32x2 extent, u32 flags, const Config* configPtr, OpenGLContext* shared)
+    OpenGLWindow::OpenGLWindow(math::int32x2 extent, u32 flags, const Config* configPtr, OpenGLWindow* shared)
         : Window(extent.x, extent.y, flags | API_OPENGL)
     {
         initContext(extent.x, extent.y, flags, configPtr, shared);
     }
 
-    OpenGLContext::~OpenGLContext()
+    OpenGLWindow::~OpenGLWindow()
     {
     }
 
-    void OpenGLContext::initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLContext* shared)
+    void OpenGLWindow::initContext(int width, int height, u32 flags, const Config* configPtr, OpenGLWindow* shared)
     {
-        OpenGLContextHandle* context = createOpenGLContext(this, width, height, flags, configPtr, shared);
+        OpenGLContext* context = createOpenGLContext(this, width, height, flags, configPtr, shared);
         if (!context)
         {
-            MANGO_EXCEPTION("[OpenGLContext] context creation failed.");
+            MANGO_EXCEPTION("[OpenGLWindow] context creation failed.");
         }
 
         m_context.reset(context);
-        setVisible(true);
 
         // initialize version
         const char* str_version = reinterpret_cast<const char*>(glGetString(GL_VERSION));
@@ -353,37 +352,65 @@ namespace mango
         printLine("Version:  \"{}\"", reinterpret_cast<const char *>(s2));
     }
 
-    void OpenGLContext::makeCurrent()
+    void OpenGLWindow::enterEventLoop()
+    {
+        if (!m_context_ready)
+        {
+            m_context_ready = true;
+            onContextReady();
+            setVisible(true);
+        }
+
+        Window::enterEventLoop();
+    }
+
+    void OpenGLWindow::enterEventLoop(const EventLoopConfig& config)
+    {
+        if (!m_context_ready)
+        {
+            m_context_ready = true;
+            onContextReady();
+            setVisible(true);
+        }
+
+        Window::enterEventLoop(config);
+    }
+
+    void OpenGLWindow::onContextReady()
+    {
+    }
+
+    void OpenGLWindow::makeCurrent()
     {
         m_context->makeCurrent();
     }
 
-    void OpenGLContext::swapBuffers()
+    void OpenGLWindow::swapBuffers()
     {
         m_context->swapBuffers();
     }
 
-    void OpenGLContext::swapInterval(int interval)
+    void OpenGLWindow::swapInterval(int interval)
     {
         m_context->swapInterval(interval);
     }
 
-    void OpenGLContext::toggleFullscreen()
+    void OpenGLWindow::toggleFullscreen()
     {
         m_context->toggleFullscreen();
     }
 
-    bool OpenGLContext::isFullscreen() const
+    bool OpenGLWindow::isFullscreen() const
     {
         return m_context->isFullscreen();
     }
 
-    math::int32x2 OpenGLContext::getWindowSize() const
+    math::int32x2 OpenGLWindow::getWindowSize() const
     {
         return m_context->getWindowSize();
     }
 
-    void OpenGLContext::initExtensionMask()
+    void OpenGLWindow::initExtensionMask()
     {
         init_ext(*this);
         init_core(*this, m_version);
@@ -534,22 +561,22 @@ namespace mango
 #endif
     }
 
-    bool OpenGLContext::isExtension(const std::string& name) const
+    bool OpenGLWindow::isExtension(const std::string& name) const
     {
         return m_extensions.find(name) != m_extensions.end();
     }
 
-    bool OpenGLContext::isGLES() const
+    bool OpenGLWindow::isGLES() const
     {
         return m_is_gles;
     }
 
-    int OpenGLContext::getVersion() const
+    int OpenGLWindow::getVersion() const
     {
         return m_version;
     }
 
-    bool OpenGLContext::isCompressedTextureSupported(u32 compression) const
+    bool OpenGLWindow::isCompressedTextureSupported(u32 compression) const
     {
         bool supported = false;
 
@@ -714,7 +741,7 @@ namespace mango
         return supported;
     }
 
-    const OpenGLContext::InternalFormat* OpenGLContext::getInternalFormat(GLenum internalFormat) const
+    const OpenGLWindow::InternalFormat* OpenGLWindow::getInternalFormat(GLenum internalFormat) const
     {
         for (auto& node : g_format_table)
         {

@@ -89,7 +89,7 @@ GLuint createComputeProgram()
     return program;
 }
 
-class DemoWindow : public OpenGLContext
+class DemoWindow : public OpenGLWindow
 {
 protected:
     GLuint renderVAO = 0;
@@ -100,7 +100,39 @@ protected:
 
 public:
     DemoWindow()
-        : OpenGLContext(1280, 800)
+        : OpenGLWindow(1280, 800)
+    {
+    }
+
+    ~DemoWindow()
+    {
+        if (renderVAO)
+        {
+            glDeleteVertexArrays(1, &renderVAO);
+        }
+
+        if (renderVBO)
+        {
+            glDeleteBuffers(1, &renderVBO);
+        }
+
+        if (renderProgram)
+        {
+            glDeleteProgram(renderProgram);
+        }
+
+        if (computeProgram)
+        {
+            glDeleteProgram(computeProgram);
+        }
+
+        if (texture)
+        {
+            glDeleteTextures(1, &texture);
+        }
+    }
+
+    void onContextReady() override
     {
         setTitle("OpenGL Compute Shader");
 
@@ -157,34 +189,6 @@ public:
 
         glUseProgram(renderProgram);
         glUniform1i(glGetUniformLocation(renderProgram, "uTexture"), 0);
-    }
-
-    ~DemoWindow()
-    {
-        if (renderVAO)
-        {
-            glDeleteVertexArrays(1, &renderVAO);
-        }
-
-        if (renderVBO)
-        {
-            glDeleteBuffers(1, &renderVBO);
-        }
-
-        if (renderProgram)
-        {
-            glDeleteProgram(renderProgram);
-        }
-
-        if (computeProgram)
-        {
-            glDeleteProgram(computeProgram);
-        }
-
-        if (texture)
-        {
-            glDeleteTextures(1, &texture);
-        }
     }
 
     void onKeyPress(Keycode code, u32 mask) override

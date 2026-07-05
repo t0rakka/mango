@@ -22,8 +22,10 @@ public:
         : OpenGLFramebuffer(256, 128)
         , m_bitmap(256, 128, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
     {
-        updateTitle();
+    }
 
+    void onContextReady() override
+    {
         // compute window size
         int32x2 screen = getScreenSize();
         int scale = std::max(1, (screen.y / std::max(1, m_bitmap.height)) / 2);

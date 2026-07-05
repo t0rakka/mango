@@ -176,7 +176,7 @@ namespace mango
     math::int32x2 adjustWindowSizeToContent(int width, int height, int screenIndex)
     {
         // compute window size
-        int32x2 screen = OpenGLContext::getScreenSize(screenIndex);
+        int32x2 screen = Window::getScreenSize(screenIndex);
         int32x2 content(width, height);
 
         if (screen.x <= 0 || screen.y <= 0)
@@ -226,7 +226,7 @@ namespace mango
     // -------------------------------------------------------------------
 
     OpenGLFramebuffer::OpenGLFramebuffer(int width, int height, BufferMode buffermode)
-        : OpenGLContext(adjustWindowSizeToContent(width, height, 0), 0, nullptr)
+        : OpenGLWindow(adjustWindowSizeToContent(width, height, 0), 0, nullptr)
         , m_width(width)
         , m_height(height)
     {

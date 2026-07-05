@@ -40,14 +40,14 @@ namespace mango
     namespace
     {
 
-    struct OpenGLContextGLX : OpenGLContextHandle
+    struct OpenGLContextGLX : OpenGLContext
     {
         GLXContext context { 0 };
         bool fullscreen { false };
 
         XlibBackend* window;
 
-        OpenGLContextGLX(OpenGLContext* theContext, int width, int height, u32 flags, const OpenGLContext::Config* pConfig, OpenGLContext* shared)
+        OpenGLContextGLX(OpenGLWindow* theContext, int width, int height, u32 flags, const OpenGLWindow::Config* pConfig, OpenGLWindow* shared)
             : window(static_cast<XlibBackend*>(theContext->backend()))
         {
             Display* display = window->x11Display();
@@ -87,7 +87,7 @@ namespace mango
             if (!window->init(vi->screen, vi->depth, vi->visual, width, height, flags, "OpenGL"))
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] init failed.");
+                MANGO_EXCEPTION("[OpenGLWindow] init failed.");
             }
 
             XFree(vi);
@@ -102,7 +102,7 @@ namespace mango
             if (!context)
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContext] OpenGL Context creation failed.");
+                MANGO_EXCEPTION("[OpenGLWindow] OpenGL Context creation failed.");
             }
 
             // Verifying that context is a direct context
@@ -176,7 +176,7 @@ namespace mango
 
     } // unnamed namespace
 
-    OpenGLContextHandle* createOpenGLContextGLX_Xlib(OpenGLContext* parent, int width, int height, u32 flags, const OpenGLContext::Config* configPtr, OpenGLContext* shared)
+    OpenGLContext* createOpenGLContextGLX_Xlib(OpenGLWindow* parent, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* shared)
     {
         auto* context = new OpenGLContextGLX(parent, width, height, flags, configPtr, shared);
         return context;

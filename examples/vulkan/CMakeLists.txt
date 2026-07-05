@@ -1,6 +1,7 @@
 
 list(APPEND EXAMPLES
     vkbasic
+    wobble
     font
 )
 

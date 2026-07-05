@@ -237,35 +237,6 @@ namespace mango::vulkan
     }
 
     // ------------------------------------------------------------------------------
-    // VulkanWindow
-    // ------------------------------------------------------------------------------
-
-    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags)
-        : Window(width, height, flags | Window::API_VULKAN)
-        , m_instance(instance)
-        , m_surface(VK_NULL_HANDLE)
-    {
-        m_surface = m_backend->createVulkanSurface(m_instance);
-        if (!m_surface)
-        {
-            MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
-        }
-    }
-
-    VulkanWindow::~VulkanWindow()
-    {
-        if (m_surface != VK_NULL_HANDLE)
-        {
-            vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
-        }
-    }
-
-    bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
-    {
-        return m_backend->getPresentationSupport(physicalDevice, queueFamilyIndex);
-    }
-
-    // ------------------------------------------------------------------------------
     // getInstanceLayerProperties()
     // ------------------------------------------------------------------------------
 

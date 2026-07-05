@@ -61,6 +61,14 @@ public:
         : OpenGLFramebuffer(animation.m_bitmap.width, animation.m_bitmap.height)
         , m_animation(animation)
     {
+    }
+
+    ~DemoWindow()
+    {
+    }
+
+    void onContextReady() override
+    {
         std::string name = filesystem::removePath(m_animation.m_file.filename());
 
         if (m_animation.isAnimation())
@@ -71,10 +79,6 @@ public:
         {
             setTitle(fmt::format("[ {} ]", name));
         }
-    }
-
-    ~DemoWindow()
-    {
     }
 
     void onKeyPress(Keycode key, u32 mask) override

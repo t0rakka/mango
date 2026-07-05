@@ -12,7 +12,7 @@ namespace mango
         GLXFBConfig selected;
         std::set<std::string_view> extensions;
     
-        GLXConfiguration(Display* display, int screen, const OpenGLContext::Config* pConfig);
+        GLXConfiguration(Display* display, int screen, const OpenGLWindow::Config* pConfig);
 
         GLXContext createContext(Display* display, GLXContext shared);
     };

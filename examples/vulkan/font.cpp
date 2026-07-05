@@ -1884,16 +1884,8 @@ protected:
         vulkan::font::GlyphAtlasSlot atlas;
     };
 
-    VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-    VkDevice m_device = VK_NULL_HANDLE;
-    VkQueue m_graphicsQueue = VK_NULL_HANDLE;
-    u32 m_graphicsQueueFamilyIndex = 0;
-    VkCommandPool m_commandPool = VK_NULL_HANDLE;
-
-    std::unique_ptr<vulkan::Swapchain> m_swapchain;
     std::unique_ptr<vulkan::Allocator> m_allocator;
     std::unique_ptr<vulkan::font::Renderer> m_renderer;
-    std::vector<VkCommandBuffer> m_commandBuffers;
 
     mango::font::Font m_font;
     std::unordered_map<int, CachedGlyph> m_glyphCache;
@@ -1987,7 +1979,7 @@ protected:
             return;
         }
 
-        const u32 query_count = m_swapchain->getImageCount() * kTimestampsPerFrame;
+        const u32 query_count = swapchain().getImageCount() * kTimestampsPerFrame;
         VkQueryPoolCreateInfo poolInfo =
         {
             .sType = VK_STRUCTURE_TYPE_QUERY_POOL_CREATE_INFO,
@@ -1996,7 +1988,7 @@ protected:
         };
 
         vkCreateQueryPool(m_device, &poolInfo, nullptr, &m_timestampPool);
-        m_timestampQueryReady.assign(m_swapchain->getImageCount(), false);
+        m_timestampQueryReady.assign(swapchain().getImageCount(), false);
     }
 
     void destroyTimestampQueryPool()
@@ -2153,84 +2145,13 @@ public:
         : VulkanWindow(instance, width, height, flags)
         , m_fontPath(fontPath)
     {
-        m_physicalDevice = selectPhysicalDevice(instance);
+    }
 
-        std::vector<VkQueueFamilyProperties> queueFamilies = getPhysicalDeviceQueueFamilyProperties(m_physicalDevice);
-        for (size_t i = 0; i < queueFamilies.size(); ++i)
-        {
-            if ((queueFamilies[i].queueFlags & VK_QUEUE_GRAPHICS_BIT) && getPresentationSupport(m_physicalDevice, u32(i)))
-            {
-                m_graphicsQueueFamilyIndex = u32(i);
-                break;
-            }
-        }
-
-        float queuePriority = 1.0f;
-        VkDeviceQueueCreateInfo queueCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority,
-        };
-
-        std::vector<const char*> deviceExtensions = vulkan::requiredDeviceExtensions();
-
-        VkPhysicalDeviceVulkan13Features features13 =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
-            .dynamicRendering = VK_TRUE,
-        };
-
-        VkDeviceCreateInfo deviceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .pNext = &features13,
-            .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &queueCreateInfo,
-            .enabledExtensionCount = u32(deviceExtensions.size()),
-            .ppEnabledExtensionNames = deviceExtensions.data(),
-        };
-
-        vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
-        vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
-
-        VkSurfaceFormatKHR preferredFormat = { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR };
-        std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(m_physicalDevice, m_surface);
-        VkSurfaceFormatKHR selectedFormat = surfaceFormats[0];
-        for (const VkSurfaceFormatKHR& format : surfaceFormats)
-        {
-            if (format.format == preferredFormat.format && format.colorSpace == preferredFormat.colorSpace)
-            {
-                selectedFormat = format;
-                break;
-            }
-        }
-
-        m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, selectedFormat, m_graphicsQueue, this);
-        m_allocator = std::make_unique<vulkan::Allocator>(instance, m_physicalDevice, m_device, VK_API_VERSION_1_3);
+    void onDeviceReady() override
+    {
+        m_allocator = std::make_unique<vulkan::Allocator>(instance(), m_physicalDevice, m_device, VK_API_VERSION_1_3);
         m_renderer = std::make_unique<vulkan::font::Renderer>(m_device, m_graphicsQueue,
-            m_graphicsQueueFamilyIndex, *m_allocator, selectedFormat.format);
-
-        VkCommandPoolCreateInfo poolInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
-        };
-
-        vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
-
-        m_commandBuffers.resize(m_swapchain->getImageCount());
-        VkCommandBufferAllocateInfo cmdAllocInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .commandPool = m_commandPool,
-            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = m_swapchain->getImageCount(),
-        };
-
-        vkAllocateCommandBuffers(m_device, &cmdAllocInfo, m_commandBuffers.data());
+            m_graphicsQueueFamilyIndex, *m_allocator, surfaceFormat().format);
 
         if (!m_font.load(m_fontPath, m_fontPixelHeight))
         {
@@ -2245,11 +2166,26 @@ public:
             cache_string("frame: 000.000 ms (000 fps)  text: 000.000 ms");
         }
 
-        VkExtent2D extent = m_swapchain->getExtent();
+        VkExtent2D extent = swapchainExtent();
         m_renderer->resize(extent);
         createTimestampQueryPool();
-        m_timestampImageCount = m_swapchain->getImageCount();
-        setVisible(true);
+        m_timestampImageCount = swapchain().getImageCount();
+    }
+
+    void onSwapchainResize(VkExtent2D extent) override
+    {
+        if (m_renderer && extent.width > 0 && extent.height > 0)
+        {
+            m_renderer->resize(extent);
+        }
+
+        const u32 image_count = swapchain().getImageCount();
+        if (image_count != m_timestampImageCount)
+        {
+            destroyTimestampQueryPool();
+            createTimestampQueryPool();
+            m_timestampImageCount = image_count;
+        }
     }
 
     ~FontWindow()
@@ -2263,9 +2199,6 @@ public:
 
             m_renderer.reset();
             m_allocator.reset();
-            m_swapchain.reset();
-            vkDestroyCommandPool(m_device, m_commandPool, nullptr);
-            vkDestroyDevice(m_device, nullptr);
         }
     }
 
@@ -2429,9 +2362,9 @@ public:
         write_timestamp(cmd, imageIndex, TS_AfterText);
 
         t_section = Time::us();
-        m_swapchain->cmdTransitionImageToColorAttachment(cmd, imageIndex);
-        m_renderer->blit_to_swapchain(cmd, m_swapchain->getImageView(imageIndex), extent);
-        m_swapchain->cmdTransitionImageToPresent(cmd, imageIndex);
+        swapchain().cmdTransitionImageToColorAttachment(cmd, imageIndex);
+        m_renderer->blit_to_swapchain(cmd, swapchain().getImageView(imageIndex), extent);
+        swapchain().cmdTransitionImageToPresent(cmd, imageIndex);
         m_timings.record_blit_ms = float(Time::us() - t_section) / 1000.0f;
         write_timestamp(cmd, imageIndex, TS_AfterBlit);
 
@@ -2443,7 +2376,7 @@ public:
         const u64 frame_begin = Time::us();
 
         const u64 wait_begin = Time::us();
-        auto frame = m_swapchain->beginFrame();
+        auto frame = beginDraw();
         m_timings.wait_ms = float(Time::us() - wait_begin) / 1000.0f;
 
         if (!frame)
@@ -2451,22 +2384,10 @@ public:
             return;
         }
 
-        VkExtent2D extent = m_swapchain->getExtent();
-        const u32 image_count = m_swapchain->getImageCount();
-        if (extent.width > 0 && extent.height > 0)
-        {
-            m_renderer->resize(extent);
-        }
-
-        if (image_count != m_timestampImageCount)
-        {
-            destroyTimestampQueryPool();
-            createTimestampQueryPool();
-            m_timestampImageCount = image_count;
-        }
+        VkExtent2D extent = swapchainExtent();
 
         const u64 record_begin = Time::us();
-        VkCommandBuffer cmd = m_commandBuffers[frame.imageIndex()];
+        VkCommandBuffer cmd = commandBuffer(frame.imageIndex());
         recordCommandBuffer(cmd, frame.imageIndex(), extent);
         m_timings.record_ms = float(Time::us() - record_begin) / 1000.0f;
 
