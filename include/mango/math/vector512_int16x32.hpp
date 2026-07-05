@@ -48,9 +48,9 @@ namespace mango::math
         }
 
         Vector(
-            s16 v00, s16 v01, s16 v02, s16 v03, s16 v04, s16 v05, s16 v06, s16 v07, 
+            s16 v00, s16 v01, s16 v02, s16 v03, s16 v04, s16 v05, s16 v06, s16 v07,
             s16 v08, s16 v09, s16 v10, s16 v11, s16 v12, s16 v13, s16 v14, s16 v15,
-            s16 v16, s16 v17, s16 v18, s16 v19, s16 v20, s16 v21, s16 v22, s16 v23, 
+            s16 v16, s16 v17, s16 v18, s16 v19, s16 v20, s16 v21, s16 v22, s16 v23,
             s16 v24, s16 v25, s16 v26, s16 v27, s16 v28, s16 v29, s16 v30, s16 v31)
             : m(simd::s16x32_set(
                 v00, v01, v02, v03, v04, v05, v06, v07, v08, v09, v10, v11, v12, v13, v14, v15,
@@ -121,7 +121,7 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 32> mullo(Vector<s16, 32> a, Vector<s16, 32> b)
+    inline Vector<s16, 32> mullo(Vector<s16, 32> a, Vector<s16, 32> b)
     {
         return simd::mullo(a, b);
     }
@@ -130,12 +130,12 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 32> operator << (Vector<s16, 32> a, int b)
+    inline Vector<s16, 32> operator << (Vector<s16, 32> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s16, 32> operator >> (Vector<s16, 32> a, int b)
+    inline Vector<s16, 32> operator >> (Vector<s16, 32> a, int b)
     {
         return simd::sra(a, b);
     }

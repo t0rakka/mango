@@ -140,12 +140,12 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<u64, 4> operator << (Vector<u64, 4> a, int b)
+    inline Vector<u64, 4> operator << (Vector<u64, 4> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<u64, 4> operator >> (Vector<u64, 4> a, int b)
+    inline Vector<u64, 4> operator >> (Vector<u64, 4> a, int b)
     {
         return simd::srl(a, b);
     }

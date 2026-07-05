@@ -49,7 +49,7 @@ namespace mango::math
 
         Vector(s16 s00, s16 s01, s16 s02, s16 s03, s16 s04, s16 s05, s16 s06, s16 s07,
                s16 s08, s16 s09, s16 s10, s16 s11, s16 s12, s16 s13, s16 s14, s16 s15)
-            : m(simd::s16x16_set(s00, s01, s02, s03, s04, s05, s06, s07, 
+            : m(simd::s16x16_set(s00, s01, s02, s03, s04, s05, s06, s07,
                                  s08, s09, s10, s11, s12, s13, s14, s15))
         {
         }
@@ -116,27 +116,27 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 16> hadd(Vector<s16, 16> a, Vector<s16, 16> b)
+    inline Vector<s16, 16> hadd(Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::hadd(a, b);
     }
 
-    static inline Vector<s16, 16> hsub(Vector<s16, 16> a, Vector<s16, 16> b)
+    inline Vector<s16, 16> hsub(Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::hsub(a, b);
     }
 
-    static inline Vector<s16, 16> hadds(Vector<s16, 16> a, Vector<s16, 16> b)
+    inline Vector<s16, 16> hadds(Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::hadds(a, b);
     }
 
-    static inline Vector<s16, 16> hsubs(Vector<s16, 16> a, Vector<s16, 16> b)
+    inline Vector<s16, 16> hsubs(Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::hsubs(a, b);
     }
 
-    static inline Vector<s16, 16> mullo(Vector<s16, 16> a, Vector<s16, 16> b)
+    inline Vector<s16, 16> mullo(Vector<s16, 16> a, Vector<s16, 16> b)
     {
         return simd::mullo(a, b);
     }
@@ -145,12 +145,12 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 16> operator << (Vector<s16, 16> a, int b)
+    inline Vector<s16, 16> operator << (Vector<s16, 16> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s16, 16> operator >> (Vector<s16, 16> a, int b)
+    inline Vector<s16, 16> operator >> (Vector<s16, 16> a, int b)
     {
         return simd::sra(a, b);
     }

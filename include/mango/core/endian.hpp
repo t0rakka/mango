@@ -15,7 +15,7 @@ namespace mango
     // unaligned load
     // --------------------------------------------------------------
 
-    static inline
+    inline
     u16 uload16(const void* p)
     {
         u16 value;
@@ -23,7 +23,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u32 uload32(const void* p)
     {
         u32 value;
@@ -31,7 +31,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u64 uload64(const void* p)
     {
         u64 value;
@@ -39,7 +39,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     float16 uload16f(const void* p)
     {
         float16 value;
@@ -47,7 +47,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     float32 uload32f(const void* p)
     {
         float32 value;
@@ -55,7 +55,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     float64 uload64f(const void* p)
     {
         float64 value;
@@ -67,37 +67,37 @@ namespace mango
     // unaligned store
     // --------------------------------------------------------------
 
-    static inline
+    inline
     void ustore16(void* p, u16 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore32(void* p, u32 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore64(void* p, u64 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore16f(void* p, float16 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore32f(void* p, float32 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore64f(void* p, float64 value)
     {
         std::memcpy(p, &value, sizeof(value));

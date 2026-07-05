@@ -116,7 +116,7 @@ namespace mango::math
         return simd::s16x8_load_low(source);
     }
 
-    static inline void store_low(s16 *dest, Vector<s16, 8> v) noexcept
+    inline void store_low(s16 *dest, Vector<s16, 8> v) noexcept
     {
         simd::s16x8_store_low(dest, v);
     }
@@ -125,27 +125,27 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 8> hadd(Vector<s16, 8> a, Vector<s16, 8> b)
+    inline Vector<s16, 8> hadd(Vector<s16, 8> a, Vector<s16, 8> b)
     {
         return simd::hadd(a, b);
     }
 
-    static inline Vector<s16, 8> hsub(Vector<s16, 8> a, Vector<s16, 8> b)
+    inline Vector<s16, 8> hsub(Vector<s16, 8> a, Vector<s16, 8> b)
     {
         return simd::hsub(a, b);
     }
 
-    static inline Vector<s16, 8> hadds(Vector<s16, 8> a, Vector<s16, 8> b)
+    inline Vector<s16, 8> hadds(Vector<s16, 8> a, Vector<s16, 8> b)
     {
         return simd::hadds(a, b);
     }
 
-    static inline Vector<s16, 8> hsubs(Vector<s16, 8> a, Vector<s16, 8> b)
+    inline Vector<s16, 8> hsubs(Vector<s16, 8> a, Vector<s16, 8> b)
     {
         return simd::hsubs(a, b);
     }
 
-    static inline Vector<s16, 8> mullo(Vector<s16, 8> a, Vector<s16, 8> b)
+    inline Vector<s16, 8> mullo(Vector<s16, 8> a, Vector<s16, 8> b)
     {
         return simd::mullo(a, b);
     }
@@ -154,12 +154,12 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 8> operator << (Vector<s16, 8> a, int b)
+    inline Vector<s16, 8> operator << (Vector<s16, 8> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s16, 8> operator >> (Vector<s16, 8> a, int b)
+    inline Vector<s16, 8> operator >> (Vector<s16, 8> a, int b)
     {
         return simd::sra(a, b);
     }

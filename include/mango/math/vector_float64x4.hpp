@@ -178,26 +178,26 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline
+    inline
     double dot(Vector<double, 4> a, Vector<double, 4> b)
     {
         return simd::dot4(a, b);
     }
 
-    static inline
+    inline
     Vector<double, 4> hmin(Vector<double, 4> v)
     {
         return simd::hmin(v);
     }
 
-    static inline
+    inline
     Vector<double, 4> hmax(Vector<double, 4> v)
     {
         return simd::hmax(v);
     }
 
     template <int x, int y, int z, int w>
-    static inline
+    inline
     Vector<double, 4> shuffle(Vector<double, 4> v)
     {
         return simd::shuffle<x, y, z, w>(v);

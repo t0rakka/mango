@@ -18,7 +18,7 @@ namespace mango::math
     //
 
     template <typename T>
-    static inline
+    inline
     T linear_to_srgb(T linear)
     {
         linear = clamp(linear, 0.0f, 1.0f);
@@ -29,7 +29,7 @@ namespace mango::math
     }
 
     template <typename T>
-    static inline
+    inline
     T srgb_to_linear(T s)
     {
         return s * (s * (s * 0.305306011f + 0.682171111f) + 0.012522878f);

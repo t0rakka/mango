@@ -114,17 +114,17 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<s32, 8> hadd(Vector<s32, 8> a, Vector<s32, 8> b)
+    inline Vector<s32, 8> hadd(Vector<s32, 8> a, Vector<s32, 8> b)
     {
         return simd::hadd(a, b);
     }
 
-    static inline Vector<s32, 8> hsub(Vector<s32, 8> a, Vector<s32, 8> b)
+    inline Vector<s32, 8> hsub(Vector<s32, 8> a, Vector<s32, 8> b)
     {
         return simd::hsub(a, b);
     }
 
-    static inline Vector<s32, 8> mullo(Vector<s32, 8> a, Vector<s32, 8> b)
+    inline Vector<s32, 8> mullo(Vector<s32, 8> a, Vector<s32, 8> b)
     {
         return simd::mullo(a, b);
     }
@@ -133,22 +133,22 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<s32, 8> operator << (Vector<s32, 8> a, int b)
+    inline Vector<s32, 8> operator << (Vector<s32, 8> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s32, 8> operator >> (Vector<s32, 8> a, int b)
+    inline Vector<s32, 8> operator >> (Vector<s32, 8> a, int b)
     {
         return simd::sra(a, b);
     }
 
-    static inline Vector<s32, 8> operator << (Vector<s32, 8> a, Vector<u32, 8> b)
+    inline Vector<s32, 8> operator << (Vector<s32, 8> a, Vector<u32, 8> b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s32, 8> operator >> (Vector<s32, 8> a, Vector<u32, 8> b)
+    inline Vector<s32, 8> operator >> (Vector<s32, 8> a, Vector<u32, 8> b)
     {
         return simd::sra(a, b);
     }

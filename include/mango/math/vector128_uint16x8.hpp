@@ -116,7 +116,7 @@ namespace mango::math
         return simd::u16x8_load_low(source);
     }
 
-    static inline void store_low(u16 *dest, Vector<u16, 8> v) noexcept
+    inline void store_low(u16 *dest, Vector<u16, 8> v) noexcept
     {
         simd::u16x8_store_low(dest, v);
     }
@@ -125,7 +125,7 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<u16, 8> mullo(Vector<u16, 8> a, Vector<u16, 8> b)
+    inline Vector<u16, 8> mullo(Vector<u16, 8> a, Vector<u16, 8> b)
     {
         return simd::mullo(a, b);
     }
@@ -134,12 +134,12 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<u16, 8> operator << (Vector<u16, 8> a, int b)
+    inline Vector<u16, 8> operator << (Vector<u16, 8> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<u16, 8> operator >> (Vector<u16, 8> a, int b)
+    inline Vector<u16, 8> operator >> (Vector<u16, 8> a, int b)
     {
         return simd::srl(a, b);
     }

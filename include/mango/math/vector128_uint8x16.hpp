@@ -121,7 +121,7 @@ namespace mango::math
         return simd::u8x16_load_low(source);
     }
 
-    static inline void store_low(u8 *dest, Vector<u8, 16> v) noexcept
+    inline void store_low(u8 *dest, Vector<u8, 16> v) noexcept
     {
         simd::u8x16_store_low(dest, v);
     }
