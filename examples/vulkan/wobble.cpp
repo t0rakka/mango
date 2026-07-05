@@ -20,7 +20,6 @@ struct Wave
     float ampRate;
     float freqRate;
     float phase;
-    float hue; // trace tint offset
 };
 
 static
@@ -80,10 +79,10 @@ protected:
 
     static constexpr Wave kWaves[] =
     {
-        { 72.0f, 0.028f, 0.91f, 1.13f, 0.00f,  0.00f },
-        { 38.0f, 0.051f, 1.37f, 0.84f, 1.20f,  0.18f },
-        { 22.0f, 0.089f, 1.05f, 1.46f, 2.40f, -0.12f },
-        { 14.0f, 0.137f, 1.62f, 0.73f, 3.80f,  0.25f },
+        { 72.0f, 0.028f, 0.91f, 1.13f, 0.00f },
+        { 38.0f, 0.051f, 1.37f, 0.84f, 1.20f },
+        { 22.0f, 0.089f, 1.05f, 1.46f, 2.40f },
+        { 14.0f, 0.137f, 1.62f, 0.73f, 3.80f },
     };
 
     int m_fbWidth = 0;
@@ -167,7 +166,6 @@ protected:
                 float tg = 0.55f + 0.35f * std::sin(float(time) * 0.7f + x * 0.01f);
                 float tb = 0.15f;
 
-                // Orange demogroup accent on the hot trace
                 tr = 1.0f;
                 tg = 0.42f + 0.18f * std::sin(float(time) * 1.3f);
                 tb = 0.05f;
@@ -180,28 +178,6 @@ protected:
                 m_phosphorB[i] = std::min(2.5f, m_phosphorB[i] + tb * intensity);
             }
         }
-
-        // ghost harmonics in the phosphor only
-        for (const Wave& wave : kWaves)
-        {
-            const float hue = wave.hue;
-            for (int x = 0; x < width; x += 3)
-            {
-                const int py = int(m_fbHeight * 0.5f + waveHeight(x, time, wave) * 0.55f);
-                if (py < 1 || py >= height - 1)
-                {
-                    continue;
-                }
-
-                float tr = 0.15f + hue;
-                float tg = 0.35f;
-                float tb = 0.9f - hue;
-                const size_t i = size_t(py) * size_t(width) + size_t(x);
-                m_phosphorR[i] = std::min(1.2f, m_phosphorR[i] + tr * 0.08f);
-                m_phosphorG[i] = std::min(1.2f, m_phosphorG[i] + tg * 0.08f);
-                m_phosphorB[i] = std::min(1.2f, m_phosphorB[i] + tb * 0.08f);
-            }
-        }
     }
 
     u32 backgroundColor(int x, int y, float waveY, double time) const
@@ -210,7 +186,7 @@ protected:
 
         const u32 solidBelow = makeRGBA(4, 3, 18, 255);
         const u32 gradTop = makeRGBA(22, 2, 42, 255);
-        const u32 gradMid = makeRGBA(255, 88, 12, 255);  // Orange
+        const u32 gradMid = makeRGBA(255, 88, 12, 255);
         const u32 gradWave = makeRGBA(0, 220, 255, 255);
 
         if (float(y) < waveY)
@@ -272,7 +248,6 @@ protected:
         g *= vig;
         b *= vig;
 
-        // corner orange glow (demogroup nod)
         const float corner = std::exp(-float(x) * 0.004f - float(y) * 0.006f);
         r += corner * 0.10f;
         g += corner * 0.03f;
@@ -317,7 +292,7 @@ public:
         Surface s = lock();
         render(s, info.time, float(info.dt));
         unlock();
-        present(VulkanFramebuffer::FILTER_BILINEAR);
+        present(VulkanFramebuffer::FILTER_NEAREST);
     }
 
     void render(Surface s, double time, float dt)
@@ -406,7 +381,7 @@ int mangoMain(const mango::CommandLine& commands)
     VkApplicationInfo applicationInfo =
     {
         .sType = VK_STRUCTURE_TYPE_APPLICATION_INFO,
-        .pApplicationName = "vkfb_wobble",
+        .pApplicationName = "wobble",
         .applicationVersion = 1,
         .pEngineName = "mango",
         .engineVersion = 1,
@@ -414,13 +389,12 @@ int mangoMain(const mango::CommandLine& commands)
     };
 
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
-
-    WobbleWindow window(instance, 800, 480);
-    window.setTitle("vkfb_wobble — mr.ai/orange");
+    WobbleWindow window(instance, 320, 200);
 
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
     config.waitForFrame = true;
+
     window.enterEventLoop(config);
 
     return 0;
