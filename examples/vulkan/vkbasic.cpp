@@ -51,15 +51,6 @@ static const char* g_fragmentShader = R"(#version 450
 class TestWindow : public vulkan::VulkanWindow
 {
 protected:
-    VkPhysicalDevice m_physicalDevice;
-    VkDevice m_device = VK_NULL_HANDLE;
-    VkCommandPool m_commandPool;
-    VkQueue m_graphicsQueue;
-    uint32_t m_graphicsQueueFamilyIndex;
-
-    std::unique_ptr<vulkan::Swapchain> m_swapchain;
-    std::vector<VkCommandBuffer> m_commandBuffers;
-
     VkShaderModule m_vertexShader = VK_NULL_HANDLE;
     VkShaderModule m_fragmentShader = VK_NULL_HANDLE;
     VkPipelineLayout m_pipelineLayout = VK_NULL_HANDLE;
@@ -93,23 +84,6 @@ protected:
     {
         Matrix4x4 mvp;
     };
-
-    uint32_t findMemoryType(uint32_t typeFilter, VkMemoryPropertyFlags properties)
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
-
-        for (uint32_t i = 0; i < memProperties.memoryTypeCount; ++i)
-        {
-            if ((typeFilter & (1 << i)) && (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        printLine(Print::Error, "Failed to find suitable memory type.");
-        return 0;
-    }
 
     void createBuffer(VkDeviceSize size, VkBufferUsageFlags usage, VkMemoryPropertyFlags properties,
                       VkBuffer& buffer, VkDeviceMemory& memory)
@@ -500,7 +474,7 @@ protected:
             .pAttachments = &colorBlendAttachment,
         };
 
-        VkFormat colorFormat = m_swapchain->getFormat();
+        VkFormat colorFormat = swapchain().getFormat();
 
         VkPipelineRenderingCreateInfo renderingCreateInfo =
         {
@@ -591,7 +565,7 @@ protected:
 
         vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-        m_swapchain->cmdTransitionImageToColorAttachment(commandBuffer, imageIndex);
+        swapchain().cmdTransitionImageToColorAttachment(commandBuffer, imageIndex);
 
         VkImageMemoryBarrier depthBarrier =
         {
@@ -621,7 +595,7 @@ protected:
         VkRenderingAttachmentInfo colorAttachment =
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-            .imageView = m_swapchain->getImageView(imageIndex),
+            .imageView = swapchain().getImageView(imageIndex),
             .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
             .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
             .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
@@ -679,14 +653,14 @@ protected:
 
         vkCmdEndRendering(commandBuffer);
 
-        m_swapchain->cmdTransitionImageToPresent(commandBuffer, imageIndex);
+        swapchain().cmdTransitionImageToPresent(commandBuffer, imageIndex);
 
         vkEndCommandBuffer(commandBuffer);
     }
 
     void updateUniformBuffer()
     {
-        const VkExtent2D extent = m_swapchain->getExtent();
+        const VkExtent2D extent = swapchain().getExtent();
         const float aspect = float(extent.width) / float(extent.height);
 
         const float time = float(mango::Time::us() - m_startTime) / 1000000.0f;
@@ -721,156 +695,24 @@ public:
         : VulkanWindow(instance, width, height, flags)
     {
         m_startTime = mango::Time::us();
-        m_physicalDevice = selectPhysicalDevice(instance);
+    }
 
-        std::vector<VkQueueFamilyProperties> queueFamilyProperties = getPhysicalDeviceQueueFamilyProperties(m_physicalDevice);
-
-        u32 selectedQueueFamilyIndex = UINT32_MAX;
-
-        for (size_t i = 0; i < queueFamilyProperties.size(); ++i)
-        {
-            const VkQueueFamilyProperties& properties = queueFamilyProperties[i];
-            bool presentationSupport = getPresentationSupport(m_physicalDevice, u32(i));
-            bool graphics = properties.queueFlags & VK_QUEUE_GRAPHICS_BIT;
-
-            if (graphics && presentationSupport)
-            {
-                selectedQueueFamilyIndex = u32(i);
-            }
-        }
-
-        if (selectedQueueFamilyIndex == UINT32_MAX)
-        {
-            printLine(Print::Error, "Couldn't find suitable queue.");
-            return;
-        }
-
-        float queuePriority = 1.0f;
-
-        VkDeviceQueueCreateInfo queueCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = selectedQueueFamilyIndex,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority,
-        };
-
-        std::vector<const char*> deviceExtensions = vulkan::requiredDeviceExtensions();
-
-        VkPhysicalDeviceVulkan13Features features13 =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
-            .dynamicRendering = VK_TRUE,
-        };
-
-        VkDeviceCreateInfo deviceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .pNext = &features13,
-            .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &queueCreateInfo,
-            .enabledExtensionCount = u32(deviceExtensions.size()),
-            .ppEnabledExtensionNames = deviceExtensions.data(),
-        };
-
-        VkResult result = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "vkCreateDevice: {}", getString(result));
-            return;
-        }
-
-        m_graphicsQueueFamilyIndex = selectedQueueFamilyIndex;
-        vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
-
-
-        //VkBool32 supported = VK_FALSE;
-        //vkGetPhysicalDeviceSurfaceSupportKHR(physicalDevice, graphicsQueueFamilyIndex, m_surface, &supported);
-        //printLine("vkGetPhysicalDeviceSurfaceSupportKHR: {}", supported);
-
-        /*
-        VkSurfaceCapabilitiesKHR caps;
-        vkGetPhysicalDeviceSurfaceCapabilitiesKHR(m_physicalDevice, m_surface, &caps);
-        printLine("PhysicalDeviceSurface.Extent: {} x {}", caps.currentExtent.width, caps.currentExtent.height);
-
-        m_extent = caps.currentExtent;
-        */
-
-        const VkSurfaceFormatKHR formatSDR =
-        {
-            .format = VK_FORMAT_B8G8R8A8_UNORM,
-            .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR
-        };
-
-        const VkSurfaceFormatKHR formatHDR =
-        {
-            .format = VK_FORMAT_R16G16B16A16_SFLOAT,
-            .colorSpace = VK_COLOR_SPACE_BT2020_LINEAR_EXT
-        };
-
-        MANGO_UNREFERENCED(formatSDR);
-        MANGO_UNREFERENCED(formatHDR);
-
-        VkSurfaceFormatKHR preferredFormat = formatSDR;
-
-        std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(m_physicalDevice, m_surface);
-
-        size_t selectedFormatIndex = 0;
-        VkSurfaceFormatKHR selectedFormat = surfaceFormats[0];
-
-        for (size_t i = 0; i < surfaceFormats.size(); ++i)
-        {
-            if (surfaceFormats[i].format == preferredFormat.format &&
-                surfaceFormats[i].colorSpace == preferredFormat.colorSpace)
-            {
-                selectedFormatIndex = i;
-                selectedFormat = surfaceFormats[i];
-                break;
-            }
-        }
-
-        printLine(Print::Info, "");
-        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
-
-        for (size_t i = 0; i < surfaceFormats.size(); ++i)
-        {
-            std::string_view prefix = i == selectedFormatIndex ? ">" : " ";
-            printLine(Print::Info, "  {} {} | {}", prefix, getString(surfaceFormats[i].format), getString(surfaceFormats[i].colorSpace));
-        }
-
-        m_swapchain = std::make_unique<vulkan::Swapchain>(m_device, m_physicalDevice, m_surface, selectedFormat, m_graphicsQueue, this);
-
-        VkCommandPoolCreateInfo poolInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
-        };
-
-        vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
-
-        m_commandBuffers.resize(m_swapchain->getImageCount());
-
-        VkCommandBufferAllocateInfo commandBufferAllocateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
-            .commandPool = m_commandPool,
-            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
-            .commandBufferCount = m_swapchain->getImageCount(),
-        };
-
-        vkAllocateCommandBuffers(m_device, &commandBufferAllocateInfo, m_commandBuffers.data());
-
-        VkExtent2D extent = m_swapchain->getExtent();
-
+    void onDeviceReady() override
+    {
+        VkExtent2D extent = swapchainExtent();
         createDepthResources(extent);
         createShaders();
         createGeometry();
         createDescriptorSetLayout();
         createDescriptorPoolAndSet();
         createPipeline();
+    }
 
-        setVisible(true);
+    void onSwapchainResize(VkExtent2D extent) override
+    {
+        vkDeviceWaitIdle(m_device);
+        destroyDepthResources();
+        createDepthResources(extent);
     }
 
     ~TestWindow()
@@ -878,8 +720,6 @@ public:
         if (m_device != VK_NULL_HANDLE)
         {
             vkDeviceWaitIdle(m_device);
-
-            m_swapchain.reset();
 
             destroyPipeline();
 
@@ -934,46 +774,21 @@ public:
             }
 
             destroyDepthResources();
-
-            vkDestroyCommandPool(m_device, m_commandPool, nullptr);
-            vkDestroyDevice(m_device, nullptr);
         }
-    }
-
-    void ensureDepthResources()
-    {
-        const VkExtent2D extent = m_swapchain->getExtent();
-        if (m_depthImage != VK_NULL_HANDLE &&
-            extent.width == m_depthExtent.width &&
-            extent.height == m_depthExtent.height)
-        {
-            return;
-        }
-
-        // beginFrame()'s recreate already waited on all swapchain fences, but the depth
-        // image may still be referenced by an earlier submission; idle before replacing.
-        // The graphics pipeline is NOT rebuilt: viewport/scissor are dynamic.
-        vkDeviceWaitIdle(m_device);
-        destroyDepthResources();
-        createDepthResources(extent);
     }
 
     void render()
     {
-        // beginFrame() owns the swapchain recreate + suboptimal retry and only ever
-        // returns a correctly-sized image, so the client just syncs its own extent-sized
-        // resources (the depth buffer) to the now final extent and renders.
-        auto frame = m_swapchain->beginFrame();
+        auto frame = beginDraw();
         if (!frame)
         {
             return;
         }
 
-        ensureDepthResources();
         updateUniformBuffer();
 
-        const VkExtent2D extent = m_swapchain->getExtent();
-        VkCommandBuffer commandBuffer = m_commandBuffers[frame.imageIndex()];
+        const VkExtent2D extent = swapchainExtent();
+        VkCommandBuffer commandBuffer = this->commandBuffer(frame.imageIndex());
         recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
         frame.submitAndPresent(m_graphicsQueue, commandBuffer);
     }

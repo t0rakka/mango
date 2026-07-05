@@ -117,14 +117,61 @@ namespace mango::vulkan
         ~CommandPool();
     };
 
+    // -------------------------------------------------------------------
+    // VulkanDeviceConfig
+    // -------------------------------------------------------------------
+
+    struct VulkanDeviceConfig
+    {
+        // VK_NULL_HANDLE selects via selectPhysicalDevice().
+        VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
+
+        // Swapchain surface formats in preference order (first supported match wins).
+        // When empty, B8G8R8A8_UNORM + SRGB_NONLINEAR is tried, then surfaceFormats[0].
+        std::vector<VkSurfaceFormatKHR> preferredFormats;
+
+        // Optional pNext for VkDeviceCreateInfo (feature structs, etc.).
+        // When null, VulkanWindow enables Vulkan 1.3 dynamic rendering by default.
+        const void* deviceCreateInfoPNext = nullptr;
+
+        // Appended to requiredDeviceExtensions().
+        std::vector<const char*> deviceExtensions;
+    };
+
+    // -------------------------------------------------------------------
+    // VulkanWindow
+    // -------------------------------------------------------------------
+
     class VulkanWindow : public Window
     {
     protected:
-        VkInstance m_instance;
-        VkSurfaceKHR m_surface;
+        VkInstance m_instance = VK_NULL_HANDLE;
+        VkSurfaceKHR m_surface = VK_NULL_HANDLE;
+
+        VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
+        VkDevice m_device = VK_NULL_HANDLE;
+        u32 m_graphicsQueueFamilyIndex = 0;
+        VkQueue m_graphicsQueue = VK_NULL_HANDLE;
+
+        VkSurfaceFormatKHR m_surfaceFormat {};
+        VkExtent2D m_swapchainExtent { 0, 0 };
+
+        std::unique_ptr<Swapchain> m_swapchain;
+        VkCommandPool m_commandPool = VK_NULL_HANDLE;
+        std::vector<VkCommandBuffer> m_commandBuffers;
+
+        bool m_on_device_ready_called = false;
+
+        void initDevice(const VulkanDeviceConfig* config);
+        void destroyDevice();
+        void allocateCommandBuffers();
+        void ensureCommandBuffers();
+
+        u32 findMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const;
 
     public:
-        VulkanWindow(VkInstance instance, int width, int height, u32 flags);
+        VulkanWindow(VkInstance instance, int width, int height, u32 flags = 0,
+                     const VulkanDeviceConfig* config = nullptr);
         ~VulkanWindow();
 
         operator VkInstance () const
@@ -132,9 +179,42 @@ namespace mango::vulkan
             return m_instance;
         }
 
-        // Whether the selected backend's surface supports presentation on the
-        // given queue family. Forwards to the active window backend.
+        bool isDeviceReady() const
+        {
+            return m_device != VK_NULL_HANDLE;
+        }
+
         bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex);
+
+        VkInstance instance() const { return m_instance; }
+        VkSurfaceKHR surface() const { return m_surface; }
+        VkPhysicalDevice physicalDevice() const { return m_physicalDevice; }
+        VkDevice device() const { return m_device; }
+        VkQueue graphicsQueue() const { return m_graphicsQueue; }
+        u32 graphicsQueueFamilyIndex() const { return m_graphicsQueueFamilyIndex; }
+        VkSurfaceFormatKHR surfaceFormat() const { return m_surfaceFormat; }
+        VkExtent2D swapchainExtent() const { return m_swapchainExtent; }
+
+        Swapchain& swapchain();
+        const Swapchain& swapchain() const;
+
+        VkCommandPool commandPool() const { return m_commandPool; }
+        VkCommandBuffer commandBuffer(u32 imageIndex) const;
+
+        // Acquire a swapchain image (handles resize/recreate internally).
+        // After a successful return, swapchainExtent() matches the drawable.
+        // Calls onSwapchainResize() when the surface extent changes.
+        Swapchain::Frame beginDraw();
+
+        void enterEventLoop();
+        void enterEventLoop(const EventLoopConfig& config);
+
+        // Called once before the window is shown and the event loop starts.
+        virtual void onDeviceReady();
+
+        // Called when the swapchain extent changes (resize / recreate).
+        // Rebuild extent-dependent resources (depth, pipelines with fixed sizes, etc.).
+        virtual void onSwapchainResize(VkExtent2D extent);
     };
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);
