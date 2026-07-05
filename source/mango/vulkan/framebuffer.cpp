@@ -8,8 +8,6 @@
 #include <mango/core/exception.hpp>
 #include <mango/vulkan/framebuffer.hpp>
 
-#if defined(MANGO_ENABLE_VULKAN)
-
 namespace
 {
 
@@ -1052,10 +1050,10 @@ namespace mango::vulkan
         const float vertices[] =
         {
             // position   texcoord
-            -1.0f, -1.0f,  0.0f, 1.0f,
-             1.0f, -1.0f,  1.0f, 1.0f,
-            -1.0f,  1.0f,  0.0f, 0.0f,
-             1.0f,  1.0f,  1.0f, 0.0f,
+            -1.0f, -1.0f,  0.0f, 0.0f,
+             1.0f, -1.0f,  1.0f, 0.0f,
+            -1.0f,  1.0f,  0.0f, 1.0f,
+             1.0f,  1.0f,  1.0f, 1.0f,
         };
 
         const VkDeviceSize size = sizeof(vertices);
@@ -1527,5 +1525,3 @@ namespace mango::vulkan
     }
 
 } // namespace mango::vulkan
-
-#endif // defined(MANGO_ENABLE_VULKAN)
