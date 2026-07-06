@@ -30,20 +30,21 @@ using namespace mango;
 using namespace mango::math;
 using namespace mango::vulkan;
 
-// =============================================================================
+// TODO: Kerning support
+// TODO: UTF8 code points support
+
+// -----------------------------------------------------------------------------
 // mango::font — backend-agnostic glyph preprocessing (no Vulkan)
-// =============================================================================
+// -----------------------------------------------------------------------------
 
 namespace mango::font
 {
 
-    using float2 = float32x2;
-
     struct QuadraticCurve
     {
-        float2 p0;
-        float2 p1;
-        float2 p2;
+        float32x2 p0;
+        float32x2 p1;
+        float32x2 p2;
     };
 
     struct Contour
@@ -54,8 +55,8 @@ namespace mango::font
     struct GlyphOutline
     {
         float advance = 0.0f;
-        float2 bounds_min { 0.0f, 0.0f };
-        float2 bounds_max { 0.0f, 0.0f };
+        float32x2 bounds_min { 0.0f, 0.0f };
+        float32x2 bounds_max { 0.0f, 0.0f };
         std::vector<Contour> contours;
     };
 
@@ -68,8 +69,8 @@ namespace mango::font
     struct GlyphGpuData
     {
         float advance = 0.0f;
-        float2 bounds_min { 0.0f, 0.0f };
-        float2 bounds_max { 0.0f, 0.0f };
+        float32x2 bounds_min { 0.0f, 0.0f };
+        float32x2 bounds_max { 0.0f, 0.0f };
         std::vector<GpuContourHeader> contours;
         std::vector<float> curve_data;
         std::vector<u8> contour_bytes;
@@ -78,7 +79,7 @@ namespace mango::font
 
     static constexpr float kEpsilon = 1e-4f;
 
-    static float2 evaluate_cubic(const float2& p0, const float2& p1, const float2& p2, const float2& p3, float t)
+    static float32x2 evaluate_cubic(const float32x2& p0, const float32x2& p1, const float32x2& p2, const float32x2& p3, float t)
     {
         float s = 1.0f - t;
         float s2 = s * s;
@@ -109,9 +110,9 @@ namespace mango::font
 
     static void subdivide_quadratic(const QuadraticCurve& curve, QuadraticCurve& left, QuadraticCurve& right)
     {
-        float2 p01 = (curve.p0 + curve.p1) * 0.5f;
-        float2 p12 = (curve.p1 + curve.p2) * 0.5f;
-        float2 p012 = (p01 + p12) * 0.5f;
+        float32x2 p01 = (curve.p0 + curve.p1) * 0.5f;
+        float32x2 p12 = (curve.p1 + curve.p2) * 0.5f;
+        float32x2 p012 = (p01 + p12) * 0.5f;
 
         left = { curve.p0, p01, p012 };
         right = { p012, p12, curve.p2 };
@@ -137,36 +138,36 @@ namespace mango::font
         make_monotonic(curve, contour.curves);
     }
 
-    static QuadraticCurve line_to_quadratic(const float2& p0, const float2& p1)
+    static QuadraticCurve line_to_quadratic(const float32x2& p0, const float32x2& p1)
     {
         return { p0, (p0 + p1) * 0.5f, p1 };
     }
 
-    static bool is_horizontal_line(const float2& p0, const float2& p1)
+    static bool is_horizontal_line(const float32x2& p0, const float32x2& p1)
     {
         return std::fabs(p0.y - p1.y) < kEpsilon && std::fabs(p0.x - p1.x) > kEpsilon;
     }
 
-    static void cubic_to_quadratics(const float2& p0, const float2& p1, const float2& p2, const float2& p3,
+    static void cubic_to_quadratics(const float32x2& p0, const float32x2& p1, const float32x2& p2, const float32x2& p3,
                                     std::vector<QuadraticCurve>& output, float tolerance = 0.5f, int depth = 0)
     {
-        float2 mid = evaluate_cubic(p0, p1, p2, p3, 0.5f);
-        float2 chord_mid = (p0 + p3) * 0.5f;
+        float32x2 mid = evaluate_cubic(p0, p1, p2, p3, 0.5f);
+        float32x2 chord_mid = (p0 + p3) * 0.5f;
         float error = length(mid - chord_mid);
 
         if (error <= tolerance || depth >= 6)
         {
-            float2 control = (4.0f * mid - p0 - p3) * 0.5f;
+            float32x2 control = (4.0f * mid - p0 - p3) * 0.5f;
             output.push_back({ p0, control, p3 });
             return;
         }
 
-        float2 p01 = (p0 + p1) * 0.5f;
-        float2 p12 = (p1 + p2) * 0.5f;
-        float2 p23 = (p2 + p3) * 0.5f;
-        float2 p012 = (p01 + p12) * 0.5f;
-        float2 p123 = (p12 + p23) * 0.5f;
-        float2 p0123 = (p012 + p123) * 0.5f;
+        float32x2 p01 = (p0 + p1) * 0.5f;
+        float32x2 p12 = (p1 + p2) * 0.5f;
+        float32x2 p23 = (p2 + p3) * 0.5f;
+        float32x2 p012 = (p01 + p12) * 0.5f;
+        float32x2 p123 = (p12 + p23) * 0.5f;
+        float32x2 p0123 = (p012 + p123) * 0.5f;
 
         cubic_to_quadratics(p0, p01, p012, p0123, output, tolerance, depth + 1);
         cubic_to_quadratics(p0123, p123, p23, p3, output, tolerance, depth + 1);
@@ -216,7 +217,7 @@ namespace mango::font
         }
     }
 
-    static void update_bounds(GlyphOutline& outline, const float2& point, bool& initialized)
+    static void update_bounds(GlyphOutline& outline, const float32x2& point, bool& initialized)
     {
         if (!initialized)
         {
@@ -233,7 +234,7 @@ namespace mango::font
     static void process_shape(const stbtt_vertex* vertices, int count, GlyphOutline& outline)
     {
         Contour contour;
-        float2 current { 0.0f, 0.0f };
+        float32x2 current { 0.0f, 0.0f };
         bool has_current = false;
         bool bounds_initialized = false;
 
@@ -249,7 +250,7 @@ namespace mango::font
         for (int i = 0; i < count; ++i)
         {
             const stbtt_vertex& v = vertices[i];
-            float2 next(float(v.x), float(v.y));
+            float32x2 next(float(v.x), float(v.y));
 
             switch (v.type)
             {
@@ -284,7 +285,7 @@ namespace mango::font
                         break;
                     }
 
-                    float2 control(float(v.cx), float(v.cy));
+                    float32x2 control(float(v.cx), float(v.cy));
                     append_curve(contour, { current, control, next });
 
                     current = next;
@@ -300,8 +301,8 @@ namespace mango::font
                         break;
                     }
 
-                    float2 c1(float(v.cx), float(v.cy));
-                    float2 c2(float(v.cx1), float(v.cy1));
+                    float32x2 c1(float(v.cx), float(v.cy));
+                    float32x2 c2(float(v.cx1), float(v.cy1));
                     std::vector<QuadraticCurve> quadratics;
                     cubic_to_quadratics(current, c1, c2, next, quadratics);
                     for (const QuadraticCurve& q : quadratics)
@@ -398,9 +399,9 @@ namespace mango::font
 
 } // namespace mango::font
 
-// =============================================================================
+// -----------------------------------------------------------------------------
 // GLSL shaders
-// =============================================================================
+// -----------------------------------------------------------------------------
 
 namespace
 {
@@ -735,9 +736,9 @@ void main()
 
 } // namespace
 
-// =============================================================================
+// -----------------------------------------------------------------------------
 // mango::vulkan::font — Vulkan backend
-// =============================================================================
+// -----------------------------------------------------------------------------
 
 namespace mango::vulkan::font
 {
@@ -1871,9 +1872,9 @@ namespace mango::vulkan::font
 
 } // namespace mango::vulkan::font
 
-// =============================================================================
+// -----------------------------------------------------------------------------
 // FontWindow — example application
-// =============================================================================
+// -----------------------------------------------------------------------------
 
 class FontWindow : public VulkanWindow
 {
