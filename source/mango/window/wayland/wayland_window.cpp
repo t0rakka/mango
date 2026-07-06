@@ -263,6 +263,7 @@ namespace
         WaylandBackend* window = static_cast<WaylandBackend*>(data);
         window->syncSurfaceScale();
         window->syncEGLWindow();
+        window->syncOpaqueRegion();
         xdg_surface_ack_configure(xdg_surface, serial);
         window->configured = true;
     }
@@ -1013,6 +1014,7 @@ namespace mango
         }
 
         syncSurfaceScale();
+        syncOpaqueRegion();
         return true;
     }
 
@@ -1026,6 +1028,27 @@ namespace mango
 
         buffer_scale = scale;
         wl_surface_set_buffer_scale(surface, buffer_scale);
+    }
+
+    void WaylandBackend::syncOpaqueRegion()
+    {
+        // Wayland compositors blend using buffer alpha.
+        // Mark the full surface opaque so non-0xff alpha
+        // does not show the desktop through the window.
+        if (!surface || !compositor || size[0] <= 0 || size[1] <= 0)
+        {
+            return;
+        }
+
+        struct wl_region* region = wl_compositor_create_region(compositor);
+        if (!region)
+        {
+            return;
+        }
+
+        wl_region_add(region, 0, 0, size[0], size[1]);
+        wl_surface_set_opaque_region(surface, region);
+        wl_region_destroy(region);
     }
 
     void WaylandBackend::syncEGLWindow()
@@ -1066,6 +1089,7 @@ namespace mango
 
         syncSurfaceScale();
         syncEGLWindow();
+        syncOpaqueRegion();
         owner->onResize(size[0], size[1]);
         owner->invalidate();
     }

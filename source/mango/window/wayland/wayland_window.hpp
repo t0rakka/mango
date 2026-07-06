@@ -102,6 +102,7 @@ namespace mango
 
         bool createWaylandWindow(int width, int height, const char* title);
         void syncSurfaceScale();
+        void syncOpaqueRegion();
         void syncEGLWindow();
         void requestRefresh();
         void processEvents();
