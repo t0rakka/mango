@@ -52,6 +52,7 @@ public:
 
         case KEYCODE_F:
             toggleFullscreen();
+            invalidate();
             break;
 
         case KEYCODE_1:
