@@ -370,7 +370,7 @@ int mangoMain(const mango::CommandLine& commands)
     };
 
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
-    WobbleWindow window(instance, 320, 200);
+    WobbleWindow window(instance, 360, 200);
 
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
