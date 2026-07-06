@@ -2500,6 +2500,10 @@ GLEXT_PROC(PFNGLWINDOWPOS4SVMESAPROC, glWindowPos4svMESA);
 GLEXT_PROC(PFNGLFRAMEBUFFERPARAMETERIMESAPROC, glFramebufferParameteriMESA);
 GLEXT_PROC(PFNGLGETFRAMEBUFFERPARAMETERIVMESAPROC, glGetFramebufferParameterivMESA);
 
+// GL_MESA_map_buffer_client_pointer
+GLEXT_PROC(PFNGLADDCLIENTPOINTERRANGEMESAPROC, glAddClientPointerRangeMESA);
+GLEXT_PROC(PFNGLRELEASECLIENTPOINTERRANGEMESAPROC, glReleaseClientPointerRangeMESA);
+
 // ---------------------------------------------------------------------------------
 // NVX
 // ---------------------------------------------------------------------------------

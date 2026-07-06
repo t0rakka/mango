@@ -6,7 +6,7 @@ extern "C" {
 #endif
 
 /*
-** Copyright 2013-2025 The Khronos Group Inc.
+** Copyright 2013-2026 The Khronos Group Inc.
 ** SPDX-License-Identifier: MIT
 **
 ** This header is generated from the Khronos OpenGL / OpenGL ES XML
@@ -17,7 +17,7 @@ extern "C" {
 
 #include "glplatform.h"
 
-/* Generated on date 20251023 */
+/* Generated on date 20260319 */
 
 /* Generated C header for:
  * API: gles1
@@ -465,7 +465,7 @@ GL_API void GL_APIENTRY glGetClipPlanex (GLenum plane, GLfixed *equation);
 GL_API void GL_APIENTRY glGenBuffers (GLsizei n, GLuint *buffers);
 GL_API void GL_APIENTRY glGenTextures (GLsizei n, GLuint *textures);
 GL_API GLenum GL_APIENTRY glGetError (void);
-GL_API void GL_APIENTRY glGetFixedv (GLenum pname, GLfixed *params);
+GL_API void GL_APIENTRY glGetFixedv (GLenum pname, GLfixed *data);
 GL_API void GL_APIENTRY glGetIntegerv (GLenum pname, GLint *data);
 GL_API void GL_APIENTRY glGetLightxv (GLenum light, GLenum pname, GLfixed *params);
 GL_API void GL_APIENTRY glGetMaterialxv (GLenum face, GLenum pname, GLfixed *params);
