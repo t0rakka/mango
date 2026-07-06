@@ -1697,11 +1697,11 @@ struct XXH64_state_s {
 
 #ifndef XXH_NO_XXH3
 
-#if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) /* >= C11 */
-#  define XXH_ALIGN(n)      _Alignas(n)
-#elif defined(__cplusplus) && (__cplusplus >= 201103L) /* >= C++11 */
+#if defined(__cplusplus) && (__cplusplus >= 201103L) /* >= C++11 */
 /* In C++ alignas() is a keyword */
 #  define XXH_ALIGN(n)      alignas(n)
+#elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L) /* > C11 */
+#  define XXH_ALIGN(n)      _Alignas(n)
 #elif defined(__GNUC__)
 #  define XXH_ALIGN(n)      __attribute__ ((aligned(n)))
 #elif defined(_MSC_VER)
@@ -2461,7 +2461,8 @@ static void XXH_free(void* p) { free(p); }
 #  define XXH3_WITH_SECRET_INLINE XXH_NO_INLINE
 #endif
 
-#if ((defined(sun) || defined(__sun)) && __cplusplus) /* Solaris includes __STDC_VERSION__ with C++. Tested with GCC 5.5 */
+/* Solaris includes __STDC_VERSION__ with C++. Tested with GCC 5.5 */
+#if ((defined(sun) || defined(__sun)) && defined(__cplusplus))
 #  define XXH_RESTRICT   /* disable */
 #elif defined (__STDC_VERSION__) && __STDC_VERSION__ >= 199901L   /* >= C99 */
 #  define XXH_RESTRICT   restrict
@@ -2510,10 +2511,10 @@ static void XXH_free(void* p) { free(p); }
 
 /* note: use after variable declarations */
 #ifndef XXH_STATIC_ASSERT
-#  if defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)    /* C11 */
-#    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { _Static_assert((c),m); } while(0)
-#  elif defined(__cplusplus) && (__cplusplus >= 201103L)            /* C++11 */
+#  if defined(__cplusplus) && (__cplusplus >= 201103L)            /* C++11 */
 #    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { static_assert((c),m); } while(0)
+#  elif defined(__STDC_VERSION__) && (__STDC_VERSION__ >= 201112L)    /* C11 */
+#    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { _Static_assert((c),m); } while(0)
 #  else
 #    define XXH_STATIC_ASSERT_WITH_MESSAGE(c,m) do { struct xxh_sa { char x[(c) ? 1 : -1]; }; } while(0)
 #  endif
@@ -6034,7 +6035,7 @@ XXH3_accumulate_512_scalar(void* XXH_RESTRICT acc,
 {
     size_t i;
     /* ARM GCC refuses to unroll this loop, resulting in a 24% slowdown on ARMv6. */
-#if defined(__GNUC__) && !defined(__clang__) \
+#if defined(__GNUC__) && !defined(__clang__) && __GNUC__ >= 8 \
   && (defined(__arm__) || defined(__thumb2__)) \
   && defined(__ARM_FEATURE_UNALIGNED) /* no unaligned access just wastes bytes */ \
   && XXH_SIZE_OPT <= 0
