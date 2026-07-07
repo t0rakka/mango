@@ -554,10 +554,10 @@ namespace mango::simd
     inline f64x4 convert<f64x4>(u32x4 u)
     {
         f64x4 v;
-        v.data[0][0] = unsignedIntToDouble(u[0]);
-        v.data[0][1] = unsignedIntToDouble(u[1]);
-        v.data[1][0] = unsignedIntToDouble(u[2]);
-        v.data[1][1] = unsignedIntToDouble(u[3]);
+        v.data[0][0] = f64(u[0]);
+        v.data[0][1] = f64(u[1]);
+        v.data[1][0] = f64(u[2]);
+        v.data[1][1] = f64(u[3]);
         return v;
     }
 
@@ -597,10 +597,10 @@ namespace mango::simd
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
-        u32 x = doubleToUnsignedInt(d.data[0][0]);
-        u32 y = doubleToUnsignedInt(d.data[0][1]);
-        u32 z = doubleToUnsignedInt(d.data[1][0]);
-        u32 w = doubleToUnsignedInt(d.data[1][1]);
+        u32 x = u32(d.data[0][0]);
+        u32 y = u32(d.data[0][1]);
+        u32 z = u32(d.data[1][0]);
+        u32 w = u32(d.data[1][1]);
         return u32x4_set(x, y, z, w);
     }
 

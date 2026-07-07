@@ -859,10 +859,10 @@ namespace mango::simd
     template <>
     inline f64x4 convert<f64x4>(u32x4 s)
     {
-        f64 x = unsignedIntToDouble(get_component<0>(s));
-        f64 y = unsignedIntToDouble(get_component<1>(s));
-        f64 z = unsignedIntToDouble(get_component<2>(s));
-        f64 w = unsignedIntToDouble(get_component<3>(s));
+        f64 x = f64(get_component<0>(s));
+        f64 y = f64(get_component<1>(s));
+        f64 z = f64(get_component<2>(s));
+        f64 w = f64(get_component<3>(s));
         return f64x4_set(x, y, z, w);
     }
 
@@ -901,10 +901,10 @@ namespace mango::simd
     template <>
     inline u32x4 convert<u32x4>(f64x4 d)
     {
-        u32 x = doubleToUnsignedInt(get_component<0>(d.data[0]));
-        u32 y = doubleToUnsignedInt(get_component<1>(d.data[0]));
-        u32 z = doubleToUnsignedInt(get_component<0>(d.data[1]));
-        u32 w = doubleToUnsignedInt(get_component<1>(d.data[1]));
+        u32 x = u32(get_component<0>(d.data[0]));
+        u32 y = u32(get_component<1>(d.data[0]));
+        u32 z = u32(get_component<0>(d.data[1]));
+        u32 w = u32(get_component<1>(d.data[1]));
         return u32x4_set(x, y, z, w);
     }
 
