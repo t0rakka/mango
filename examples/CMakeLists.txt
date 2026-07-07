@@ -17,7 +17,7 @@ add_subdirectory(misc)
 add_subdirectory(image)
 add_subdirectory(utils)
 
-set(EXAMPLE_BINARY_FOLDERS
+set(_mango_example_binary_folders
     "${CMAKE_CURRENT_BINARY_DIR}/test"
     "${CMAKE_CURRENT_BINARY_DIR}/misc"
     "${CMAKE_CURRENT_BINARY_DIR}/image"
@@ -26,18 +26,20 @@ set(EXAMPLE_BINARY_FOLDERS
 
 if (BUILD_OPENGL)
     add_subdirectory(opengl)
-    list(APPEND EXAMPLE_BINARY_FOLDERS
+    list(APPEND _mango_example_binary_folders
         "${CMAKE_CURRENT_BINARY_DIR}/opengl"
     )
 endif ()
 
 if (BUILD_VULKAN)
     add_subdirectory(vulkan)
-    list(APPEND EXAMPLE_BINARY_FOLDERS
+    list(APPEND _mango_example_binary_folders
         "${CMAKE_CURRENT_BINARY_DIR}/vulkan"
     )
 endif ()
 
-set(EXAMPLE_BINARY_FOLDERS ${EXAMPLE_BINARY_FOLDERS}
-    CACHE STRING "Binary Directories for examples" FORCE
-)
+if (NOT EXAMPLE_BINARY_FOLDERS STREQUAL "${_mango_example_binary_folders}")
+    set(EXAMPLE_BINARY_FOLDERS "${_mango_example_binary_folders}"
+        CACHE STRING "Binary Directories for examples" FORCE
+    )
+endif ()
