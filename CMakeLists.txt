@@ -195,7 +195,7 @@ if (BUILD_VULKAN)
     endif ()
 endif ()
 
-message("[${PROJECT_NAME}]")
+message("[${PROJECT_NAME}: ${PROJECT_VERSION}]")
 list(APPEND CMAKE_MESSAGE_INDENT "    ")
 
 message("Processor: ${CMAKE_SYSTEM_PROCESSOR}")
@@ -645,13 +645,11 @@ SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
-
 # ------------------------------------------------------------------------------
 # libraries
 # ------------------------------------------------------------------------------
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/mango_libraries.cmake)
-
 
 # ------------------------------------------------------------------------------
 # find_module()
@@ -875,21 +873,29 @@ endif ()
 
 find_package(PkgConfig QUIET)
 
-message("[Required Libraries]")
+message("[Required Libraries: core]")
 
-find_module(mango-core FMT PUBLIC REQUIRED "" fmt fmt::fmt 8.0)
 find_module(mango-core ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
-find_module(mango-image ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
-find_module(mango-image LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
 find_module(mango-core ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
-find_module(mango-image ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
+find_module(mango-core FMT PUBLIC REQUIRED "" fmt fmt::fmt 8.0)
 find_libdeflate(mango-core ${INTERFACE} REQUIRED)
+
+message("[Required Libraries: image]")
+
+find_module(mango-image ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
+find_module(mango-image ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
+find_module(mango-image LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
+
+if (BUILD_IMPORT3D)
+    message("[Required Libraries: import3d]")
+    find_module(mango-import3d SIMDJSON ${INTERFACE} REQUIRED simdjson simdjson simdjson::simdjson 0)
+endif ()
 
 # ------------------------------------------------------------------------------
 # Optional Libraries
 # ------------------------------------------------------------------------------
 
-message("[Optional Libraries]")
+message("[Optional Libraries: core]")
 
 if (LIBRARY_BZIP2)
     find_module(mango-core BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
@@ -901,6 +907,11 @@ endif ()
 
 if (LIBRARY_ISAL)
     find_module(mango-core ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+endif ()
+
+message("[Optional Libraries: image]")
+
+if (LIBRARY_ISAL)
     find_module(mango-image ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
@@ -965,10 +976,6 @@ if (LIBRARY_LIBRAW)
             message("    LIBRAW: no version [not found]")
         endif ()
     endif ()
-endif ()
-
-if (BUILD_IMPORT3D)
-    find_module(mango-import3d SIMDJSON ${INTERFACE} REQUIRED simdjson simdjson simdjson::simdjson 0)
 endif ()
 
 # ------------------------------------------------------------------------------
