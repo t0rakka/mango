@@ -129,6 +129,14 @@ namespace mango::detail
             return value;
         }
 
+        u32 read24()
+        {
+            // NOTE: uload24 is always little endian
+            u32 value = uload24(p);
+            p += 3;
+            return value;
+        }
+    
         u32 read32()
         {
             u32 value = uload32(p);
@@ -218,6 +226,14 @@ namespace mango::detail
         }
 
         template <typename T>
+        void write24(T value)
+        {
+            // NOTE: ustore24 is always little endian
+            ustore24(p, u32(value));
+            p += 3;
+        }
+
+        template <typename T>
         void write32(T value)
         {
             ustore32(p, u32(value));
@@ -292,6 +308,14 @@ namespace mango::detail
         {
             u16 value = byteswap(uload16(p));
             p += 2;
+            return value;
+        }
+
+        u32 read24()
+        {
+            // NOTE: uload24 is always little endian
+            u32 value = uload24(p);
+            p += 3;
             return value;
         }
 
@@ -381,6 +405,14 @@ namespace mango::detail
         {
             ustore16(p, byteswap(u16(value)));
             p += 2;
+        }
+
+        template <typename T>
+        void write24(T value)
+        {
+            // NOTE: ustore24 is always little endian
+            ustore24(p, u32(value));
+            p += 3;
         }
 
         template <typename T>

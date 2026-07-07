@@ -52,19 +52,6 @@ namespace
         return TextureCompression::NONE;
     }
 
-    u32 read24(LittleEndianConstPointer& p)
-    {
-        u32 value = (p[2] << 16) | (p[1] << 8) | p[0];
-        p += 3;
-        return value;
-    }
-
-    void write24(Stream& stream, u32 value)
-    {
-        UnsignedInt24 u = value;
-        stream.write(u, 3);
-    }
-
     // ----------------------------------------------------------------------------
     // HeaderASTC
     // ----------------------------------------------------------------------------
@@ -88,9 +75,9 @@ namespace
             xblock = p.read8();
             yblock = p.read8();
             zblock = p.read8();
-            header.width = read24(p);
-            header.height = read24(p);
-            header.depth = read24(p);
+            header.width = p.read24();
+            header.height = p.read24();
+            header.depth = p.read24();
 
             u32 compression = select_astc_format(xblock, yblock);
 
@@ -202,9 +189,9 @@ namespace
         output.write8(block_width);
         output.write8(block_height);
         output.write8(0);
-        write24(output, temp.width);
-        write24(output, temp.height);
-        write24(output, 0);
+        output.write24(temp.width);
+        output.write24(temp.height);
+        output.write24(0);
 
         // write compressed blocks
         output.write(buffer);

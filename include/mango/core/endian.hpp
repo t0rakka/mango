@@ -1,10 +1,9 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
-#include <cassert>
 #include <mango/core/configure.hpp>
 #include <mango/core/bits.hpp>
 
@@ -24,11 +23,43 @@ namespace mango
     }
 
     static inline
+    u16 uload16_reverse(const void* p)
+    {
+        u16 value;
+        std::memcpy(&value, p, sizeof(value));
+        return byteswap(value);
+    }
+
+    static inline
+    u32 uload24(const void* p)
+    {
+        // uload24 is always little endian
+        const u8* data = static_cast<const u8*>(p);
+        return u32(data[0]) | (u32(data[1]) << 8) | (u32(data[2]) << 16);
+    }
+
+    static inline
+    u32 uload24_reverse(const void* p)
+    {
+        // uload24_reverse is always big endian
+        const u8* data = static_cast<const u8*>(p);
+        return u32(data[2]) | (u32(data[1]) << 8) | (u32(data[0]) << 16);
+    }
+
+    static inline
     u32 uload32(const void* p)
     {
         u32 value;
         std::memcpy(&value, p, sizeof(value));
         return value;
+    }
+
+    static inline
+    u32 uload32_reverse(const void* p)
+    {
+        u32 value;
+        std::memcpy(&value, p, sizeof(value));
+        return byteswap(value);
     }
 
     static inline
@@ -40,11 +71,27 @@ namespace mango
     }
 
     static inline
+    u64 uload64_reverse(const void* p)
+    {
+        u64 value;
+        std::memcpy(&value, p, sizeof(value));
+        return byteswap(value);
+    }
+
+    static inline
     float16 uload16f(const void* p)
     {
         float16 value;
         std::memcpy(&value, p, sizeof(value));
         return value;
+    }
+
+    static inline
+    float16 uload16f_reverse(const void* p)
+    {
+        float16 value;
+        std::memcpy(&value, p, sizeof(value));
+        return byteswap(value);
     }
 
     static inline
@@ -56,11 +103,27 @@ namespace mango
     }
 
     static inline
+    float32 uload32f_reverse(const void* p)
+    {
+        float32 value;
+        std::memcpy(&value, p, sizeof(value));
+        return byteswap(value);
+    }
+
+    static inline
     float64 uload64f(const void* p)
     {
         float64 value;
         std::memcpy(&value, p, sizeof(value));
         return value;
+    }
+
+    static inline
+    float64 uload64f_reverse(const void* p)
+    {
+        float64 value;
+        std::memcpy(&value, p, sizeof(value));
+        return byteswap(value);
     }
 
     // --------------------------------------------------------------
@@ -74,8 +137,42 @@ namespace mango
     }
 
     static inline
+    void ustore16_reverse(void* p, u16 value)
+    {
+        value = byteswap(value);
+        std::memcpy(p, &value, sizeof(value));
+    }
+
+    static inline
+    void ustore24(void* p, u32 value)
+    {
+        // ustore24 is always little endian
+        u8* bytes = static_cast<u8*>(p);
+        bytes[0] = u8(value >>  0);
+        bytes[1] = u8(value >>  8);
+        bytes[2] = u8(value >> 16);
+    }
+
+    static inline
+    void ustore24_reverse(void* p, u32 value)
+    {
+        // ustore24_reverse is always big endian
+        u8* bytes = static_cast<u8*>(p);
+        bytes[0] = u8(value >> 16);
+        bytes[1] = u8(value >>  8);
+        bytes[2] = u8(value >>  0);
+    }
+
+    static inline
     void ustore32(void* p, u32 value)
     {
+        std::memcpy(p, &value, sizeof(value));
+    }
+
+    static inline
+    void ustore32_reverse(void* p, u32 value)
+    {
+        value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
@@ -86,8 +183,22 @@ namespace mango
     }
 
     static inline
+    void ustore64_reverse(void* p, u64 value)
+    {
+        value = byteswap(value);
+        std::memcpy(p, &value, sizeof(value));
+    }
+
+    static inline
     void ustore16f(void* p, float16 value)
     {
+        std::memcpy(p, &value, sizeof(value));
+    }
+
+    static inline
+    void ustore16f_reverse(void* p, float16 value)
+    {
+        value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
@@ -98,8 +209,22 @@ namespace mango
     }
 
     static inline
+    void ustore32f_reverse(void* p, float32 value)
+    {
+        value = byteswap(value);
+        std::memcpy(p, &value, sizeof(value));
+    }
+
+    static inline
     void ustore64f(void* p, float64 value)
     {
+        std::memcpy(p, &value, sizeof(value));
+    }
+
+    static inline
+    void ustore64f_reverse(void* p, float64 value)
+    {
+        value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
@@ -107,10 +232,6 @@ namespace mango
 
 namespace mango::littleEndian
 {
-
-    // --------------------------------------------------------------
-    // littleEndian load/store
-    // --------------------------------------------------------------
 
 #ifdef MANGO_LITTLE_ENDIAN
 
@@ -132,21 +253,21 @@ namespace mango::littleEndian
 
 #else
 
-    inline auto uload16 = [] (const void* p) { return byteswap(mango::uload16(p)); };
-    inline auto uload32 = [] (const void* p) { return byteswap(mango::uload32(p)); };
-    inline auto uload64 = [] (const void* p) { return byteswap(mango::uload64(p)); };
+    inline auto uload16 = mango::uload16_reverse;
+    inline auto uload32 = mango::uload32_reverse;
+    inline auto uload64 = mango::uload64_reverse;
 
-    inline auto uload16f = [] (const void* p) { return byteswap(mango::uload16f(p)); };
-    inline auto uload32f = [] (const void* p) { return byteswap(mango::uload32f(p)); };
-    inline auto uload64f = [] (const void* p) { return byteswap(mango::uload64f(p)); };
+    inline auto uload16f = mango::uload16f_reverse;
+    inline auto uload32f = mango::uload32f_reverse;
+    inline auto uload64f = mango::uload64f_reverse;
 
-    inline auto ustore16 = [] (void* p, u16 value) { mango::ustore16(p, byteswap(value)); };
-    inline auto ustore32 = [] (void* p, u32 value) { mango::ustore32(p, byteswap(value)); };
-    inline auto ustore64 = [] (void* p, u64 value) { mango::ustore64(p, byteswap(value)); };
+    inline auto ustore16 = mango::ustore16_reverse;
+    inline auto ustore32 = mango::ustore32_reverse;
+    inline auto ustore64 = mango::ustore64_reverse;
 
-    inline auto ustore16f = [] (void* p, float16 value) { mango::ustore16f(p, byteswap(value)); };
-    inline auto ustore32f = [] (void* p, float32 value) { mango::ustore32f(p, byteswap(value)); };
-    inline auto ustore64f = [] (void* p, float64 value) { mango::ustore64f(p, byteswap(value)); };
+    inline auto ustore16f = mango::ustore16f_reverse;
+    inline auto ustore32f = mango::ustore32f_reverse;
+    inline auto ustore64f = mango::ustore64f_reverse;
 
 #endif
 
@@ -155,27 +276,23 @@ namespace mango::littleEndian
 namespace mango::bigEndian
 {
 
-    // --------------------------------------------------------------
-    // bigEndian load/store
-    // --------------------------------------------------------------
-
 #ifdef MANGO_LITTLE_ENDIAN
 
-    inline auto uload16 = [] (const void* p) { return byteswap(mango::uload16(p)); };
-    inline auto uload32 = [] (const void* p) { return byteswap(mango::uload32(p)); };
-    inline auto uload64 = [] (const void* p) { return byteswap(mango::uload64(p)); };
+    inline auto uload16 = mango::uload16_reverse;
+    inline auto uload32 = mango::uload32_reverse;
+    inline auto uload64 = mango::uload64_reverse;
 
-    inline auto uload16f = [] (const void* p) { return byteswap(mango::uload16f(p)); };
-    inline auto uload32f = [] (const void* p) { return byteswap(mango::uload32f(p)); };
-    inline auto uload64f = [] (const void* p) { return byteswap(mango::uload64f(p)); };
+    inline auto uload16f = mango::uload16f_reverse;
+    inline auto uload32f = mango::uload32f_reverse;
+    inline auto uload64f = mango::uload64f_reverse;
 
-    inline auto ustore16 = [] (void* p, u16 value) { mango::ustore16(p, byteswap(value)); };
-    inline auto ustore32 = [] (void* p, u32 value) { mango::ustore32(p, byteswap(value)); };
-    inline auto ustore64 = [] (void* p, u64 value) { mango::ustore64(p, byteswap(value)); };
+    inline auto ustore16 = mango::ustore16_reverse;
+    inline auto ustore32 = mango::ustore32_reverse;
+    inline auto ustore64 = mango::ustore64_reverse;
 
-    inline auto ustore16f = [] (void* p, float16 value) { mango::ustore16f(p, byteswap(value)); };
-    inline auto ustore32f = [] (void* p, float32 value) { mango::ustore32f(p, byteswap(value)); };
-    inline auto ustore64f = [] (void* p, float64 value) { mango::ustore64f(p, byteswap(value)); };
+    inline auto ustore16f = mango::ustore16f_reverse;
+    inline auto ustore32f = mango::ustore32f_reverse;
+    inline auto ustore64f = mango::ustore64f_reverse;
 
 #else
 
@@ -306,10 +423,6 @@ namespace mango::detail
 namespace mango::littleEndian
 {
 
-    // --------------------------------------------------------------
-    // littleEndian storage types
-    // --------------------------------------------------------------
-
 #ifdef MANGO_LITTLE_ENDIAN
 
     using s16 = detail::TypeCopy<mango::s16>;
@@ -342,10 +455,6 @@ namespace mango::littleEndian
 
 namespace mango::bigEndian
 {
-
-    // --------------------------------------------------------------
-    // bigEndian storage types
-    // --------------------------------------------------------------
 
 #ifdef MANGO_LITTLE_ENDIAN
 
