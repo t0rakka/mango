@@ -8,21 +8,24 @@ set(MANGO_CORE_SOURCES
     ${CORE_SOURCES}
     ${FILESYSTEM_HEADERS}
     ${FILESYSTEM_SOURCES}
-    ${IMAGE_HEADERS}
-    ${IMAGE_SOURCES}
-    ${JPEG_HEADERS}
-    ${JPEG_SOURCES}
     ${MATH_HEADERS}
     ${MATH_SOURCES}
     ${SIMD_HEADERS}
     ${SIMD_SOURCES}
     ${EXTERNAL_AES}
-    ${EXTERNAL_BC}
     ${EXTERNAL_CONCURRENT_QUEUE}
-    ${EXTERNAL_ASTC}
-    ${EXTERNAL_GOOGLE}
     ${EXTERNAL_UNRAR}
     ${EXTERNAL_INFLATELIB}
+)
+
+set(MANGO_IMAGE_SOURCES
+    ${IMAGE_HEADERS}
+    ${IMAGE_SOURCES}
+    ${JPEG_HEADERS}
+    ${JPEG_SOURCES}
+    ${EXTERNAL_BC}
+    ${EXTERNAL_ASTC}
+    ${EXTERNAL_GOOGLE}
     ${EXTERNAL_BASISU}
     ${EXTERNAL_ZPNG}
 )
@@ -37,7 +40,10 @@ endif ()
 add_library(mango-core ${MANGO_CORE_SOURCES})
 add_library(mango::core ALIAS mango-core)
 
-set(MANGO_LIBRARY_TARGETS mango-core)
+add_library(mango-image ${MANGO_IMAGE_SOURCES})
+add_library(mango::image ALIAS mango-image)
+
+set(MANGO_LIBRARY_TARGETS mango-core mango-image)
 
 function(mango_set_library_properties target)
     set_target_properties(${target} PROPERTIES
@@ -66,6 +72,10 @@ endfunction()
 mango_set_library_properties(mango-core)
 mango_apply_shared_config(mango-core)
 target_include_directories(mango-core PRIVATE "${EXTERNAL_SOURCE_DIR}/inflatelib")
+
+mango_set_library_properties(mango-image)
+mango_apply_shared_config(mango-image)
+target_link_libraries(mango-image PUBLIC mango-core)
 
 if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango-core PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
@@ -128,9 +138,9 @@ if (BUILD_OPENGL)
     mango_apply_shared_config(mango-opengl)
 
     if (BUILD_MANGO_WINDOW)
-        target_link_libraries(mango-opengl PUBLIC mango-window)
+        target_link_libraries(mango-opengl PUBLIC mango-window mango-image)
     else ()
-        target_link_libraries(mango-opengl PUBLIC mango-core)
+        target_link_libraries(mango-opengl PUBLIC mango-core mango-image)
     endif ()
 
     if (APPLE)
@@ -193,9 +203,9 @@ if (BUILD_VULKAN)
     endif ()
 
     if (BUILD_MANGO_WINDOW)
-        target_link_libraries(mango-vulkan PUBLIC mango-window)
+        target_link_libraries(mango-vulkan PUBLIC mango-window mango-image)
     else ()
-        target_link_libraries(mango-vulkan PUBLIC mango-core)
+        target_link_libraries(mango-vulkan PUBLIC mango-core mango-image)
     endif ()
 
     find_package(glslang CONFIG REQUIRED)
@@ -245,7 +255,7 @@ if (BUILD_IMPORT3D)
 
     mango_set_library_properties(mango-import3d)
     mango_apply_shared_config(mango-import3d)
-    target_link_libraries(mango-import3d PUBLIC mango-core)
+    target_link_libraries(mango-import3d PUBLIC mango-core mango-image)
     target_include_directories(mango-import3d PRIVATE "${EXTERNAL_SOURCE_DIR}/fastgltf/include")
 
 endif ()
@@ -256,7 +266,7 @@ endif ()
 
 add_library(mango INTERFACE)
 add_library(mango::mango ALIAS mango)
-target_link_libraries(mango INTERFACE mango-core)
+target_link_libraries(mango INTERFACE mango-core mango-image)
 if (TARGET mango-window)
     target_link_libraries(mango INTERFACE mango-window)
 endif ()
@@ -273,8 +283,11 @@ endif ()
 if (UNIX AND NOT APPLE)
     target_link_options(mango-core PRIVATE "LINKER:--exclude-libs,ALL")
     target_link_options(mango-core PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
+    target_link_options(mango-image PRIVATE "LINKER:--exclude-libs,ALL")
+    target_link_options(mango-image PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
 endif ()
 
 if (APPLE)
     target_compile_options(mango-core PUBLIC "-mmacosx-version-min=10.15")
+    target_compile_options(mango-image PUBLIC "-mmacosx-version-min=10.15")
 endif ()
