@@ -4,13 +4,12 @@
 */
 #if defined(MANGO_HAS_XCB_WINDOW)
 
+#define VK_USE_PLATFORM_XCB_KHR
+
 #include <mango/core/exception.hpp>
 #include "window_surface.hpp"
 
-#define VK_USE_PLATFORM_XCB_KHR
-#include <vulkan/vulkan.h>
-
-#include "../../window/xcb/xcb_window.hpp"
+#include "../window/xcb/xcb_window.hpp"
 
 namespace mango::vulkan
 {

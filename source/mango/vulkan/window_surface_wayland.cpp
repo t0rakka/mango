@@ -4,13 +4,12 @@
 */
 #if defined(MANGO_HAS_WAYLAND_WINDOW)
 
+#define VK_USE_PLATFORM_WAYLAND_KHR
+
 #include <mango/core/exception.hpp>
 #include "window_surface.hpp"
 
-#define VK_USE_PLATFORM_WAYLAND_KHR
-#include <vulkan/vulkan.h>
-
-#include "../../window/wayland/wayland_window.hpp"
+#include "../window/wayland/wayland_window.hpp"
 
 namespace mango::vulkan
 {
