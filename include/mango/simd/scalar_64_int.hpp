@@ -14,7 +14,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline u32x2 set_component(u32x2 a, u32 s)
+    inline u32x2 set_component(u32x2 a, u32 s)
     {
         static_assert(Index < 2, "Index out of range.");
         a[Index] = s;
@@ -22,80 +22,80 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline u32 get_component(u32x2 a)
+    inline u32 get_component(u32x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return a[Index];
     }
 
-    static inline u32x2 u32x2_zero()
+    inline u32x2 u32x2_zero()
     {
         return detail::scalar_set<u32, 2>(0);
     }
 
-    static inline u32x2 u32x2_set(u32 s)
+    inline u32x2 u32x2_set(u32 s)
     {
         return detail::scalar_set<u32, 2>(s);
     }
 
-    static inline u32x2 u32x2_set(u32 x, u32 y)
+    inline u32x2 u32x2_set(u32 x, u32 y)
     {
         return {{ x, y }};
     }
 
-    static inline u32x2 u32x2_uload(const void* source)
+    inline u32x2 u32x2_uload(const void* source)
     {
         u32x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void u32x2_ustore(void* dest, u32x2 a)
+    inline void u32x2_ustore(void* dest, u32x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline u32x2 add(u32x2 a, u32x2 b)
+    inline u32x2 add(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
-    static inline u32x2 sub(u32x2 a, u32x2 b)
+    inline u32x2 sub(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    static inline u32x2 bitwise_nand(u32x2 a, u32x2 b)
+    inline u32x2 bitwise_nand(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
-    static inline u32x2 bitwise_and(u32x2 a, u32x2 b)
+    inline u32x2 bitwise_and(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
-    static inline u32x2 bitwise_or(u32x2 a, u32x2 b)
+    inline u32x2 bitwise_or(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
-    static inline u32x2 bitwise_xor(u32x2 a, u32x2 b)
+    inline u32x2 bitwise_xor(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
-    static inline u32x2 bitwise_not(u32x2 a)
+    inline u32x2 bitwise_not(u32x2 a)
     {
         return detail::scalar_unroll(detail::scalar_not, a);
     }
 
-    static inline u32x2 min(u32x2 a, u32x2 b)
+    inline u32x2 min(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
-    static inline u32x2 max(u32x2 a, u32x2 b)
+    inline u32x2 max(u32x2 a, u32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_max, a, b);
     }
@@ -105,7 +105,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline s32x2 set_component(s32x2 a, s32 s)
+    inline s32x2 set_component(s32x2 a, s32 s)
     {
         static_assert(Index < 2, "Index out of range.");
         a[Index] = s;
@@ -113,80 +113,80 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline s32 get_component(s32x2 a)
+    inline s32 get_component(s32x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return a[Index];
     }
 
-    static inline s32x2 s32x2_zero()
+    inline s32x2 s32x2_zero()
     {
         return detail::scalar_set<s32, 2>(0);
     }
 
-    static inline s32x2 s32x2_set(s32 s)
+    inline s32x2 s32x2_set(s32 s)
     {
         return detail::scalar_set<s32, 2>(s);
     }
 
-    static inline s32x2 s32x2_set(s32 x, s32 y)
+    inline s32x2 s32x2_set(s32 x, s32 y)
     {
         return {{ x, y }};
     }
 
-    static inline s32x2 s32x2_uload(const void* source)
+    inline s32x2 s32x2_uload(const void* source)
     {
         s32x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void s32x2_ustore(void* dest, s32x2 a)
+    inline void s32x2_ustore(void* dest, s32x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
-    static inline s32x2 add(s32x2 a, s32x2 b)
+    inline s32x2 add(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_add, a, b);
     }
 
-    static inline s32x2 sub(s32x2 a, s32x2 b)
+    inline s32x2 sub(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_sub, a, b);
     }
 
-    static inline s32x2 bitwise_nand(s32x2 a, s32x2 b)
+    inline s32x2 bitwise_nand(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_nand, a, b);
     }
 
-    static inline s32x2 bitwise_and(s32x2 a, s32x2 b)
+    inline s32x2 bitwise_and(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_and, a, b);
     }
 
-    static inline s32x2 bitwise_or(s32x2 a, s32x2 b)
+    inline s32x2 bitwise_or(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_or, a, b);
     }
 
-    static inline s32x2 bitwise_xor(s32x2 a, s32x2 b)
+    inline s32x2 bitwise_xor(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_xor, a, b);
     }
 
-    static inline s32x2 bitwise_not(s32x2 a)
+    inline s32x2 bitwise_not(s32x2 a)
     {
         return detail::scalar_unroll(detail::scalar_not, a);
     }
 
-    static inline s32x2 min(s32x2 a, s32x2 b)
+    inline s32x2 min(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_min, a, b);
     }
 
-    static inline s32x2 max(s32x2 a, s32x2 b)
+    inline s32x2 max(s32x2 a, s32x2 b)
     {
         return detail::scalar_unroll(detail::scalar_max, a, b);
     }

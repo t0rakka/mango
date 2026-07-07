@@ -205,43 +205,43 @@ namespace mango::simd
 
     // 128 <- 128
 
-    static inline u16x8 extend16x8(u8x16 s)
+    inline u16x8 extend16x8(u8x16 s)
     {
         return (v16u8) __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
     }
 
-    static inline u32x4 extend32x4(u8x16 s)
+    inline u32x4 extend32x4(u8x16 s)
     {
         v8u16 temp16x8 = __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
         return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)temp16x8);
     }
 
-    static inline u64x2 extend64x2(u8x16 s)
+    inline u64x2 extend64x2(u8x16 s)
     {
         v8u16 temp16x8 = __msa_ilvr_b(__msa_fill_b(0), (v16i8)s);
         v4u32 temp32x4 = __msa_ilvr_h(__msa_fill_h(0), (v8i16)temp16x8);
         return (v2u64) __msa_ilvr_w(__msa_fill_w(0), (v4i32)temp32x4);
     }
 
-    static inline u32x4 extend32x4(u16x8 s)
+    inline u32x4 extend32x4(u16x8 s)
     {
         return (v4u32) __msa_ilvr_h(__msa_fill_h(0), (v8i16)s);
     }
 
-    static inline u64x2 extend64x2(u16x8 s)
+    inline u64x2 extend64x2(u16x8 s)
     {
         v4u32 temp32x4 = __msa_ilvr_h(__msa_fill_h(0), (v8i16)s);
         return (v2u64) __msa_ilvr_w(__msa_fill_w(0), (v4i32)temp32x4);
     }
 
-    static inline u64x2 extend64x2(u32x4 s)
+    inline u64x2 extend64x2(u32x4 s)
     {
         return (v2u64) __msa_ilvr_w(__msa_fill_w(0), (v4i32)s);
     }
 
     // 256 <- 128
 
-    static inline u16x16 extend16x16(u8x16 s)
+    inline u16x16 extend16x16(u8x16 s)
     {
         u8x16 high = (v16u8) __msa_ilvl_d((v2i64)s, (v2i64)s);
         auto lo = extend16x8(s);
@@ -249,7 +249,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u32x8 extend32x8(u16x8 s)
+    inline u32x8 extend32x8(u16x8 s)
     {
         u16x8 high = (v8u16) __msa_ilvl_d((v2i64)s, (v2i64)s);
         auto lo = extend32x4(s);
@@ -257,13 +257,13 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u32x8 extend32x8(u8x16 s)
+    inline u32x8 extend32x8(u8x16 s)
     {
         const u16x8 temp = extend16x8(s);
         return extend32x8(temp);
     }
 
-    static inline u64x4 extend64x4(u32x4 s)
+    inline u64x4 extend64x4(u32x4 s)
     {
         u32x4 high = (v4u32) __msa_ilvl_d((v2i64)s, (v2i64)s);
         auto lo = extend64x2(s);
@@ -271,13 +271,13 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u16x8 s)
+    inline u64x4 extend64x4(u16x8 s)
     {
         const u32x4 temp = extend32x4(s);
         return extend64x4(temp);
     }
 
-    static inline u64x4 extend64x4(u8x16 s)
+    inline u64x4 extend64x4(u8x16 s)
     {
         const u16x8 temp16x8 = extend16x8(s);
         const u32x4 temp32x4 = extend32x4(temp16x8);
@@ -290,19 +290,19 @@ namespace mango::simd
 
     // 128 <- 128
 
-    static inline s16x8 extend16x8(s8x16 s)
+    inline s16x8 extend16x8(s8x16 s)
     {
         v16i8 sign = __msa_clt_s_b(s, __msa_fill_b(0));
         return (v16i8) __msa_ilvr_b(sign, (v16i8)s);
     }
 
-    static inline s32x4 extend32x4(s8x16 s)
+    inline s32x4 extend32x4(s8x16 s)
     {
         v16i8 temp16x8 = __msa_ilvr_b(__msa_clt_s_b(s, __msa_fill_b(0)), (v16i8)s);
         return (v4i32) __msa_ilvr_h(__msa_clt_s_h(s, __msa_fill_h(0)), (v8i16)temp16x8);
     }
 
-    static inline s64x2 extend64x2(s8x16 s)
+    inline s64x2 extend64x2(s8x16 s)
     {
         v16i8 sign = __msa_clt_s_h(s, __msa_fill_b(0));
         const auto temp16x8 = (v8i16) __msa_ilvr_b(sign, (v16i8)s);
@@ -310,20 +310,20 @@ namespace mango::simd
         return (v2i64) __msa_ilvr_w((v4i32)sign, temp32x4);
     }
 
-    static inline s32x4 extend32x4(s16x8 s)
+    inline s32x4 extend32x4(s16x8 s)
     {
         v8i16 sign = __msa_clt_s_h(s, __msa_fill_h(0));
         return (v4i32) __msa_ilvr_h(sign, (v8i16)s);
     }
 
-    static inline s64x2 extend64x2(s16x8 s)
+    inline s64x2 extend64x2(s16x8 s)
     {
         v8i16 sign = __msa_clt_s_h(s, __msa_fill_h(0));
         const auto temp32x4 = (v4i32) __msa_ilvr_h(sign, (v8i16)s);
         return (v2i64) __msa_ilvr_w((v4i32)sign, temp32x4);
     }
 
-    static inline s64x2 extend64x2(s32x4 s)
+    inline s64x2 extend64x2(s32x4 s)
     {
         v4i32 sign = __msa_clt_s_w(s, __msa_fill_w(0));
         return (v2i64) __msa_ilvr_w(sign, (v4i32)s);
@@ -331,7 +331,7 @@ namespace mango::simd
 
     // 256 <- 128
 
-    static inline s16x16 extend16x16(s8x16 s)
+    inline s16x16 extend16x16(s8x16 s)
     {
         s8x16 high = (v16i8) __msa_ilvl_d((v2i64)s, (v2i64)s);
         auto lo = extend16x8(s);
@@ -339,7 +339,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s32x8 extend32x8(s16x8 s)
+    inline s32x8 extend32x8(s16x8 s)
     {
         s16x8 high = (v8i16) __msa_ilvl_d((v2i64)s, (v2i64)s);
         auto lo = extend32x4(s);
@@ -347,13 +347,13 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s32x8 extend32x8(s8x16 s)
+    inline s32x8 extend32x8(s8x16 s)
     {
         const s16x8 temp = extend16x8(s);
         return extend32x8(temp);
     }
 
-    static inline s64x4 extend64x4(s32x4 s)
+    inline s64x4 extend64x4(s32x4 s)
     {
         s32x4 high = (v4i32) __msa_ilvl_d((v2i64)s, (v2i64)s);
         auto lo = extend64x2(s);
@@ -361,13 +361,13 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s16x8 s)
+    inline s64x4 extend64x4(s16x8 s)
     {
         const s32x4 temp = extend32x4(s);
         return extend64x4(temp);
     }
 
-    static inline s64x4 extend64x4(s8x16 s)
+    inline s64x4 extend64x4(s8x16 s)
     {
         const s16x8 temp16x8 = extend16x8(s);
         const s32x4 temp32x4 = extend32x4(temp16x8);
@@ -378,25 +378,25 @@ namespace mango::simd
     // narrow
     // -----------------------------------------------------------------
 
-    static inline u8x16 narrow(u16x8 a, u16x8 b)
+    inline u8x16 narrow(u16x8 a, u16x8 b)
     {
         const v16i8 control = (v16i8) { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
         return (v16u8) __msa_vshf_b(control, (v16i8) a, (v16i8) b);
     }
 
-    static inline u16x8 narrow(u32x4 a, u32x4 b)
+    inline u16x8 narrow(u32x4 a, u32x4 b)
     {
         const v8i16 control = (v8i16) { 0, 2, 4, 6, 8, 10, 12, 14 };
         return (v8u16) __msa_vshf_h(control, (v8i16) a, (v8i16) b);
     }
 
-    static inline s8x16 narrow(s16x8 a, s16x8 b)
+    inline s8x16 narrow(s16x8 a, s16x8 b)
     {
         const v16i8 control = (v16i8) { 0, 2, 4, 6, 8, 10, 12, 14, 16, 18, 20, 22, 24, 26, 28, 30 };
         return (v16i8) __msa_vshf_b(control, (v16i8) a, (v16i8) b);
     }
 
-    static inline s16x8 narrow(s32x4 a, s32x4 b)
+    inline s16x8 narrow(s32x4 a, s32x4 b)
     {
         const v8i16 control = (v8i16) { 0, 2, 4, 6, 8, 10, 12, 14 };
         return (v8i16) __msa_vshf_h(control, (v8i16) a, (v8i16) b);
@@ -406,29 +406,29 @@ namespace mango::simd
     // u32
     // -----------------------------------------------------------------
 
-    static inline u32x4 get_low(u32x8 a)
+    inline u32x4 get_low(u32x8 a)
     {
         return a.data[0];
     }
 
-    static inline u32x4 get_high(u32x8 a)
+    inline u32x4 get_high(u32x8 a)
     {
         return a.data[1];
     }
 
-    static inline u32x8 set_low(u32x8 a, u32x4 low)
+    inline u32x8 set_low(u32x8 a, u32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline u32x8 set_high(u32x8 a, u32x4 high)
+    inline u32x8 set_high(u32x8 a, u32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline u32x8 combine(u32x4 a, u32x4 b)
+    inline u32x8 combine(u32x4 a, u32x4 b)
     {
         u32x8 v;
         v.data[0] = a;
@@ -440,29 +440,29 @@ namespace mango::simd
     // s32
     // -----------------------------------------------------------------
 
-    static inline s32x4 get_low(s32x8 a)
+    inline s32x4 get_low(s32x8 a)
     {
         return a.data[0];
     }
 
-    static inline s32x4 get_high(s32x8 a)
+    inline s32x4 get_high(s32x8 a)
     {
         return a.data[1];
     }
 
-    static inline s32x8 set_low(s32x8 a, s32x4 low)
+    inline s32x8 set_low(s32x8 a, s32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline s32x8 set_high(s32x8 a, s32x4 high)
+    inline s32x8 set_high(s32x8 a, s32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline s32x8 combine(s32x4 a, s32x4 b)
+    inline s32x8 combine(s32x4 a, s32x4 b)
     {
         s32x8 v;
         v.data[0] = a;
@@ -474,29 +474,29 @@ namespace mango::simd
     // f32
     // -----------------------------------------------------------------
 
-    static inline f32x4 get_low(f32x8 a)
+    inline f32x4 get_low(f32x8 a)
     {
         return a.data[0];
     }
 
-    static inline f32x4 get_high(f32x8 a)
+    inline f32x4 get_high(f32x8 a)
     {
         return a.data[1];
     }
 
-    static inline f32x8 set_low(f32x8 a, f32x4 low)
+    inline f32x8 set_low(f32x8 a, f32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline f32x8 set_high(f32x8 a, f32x4 high)
+    inline f32x8 set_high(f32x8 a, f32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline f32x8 combine(f32x4 a, f32x4 b)
+    inline f32x8 combine(f32x4 a, f32x4 b)
     {
         return { a, b };
     }
@@ -621,29 +621,29 @@ namespace mango::simd
     // f64
     // -----------------------------------------------------------------
 
-    static inline f64x2 get_low(f64x4 a)
+    inline f64x2 get_low(f64x4 a)
     {
         return a.data[0];
     }
 
-    static inline f64x2 get_high(f64x4 a)
+    inline f64x2 get_high(f64x4 a)
     {
         return a.data[1];
     }
 
-    static inline f64x4 set_low(f64x4 a, f64x2 low)
+    inline f64x4 set_low(f64x4 a, f64x2 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline f64x4 set_high(f64x4 a, f64x2 high)
+    inline f64x4 set_high(f64x4 a, f64x2 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline f64x4 combine(f64x2 a, f64x2 b)
+    inline f64x4 combine(f64x2 a, f64x2 b)
     {
         return { a, b };
     }
