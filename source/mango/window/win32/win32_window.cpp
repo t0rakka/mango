@@ -12,15 +12,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/window/window.hpp>
 
-// Define the Vulkan platform before window_backend.hpp pulls in <vulkan/vulkan.h>,
-// so VkWin32SurfaceCreateInfoKHR and friends are available in this TU only.
-#if defined(MANGO_ENABLE_VULKAN)
-    #define VK_USE_PLATFORM_WIN32_KHR
-#endif
-
 #include "win32_window.hpp"
-
-#if defined(MANGO_ENABLE_WIN32)
 
 #include <shellapi.h>
 
@@ -987,35 +979,7 @@ namespace mango
         }
     }
 
-#if defined(MANGO_ENABLE_VULKAN)
-
-    VkSurfaceKHR WindowContext::createVulkanSurface(VkInstance instance)
-    {
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-
-        VkWin32SurfaceCreateInfoKHR surfaceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_WIN32_SURFACE_CREATE_INFO_KHR,
-            .hinstance = ::GetModuleHandle(NULL),
-            .hwnd = hwnd
-        };
-
-        VkResult result = vkCreateWin32SurfaceKHR(instance, &surfaceCreateInfo, NULL, &surface);
-        if (result != VK_SUCCESS)
-        {
-            MANGO_EXCEPTION("[WindowContext] vkCreateWin32SurfaceKHR failed.");
-        }
-
-        return surface;
-    }
-
-    bool WindowContext::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
-    {
-        return vkGetPhysicalDeviceWin32PresentationSupportKHR(physicalDevice, queueFamilyIndex);
-    }
-
-#endif // defined(MANGO_ENABLE_VULKAN)
-
 } // namespace mango
 
-#endif // defined(MANGO_ENABLE_WIN32)
+#include "../window_registry.hpp"
+MANGO_REGISTER_WINDOW_BACKEND(Win32, createWin32Backend);

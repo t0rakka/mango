@@ -4,8 +4,6 @@
 */
 #include <mango/core/configure.hpp>
 
-#if defined(MANGO_ENABLE_OPENGL)
-
 #include "CustomOpenGLView.h"
 #include "../../window/cocoa/cocoa_input.hpp"
 
@@ -137,5 +135,3 @@
 }
 
 @end
-
-#endif // defined(MANGO_ENABLE_OPENGL)

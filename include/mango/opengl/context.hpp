@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -9,17 +9,11 @@
 #include <mango/core/configure.hpp>
 #include <mango/math/math.hpp>
 
-#if defined(MANGO_ENABLE_OPENGL)
-
 // -----------------------------------------------------------------------
 // OpenGL Configuration
 // -----------------------------------------------------------------------
 
-#if defined(MANGO_ENABLE_WIN32)
-
-    // -----------------------------------------------------------------------
-    // WGL
-    // -----------------------------------------------------------------------
+#if defined(MANGO_PLATFORM_WINDOWS)
 
     #define MANGO_OPENGL_CONTEXT_WGL
     #define MANGO_OPENGL_FRAMEBUFFER
@@ -38,16 +32,12 @@
 
 #endif
 
-#if defined(MANGO_ENABLE_COCOA)
-
-    // -----------------------------------------------------------------------
-    // Cocoa
-    // -----------------------------------------------------------------------
+#if defined(MANGO_PLATFORM_MACOS)
 
     #define MANGO_OPENGL_CONTEXT_COCOA
     #define MANGO_OPENGL_FRAMEBUFFER
 
-    #define GL_SILENCE_DEPRECATION /* macOS 10.14 deprecated OpenGL API */
+    #define GL_SILENCE_DEPRECATION
 
     #include <OpenGL/gl3.h>
     #include <OpenGL/gl3ext.h>
@@ -57,20 +47,15 @@
 
 #endif
 
-#if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB) || defined(MANGO_ENABLE_WAYLAND)
+#if defined(MANGO_PLATFORM_LINUX)
 
-    // -----------------------------------------------------------------------
-    // GLX / EGL (Linux)
-    // -----------------------------------------------------------------------
-    // GLX: Xlib / XCB.  EGL: Wayland (and X11 when OpenGLWindow::EGL is set).
-    // glx.h is not included here (pulls in Xlib and collides with Window, etc.);
-    // GLX backends include it in their .cpp files.
-
-    #if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
+    #if defined(MANGO_HAS_XLIB_WINDOW) || defined(MANGO_HAS_XCB_WINDOW)
         #define MANGO_OPENGL_CONTEXT_GLX
     #endif
 
-    #if defined(MANGO_ENABLE_EGL) || defined(MANGO_ENABLE_WAYLAND)
+    #if defined(MANGO_OPENGL_CONTEXT_EGL)
+        // Set by mango-opengl when EGL support is enabled.
+    #elif defined(MANGO_HAS_WAYLAND_WINDOW) || defined(MANGO_OPENGL_ENABLE_EGL)
         #define MANGO_OPENGL_CONTEXT_EGL
     #endif
 
@@ -202,5 +187,3 @@ namespace mango
     };
 
 } // namespace mango
-
-#endif // defined(MANGO_ENABLE_OPENGL)

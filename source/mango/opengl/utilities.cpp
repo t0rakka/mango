@@ -6,8 +6,6 @@
 #include <mango/core/core.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#if defined(MANGO_ENABLE_OPENGL)
-
 namespace mango::opengl
 {
 
@@ -227,5 +225,3 @@ namespace mango::opengl
     }
 
 } // namespace mango::opengl
-
-#endif // defined(MANGO_ENABLE_OPENGL)

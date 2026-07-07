@@ -14,12 +14,7 @@
 #if defined(MANGO_OPENGL_CONTEXT_EGL)
 
 #include "../../window/window_backend.hpp"
-
-// This translation unit serves every Linux backend (xlib / xcb / wayland), so it
-// must not pull in any backend-specific native window header. Force EGL's native
-// handle types to be opaque (void*/integer) instead of the X11 or Wayland types,
-// and exchange the real handles with the backend through WindowBackend's
-// eglNativeDisplay()/eglNativeWindow() hooks.
+#include "egl_surface.hpp"
 #define MESA_EGL_NO_X11_HEADERS
 #define EGL_NO_X11
 #define USE_OZONE
@@ -203,12 +198,12 @@ namespace mango
 
         WindowBackend* window;
 
+        opengl::egl::NativeWindowBinding m_native_binding;
+
         OpenGLContextEGL(OpenGLWindow* theContext, int width, int height, u32 flags, const OpenGLWindow::Config* configPtr, OpenGLWindow* theShared)
             : window(theContext->backend())
         {
-            // Native display: nullptr selects EGL_DEFAULT_DISPLAY (X11); Wayland
-            // hands back its wl_display.
-            void* native_display = window->eglNativeDisplay();
+            void* native_display = opengl::egl::getNativeDisplay(window);
             egl_display = eglGetDisplay(native_display
                 ? reinterpret_cast<EGLNativeDisplayType>(native_display)
                 : EGL_DEFAULT_DISPLAY);
@@ -250,9 +245,8 @@ namespace mango
             EGLConfig eglConfig = nullptr;
             bool srgb_surface = false;
 
-            // Ask the backend to create the OS window (X11) or wl_egl_window
-            // (Wayland) and return the EGLNativeWindowType packed into a void*.
-            void* native = window->eglNativeWindow(width, height, flags);
+            m_native_binding = opengl::egl::createNativeWindow(window, width, height, flags);
+            void* native = m_native_binding.native_window;
             if (!native)
             {
                 shutdown();
@@ -288,8 +282,7 @@ namespace mango
                 MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
             }
 
-            // Wayland needs a roundtrip + egl-window resync once the surface exists.
-            window->eglPresent();
+            window->presentGraphicsSurface();
 
             if (!eglMakeCurrent(egl_display, egl_surface, egl_surface, egl_context))
             {
@@ -310,14 +303,23 @@ namespace mango
                 if (egl_surface != EGL_NO_SURFACE)
                 {
                     eglDestroySurface(egl_display, egl_surface);
+                    egl_surface = EGL_NO_SURFACE;
                 }
 
                 if (egl_context != EGL_NO_CONTEXT)
                 {
                     eglDestroyContext(egl_display, egl_context);
+                    egl_context = EGL_NO_CONTEXT;
                 }
 
                 eglTerminate(egl_display);
+                egl_display = EGL_NO_DISPLAY;
+            }
+
+            opengl::egl::destroyNativeWindow(m_native_binding);
+            if (window)
+            {
+                window->graphics_hooks = {};
             }
         }
 
@@ -328,7 +330,7 @@ namespace mango
 
         void swapBuffers() override
         {
-            window->eglPresent();
+            window->presentGraphicsSurface();
             eglSwapBuffers(egl_display, egl_surface);
         }
 

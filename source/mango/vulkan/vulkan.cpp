@@ -8,6 +8,7 @@
 #include <cstring>
 
 #include <mango/vulkan/vulkan.hpp>
+#include <mango/window/registry.hpp>
 #include "../window/window_backend.hpp"
 
 namespace mango::vulkan
@@ -69,20 +70,23 @@ namespace mango::vulkan
             }
         };
 
-#if defined(MANGO_ENABLE_WIN32)
+#if defined(MANGO_PLATFORM_WINDOWS)
         enableIfAvailable("VK_KHR_win32_surface");
-#endif
-#if defined(MANGO_ENABLE_COCOA)
+#elif defined(MANGO_PLATFORM_MACOS)
         enableIfAvailable("VK_EXT_metal_surface");
-#endif
-#if defined(MANGO_ENABLE_XLIB)
-        enableIfAvailable("VK_KHR_xlib_surface");
-#endif
-#if defined(MANGO_ENABLE_XCB)
-        enableIfAvailable("VK_KHR_xcb_surface");
-#endif
-#if defined(MANGO_ENABLE_WAYLAND)
-        enableIfAvailable("VK_KHR_wayland_surface");
+#else
+        if (isWindowBackendAvailable(WindowSystem::Xlib))
+        {
+            enableIfAvailable("VK_KHR_xlib_surface");
+        }
+        if (isWindowBackendAvailable(WindowSystem::Xcb))
+        {
+            enableIfAvailable("VK_KHR_xcb_surface");
+        }
+        if (isWindowBackendAvailable(WindowSystem::Wayland))
+        {
+            enableIfAvailable("VK_KHR_wayland_surface");
+        }
 #endif
 
         return extensions;
@@ -140,7 +144,7 @@ namespace mango::vulkan
     {
         std::vector<const char*> extensions = { VK_KHR_SWAPCHAIN_EXTENSION_NAME };
 
-#if defined(MANGO_ENABLE_COCOA)
+#if defined(MANGO_PLATFORM_MACOS)
         extensions.push_back("VK_KHR_portability_subset");
 #endif
 

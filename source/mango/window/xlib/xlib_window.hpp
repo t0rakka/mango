@@ -7,8 +7,6 @@
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
 
-#if defined(MANGO_ENABLE_XLIB)
-
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
@@ -106,19 +104,7 @@ namespace mango
         void runEventLoop() override;
         void wakeEventLoop() override;
 
-#if defined(MANGO_ENABLE_VULKAN)
-        VkSurfaceKHR createVulkanSurface(VkInstance instance) override;
-        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex) override;
-#endif
-
-#if defined(MANGO_ENABLE_EGL)
-        // Creates the X11 window and returns its XID packed into a void* for the
-        // shared EGL TU. eglNativeDisplay() inherits the base nullptr, mapping to
-        // EGL_DEFAULT_DISPLAY (the X11 platform), preserving the original behavior.
-        void* eglNativeWindow(int width, int height, u32 flags) override;
-#endif
+        void* createNativeWindowForGraphics(int width, int height, u32 flags) override;
     };
 
 } // namespace mango
-
-#endif // defined(MANGO_ENABLE_XLIB)

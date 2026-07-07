@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 2.7.3
+        VERSION 3.0.0
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -80,6 +80,12 @@ if (BUILD_ALL)
     set(BUILD_VULKAN     ON)
     set(BUILD_IMPORT3D   ON)
     set(BUILD_EXAMPLES   ON)
+endif ()
+
+if (BUILD_OPENGL OR BUILD_VULKAN)
+    set(BUILD_MANGO_WINDOW ON)
+else ()
+    set(BUILD_MANGO_WINDOW OFF)
 endif ()
 
 # Option to enable every Intel ISA extension
@@ -281,7 +287,60 @@ message("Installation Directory: ${CMAKE_INSTALL_PREFIX}")
 set(MANGO_INCLUDE_DIR "${CMAKE_CURRENT_SOURCE_DIR}/include/mango")
 set(MANGO_SOURCE_DIR  "${CMAKE_CURRENT_SOURCE_DIR}/source/mango")
 
-if (BUILD_OPENGL OR BUILD_VULKAN)
+# Linux window backends: enabled by default, soft-disable when dev packages are missing.
+if (UNIX AND NOT APPLE AND NOT EMSCRIPTEN AND BUILD_MANGO_WINDOW)
+    if (ENABLE_XLIB)
+        find_package(X11)
+        if (NOT X11_FOUND)
+            message(WARNING "mango-window: Xlib dev packages not found; disabling ENABLE_XLIB")
+            set(ENABLE_XLIB OFF CACHE BOOL "Build the Xlib window backend (Linux)" FORCE)
+        endif ()
+    endif ()
+    if (ENABLE_XCB)
+        find_package(PkgConfig QUIET)
+        if (PkgConfig_FOUND)
+            pkg_check_modules(XCB QUIET xcb)
+            if (NOT XCB_FOUND)
+                message(WARNING "mango-window: Xcb dev packages not found; disabling ENABLE_XCB")
+                set(ENABLE_XCB OFF CACHE BOOL "Build the Xcb window backend (Linux)" FORCE)
+            endif ()
+        else ()
+            set(ENABLE_XCB OFF CACHE BOOL "Build the Xcb window backend (Linux)" FORCE)
+        endif ()
+    endif ()
+    if (ENABLE_WAYLAND)
+        find_package(PkgConfig QUIET)
+        set(_mango_wayland_ok TRUE)
+        if (PkgConfig_FOUND)
+            pkg_check_modules(WAYLAND_CLIENT QUIET wayland-client)
+            pkg_check_modules(WAYLAND_PROTOCOLS QUIET wayland-protocols)
+            find_program(WAYLAND_SCANNER wayland-scanner)
+            if (NOT WAYLAND_CLIENT_FOUND OR NOT WAYLAND_PROTOCOLS_FOUND OR NOT WAYLAND_SCANNER)
+                set(_mango_wayland_ok FALSE)
+            endif ()
+        else ()
+            set(_mango_wayland_ok FALSE)
+        endif ()
+        if (NOT _mango_wayland_ok)
+            message(WARNING "mango-window: Wayland dev packages not found; disabling ENABLE_WAYLAND")
+            set(ENABLE_WAYLAND OFF CACHE BOOL "Build the Wayland window backend (Linux)" FORCE)
+        endif ()
+    endif ()
+    if (NOT ENABLE_XLIB AND NOT ENABLE_XCB AND NOT ENABLE_WAYLAND)
+        message(FATAL_ERROR "mango-window: no Linux window backend available. Install X11, Xcb, and/or Wayland dev packages.")
+    endif ()
+    if (ENABLE_XLIB)
+        set(MANGO_HAS_XLIB_WINDOW ON)
+    endif ()
+    if (ENABLE_XCB)
+        set(MANGO_HAS_XCB_WINDOW ON)
+    endif ()
+    if (ENABLE_WAYLAND)
+        set(MANGO_HAS_WAYLAND_WINDOW ON)
+    endif ()
+endif ()
+
+if (BUILD_MANGO_WINDOW)
 
     if (NOT EMSCRIPTEN)
 
@@ -331,11 +390,8 @@ if (BUILD_OPENGL OR BUILD_VULKAN)
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
             )
 
-            # Always generate the xdg-shell protocol glue for the Wayland backend.
-            find_package(PkgConfig REQUIRED)
             pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
             pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
-            find_program(WAYLAND_SCANNER wayland-scanner REQUIRED)
 
             set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
             set(XDG_SHELL_CLIENT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h")
@@ -589,289 +645,13 @@ SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
-# ------------------------------------------------------------------------------
-# library: mango
-# ------------------------------------------------------------------------------
-
-set(MANGO_SOURCES
-    ${MAIN_HEADER}
-    ${CORE_HEADERS}
-    ${CORE_SOURCES}
-    ${FILESYSTEM_HEADERS}
-    ${FILESYSTEM_SOURCES}
-    ${IMAGE_HEADERS}
-    ${IMAGE_SOURCES}
-    ${JPEG_HEADERS}
-    ${JPEG_SOURCES}
-    ${MATH_HEADERS}
-    ${MATH_SOURCES}
-    ${SIMD_HEADERS}
-    ${SIMD_SOURCES}
-    ${EXTERNAL_AES}
-    ${EXTERNAL_BC}
-    ${EXTERNAL_CONCURRENT_QUEUE}
-    ${EXTERNAL_ASTC}
-    ${EXTERNAL_GOOGLE}
-    ${EXTERNAL_UNRAR}
-    ${EXTERNAL_INFLATELIB}
-    ${EXTERNAL_BASISU}
-    ${EXTERNAL_ZPNG}
-)
-
-if (LIBRARY_LZMA)
-    list(APPEND MANGO_SOURCES
-        ${EXTERNAL_LZMA}
-    )
-endif ()
-
-if (LIBRARY_LZFSE)
-    list(APPEND MANGO_SOURCES
-        ${EXTERNAL_LZFSE}
-    )
-endif ()
-
-if (BUILD_OPENGL OR BUILD_VULKAN)
-    list(APPEND MANGO_SOURCES
-        ${WINDOW_HEADERS}
-        ${WINDOW_SOURCES}
-    )
-endif ()
-
-if (BUILD_OPENGL)
-    list(APPEND MANGO_SOURCES
-        ${OPENGL_HEADERS}
-        ${OPENGL_SOURCES}
-    )
-endif ()
-
-if (BUILD_VULKAN)
-    list(APPEND MANGO_SOURCES
-        ${VULKAN_HEADERS}
-        ${VULKAN_SOURCES}
-    )
-endif ()
-
-if (BUILD_IMPORT3D)
-    list(APPEND MANGO_SOURCES
-        ${IMPORT3D_HEADERS}
-        ${IMPORT3D_SOURCES}
-        ${EXTERNAL_IMPORT3D}
-    )
-    include_directories(BEFORE
-        "${EXTERNAL_SOURCE_DIR}/fastgltf/include"
-    )
-endif ()
-
-add_library(mango ${MANGO_SOURCES})
-
-target_include_directories(mango PRIVATE "${EXTERNAL_SOURCE_DIR}/inflatelib")
-
-set_target_properties(mango PROPERTIES
-    VERSION ${PROJECT_VERSION}
-    SOVERSION ${PROJECT_VERSION}
-)
-
-if (APPLE)
-    target_compile_options(mango PUBLIC "-mmacosx-version-min=10.15")
-endif ()
-
-# Linux/ELF: glslang, SPIRV and SPIRV-Tools are only available as static archives
-# on most distributions, so they get baked into libmango.so. Keep their ~1700
-# symbols out of the dynamic symbol table (they are private implementation detail,
-# not part of mango's ABI) and strip the local symbol table from Release builds.
-# This trims the library without changing what consumers can link against.
-if (UNIX AND NOT APPLE)
-    target_link_options(mango PRIVATE "LINKER:--exclude-libs,ALL")
-    target_link_options(mango PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
-endif ()
-
-if (BUILD_OPENGL)
-    target_compile_definitions(mango PUBLIC MANGO_ENABLE_OPENGL)
-endif ()
-
-if (BUILD_VULKAN)
-    target_compile_definitions(mango PUBLIC MANGO_ENABLE_VULKAN)
-    # Vulkan Memory Allocator (vendored, header-only). Private: the implementation
-    # is compiled in allocator.cpp and the public allocator.hpp only forward-declares
-    # the VMA handles, so this header is not exposed to mango consumers.
-    target_include_directories(mango PRIVATE "${EXTERNAL_SOURCE_DIR}/vma")
-    if (APPLE)
-        target_compile_definitions(mango PRIVATE VK_USE_PLATFORM_METAL_EXT)
-    endif ()
-endif ()
-
-# Enabled window-system backends (Linux). These are PUBLIC because they affect
-# the OpenGL/Vulkan configuration selected in the public headers, and multiple
-# may be set at once (runtime selection).
-if (NOT WIN32 AND NOT APPLE AND NOT EMSCRIPTEN)
-    if (ENABLE_XLIB)
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XLIB")
-    endif ()
-    if (ENABLE_XCB)
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_XCB")
-    endif ()
-    if (ENABLE_WAYLAND)
-        target_compile_definitions(mango PUBLIC "MANGO_ENABLE_WAYLAND")
-    endif ()
-endif ()
 
 # ------------------------------------------------------------------------------
-# Platform Libraries
+# libraries
 # ------------------------------------------------------------------------------
 
-find_package(PkgConfig QUIET)
-if (PkgConfig_FOUND)
-    message("PkgConfig: " ${PKG_CONFIG_VERSION_STRING})
-endif ()
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/mango_libraries.cmake)
 
-if (CMAKE_THREAD_LIBS_INIT)
-    target_link_libraries(mango PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
-endif ()
-
-if (BUILD_OPENGL OR BUILD_VULKAN)
-    message("[Platform Libraries]")
-endif ()
-
-# ------------------------------------------------------------------------------
-# OpenGL
-# ------------------------------------------------------------------------------
-
-if (BUILD_OPENGL)
-    if (OPENGL_FOUND)
-        if (APPLE)
-            message("    OpenGL: Cocoa")
-            target_link_libraries(mango PUBLIC "-framework Cocoa -framework OpenGL -framework CoreVideo")
-        elseif (WIN32)
-            message("    OpenGL: WIN32")
-            target_link_libraries(mango PUBLIC ${OPENGL_gl_LIBRARY})
-        else ()
-            # Linux: link the union of every enabled backend's GL dependencies.
-            set(s_gl_backends "")
-            if (ENABLE_XLIB)
-                list(APPEND s_gl_backends XLIB)
-            endif ()
-            if (ENABLE_XCB)
-                list(APPEND s_gl_backends XCB)
-            endif ()
-            if (ENABLE_WAYLAND)
-                list(APPEND s_gl_backends WAYLAND)
-            endif ()
-            if (ENABLE_EGL)
-                list(APPEND s_gl_backends EGL)
-            endif ()
-            if (s_gl_backends)
-                list(JOIN s_gl_backends ", " s_gl_backends_str)
-                message("    OpenGL: ${s_gl_backends_str}")
-            endif ()
-
-            target_link_libraries(mango PUBLIC GL)
-
-            if (ENABLE_XLIB OR ENABLE_XCB)
-                # GLX serves the X11 backends.
-                target_link_libraries(mango PUBLIC ${OPENGL_glx_LIBRARY})
-            endif ()
-
-            if (ENABLE_XLIB)
-                # Xext provides XSync (_NET_WM_SYNC_REQUEST frame synchronization).
-                target_link_libraries(mango PUBLIC X11 Xext Xrandr)
-            endif ()
-
-            if (ENABLE_XCB)
-                # xcb-sync provides the SYNC counter (_NET_WM_SYNC_REQUEST frame sync).
-                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-sync xcb-xkb xcb-keysyms xcb-icccm xcb-randr xcb-glx xkbcommon)
-            endif ()
-
-            if (ENABLE_WAYLAND)
-                find_package(PkgConfig REQUIRED)
-                pkg_check_modules(WAYLAND REQUIRED wayland-client)
-                pkg_check_modules(WAYLAND_EGL REQUIRED wayland-egl)
-                pkg_check_modules(XKB REQUIRED xkbcommon)
-                target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-                target_link_libraries(mango PUBLIC wayland-client wayland-egl xkbcommon)
-            endif ()
-
-            # EGL: required by Wayland GL, optional for the X11 backends.
-            if (ENABLE_EGL OR ENABLE_WAYLAND)
-                target_compile_definitions(mango PUBLIC "MANGO_ENABLE_EGL")
-                target_link_libraries(mango PUBLIC EGL)
-            endif ()
-        endif ()
-    endif ()
-endif ()
-
-# ------------------------------------------------------------------------------
-# Vulkan
-# ------------------------------------------------------------------------------
-
-if (BUILD_VULKAN)
-    if (VULKAN_FOUND)
-
-        find_package(glslang CONFIG REQUIRED)
-        target_link_libraries(mango PRIVATE
-            glslang::glslang
-            glslang::SPIRV
-            #glslang::OSDependent
-            #glslang::MachineIndependent
-            #glslang::GenericCodeGen
-            #glslang::glslang-default-resource-limits
-        )
-
-        # Link default resource limits provider for GetDefaultResources()
-        if (TARGET glslang::glslang-default-resource-limits)
-            target_link_libraries(mango PRIVATE glslang::glslang-default-resource-limits)
-        elseif (TARGET glslang-default-resource-limits)
-            target_link_libraries(mango PRIVATE glslang-default-resource-limits)
-        elseif (TARGET glslang::ResourceLimits)
-            target_link_libraries(mango PRIVATE glslang::ResourceLimits)
-        endif ()
-
-        if (WIN32)
-            message("    Vulkan: WIN32")
-            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
-            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES})
-        elseif (APPLE)
-            message("    Vulkan: Metal (MoltenVK)")
-            target_include_directories(mango PUBLIC ${Vulkan_INCLUDE_DIRS})
-            target_link_libraries(mango PUBLIC ${Vulkan_LIBRARIES} "-framework Cocoa" "-framework QuartzCore")
-        else ()
-            # Linux: link the union of every enabled backend's Vulkan dependencies.
-            set(s_vk_backends "")
-            if (ENABLE_XLIB)
-                list(APPEND s_vk_backends XLIB)
-            endif ()
-            if (ENABLE_XCB)
-                list(APPEND s_vk_backends XCB)
-            endif ()
-            if (ENABLE_WAYLAND)
-                list(APPEND s_vk_backends WAYLAND)
-            endif ()
-            if (s_vk_backends)
-                list(JOIN s_vk_backends ", " s_vk_backends_str)
-                message("    Vulkan: ${s_vk_backends_str}")
-            endif ()
-
-            target_link_libraries(mango PUBLIC vulkan)
-
-            if (ENABLE_XLIB)
-                # Xext provides XSync (_NET_WM_SYNC_REQUEST frame synchronization).
-                target_link_libraries(mango PUBLIC X11 Xext Xrandr)
-            endif ()
-
-            if (ENABLE_XCB)
-                # xcb-sync provides the SYNC counter (_NET_WM_SYNC_REQUEST frame sync).
-                target_link_libraries(mango PUBLIC X11-xcb xcb xcb-sync xcb-xkb xcb-keysyms xcb-icccm xcb-randr xkbcommon)
-            endif ()
-
-            if (ENABLE_WAYLAND)
-                find_package(PkgConfig REQUIRED)
-                pkg_check_modules(WAYLAND REQUIRED wayland-client)
-                pkg_check_modules(XKB REQUIRED xkbcommon)
-                target_include_directories(mango PRIVATE "${CMAKE_CURRENT_BINARY_DIR}")
-                target_link_libraries(mango PUBLIC wayland-client xkbcommon)
-            endif ()
-        endif ()
-    endif ()
-endif ()
 
 # ------------------------------------------------------------------------------
 # find_module()
@@ -1082,24 +862,26 @@ endfunction()
 # ------------------------------------------------------------------------------
 
 if (LIBRARY_LZMA)
-    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_LZMA")
+    target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LZMA")
 endif ()
 
 if (LIBRARY_LZFSE)
-    target_compile_definitions(mango PRIVATE "MANGO_ENABLE_LZFSE")
+    target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LZFSE")
 endif ()
 
 # ------------------------------------------------------------------------------
 # Required Libraries
 # ------------------------------------------------------------------------------
 
+find_package(PkgConfig QUIET)
+
 message("[Required Libraries]")
 
-find_module(mango FMT PUBLIC REQUIRED "" fmt fmt::fmt 8.0)
-find_module(mango ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
-find_module(mango LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
-find_module(mango ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
-find_libdeflate(mango ${INTERFACE} REQUIRED)
+find_module(mango-core FMT PUBLIC REQUIRED "" fmt fmt::fmt 8.0)
+find_module(mango-core ZLIB ${INTERFACE} REQUIRED zlib ZLIB ZLIB::ZLIB 0)
+find_module(mango-core LCMS2 PRIVATE REQUIRED lcms2 lcms2 lcms2::lcms2 0)
+find_module(mango-core ZSTD ${INTERFACE} REQUIRED libzstd zstd zstd::libzstd 0)
+find_libdeflate(mango-core ${INTERFACE} REQUIRED)
 
 # ------------------------------------------------------------------------------
 # Optional Libraries
@@ -1108,47 +890,47 @@ find_libdeflate(mango ${INTERFACE} REQUIRED)
 message("[Optional Libraries]")
 
 if (LIBRARY_BZIP2)
-    find_module(mango BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
+    find_module(mango-core BZIP2 ${INTERFACE} OPTIONAL "" BZip2 BZip2::BZip2 0)
 endif ()
 
 if (LIBRARY_LZ4)
-    find_module(mango LZ4 ${INTERFACE} OPTIONAL liblz4 lz4 lz4::lz4 0)
+    find_module(mango-core LZ4 ${INTERFACE} OPTIONAL liblz4 lz4 lz4::lz4 0)
 endif ()
 
 if (LIBRARY_ISAL)
-    find_module(mango ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
+    find_module(mango-core ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
 if (LIBRARY_JXR)
-    find_module(mango JXR ${INTERFACE} OPTIONAL jxrlib JXR "" 0)
+    find_module(mango-core JXR ${INTERFACE} OPTIONAL jxrlib JXR "" 0)
 endif ()
 
 if (LIBRARY_JXL)
-    find_module(mango JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.7)
-    find_module(mango JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
+    find_module(mango-core JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.7)
+    find_module(mango-core JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
 
 if (LIBRARY_JP2)
-    find_module(mango JP2 ${INTERFACE} OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
+    find_module(mango-core JP2 ${INTERFACE} OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
 endif ()
 
 if (LIBRARY_WEBP)
-    find_module(mango WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
+    find_module(mango-core WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
     if (TARGET WebP::webpdemux)
-        target_link_libraries(mango ${INTERFACE} WebP::webpdemux)
+        target_link_libraries(mango-core ${INTERFACE} WebP::webpdemux)
     endif ()
 endif ()
 
 if (LIBRARY_WP2)
-    find_module(mango WP2 ${INTERFACE} OPTIONAL wp2 wp2 webp2 0)
+    find_module(mango-core WP2 ${INTERFACE} OPTIONAL wp2 wp2 webp2 0)
 endif ()
 
 if (LIBRARY_AVIF)
-    find_module(mango AVIF ${INTERFACE} OPTIONAL libavif libavif avif 1.0.0)
+    find_module(mango-core AVIF ${INTERFACE} OPTIONAL libavif libavif avif 1.0.0)
 endif ()
 
 if (LIBRARY_HEIF)
-    find_module(mango HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
+    find_module(mango-core HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
 endif ()
 
 if (LIBRARY_LIBRAW)
@@ -1174,8 +956,8 @@ if (LIBRARY_LIBRAW)
                 endif ()
             endif ()
 
-            target_compile_definitions(mango PRIVATE "MANGO_ENABLE_LIBRAW")
-            target_link_libraries(mango ${INTERFACE} PkgConfig::LIBRAW)
+            target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LIBRAW")
+            target_link_libraries(mango-core ${INTERFACE} PkgConfig::LIBRAW)
         else ()
             message("    LIBRAW: no version [not found]")
         endif ()
@@ -1183,7 +965,7 @@ if (LIBRARY_LIBRAW)
 endif ()
 
 if (BUILD_IMPORT3D)
-    find_module(mango SIMDJSON ${INTERFACE} REQUIRED simdjson simdjson simdjson::simdjson 0)
+    find_module(mango-import3d SIMDJSON ${INTERFACE} REQUIRED simdjson simdjson simdjson::simdjson 0)
 endif ()
 
 # ------------------------------------------------------------------------------
@@ -1193,12 +975,11 @@ endif ()
 set(SIMD "NONE")
 
 if (BUILD_SHARED_LIBS)
-    target_compile_definitions(mango PUBLIC "MANGO_SHARED")
-    target_compile_definitions(mango PRIVATE "MANGO_API_EXPORT")
+    # MANGO_SHARED / MANGO_API_EXPORT are set per-library in cmake/mango_libraries.cmake
 endif ()
 
 if (WIN32)
-    target_compile_definitions(mango PUBLIC UNICODE)
+    # UNICODE is set per-library in cmake/mango_libraries.cmake
 endif ()
 
 if ((ARM AND ENABLE_NEON) OR ARM64)
@@ -1208,69 +989,69 @@ endif ()
 if (EMSCRIPTEN)
 
     set(SIMD "WASM")
-    target_compile_options(mango PUBLIC "-msimd128")
+    target_compile_options(mango-core PUBLIC "-msimd128")
 
 elseif (MSVC)
 
-    target_compile_options(mango PUBLIC $<$<CONFIG:Release>:/Ox>)
-    target_compile_options(mango PUBLIC "/utf-8")
-    target_compile_options(mango PUBLIC "/MP")
+    target_compile_options(mango-core PUBLIC $<$<CONFIG:Release>:/Ox>)
+    target_compile_options(mango-core PUBLIC "/utf-8")
+    target_compile_options(mango-core PUBLIC "/MP")
 
     if (X86 OR X86_64)
 
         if (ENABLE_PCLMUL)
-            target_compile_definitions(mango PUBLIC "__PCLMUL__")
+            target_compile_definitions(mango-core PUBLIC "__PCLMUL__")
         endif ()
 
         if (ENABLE_POPCNT)
-            target_compile_definitions(mango PUBLIC "__POPCNT__")
+            target_compile_definitions(mango-core PUBLIC "__POPCNT__")
         endif ()
 
         if (ENABLE_AES)
-            target_compile_definitions(mango PUBLIC "__AES__")
+            target_compile_definitions(mango-core PUBLIC "__AES__")
         endif ()
 
         if (ENABLE_F16C)
-            target_compile_definitions(mango PUBLIC "__F16C__")
+            target_compile_definitions(mango-core PUBLIC "__F16C__")
         endif ()
 
         if (ENABLE_LZCNT)
-            target_compile_definitions(mango PUBLIC "__LZCNT__")
+            target_compile_definitions(mango-core PUBLIC "__LZCNT__")
         endif ()
 
         if (ENABLE_BMI)
-            target_compile_definitions(mango PUBLIC "__BMI__")
+            target_compile_definitions(mango-core PUBLIC "__BMI__")
         endif ()
 
         if (ENABLE_BMI2)
-            target_compile_definitions(mango PUBLIC "__BMI2__")
+            target_compile_definitions(mango-core PUBLIC "__BMI2__")
         endif ()
 
         if (ENABLE_FMA)
-            target_compile_definitions(mango PUBLIC "__FMA__")
+            target_compile_definitions(mango-core PUBLIC "__FMA__")
         endif ()
 
         if (ENABLE_SHA)
-            target_compile_definitions(mango PUBLIC "__SHA__")
+            target_compile_definitions(mango-core PUBLIC "__SHA__")
         endif ()
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
             set(SIMD "AVX-512 (2015)")
-            target_compile_options(mango PUBLIC "/arch:AVX512")
-            target_compile_definitions(mango PUBLIC "__AVX512F__" "__AVX512DQ__")
+            target_compile_options(mango-core PUBLIC "/arch:AVX512")
+            target_compile_definitions(mango-core PUBLIC "__AVX512F__" "__AVX512DQ__")
         elseif (ENABLE_AVX2)
             set(SIMD "AVX2 (2013)")
-            target_compile_options(mango PUBLIC "/arch:AVX2")
+            target_compile_options(mango-core PUBLIC "/arch:AVX2")
         elseif (ENABLE_AVX)
             set(SIMD "AVX (2008)")
-            target_compile_options(mango PUBLIC "/arch:AVX")
+            target_compile_options(mango-core PUBLIC "/arch:AVX")
         elseif (ENABLE_SSE2 OR ENABLE_SSE4)
             # MSVC does not have SSE4 option; at least enable SSE2
             set(SIMD "SSE2 (2001)")
             if (NOT X86_64)
                 # MSVC enables SSE2 by default on X86_64
-                target_compile_options(mango PUBLIC "/arch:SSE2")
+                target_compile_options(mango-core PUBLIC "/arch:SSE2")
             endif ()
         endif ()
 
@@ -1279,14 +1060,14 @@ elseif (MSVC)
 else ()
 
     add_compile_options(-Wall)
-    target_compile_options(mango PRIVATE $<$<CONFIG:Release>:-O3>)
+    target_compile_options(mango-core PRIVATE $<$<CONFIG:Release>:-O3>)
 
     if (CYGWIN)
-        target_compile_options(mango PUBLIC "-municode")
+        target_compile_options(mango-core PUBLIC "-municode")
     endif ()
 
     if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        target_compile_options(mango PUBLIC "-ftree-vectorize")
+        target_compile_options(mango-core PUBLIC "-ftree-vectorize")
         set(CMAKE_CXX_FLAGS "-Wno-psabi")
     endif ()
 
@@ -1298,59 +1079,59 @@ else ()
     if (X86 OR X86_64)
 
         if (ENABLE_PCLMUL)
-            target_compile_options(mango PUBLIC "-mpclmul")
+            target_compile_options(mango-core PUBLIC "-mpclmul")
         endif ()
 
         if (ENABLE_POPCNT)
-            target_compile_options(mango PUBLIC "-mpopcnt")
+            target_compile_options(mango-core PUBLIC "-mpopcnt")
         endif ()
 
         if (ENABLE_AES)
-            target_compile_options(mango PUBLIC "-maes")
+            target_compile_options(mango-core PUBLIC "-maes")
         endif ()
 
         if (ENABLE_F16C)
-            target_compile_options(mango PUBLIC "-mf16c")
+            target_compile_options(mango-core PUBLIC "-mf16c")
         endif ()
 
         if (ENABLE_LZCNT)
-            target_compile_options(mango PUBLIC "-mlzcnt")
+            target_compile_options(mango-core PUBLIC "-mlzcnt")
         endif ()
 
         if (ENABLE_BMI)
-            target_compile_options(mango PUBLIC "-mbmi")
+            target_compile_options(mango-core PUBLIC "-mbmi")
         endif ()
 
         if (ENABLE_BMI2)
-            target_compile_options(mango PUBLIC "-mbmi2")
+            target_compile_options(mango-core PUBLIC "-mbmi2")
         endif ()
 
         if (ENABLE_FMA)
-            target_compile_options(mango PUBLIC "-mfma")
+            target_compile_options(mango-core PUBLIC "-mfma")
         endif ()
 
         if (ENABLE_SHA)
-            target_compile_options(mango PUBLIC "-msha")
+            target_compile_options(mango-core PUBLIC "-msha")
         endif ()
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
             set(SIMD "AVX-512 (2015)")
-            target_compile_options(mango PUBLIC "-mavx512dq")
-            target_compile_options(mango PUBLIC "-mavx512vl")
-            target_compile_options(mango PUBLIC "-mavx512bw")
+            target_compile_options(mango-core PUBLIC "-mavx512dq")
+            target_compile_options(mango-core PUBLIC "-mavx512vl")
+            target_compile_options(mango-core PUBLIC "-mavx512bw")
         elseif (ENABLE_AVX2)
             set(SIMD "AVX2 (2013)")
-            target_compile_options(mango PUBLIC "-mavx2")
+            target_compile_options(mango-core PUBLIC "-mavx2")
         elseif (ENABLE_AVX)
             set(SIMD "AVX (2008)")
-            target_compile_options(mango PUBLIC "-mavx")
+            target_compile_options(mango-core PUBLIC "-mavx")
         elseif (ENABLE_SSE4)
             set(SIMD "SSE4.2 (2006)")
-            target_compile_options(mango PUBLIC "-msse4")
+            target_compile_options(mango-core PUBLIC "-msse4")
         elseif (ENABLE_SSE2)
             set(SIMD "SSE2 (2001)")
-            target_compile_options(mango PUBLIC "-msse2")
+            target_compile_options(mango-core PUBLIC "-msse2")
         endif ()
 
     endif ()
@@ -1405,6 +1186,60 @@ endif()
 message("    SIMD: " ${SIMD})
 
 # ------------------------------------------------------------------------------
+# Graphics Libraries
+# ------------------------------------------------------------------------------
+
+if (BUILD_MANGO_WINDOW AND NOT EMSCRIPTEN)
+    if (WIN32 OR CYGWIN)
+        set(MANGO_VULKAN_WINDOW_SYSTEMS "Win32")
+        set(MANGO_OPENGL_WINDOW_SYSTEMS "WGL")
+    elseif (APPLE)
+        set(MANGO_VULKAN_WINDOW_SYSTEMS "MoltenVK (Metal)")
+        set(MANGO_OPENGL_WINDOW_SYSTEMS "Cocoa")
+    else ()
+        set(_mango_vk_ws "")
+        set(_mango_gl_ws "")
+        if (MANGO_HAS_WAYLAND_WINDOW)
+            list(APPEND _mango_vk_ws "Wayland")
+            list(APPEND _mango_gl_ws "Wayland (EGL)")
+        endif ()
+        if (MANGO_HAS_XCB_WINDOW)
+            list(APPEND _mango_vk_ws "Xcb")
+            list(APPEND _mango_gl_ws "Xcb (GLX)")
+        endif ()
+        if (MANGO_HAS_XLIB_WINDOW)
+            list(APPEND _mango_vk_ws "Xlib")
+            list(APPEND _mango_gl_ws "Xlib (GLX)")
+        endif ()
+        if (_mango_vk_ws)
+            list(JOIN _mango_vk_ws ", " MANGO_VULKAN_WINDOW_SYSTEMS)
+        endif ()
+        if (_mango_gl_ws)
+            list(JOIN _mango_gl_ws ", " MANGO_OPENGL_WINDOW_SYSTEMS)
+        endif ()
+    endif ()
+
+    if (BUILD_VULKAN OR BUILD_OPENGL)
+        message("[Graphics]")
+    endif ()
+
+    if (BUILD_VULKAN)
+        if (MANGO_VULKAN_WINDOW_SYSTEMS)
+            message("    Vulkan: " ${MANGO_VULKAN_WINDOW_SYSTEMS})
+        else ()
+            message("    Vulkan: (no window backends)")
+        endif ()
+    endif ()
+    if (BUILD_OPENGL)
+        if (MANGO_OPENGL_WINDOW_SYSTEMS)
+            message("    OpenGL: " ${MANGO_OPENGL_WINDOW_SYSTEMS})
+        else ()
+            message("    OpenGL: (no window backends)")
+        endif ()
+    endif ()
+endif ()
+
+# ------------------------------------------------------------------------------
 # Build Options
 # ------------------------------------------------------------------------------
 
@@ -1420,13 +1255,6 @@ message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
 
 include(GNUInstallDirs)
 
-add_library(mango::mango ALIAS mango)
-
-target_include_directories(mango
-    PUBLIC $<BUILD_INTERFACE:${PROJECT_SOURCE_DIR}/include/>
-    INTERFACE $<INSTALL_INTERFACE:include/>
-)
-
 # install mango headers
 install(
     DIRECTORY ${PROJECT_SOURCE_DIR}/include/
@@ -1434,11 +1262,10 @@ install(
     FILES_MATCHING PATTERN "*.h*"
 )
 
-# install mango library
 set(MANGO_INSTALL_BINDIR "$<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_BINDIR},${CMAKE_INSTALL_BINDIR}>")
 set(MANGO_INSTALL_LIBDIR "$<IF:$<CONFIG:Debug>,debug/${CMAKE_INSTALL_LIBDIR},${CMAKE_INSTALL_LIBDIR}>")
 
-install(TARGETS mango
+install(TARGETS ${MANGO_LIBRARY_TARGETS}
     EXPORT mango-config
     RUNTIME DESTINATION ${MANGO_INSTALL_BINDIR}
     LIBRARY DESTINATION ${MANGO_INSTALL_LIBDIR}
@@ -1497,12 +1324,13 @@ if (BUILD_EXAMPLES)
             get_filename_component(folder_name ${x} NAME)
             set(destination_folder ${x}/${CMAKE_CFG_INTDIR})
 
-            add_custom_target(copy_mango_to_${folder_name} ALL
-                COMMAND ${CMAKE_COMMAND} -E echo "Copying: $<TARGET_FILE:mango>  -->  ${destination_folder}"
-                COMMAND ${CMAKE_COMMAND} -E make_directory "${destination_folder}"
-                COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:mango>" "${destination_folder}"
-                DEPENDS mango
-            )
+            foreach (lib ${MANGO_LIBRARY_TARGETS})
+                add_custom_target(copy_${lib}_to_${folder_name} ALL
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${destination_folder}"
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:${lib}>" "${destination_folder}"
+                    DEPENDS ${lib}
+                )
+            endforeach ()
 
             get_directory_property(example_targets DIRECTORY ${x} BUILDSYSTEM_TARGETS)
             foreach (target ${example_targets})
@@ -1511,7 +1339,9 @@ if (BUILD_EXAMPLES)
                 endif ()
                 get_target_property(target_type ${target} TYPE)
                 if (target_type STREQUAL "EXECUTABLE")
-                    add_dependencies(${target} copy_mango_to_${folder_name})
+                    foreach (lib ${MANGO_LIBRARY_TARGETS})
+                        add_dependencies(${target} copy_${lib}_to_${folder_name})
+                    endforeach ()
                 endif ()
             endforeach ()
         endforeach ()

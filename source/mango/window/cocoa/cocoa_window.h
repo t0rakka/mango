@@ -8,12 +8,6 @@
 
 #if defined(MANGO_ENABLE_COCOA)
 
-#if defined(MANGO_ENABLE_OPENGL)
-    #ifndef GL_SILENCE_DEPRECATION
-    #define GL_SILENCE_DEPRECATION
-    #endif
-#endif
-
 #import <Cocoa/Cocoa.h>
 
 // -----------------------------------------------------------------------
@@ -29,22 +23,5 @@
 - (void)createMenu;
 
 @end
-
-#if defined(MANGO_ENABLE_VULKAN)
-
-@interface MangoMetalView : NSView
-{
-@public
-    mango::Window* mangoWindow;
-    mango::WindowContext* mangoContext;
-}
-
-- (id)initWithFrame:(NSRect)frame window:(mango::Window*)window context:(mango::WindowContext*)context;
-- (void)dispatchResize:(NSRect)frame;
-- (void)trackContentView:(NSWindow*)window;
-
-@end
-
-#endif // defined(MANGO_ENABLE_VULKAN)
 
 #endif // defined(MANGO_ENABLE_COCOA)

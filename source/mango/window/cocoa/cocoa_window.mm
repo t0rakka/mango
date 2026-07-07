@@ -7,8 +7,6 @@
 #include "cocoa_window.h"
 #import <CoreVideo/CoreVideo.h>
 
-#if defined(MANGO_ENABLE_COCOA)
-
 // -----------------------------------------------------------------------
 // CustomNSWindow
 // -----------------------------------------------------------------------
@@ -43,8 +41,6 @@
 
 namespace mango
 {
-    using namespace mango::image;
-
     // -----------------------------------------------------------------------
     // Window (static, screen queries)
     // -----------------------------------------------------------------------
@@ -257,4 +253,5 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_ENABLE_COCOA)
+#include "../window_registry.hpp"
+MANGO_REGISTER_WINDOW_BACKEND(Cocoa, createCocoaBackend);

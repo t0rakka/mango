@@ -2,12 +2,86 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include "cocoa_input.hpp"
-#include "cocoa_window.h"
+#include <mango/core/exception.hpp>
+#include <mango/window/window.hpp>
+#include "../window_surface.hpp"
 
-#if defined(MANGO_ENABLE_COCOA) && defined(MANGO_ENABLE_VULKAN)
+#include <vulkan/vulkan.h>
+#include <vulkan/vulkan_metal.h>
 
+#import <Cocoa/Cocoa.h>
 #import <QuartzCore/QuartzCore.h>
+
+#include "../../window/cocoa/cocoa_window.h"
+#include "../../window/cocoa/cocoa_window.hpp"
+#include "../../window/cocoa/cocoa_input.hpp"
+#include "cocoa_metal_view.h"
+
+namespace mango::vulkan
+{
+
+    void ensureCocoaVulkanContent(Window* window, WindowBackend* backend, int width, int height)
+    {
+        auto* context = static_cast<WindowContext*>(backend);
+        if (context->content_view)
+        {
+            return;
+        }
+
+        CustomNSWindow* win = (__bridge CustomNSWindow*)context->ns_window;
+        if (!win)
+        {
+            MANGO_EXCEPTION("[Vulkan] Cocoa window is not initialized.");
+        }
+
+        NSRect frame = NSMakeRect(0, 0, width, height);
+        MangoMetalView* view = [[MangoMetalView alloc] initWithFrame:frame window:window context:context];
+        if (!view)
+        {
+            MANGO_EXCEPTION("[Vulkan] Failed to create Metal view.");
+        }
+
+        context->content_view = (__bridge void*)[view retain];
+        context->layer = (__bridge void*)view.layer;
+
+        [[win contentView] addSubview:view];
+        [view trackContentView:win];
+        context->updateMetalDrawableSize();
+
+        context->ns_delegate = cocoa::createWindowDelegate(window, context->content_view);
+        [win setDelegate:(__bridge id)context->ns_delegate];
+    }
+
+    VkSurfaceKHR createVulkanSurfaceCocoa(WindowBackend* backend, VkInstance instance)
+    {
+        auto* context = static_cast<WindowContext*>(backend);
+
+        VkSurfaceKHR surface = VK_NULL_HANDLE;
+
+        VkMetalSurfaceCreateInfoEXT surfaceCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_METAL_SURFACE_CREATE_INFO_EXT,
+            .pLayer = static_cast<const CAMetalLayer*>(context->layer),
+        };
+
+        VkResult result = vkCreateMetalSurfaceEXT(instance, &surfaceCreateInfo, nullptr, &surface);
+        if (result != VK_SUCCESS)
+        {
+            MANGO_EXCEPTION("[WindowContext] vkCreateMetalSurfaceEXT failed.");
+        }
+
+        return surface;
+    }
+
+    bool getVulkanPresentationSupportCocoa(WindowBackend* backend, VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
+    {
+        MANGO_UNREFERENCED(backend);
+        MANGO_UNREFERENCED(physicalDevice);
+        MANGO_UNREFERENCED(queueFamilyIndex);
+        return true;
+    }
+
+} // namespace mango::vulkan
 
 // -----------------------------------------------------------------------
 // MangoMetalView
@@ -129,5 +203,3 @@
 }
 
 @end
-
-#endif // defined(MANGO_ENABLE_COCOA) && defined(MANGO_ENABLE_VULKAN)

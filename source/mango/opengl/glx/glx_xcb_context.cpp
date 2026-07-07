@@ -7,7 +7,7 @@
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
 
-#if defined(MANGO_ENABLE_XCB)
+#if defined(MANGO_HAS_XCB_WINDOW)
 
 #define explicit explicit_
 #include <xcb/xcb.h>
@@ -200,4 +200,4 @@ namespace mango
 
 } // namespace mango
 
-#endif // defined(MANGO_ENABLE_XCB)
+#endif // defined(MANGO_HAS_XCB_WINDOW)

@@ -11,6 +11,7 @@
 #include <mango/core/print.hpp>
 #include <mango/core/string.hpp>
 #include "window_backend.hpp"
+#include "window_registry.hpp"
 
 namespace mango
 {
@@ -46,39 +47,16 @@ namespace mango
         WindowSystem g_window_system = WindowSystem::Default;
         bool g_window_system_locked = false;
 
-#if !defined(MANGO_ENABLE_WIN32) && !defined(MANGO_ENABLE_COCOA)
-
-        // Linux: a backend is "available" when its support is compiled into the
-        // binary. The preferred fallback order is Wayland > Xlib > Xcb.
+#if defined(MANGO_PLATFORM_LINUX)
 
         bool isWindowSystemAvailable(WindowSystem ws)
         {
-            switch (ws)
-            {
-#if defined(MANGO_ENABLE_WAYLAND)
-                case WindowSystem::Wayland: return true;
-#endif
-#if defined(MANGO_ENABLE_XLIB)
-                case WindowSystem::Xlib:    return true;
-#endif
-#if defined(MANGO_ENABLE_XCB)
-                case WindowSystem::Xcb:     return true;
-#endif
-                default:                    return false;
-            }
+            return isWindowBackendRegistered(ws);
         }
 
         WindowSystem firstAvailableWindowSystem()
         {
-#if defined(MANGO_ENABLE_WAYLAND)
-            return WindowSystem::Wayland;
-#elif defined(MANGO_ENABLE_XLIB)
-            return WindowSystem::Xlib;
-#elif defined(MANGO_ENABLE_XCB)
-            return WindowSystem::Xcb;
-#else
-            return WindowSystem::Default;
-#endif
+            return firstRegisteredWindowSystem();
         }
 
         WindowSystem autoDetectWindowSystem()
@@ -107,28 +85,31 @@ namespace mango
             }
 
             // 2. Auto-detect from the running session (preferred order Wayland > X).
-#if defined(MANGO_ENABLE_WAYLAND)
-            if (const char* display = std::getenv("WAYLAND_DISPLAY"); display && *display)
+            if (isWindowBackendRegistered(WindowSystem::Wayland))
             {
-                return WindowSystem::Wayland;
+                if (const char* display = std::getenv("WAYLAND_DISPLAY"); display && *display)
+                {
+                    return WindowSystem::Wayland;
+                }
             }
-#endif
-#if defined(MANGO_ENABLE_XLIB) || defined(MANGO_ENABLE_XCB)
-            if (const char* display = std::getenv("DISPLAY"); display && *display)
+
+            if (isWindowBackendRegistered(WindowSystem::Xlib) || isWindowBackendRegistered(WindowSystem::Xcb))
             {
-#if defined(MANGO_ENABLE_XLIB)
-                return WindowSystem::Xlib;
-#else
-                return WindowSystem::Xcb;
-#endif
+                if (const char* display = std::getenv("DISPLAY"); display && *display)
+                {
+                    if (isWindowBackendRegistered(WindowSystem::Xlib))
+                    {
+                        return WindowSystem::Xlib;
+                    }
+                    return WindowSystem::Xcb;
+                }
             }
-#endif
 
             // 3. Nothing detected: first available in preferred order.
             return firstAvailableWindowSystem();
         }
 
-#endif // !MANGO_ENABLE_WIN32 && !MANGO_ENABLE_COCOA
+#endif // defined(MANGO_PLATFORM_LINUX)
 
     } // namespace
 
@@ -581,10 +562,10 @@ namespace mango
 
     WindowSystem resolveWindowSystem(WindowSystem ws)
     {
-#if defined(MANGO_ENABLE_WIN32)
+#if defined(MANGO_PLATFORM_WINDOWS)
         MANGO_UNREFERENCED(ws);
         return WindowSystem::Win32;
-#elif defined(MANGO_ENABLE_COCOA)
+#elif defined(MANGO_PLATFORM_MACOS)
         MANGO_UNREFERENCED(ws);
         return WindowSystem::Cocoa;
 #else
@@ -608,31 +589,14 @@ namespace mango
     std::unique_ptr<WindowBackend> createWindowBackend(WindowSystem ws, Window* window,
         int width, int height, u32 flags, const char* title)
     {
-#if defined(MANGO_ENABLE_WIN32)
+#if defined(MANGO_PLATFORM_WINDOWS)
         MANGO_UNREFERENCED(ws);
-        return createWin32Backend(window, width, height, flags, title);
-#elif defined(MANGO_ENABLE_COCOA)
+        return createRegisteredWindowBackend(WindowSystem::Win32, window, width, height, flags, title);
+#elif defined(MANGO_PLATFORM_MACOS)
         MANGO_UNREFERENCED(ws);
-        return createCocoaBackend(window, width, height, flags, title);
+        return createRegisteredWindowBackend(WindowSystem::Cocoa, window, width, height, flags, title);
 #else
-        switch (ws)
-        {
-#if defined(MANGO_ENABLE_XLIB)
-            case WindowSystem::Xlib:
-                return createXlibBackend(window, width, height, flags, title);
-#endif
-#if defined(MANGO_ENABLE_XCB)
-            case WindowSystem::Xcb:
-                return createXcbBackend(window, width, height, flags, title);
-#endif
-#if defined(MANGO_ENABLE_WAYLAND)
-            case WindowSystem::Wayland:
-                return createWaylandBackend(window, width, height, flags, title);
-#endif
-            default:
-                break;
-        }
-        return nullptr;
+        return createRegisteredWindowBackend(ws, window, width, height, flags, title);
 #endif
     }
 
