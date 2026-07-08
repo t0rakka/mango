@@ -149,6 +149,7 @@ int mangoMain(const mango::CommandLine& commands)
 
         EventLoopConfig config;
         config.mode = FrameMode::OnDemand;
+
         window.enterEventLoop(config);
     }
 

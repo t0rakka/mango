@@ -168,8 +168,6 @@ int mangoMain(const mango::CommandLine& commands)
     ImageAnimation animation(filename);
     DemoWindow demo(animation);
 
-    // OnDemand: the first frame fires automatically, after which animations re-arm a
-    // timed wake via requestFrameIn() and still images simply idle until invalidated.
     EventLoopConfig config;
     config.mode = FrameMode::OnDemand;
     config.trackDisplayRefreshRate = false;

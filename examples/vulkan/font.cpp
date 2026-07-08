@@ -2510,6 +2510,7 @@ int mangoMain(const mango::CommandLine& commands)
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
     config.waitForFrame = true;
+
     window.enterEventLoop(config);
 
     return 0;
