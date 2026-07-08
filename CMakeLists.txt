@@ -33,15 +33,16 @@ OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
 OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
-OPTION(LIBRARY_JXR          "Enable JPEG XR image format support"       ON)
-OPTION(LIBRARY_JXL          "Enable JPEG-XL image format support"       ON)
-OPTION(LIBRARY_JP2          "Enable JPEG2000 image format support"      ON)
-OPTION(LIBRARY_WEBP         "Enable WebP image format support"          ON)
-OPTION(LIBRARY_WP2          "Enable WP2 image format support"           ON)
-OPTION(LIBRARY_AVIF         "Enable avif image format support"          ON)
-OPTION(LIBRARY_HEIF         "Enable heif image format support"          ON)
-OPTION(LIBRARY_LIBRAW       "Enable camera raw support (LibRaw)"        ON)
 OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
+
+OPTION(IMAGE_FORMAT_JXR     "Enable JPEG XR image format support"       ON)
+OPTION(IMAGE_FORMAT_JXL     "Enable JPEG-XL image format support"       ON)
+OPTION(IMAGE_FORMAT_JP2     "Enable JPEG2000 image format support"      ON)
+OPTION(IMAGE_FORMAT_WEBP    "Enable WebP image format support"          ON)
+OPTION(IMAGE_FORMAT_WP2     "Enable WebP 2 image format support"        ON)
+OPTION(IMAGE_FORMAT_AVIF    "Enable AVIF image format support"          ON)
+OPTION(IMAGE_FORMAT_HEIF    "Enable HEIF image format support"          ON)
+OPTION(IMAGE_FORMAT_CAMERA  "Enable camera raw image format (LibRaw)"   ON)
 OPTION(IMAGE_FORMAT_RETRO   "Enable RETRO image format support"         ON)
 OPTION(IMAGE_FORMAT_KTX2    "Enable KTX2 image format support"          ON)
 
@@ -65,15 +66,15 @@ OPTION(ENABLE_SHA           "Enable SHA"                                OFF)
 # Option to disable every optional library
 option(LIBRARY_DISABLE,     "Disable ALL optional libraries"            OFF)
 if (LIBRARY_DISABLE)
-    set(LIBRARY_JXR    OFF)
-    set(LIBRARY_JXL    OFF)
-    set(LIBRARY_JP2    OFF)
-    set(LIBRARY_WEBP   OFF)
-    set(LIBRARY_WP2    OFF)
-    set(LIBRARY_AVIF   OFF)
-    set(LIBRARY_HEIF   OFF)
-    set(LIBRARY_LIBRAW OFF)
-    set(LIBRARY_ISAL   OFF)
+    set(IMAGE_FORMAT_JXR    OFF)
+    set(IMAGE_FORMAT_JXL    OFF)
+    set(IMAGE_FORMAT_JP2    OFF)
+    set(IMAGE_FORMAT_WEBP   OFF)
+    set(IMAGE_FORMAT_WP2    OFF)
+    set(IMAGE_FORMAT_AVIF   OFF)
+    set(IMAGE_FORMAT_HEIF   OFF)
+    set(IMAGE_FORMAT_CAMERA OFF)
+    set(LIBRARY_ISAL        OFF)
 endif ()
 
 # Option to build everything
@@ -678,6 +679,38 @@ if (NOT IMAGE_FORMAT_KTX2)
     )
 endif ()
 
+if (NOT IMAGE_FORMAT_JXR)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_jxr.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_JXL)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_jxl.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_JP2)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_jp2.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_WEBP)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_webp.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_WP2)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_wp2.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_AVIF)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_avif.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_HEIF)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_heif.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_CAMERA)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_camera.cpp")
+endif ()
+
 # ------------------------------------------------------------------------------
 # libraries
 # ------------------------------------------------------------------------------
@@ -696,13 +729,11 @@ if (LIBRARY_ASTC)
     target_compile_definitions(mango-image PRIVATE "MANGO_ENABLE_ASTC")
 endif ()
 
-if (IMAGE_FORMAT_RETRO)
-    target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_RETRO")
-endif ()
-
-if (IMAGE_FORMAT_KTX2)
-    target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_KTX2")
-endif ()
+foreach (_image_format IN ITEMS RETRO KTX2 JXR JXL JP2 WEBP WP2 AVIF HEIF CAMERA)
+    if (IMAGE_FORMAT_${_image_format})
+        target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_${_image_format}")
+    endif ()
+endforeach ()
 
 # ------------------------------------------------------------------------------
 # find_module()
@@ -956,39 +987,39 @@ if (LIBRARY_ISAL)
     find_module(mango-image ISAL ${INTERFACE} OPTIONAL libisal unofficial-isal unofficial::isal::isal 0)
 endif ()
 
-if (LIBRARY_JXR)
+if (IMAGE_FORMAT_JXR)
     find_module(mango-image JXR ${INTERFACE} OPTIONAL jxrlib JXR "" 0)
 endif ()
 
-if (LIBRARY_JXL)
+if (IMAGE_FORMAT_JXL)
     find_module(mango-image JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.7)
     find_module(mango-image JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
 endif ()
 
-if (LIBRARY_JP2)
+if (IMAGE_FORMAT_JP2)
     find_module(mango-image JP2 ${INTERFACE} OPTIONAL libopenjp2 OpenJPEG openjp2 2.4.0)
 endif ()
 
-if (LIBRARY_WEBP)
+if (IMAGE_FORMAT_WEBP)
     find_module(mango-image WEBP ${INTERFACE} OPTIONAL libwebp WebP WebP::webp 1.3.2)
     if (TARGET WebP::webpdemux)
         target_link_libraries(mango-image ${INTERFACE} WebP::webpdemux)
     endif ()
 endif ()
 
-if (LIBRARY_WP2)
+if (IMAGE_FORMAT_WP2)
     find_module(mango-image WP2 ${INTERFACE} OPTIONAL wp2 wp2 webp2 0)
 endif ()
 
-if (LIBRARY_AVIF)
+if (IMAGE_FORMAT_AVIF)
     find_module(mango-image AVIF ${INTERFACE} OPTIONAL libavif libavif avif 1.0.0)
 endif ()
 
-if (LIBRARY_HEIF)
+if (IMAGE_FORMAT_HEIF)
     find_module(mango-image HEIF ${INTERFACE} OPTIONAL libheif libheif heif 1.13.0)
 endif ()
 
-if (LIBRARY_LIBRAW)
+if (IMAGE_FORMAT_CAMERA)
     # LibRaw ships only a pkg-config file (no CMake package config). Its .pc pulls in
     # bare link tokens (-lstdc++, OpenMP, lcms2 via Requires); adding those as plain
     # library names defeats CMake's link de-duplication and ends up duplicating every
@@ -1011,7 +1042,6 @@ if (LIBRARY_LIBRAW)
                 endif ()
             endif ()
 
-            target_compile_definitions(mango-image PRIVATE "MANGO_ENABLE_LIBRAW")
             target_link_libraries(mango-image ${INTERFACE} PkgConfig::LIBRAW)
         else ()
             message("    LIBRAW: no version [not found]")

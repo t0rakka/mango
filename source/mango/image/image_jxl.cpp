@@ -5,8 +5,6 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)
-
 #include "jxl/decode.h"
 #include "jxl/decode_cxx.h"
 #include "jxl/encode.h"
@@ -637,16 +635,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecJXL()
-    {
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_JXL) && defined(MANGO_ENABLE_JXL_THREADS)

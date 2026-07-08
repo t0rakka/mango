@@ -141,14 +141,30 @@ namespace mango::image
     void registerImageCodecPICT();
     void registerImageCodecPSD();
     void registerImageCodecRAW();
+#if defined(IMAGE_FORMAT_CAMERA)
     void registerImageCodecCAMERA();
+#endif
+#if defined(IMAGE_FORMAT_JXR)
     void registerImageCodecJXR();
+#endif
+#if defined(IMAGE_FORMAT_JXL)
     void registerImageCodecJXL();
+#endif
+#if defined(IMAGE_FORMAT_JP2)
     void registerImageCodecJP2();
+#endif
+#if defined(IMAGE_FORMAT_HEIF)
     void registerImageCodecHEIF();
+#endif
+#if defined(IMAGE_FORMAT_AVIF)
     void registerImageCodecAVIF();
+#endif
+#if defined(IMAGE_FORMAT_WEBP)
     void registerImageCodecWEBP();
+#endif
+#if defined(IMAGE_FORMAT_WP2)
     void registerImageCodecWP2();
+#endif
 
     class ImageServer
     {
@@ -192,14 +208,30 @@ namespace mango::image
             registerImageCodecPICT();
             registerImageCodecPSD();
             registerImageCodecRAW();
+#if defined(IMAGE_FORMAT_CAMERA)
             registerImageCodecCAMERA();
+#endif
+#if defined(IMAGE_FORMAT_JXR)
             registerImageCodecJXR();
+#endif
+#if defined(IMAGE_FORMAT_JXL)
             registerImageCodecJXL();
+#endif
+#if defined(IMAGE_FORMAT_JP2)
             registerImageCodecJP2();
+#endif
+#if defined(IMAGE_FORMAT_HEIF)
             registerImageCodecHEIF();
+#endif
+#if defined(IMAGE_FORMAT_AVIF)
             registerImageCodecAVIF();
+#endif
+#if defined(IMAGE_FORMAT_WEBP)
             registerImageCodecWEBP();
+#endif
+#if defined(IMAGE_FORMAT_WP2)
             registerImageCodecWP2();
+#endif
         }
 
         ~ImageServer()

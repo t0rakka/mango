@@ -9,8 +9,6 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_JXR)
-
 #ifndef __ANSI__
 #define __ANSI__
 #endif
@@ -858,16 +856,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecJXR()
-    {
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_JXR)
