@@ -34,8 +34,8 @@ OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
 OPTION(LIBRARY_JXR          "Enable JPEG XR image format support"       ON)
-OPTION(LIBRARY_JXL          "Enable jpeg-xl image format support"       ON)
-OPTION(LIBRARY_JP2          "Enable jpeg2000 image format support"      ON)
+OPTION(LIBRARY_JXL          "Enable JPEG-XL image format support"       ON)
+OPTION(LIBRARY_JP2          "Enable JPEG2000 image format support"      ON)
 OPTION(LIBRARY_WEBP         "Enable WebP image format support"          ON)
 OPTION(LIBRARY_WP2          "Enable WP2 image format support"           ON)
 OPTION(LIBRARY_AVIF         "Enable avif image format support"          ON)
@@ -43,6 +43,7 @@ OPTION(LIBRARY_HEIF         "Enable heif image format support"          ON)
 OPTION(LIBRARY_LIBRAW       "Enable camera raw support (LibRaw)"        ON)
 OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
 OPTION(IMAGE_FORMAT_RETRO   "Enable RETRO image format support"         ON)
+OPTION(IMAGE_FORMAT_KTX2    "Enable KTX2 image format support"          ON)
 
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
@@ -620,10 +621,12 @@ FILE(GLOB EXTERNAL_ZPNG
     "${EXTERNAL_SOURCE_DIR}/zpng/*.cpp"
 )
 
-FILE(GLOB EXTERNAL_BASISU
-    "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/*.h"
-    "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/*.cpp"
-)
+if (IMAGE_FORMAT_KTX2)
+    FILE(GLOB EXTERNAL_BASISU
+        "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/*.h"
+        "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/*.cpp"
+    )
+endif ()
 
 FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.h"
@@ -648,7 +651,9 @@ endif ()
 SOURCE_GROUP("external/unrar"       FILES ${EXTERNAL_UNRAR})
 SOURCE_GROUP("external/inflatelib"  FILES ${EXTERNAL_INFLATELIB})
 SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
-SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
+if (IMAGE_FORMAT_KTX2)
+    SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
+endif ()
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
 if (NOT IMAGE_FORMAT_RETRO)
@@ -664,6 +669,12 @@ endif ()
 if (NOT LIBRARY_ASTC)
     list(REMOVE_ITEM IMAGE_SOURCES
         "${MANGO_SOURCE_DIR}/image/block_astc.cpp"
+    )
+endif ()
+
+if (NOT IMAGE_FORMAT_KTX2)
+    list(REMOVE_ITEM IMAGE_SOURCES
+        "${MANGO_SOURCE_DIR}/image/image_ktx2.cpp"
     )
 endif ()
 
@@ -687,6 +698,10 @@ endif ()
 
 if (IMAGE_FORMAT_RETRO)
     target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_RETRO")
+endif ()
+
+if (IMAGE_FORMAT_KTX2)
+    target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_KTX2")
 endif ()
 
 # ------------------------------------------------------------------------------

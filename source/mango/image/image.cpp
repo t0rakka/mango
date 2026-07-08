@@ -120,7 +120,9 @@ namespace mango::image
     void registerImageCodecHDR();
     void registerImageCodecGIF();
     void registerImageCodecKTX();
+#if defined(IMAGE_FORMAT_KTX2)
     void registerImageCodecKTX2();
+#endif
     void registerImageCodecPVR();
     void registerImageCodecASTC();
     void registerImageCodecZPNG();
@@ -169,7 +171,9 @@ namespace mango::image
             registerImageCodecHDR();
             registerImageCodecGIF();
             registerImageCodecKTX();
+#if defined(IMAGE_FORMAT_KTX2)
             registerImageCodecKTX2();
+#endif
             registerImageCodecPVR();
             registerImageCodecASTC();
             registerImageCodecZPNG();
