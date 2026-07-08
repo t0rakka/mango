@@ -41,8 +41,17 @@ public:
 
     void onKeyPress(Keycode key, u32 mask) override
     {
-        if (key == KEYCODE_ESC)
-            breakEventLoop();
+        switch (key)
+        {
+            case KEYCODE_ESC:
+                breakEventLoop();
+                break;
+            case KEYCODE_F:
+                toggleFullscreen();
+                break;
+            default:
+                break;
+        }
     }
 
     void onFrame(const FrameInfo& info) override
