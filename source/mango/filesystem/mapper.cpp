@@ -227,9 +227,10 @@ namespace mango::filesystem
 
                     if (m_current_mapper->isFile(container))
                     {
-                        m_parent_memory = m_current_mapper->map(container);
+                        std::unique_ptr<VirtualMemory> memory = m_current_mapper->map(container);
 
-                        mapper = node.create(*m_parent_memory, password);
+                        mapper = node.create(*memory, password);
+                        m_parent_memories.push_back(std::move(memory));
                         m_mappers.emplace_back(mapper);
                         m_current_mapper = mapper;
 
