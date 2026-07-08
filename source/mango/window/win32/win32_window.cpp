@@ -735,7 +735,7 @@ namespace mango
 
             // Make the fullscreen window one extra pixel higher to disable exclusive fullscreen mode "optimization"
             // It just causes headaches and problems; for example some time the DWM goes insane and starts stuttering at 5 fps.
-            const int ANTI_EXCLUSIVE_MODE_PIXEL = is_opengl ? 1 : 0;
+            const int ANTI_EXCLUSIVE_MODE_PIXEL = 1;//is_opengl ? 1 : 0; // always enable, seems to be a problem with Vulkan as well
 
             HMONITOR monitor = ::MonitorFromRect(&rect, MONITOR_DEFAULTTONEAREST);
             MONITORINFO monitorInfo = { sizeof(MONITORINFO) };
