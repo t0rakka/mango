@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <map>
 #include <mango/core/core.hpp>
@@ -54,11 +54,16 @@ namespace mango::image
     void encode_block_bc7             (const TextureCompression& info, u8* output, const u8* input, size_t stride);
     void encode_block_etc1            (const TextureCompression& info, u8* output, const u8* input, size_t stride);
 
+#if defined(MANGO_ENABLE_ASTC)
     void decode_surface_astc          (const TextureCompression& info, const Surface& output, const u8* input);
+    void encode_surface_astc          (const TextureCompression& info, u8* output, const Surface& input);
+    #define ASTC_FUNCTIONS decode_surface_astc, encode_surface_astc
+#else
+    #define ASTC_FUNCTIONS nullptr, nullptr
+#endif
+
     void decode_surface_pvrtc         (const TextureCompression& info, const Surface& output, const u8* input);
     void decode_surface_pvrtc2        (const TextureCompression& info, const Surface& output, const u8* input);
-
-    void encode_surface_astc          (const TextureCompression& info, u8* output, const Surface& input);
 
 } // namespace mango::image
 
@@ -609,7 +614,7 @@ namespace
             vulkan::FORMAT_ASTC_4x4_UNORM_BLOCK,
             4, 4, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -619,7 +624,7 @@ namespace
             vulkan::FORMAT_ASTC_5x4_UNORM_BLOCK,
             5, 4, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -629,7 +634,7 @@ namespace
             vulkan::FORMAT_ASTC_5x5_UNORM_BLOCK,
             5, 5, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -639,7 +644,7 @@ namespace
             vulkan::FORMAT_ASTC_6x5_UNORM_BLOCK,
             6, 5, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -649,7 +654,7 @@ namespace
             vulkan::FORMAT_ASTC_6x6_UNORM_BLOCK,
             6, 6, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -659,7 +664,7 @@ namespace
             vulkan::FORMAT_ASTC_8x5_UNORM_BLOCK,
             8, 5, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -669,7 +674,7 @@ namespace
             vulkan::FORMAT_ASTC_8x6_UNORM_BLOCK,
             8, 6, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -679,7 +684,7 @@ namespace
             vulkan::FORMAT_ASTC_8x8_UNORM_BLOCK,
             8, 8, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -689,7 +694,7 @@ namespace
             vulkan::FORMAT_ASTC_10x5_UNORM_BLOCK,
             10, 5, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -699,7 +704,7 @@ namespace
             vulkan::FORMAT_ASTC_10x6_UNORM_BLOCK,
             10, 6, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -709,7 +714,7 @@ namespace
             vulkan::FORMAT_ASTC_10x8_UNORM_BLOCK,
             10, 8, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -719,7 +724,7 @@ namespace
             vulkan::FORMAT_ASTC_10x10_UNORM_BLOCK,
             10, 10, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -729,7 +734,7 @@ namespace
             vulkan::FORMAT_ASTC_12x10_UNORM_BLOCK,
             12, 10, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -739,7 +744,7 @@ namespace
             vulkan::FORMAT_ASTC_12x12_UNORM_BLOCK,
             12, 12, 1, 16, LinearFormat(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -749,7 +754,7 @@ namespace
             vulkan::FORMAT_ASTC_4x4_SRGB_BLOCK,
             4, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -759,7 +764,7 @@ namespace
             vulkan::FORMAT_ASTC_5x4_SRGB_BLOCK,
             5, 4, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -769,7 +774,7 @@ namespace
             vulkan::FORMAT_ASTC_5x5_SRGB_BLOCK,
             5, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -779,7 +784,7 @@ namespace
             vulkan::FORMAT_ASTC_6x5_SRGB_BLOCK,
             6, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -789,7 +794,7 @@ namespace
             vulkan::FORMAT_ASTC_6x6_SRGB_BLOCK,
             6, 6, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -799,7 +804,7 @@ namespace
             vulkan::FORMAT_ASTC_8x5_SRGB_BLOCK,
             8, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -809,7 +814,7 @@ namespace
             vulkan::FORMAT_ASTC_8x6_SRGB_BLOCK,
             8, 6, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -819,7 +824,7 @@ namespace
             vulkan::FORMAT_ASTC_8x8_SRGB_BLOCK,
             8, 8, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -829,7 +834,7 @@ namespace
             vulkan::FORMAT_ASTC_10x5_SRGB_BLOCK,
             10, 5, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -839,7 +844,7 @@ namespace
             vulkan::FORMAT_ASTC_10x6_SRGB_BLOCK,
             10, 6, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -849,7 +854,7 @@ namespace
             vulkan::FORMAT_ASTC_10x8_SRGB_BLOCK,
             10, 8, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -859,7 +864,7 @@ namespace
             vulkan::FORMAT_ASTC_10x10_SRGB_BLOCK,
             10, 10, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -869,7 +874,7 @@ namespace
             vulkan::FORMAT_ASTC_12x10_SRGB_BLOCK,
             12, 10, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -879,7 +884,7 @@ namespace
             vulkan::FORMAT_ASTC_12x12_SRGB_BLOCK,
             12, 12, 1, 16, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         // KHR_texture_compression_astc_hdr
@@ -891,7 +896,7 @@ namespace
             vulkan::FORMAT_ASTC_4x4_SFLOAT_BLOCK,
             4, 4, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -901,7 +906,7 @@ namespace
             vulkan::FORMAT_ASTC_5x4_SFLOAT_BLOCK,
             5, 4, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -911,7 +916,7 @@ namespace
             vulkan::FORMAT_ASTC_5x5_SFLOAT_BLOCK,
             5, 5, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -921,7 +926,7 @@ namespace
             vulkan::FORMAT_ASTC_6x5_SFLOAT_BLOCK,
             6, 5, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -931,7 +936,7 @@ namespace
             vulkan::FORMAT_ASTC_6x6_SFLOAT_BLOCK,
             6, 6, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -941,7 +946,7 @@ namespace
             vulkan::FORMAT_ASTC_8x5_SFLOAT_BLOCK,
             8, 5, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -951,7 +956,7 @@ namespace
             vulkan::FORMAT_ASTC_8x6_SFLOAT_BLOCK,
             8, 6, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -961,7 +966,7 @@ namespace
             vulkan::FORMAT_ASTC_8x8_SFLOAT_BLOCK,
             8, 8, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -971,7 +976,7 @@ namespace
             vulkan::FORMAT_ASTC_10x5_SFLOAT_BLOCK,
             10, 5, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -981,7 +986,7 @@ namespace
             vulkan::FORMAT_ASTC_10x6_SFLOAT_BLOCK,
             10, 6, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -991,7 +996,7 @@ namespace
             vulkan::FORMAT_ASTC_10x8_SFLOAT_BLOCK,
             10, 8, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -1001,7 +1006,7 @@ namespace
             vulkan::FORMAT_ASTC_10x10_SFLOAT_BLOCK,
             10, 10, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -1011,7 +1016,7 @@ namespace
             vulkan::FORMAT_ASTC_12x10_SFLOAT_BLOCK,
             12, 10, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         TextureCompression(
@@ -1021,7 +1026,7 @@ namespace
             vulkan::FORMAT_ASTC_12x12_SFLOAT_BLOCK,
             12, 12, 1, 16, LinearFormat(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16),
             nullptr, nullptr,
-            decode_surface_astc, encode_surface_astc
+            ASTC_FUNCTIONS
         ),
 
         // OES_texture_compression_astc

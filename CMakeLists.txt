@@ -31,6 +31,7 @@ OPTION(LIBRARY_BZIP2        "Enable BZIP2 compression support"          ON)
 OPTION(LIBRARY_LZ4          "Enable LZ4 compression support"            ON)
 OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
 OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
+OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
 OPTION(LIBRARY_JXR          "Enable JPEG XR image codec support"        ON)
 OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
@@ -40,7 +41,7 @@ OPTION(LIBRARY_WP2          "Enable WP2 image codec support"            ON)
 OPTION(LIBRARY_AVIF         "Enable avif image codec support"           ON)
 OPTION(LIBRARY_HEIF         "Enable heif image codec support"           ON)
 OPTION(LIBRARY_LIBRAW       "Enable camera raw image codec (LibRaw)"    ON)
-OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
+OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
 
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
@@ -576,10 +577,12 @@ FILE(GLOB EXTERNAL_CONCURRENT_QUEUE
     "${EXTERNAL_SOURCE_DIR}/concurrentqueue/*.h"
 )
 
-FILE(GLOB EXTERNAL_ASTC
-    "${EXTERNAL_SOURCE_DIR}/astc/*.cpp"
-    "${EXTERNAL_SOURCE_DIR}/astc/*.h"
-)
+if (LIBRARY_ASTC)
+    FILE(GLOB EXTERNAL_ASTC
+        "${EXTERNAL_SOURCE_DIR}/astc/*.cpp"
+        "${EXTERNAL_SOURCE_DIR}/astc/*.h"
+    )
+endif ()
 
 FILE(GLOB EXTERNAL_GOOGLE
     "${EXTERNAL_SOURCE_DIR}/google/*.hpp"
@@ -631,7 +634,9 @@ FILE(GLOB EXTERNAL_IMPORT3D
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
 SOURCE_GROUP("external/bc"          FILES ${EXTERNAL_BC})
 SOURCE_GROUP("external/concurrent"  FILES ${EXTERNAL_CONCURRENT_QUEUE})
-SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
+if (LIBRARY_ASTC)
+    SOURCE_GROUP("external/astc"        FILES ${EXTERNAL_ASTC})
+endif ()
 SOURCE_GROUP("external/google"      FILES ${EXTERNAL_GOOGLE})
 if (LIBRARY_LZMA)
     SOURCE_GROUP("external/lzma"    FILES ${EXTERNAL_LZMA})
@@ -650,6 +655,18 @@ SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 # ------------------------------------------------------------------------------
 
 include(${CMAKE_CURRENT_LIST_DIR}/cmake/mango_libraries.cmake)
+
+if (LIBRARY_LZMA)
+    target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LZMA")
+endif ()
+
+if (LIBRARY_LZFSE)
+    target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LZFSE")
+endif ()
+
+if (LIBRARY_ASTC)
+    target_compile_definitions(mango-image PRIVATE "MANGO_ENABLE_ASTC")
+endif ()
 
 # ------------------------------------------------------------------------------
 # find_module()
@@ -854,18 +871,6 @@ function (find_libdeflate Target Interface Mode)
     check_required("LIBDEFLATE" "libdeflate")
 
 endfunction()
-
-# ------------------------------------------------------------------------------
-# Vendored Libraries
-# ------------------------------------------------------------------------------
-
-if (LIBRARY_LZMA)
-    target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LZMA")
-endif ()
-
-if (LIBRARY_LZFSE)
-    target_compile_definitions(mango-core PRIVATE "MANGO_ENABLE_LZFSE")
-endif ()
 
 # ------------------------------------------------------------------------------
 # Required Libraries

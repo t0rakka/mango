@@ -1,11 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/compression.hpp>
 #include <mango/image/surface.hpp>
 #include <mango/image/color.hpp>
+
+#if defined(MANGO_ENABLE_ASTC)
 
 #include "../../external/astc/astcenc.h"
 
@@ -182,3 +184,5 @@ namespace mango::image
     }
 
 } // namespace mango::image
+
+#endif // defined(MANGO_ENABLE_ASTC)
