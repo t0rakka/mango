@@ -7,8 +7,6 @@
 #include <mango/image/surface.hpp>
 #include <mango/image/color.hpp>
 
-#if defined(MANGO_ENABLE_ASTC)
-
 #include "../../external/astc/astcenc.h"
 
 namespace mango::image
@@ -184,5 +182,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_ASTC)

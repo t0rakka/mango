@@ -126,11 +126,13 @@ namespace mango::image
     void registerImageCodecZPNG();
     void registerImageCodecSGI();
     void registerImageCodecPNM();
+#if defined(IMAGE_FORMAT_RETRO)
     void registerImageCodecATARI();
     void registerImageCodecATARI8();
     void registerImageCodecC64();
     void registerImageCodecMSX();
     void registerImageCodecRETRO();
+#endif
     void registerImageCodecEXR();
     void registerImageCodecQOI();
     void registerImageCodecPIC();
@@ -173,11 +175,13 @@ namespace mango::image
             registerImageCodecZPNG();
             registerImageCodecSGI();
             registerImageCodecPNM();
+#if defined(IMAGE_FORMAT_RETRO)
             registerImageCodecATARI();
             registerImageCodecATARI8();
             registerImageCodecC64();
             registerImageCodecMSX();
             registerImageCodecRETRO();
+#endif
             registerImageCodecEXR();
             registerImageCodecQOI();
             registerImageCodecPIC();

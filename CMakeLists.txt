@@ -33,15 +33,16 @@ OPTION(LIBRARY_LZMA         "Enable LZMA compression support"           ON)
 OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
-OPTION(LIBRARY_JXR          "Enable JPEG XR image codec support"        ON)
-OPTION(LIBRARY_JXL          "Enable jpeg-xl image codec support"        ON)
-OPTION(LIBRARY_JP2          "Enable jpeg2000 image codec support"       ON)
-OPTION(LIBRARY_WEBP         "Enable WebP image codec support"           ON)
-OPTION(LIBRARY_WP2          "Enable WP2 image codec support"            ON)
-OPTION(LIBRARY_AVIF         "Enable avif image codec support"           ON)
-OPTION(LIBRARY_HEIF         "Enable heif image codec support"           ON)
-OPTION(LIBRARY_LIBRAW       "Enable camera raw image codec (LibRaw)"    ON)
+OPTION(LIBRARY_JXR          "Enable JPEG XR image format support"       ON)
+OPTION(LIBRARY_JXL          "Enable jpeg-xl image format support"       ON)
+OPTION(LIBRARY_JP2          "Enable jpeg2000 image format support"      ON)
+OPTION(LIBRARY_WEBP         "Enable WebP image format support"          ON)
+OPTION(LIBRARY_WP2          "Enable WP2 image format support"           ON)
+OPTION(LIBRARY_AVIF         "Enable avif image format support"          ON)
+OPTION(LIBRARY_HEIF         "Enable heif image format support"          ON)
+OPTION(LIBRARY_LIBRAW       "Enable camera raw support (LibRaw)"        ON)
 OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
+OPTION(IMAGE_FORMAT_RETRO   "Enable RETRO image format support"         ON)
 
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
 OPTION(ENABLE_SSE2          "Enable SSE2 instructions"                  OFF)
@@ -650,6 +651,22 @@ SOURCE_GROUP("external/zpng"        FILES ${EXTERNAL_ZPNG})
 SOURCE_GROUP("external/basisu"      FILES ${EXTERNAL_BASISU})
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
+if (NOT IMAGE_FORMAT_RETRO)
+    list(REMOVE_ITEM IMAGE_SOURCES
+        "${MANGO_SOURCE_DIR}/image/image_atari.cpp"
+        "${MANGO_SOURCE_DIR}/image/image_atari8.cpp"
+        "${MANGO_SOURCE_DIR}/image/image_c64.cpp"
+        "${MANGO_SOURCE_DIR}/image/image_msx.cpp"
+        "${MANGO_SOURCE_DIR}/image/image_retro.cpp"
+    )
+endif ()
+
+if (NOT LIBRARY_ASTC)
+    list(REMOVE_ITEM IMAGE_SOURCES
+        "${MANGO_SOURCE_DIR}/image/block_astc.cpp"
+    )
+endif ()
+
 # ------------------------------------------------------------------------------
 # libraries
 # ------------------------------------------------------------------------------
@@ -666,6 +683,10 @@ endif ()
 
 if (LIBRARY_ASTC)
     target_compile_definitions(mango-image PRIVATE "MANGO_ENABLE_ASTC")
+endif ()
+
+if (IMAGE_FORMAT_RETRO)
+    target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_RETRO")
 endif ()
 
 # ------------------------------------------------------------------------------
