@@ -57,6 +57,10 @@ namespace mango
         void presentGraphicsSurface();
         void clearGraphicsHooks();
 
+        // Called immediately before the graphics API presents a frame (EGL swap,
+        // Vulkan vkQueuePresentKHR). Wayland uses this to refresh wl_surface state.
+        virtual void beforePresent() {}
+
         // Graphics-neutral native handles for EGL bridge code in mango-opengl.
         virtual void* nativeDisplay() { return nullptr; }
         virtual void* nativeSurface() { return nullptr; }

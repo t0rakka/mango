@@ -70,6 +70,7 @@ namespace mango
         bool isKeyPressed(Keycode code) const override;
         void runEventLoop() override;
         void wakeEventLoop() override;
+        void beforePresent() override;
 
         void* nativeDisplay() override { return display; }
         void* nativeSurface() override { return surface; }

@@ -6,6 +6,7 @@
 #include <mango/core/configure.hpp>
 #include <mango/core/print.hpp>
 #include <mango/vulkan/vulkan.hpp>
+#include "../window/window_backend.hpp"
 
 namespace mango::vulkan
 {
@@ -668,6 +669,14 @@ namespace mango::vulkan
 
     VkResult Swapchain::present(u32 imageIndex)
     {
+        if (m_window)
+        {
+            if (WindowBackend* backend = m_window->backend())
+            {
+                backend->beforePresent();
+            }
+        }
+
         VkSemaphore renderFinishedSemaphore = m_renderFinishedSemaphores[imageIndex];
 
         VkPresentInfoKHR presentInfo =

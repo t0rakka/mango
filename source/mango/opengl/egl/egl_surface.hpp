@@ -20,6 +20,7 @@ namespace mango
             void* cookie = nullptr;
             void (*sync)(WindowBackend* backend, void* cookie) = nullptr;
             void (*destroy)(void* cookie) = nullptr;
+            bool present_opaque = false;
         };
 
         void* getNativeDisplay(WindowBackend* backend);
