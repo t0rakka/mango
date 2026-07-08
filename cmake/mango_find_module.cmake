@@ -131,7 +131,12 @@ function (locate_module Prefix ModuleName PackageName ImportedTarget Version Out
                 endif ()
             endif ()
 
-            if (NOT _imported_target STREQUAL "")
+            # vcpkg FindJXR exposes include dirs + libs, not an imported target.
+            # Prefer manual wiring so JXRGlue.h (under include/jxrlib) is on the path.
+            if (${Prefix} STREQUAL "JXR" AND DEFINED JXR_INCLUDE_DIRS AND DEFINED JXR_LIBRARIES)
+                set(_found TRUE)
+                set(_method "manual")
+            elseif (NOT _imported_target STREQUAL "")
                 set(_found TRUE)
                 set(_method "cmake")
                 set(_package_name ${PackageName})
