@@ -321,6 +321,9 @@ if (UNIX AND NOT APPLE AND NOT EMSCRIPTEN AND BUILD_MANGO_WINDOW)
             pkg_check_modules(WAYLAND_CLIENT QUIET wayland-client)
             pkg_check_modules(WAYLAND_PROTOCOLS QUIET wayland-protocols)
             find_program(WAYLAND_SCANNER wayland-scanner)
+            if (WAYLAND_PROTOCOLS_FOUND)
+                pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
+            endif ()
             if (NOT WAYLAND_CLIENT_FOUND OR NOT WAYLAND_PROTOCOLS_FOUND OR NOT WAYLAND_SCANNER)
                 set(_mango_wayland_ok FALSE)
             endif ()
@@ -395,9 +398,6 @@ if (BUILD_MANGO_WINDOW)
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.hpp
                 ${MANGO_SOURCE_DIR}/window/wayland/wayland_window.cpp
             )
-
-            pkg_check_modules(WAYLAND_PROTOCOLS REQUIRED wayland-protocols)
-            pkg_get_variable(WAYLAND_PROTOCOLS_DIR wayland-protocols pkgdatadir)
 
             set(XDG_SHELL_XML "${WAYLAND_PROTOCOLS_DIR}/stable/xdg-shell/xdg-shell.xml")
             set(XDG_SHELL_CLIENT_HEADER "${CMAKE_CURRENT_BINARY_DIR}/xdg-shell-client-protocol.h")
@@ -745,218 +745,8 @@ mango_link_libraries()
 # configuration
 # ------------------------------------------------------------------------------
 
-set(SIMD "NONE")
-
-if (BUILD_SHARED_LIBS)
-    # MANGO_SHARED / MANGO_API_EXPORT are set per-library in cmake/mango_libraries.cmake
-endif ()
-
-if (WIN32)
-    # UNICODE is set per-library in cmake/mango_libraries.cmake
-endif ()
-
-if ((ARM AND ENABLE_NEON) OR ARM64)
-    set(SIMD "NEON")
-endif ()
-
-if (EMSCRIPTEN)
-
-    set(SIMD "WASM")
-    target_compile_options(mango-core PUBLIC "-msimd128")
-
-elseif (MSVC)
-
-    target_compile_options(mango-core PUBLIC $<$<CONFIG:Release>:/Ox>)
-    target_compile_options(mango-core PUBLIC "/utf-8")
-    target_compile_options(mango-core PUBLIC "/MP")
-
-    if (X86 OR X86_64)
-
-        if (ENABLE_PCLMUL)
-            target_compile_definitions(mango-core PUBLIC "__PCLMUL__")
-        endif ()
-
-        if (ENABLE_POPCNT)
-            target_compile_definitions(mango-core PUBLIC "__POPCNT__")
-        endif ()
-
-        if (ENABLE_AES)
-            target_compile_definitions(mango-core PUBLIC "__AES__")
-        endif ()
-
-        if (ENABLE_F16C)
-            target_compile_definitions(mango-core PUBLIC "__F16C__")
-        endif ()
-
-        if (ENABLE_LZCNT)
-            target_compile_definitions(mango-core PUBLIC "__LZCNT__")
-        endif ()
-
-        if (ENABLE_BMI)
-            target_compile_definitions(mango-core PUBLIC "__BMI__")
-        endif ()
-
-        if (ENABLE_BMI2)
-            target_compile_definitions(mango-core PUBLIC "__BMI2__")
-        endif ()
-
-        if (ENABLE_FMA)
-            target_compile_definitions(mango-core PUBLIC "__FMA__")
-        endif ()
-
-        if (ENABLE_SHA)
-            target_compile_definitions(mango-core PUBLIC "__SHA__")
-        endif ()
-
-        # enable only one (the most recent) SIMD extension
-        if (ENABLE_AVX512)
-            set(SIMD "AVX-512 (2015)")
-            target_compile_options(mango-core PUBLIC "/arch:AVX512")
-            target_compile_definitions(mango-core PUBLIC "__AVX512F__" "__AVX512DQ__")
-        elseif (ENABLE_AVX2)
-            set(SIMD "AVX2 (2013)")
-            target_compile_options(mango-core PUBLIC "/arch:AVX2")
-        elseif (ENABLE_AVX)
-            set(SIMD "AVX (2008)")
-            target_compile_options(mango-core PUBLIC "/arch:AVX")
-        elseif (ENABLE_SSE2 OR ENABLE_SSE4)
-            # MSVC does not have SSE4 option; at least enable SSE2
-            set(SIMD "SSE2 (2001)")
-            if (NOT X86_64)
-                # MSVC enables SSE2 by default on X86_64
-                target_compile_options(mango-core PUBLIC "/arch:SSE2")
-            endif ()
-        endif ()
-
-    endif ()
-
-else ()
-
-    add_compile_options(-Wall)
-    target_compile_options(mango-core PRIVATE $<$<CONFIG:Release>:-O3>)
-
-    if (CYGWIN)
-        target_compile_options(mango-core PUBLIC "-municode")
-    endif ()
-
-    if ("${CMAKE_CXX_COMPILER_ID}" STREQUAL "GNU")
-        target_compile_options(mango-core PUBLIC "-ftree-vectorize")
-        set(CMAKE_CXX_FLAGS "-Wno-psabi")
-    endif ()
-
-    if (ARM AND (NOT APPLE))
-        # The compiler for Apple Silicon does not recognize these
-        add_definitions (-mfpu=neon -mfloat-abi=hard)
-    endif ()
-
-    if (X86 OR X86_64)
-
-        if (ENABLE_PCLMUL)
-            target_compile_options(mango-core PUBLIC "-mpclmul")
-        endif ()
-
-        if (ENABLE_POPCNT)
-            target_compile_options(mango-core PUBLIC "-mpopcnt")
-        endif ()
-
-        if (ENABLE_AES)
-            target_compile_options(mango-core PUBLIC "-maes")
-        endif ()
-
-        if (ENABLE_F16C)
-            target_compile_options(mango-core PUBLIC "-mf16c")
-        endif ()
-
-        if (ENABLE_LZCNT)
-            target_compile_options(mango-core PUBLIC "-mlzcnt")
-        endif ()
-
-        if (ENABLE_BMI)
-            target_compile_options(mango-core PUBLIC "-mbmi")
-        endif ()
-
-        if (ENABLE_BMI2)
-            target_compile_options(mango-core PUBLIC "-mbmi2")
-        endif ()
-
-        if (ENABLE_FMA)
-            target_compile_options(mango-core PUBLIC "-mfma")
-        endif ()
-
-        if (ENABLE_SHA)
-            target_compile_options(mango-core PUBLIC "-msha")
-        endif ()
-
-        # enable only one (the most recent) SIMD extension
-        if (ENABLE_AVX512)
-            set(SIMD "AVX-512 (2015)")
-            target_compile_options(mango-core PUBLIC "-mavx512dq")
-            target_compile_options(mango-core PUBLIC "-mavx512vl")
-            target_compile_options(mango-core PUBLIC "-mavx512bw")
-        elseif (ENABLE_AVX2)
-            set(SIMD "AVX2 (2013)")
-            target_compile_options(mango-core PUBLIC "-mavx2")
-        elseif (ENABLE_AVX)
-            set(SIMD "AVX (2008)")
-            target_compile_options(mango-core PUBLIC "-mavx")
-        elseif (ENABLE_SSE4)
-            set(SIMD "SSE4.2 (2006)")
-            target_compile_options(mango-core PUBLIC "-msse4")
-        elseif (ENABLE_SSE2)
-            set(SIMD "SSE2 (2001)")
-            target_compile_options(mango-core PUBLIC "-msse2")
-        endif ()
-
-    endif ()
-endif ()
-
-# ------------------------------------------------------------------------------
-# ISA Extensions
-# ------------------------------------------------------------------------------
-
-message("[ISA Extensions]")
-
-if (X86 OR X86_64)
-
-    if (ENABLE_PCLMUL)
-        message("    PCLMUL (2008)")
-    endif ()
-
-    if (ENABLE_POPCNT)
-        message("    POPCNT (2008)")
-    endif ()
-
-    if (ENABLE_AES)
-        message("    AES (2010)")
-    endif ()
-
-    if (ENABLE_F16C)
-        message("    F16C (2012)")
-    endif ()
-
-    if (ENABLE_LZCNT)
-        message("    LZCNT (2013)")
-    endif ()
-
-    if (ENABLE_BMI)
-        message("    BMI (2013)")
-    endif ()
-
-    if (ENABLE_BMI2)
-        message("    BMI2 (2013)")
-    endif ()
-
-    if (ENABLE_FMA)
-        message("    FMA (2013)")
-    endif ()
-
-    if (ENABLE_SHA)
-        message("    SHA (2013)")
-    endif ()
-
-endif()
-
-message("    SIMD: " ${SIMD})
+include(${CMAKE_CURRENT_LIST_DIR}/cmake/mango_simd.cmake)
+mango_configure_isa()
 
 # ------------------------------------------------------------------------------
 # Build Options
