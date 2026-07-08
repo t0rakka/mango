@@ -130,9 +130,23 @@ namespace
     }
 
     EGLConfigChoice chooseEGLConfigWithRetry(EGLDisplay display, mango::OpenGLWindow::Config& config,
-                                             EGLNativeWindowType native_window)
+                                             EGLNativeWindowType native_window, bool present_opaque)
     {
+        const auto saved_alpha = config.alpha;
+        if (present_opaque)
+        {
+            // Wayland compositors blend using buffer alpha; prefer configs without
+            // an alpha channel so partial alpha cannot punch through to the desktop.
+            config.alpha = 0;
+        }
+
         EGLConfigChoice choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+
+        if (!choice.config && present_opaque && saved_alpha > 0)
+        {
+            config.alpha = saved_alpha;
+            choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+        }
 
         if (!choice.config && config.samples > 1)
         {
@@ -154,8 +168,32 @@ namespace
     }
 
     EGLSurface createEGLWindowSurface(EGLDisplay display, EGLConfig config,
-                                      EGLNativeWindowType native_window, bool srgb)
+                                      EGLNativeWindowType native_window, bool srgb,
+                                      bool present_opaque)
     {
+        const bool use_present_opaque = present_opaque && eglHasExtension(display, "EGL_EXT_present_opaque");
+
+        if (srgb && use_present_opaque)
+        {
+            const EGLint attribs[] =
+            {
+                EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
+                EGL_PRESENT_OPAQUE_EXT, EGL_TRUE,
+                EGL_NONE,
+            };
+
+            eglClearErrors();
+            EGLSurface surface = eglCreateWindowSurface(display, config, native_window, attribs);
+            if (surface != EGL_NO_SURFACE)
+            {
+                mango::printLine("[EGL] EGL_KHR_gl_colorspace : sRGB + EGL_EXT_present_opaque");
+                return surface;
+            }
+
+            mango::printLine(mango::Print::Warning, "[EGL] sRGB+opaque surface creation failed (0x{:x}), retrying",
+                eglGetError());
+        }
+
         if (srgb)
         {
             const EGLint attribs[] =
@@ -173,6 +211,26 @@ namespace
             }
 
             mango::printLine(mango::Print::Warning, "[EGL] sRGB surface creation failed (0x{:x}), using linear colorspace",
+                eglGetError());
+        }
+
+        if (use_present_opaque)
+        {
+            const EGLint attribs[] =
+            {
+                EGL_PRESENT_OPAQUE_EXT, EGL_TRUE,
+                EGL_NONE,
+            };
+
+            eglClearErrors();
+            EGLSurface surface = eglCreateWindowSurface(display, config, native_window, attribs);
+            if (surface != EGL_NO_SURFACE)
+            {
+                mango::printLine("[EGL] EGL_EXT_present_opaque");
+                return surface;
+            }
+
+            mango::printLine(mango::Print::Warning, "[EGL] opaque surface creation failed (0x{:x}), using default",
                 eglGetError());
         }
 
@@ -256,7 +314,8 @@ namespace mango
             EGLNativeWindowType native_window = (EGLNativeWindowType)(std::uintptr_t)native;
 
             {
-                EGLConfigChoice choice = chooseEGLConfigWithRetry(egl_display, config, native_window);
+                EGLConfigChoice choice = chooseEGLConfigWithRetry(egl_display, config, native_window,
+                    m_native_binding.present_opaque);
                 if (!choice.config)
                 {
                     shutdown();
@@ -275,7 +334,8 @@ namespace mango
 
             printLine("[EGL] eglCreateContext() : OK");
 
-            egl_surface = createEGLWindowSurface(egl_display, eglConfig, native_window, srgb_surface);
+            egl_surface = createEGLWindowSurface(egl_display, eglConfig, native_window, srgb_surface,
+                m_native_binding.present_opaque);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();

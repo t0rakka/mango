@@ -71,6 +71,7 @@ namespace mango::opengl::egl
             }
 
             syncWaylandState(cookie);
+            state->backend->beforePresent();
         }
 
         void destroyWaylandState(void* cookie)
@@ -123,6 +124,7 @@ namespace mango::opengl::egl
         wayland->graphics_hooks.destroy = destroyWaylandState;
 
         result.native_window = state->egl_window;
+        result.present_opaque = true;
         result.cookie = state;
         result.sync = [](WindowBackend* window_backend, void* cookie) {
             MANGO_UNREFERENCED(window_backend);

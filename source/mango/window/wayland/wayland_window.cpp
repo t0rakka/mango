@@ -1030,6 +1030,11 @@ namespace mango
         wl_region_add(region, 0, 0, size[0], size[1]);
         wl_surface_set_opaque_region(surface, region);
         wl_region_destroy(region);
+
+        if (display)
+        {
+            wl_display_flush(display);
+        }
     }
 
     void WaylandBackend::syncGraphicsSurfaceFromResize()
@@ -1208,6 +1213,13 @@ namespace mango
         // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
         // and the idle wait is capped, so a cross-thread change is noticed within the
         // cap without an explicit wake. A self-pipe could make this immediate later.
+    }
+
+    void WaylandBackend::beforePresent()
+    {
+        // wl_surface opaque region is double-buffered and must be set before each
+        // attach/commit (EGL swap / Vulkan present), not only on configure/resize.
+        syncOpaqueRegion();
     }
 
     void WaylandBackend::runEventLoop()
