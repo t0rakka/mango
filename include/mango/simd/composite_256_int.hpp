@@ -18,7 +18,7 @@ namespace mango::simd
                       : get_component<index & mask>(vec.data[1])
 
 #define SIMD_COMPOSITE_FUNC1(R, A, FUNC) \
-    static inline R FUNC(A a) \
+    inline R FUNC(A a) \
     { \
         auto lo = FUNC(a.data[0]); \
         auto hi = FUNC(a.data[1]); \
@@ -26,7 +26,7 @@ namespace mango::simd
     }
 
 #define SIMD_COMPOSITE_FUNC2(R, AB, FUNC) \
-    static inline R FUNC(AB a, AB b) \
+    inline R FUNC(AB a, AB b) \
     { \
         auto lo = FUNC(a.data[0], b.data[0]); \
         auto hi = FUNC(a.data[1], b.data[1]); \
@@ -34,7 +34,7 @@ namespace mango::simd
     }
 
 #define SIMD_COMPOSITE_SELECT(MASK, AB, FUNC) \
-    static inline AB select(MASK mask, AB a, AB b) \
+    inline AB select(MASK mask, AB a, AB b) \
     { \
         auto lo = select(mask.data[0], a.data[0], b.data[0]); \
         auto hi = select(mask.data[1], a.data[1], b.data[1]); \
@@ -42,7 +42,7 @@ namespace mango::simd
     }
 
 #define SIMD_COMPOSITE_ZEROMASK_FUNC1(R, A, MASK, FUNC) \
-    static inline R FUNC(A a, MASK mask) \
+    inline R FUNC(A a, MASK mask) \
     { \
         auto lo = FUNC(a.data[0], mask.data[0]); \
         auto hi = FUNC(a.data[1], mask.data[1]); \
@@ -50,7 +50,7 @@ namespace mango::simd
     }
 
 #define SIMD_COMPOSITE_ZEROMASK_FUNC2(R, AB, MASK, FUNC) \
-    static inline R FUNC(AB a, AB b, MASK mask) \
+    inline R FUNC(AB a, AB b, MASK mask) \
     { \
         auto lo = FUNC(a.data[0], b.data[0], mask.data[0]); \
         auto hi = FUNC(a.data[1], b.data[1], mask.data[1]); \
@@ -58,7 +58,7 @@ namespace mango::simd
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC1(R, A, MASK, FUNC) \
-    static inline R FUNC(A a, MASK mask, R value) \
+    inline R FUNC(A a, MASK mask, R value) \
     { \
         auto lo = FUNC(a.data[0], mask.data[0], value.data[0]); \
         auto hi = FUNC(a.data[1], mask.data[1], value.data[1]); \
@@ -66,7 +66,7 @@ namespace mango::simd
     }
 
 #define SIMD_COMPOSITE_MASK_FUNC2(R, AB, MASK, FUNC) \
-    static inline R FUNC(AB a, AB b, MASK mask, R value) \
+    inline R FUNC(AB a, AB b, MASK mask, R value) \
     { \
         auto lo = FUNC(a.data[0], b.data[0], mask.data[0], value.data[0]); \
         auto hi = FUNC(a.data[1], b.data[1], mask.data[1], value.data[1]); \
@@ -78,7 +78,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline u8x32 set_component(u8x32 a, u8 b)
+    inline u8x32 set_component(u8x32 a, u8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 15, Index);
@@ -86,27 +86,27 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline u8 get_component(u8x32 a)
+    inline u8 get_component(u8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 15, Index);
     }
 
-    static inline u8x32 u8x32_zero()
+    inline u8x32 u8x32_zero()
     {
         auto lo = u8x16_zero();
         auto hi = u8x16_zero();
         return { lo, hi };
     }
 
-    static inline u8x32 u8x32_set(u8 s)
+    inline u8x32 u8x32_set(u8 s)
     {
         auto lo = u8x16_set(s);
         auto hi = u8x16_set(s);
         return { lo, hi };
     }
 
-    static inline u8x32 u8x32_set(
+    inline u8x32 u8x32_set(
         u8 v00, u8 v01, u8 v02, u8 v03, u8 v04, u8 v05, u8 v06, u8 v07,
         u8 v08, u8 v09, u8 v10, u8 v11, u8 v12, u8 v13, u8 v14, u8 v15,
         u8 v16, u8 v17, u8 v18, u8 v19, u8 v20, u8 v21, u8 v22, u8 v23,
@@ -119,14 +119,14 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u8x32 u8x32_uload(const void* source)
+    inline u8x32 u8x32_uload(const void* source)
     {
         auto lo = u8x16_uload(reinterpret_cast<const u8*>(source) +  0);
         auto hi = u8x16_uload(reinterpret_cast<const u8*>(source) + 16);
         return { lo, hi };
     }
 
-    static inline void u8x32_ustore(void* dest, u8x32 a)
+    inline void u8x32_ustore(void* dest, u8x32 a)
     {
         u8x16_ustore(reinterpret_cast<u8*>(dest) +  0, a.data[0]);
         u8x16_ustore(reinterpret_cast<u8*>(dest) + 16, a.data[1]);
@@ -175,7 +175,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline u16x16 set_component(u16x16 a, u16 b)
+    inline u16x16 set_component(u16x16 a, u16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 7, Index);
@@ -183,27 +183,27 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline u16 get_component(u16x16 a)
+    inline u16 get_component(u16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 7, Index);
     }
 
-    static inline u16x16 u16x16_zero()
+    inline u16x16 u16x16_zero()
     {
         auto lo = u16x8_zero();
         auto hi = u16x8_zero();
         return { lo, hi };
     }
 
-    static inline u16x16 u16x16_set(u16 s)
+    inline u16x16 u16x16_set(u16 s)
     {
         auto lo = u16x8_set(s);
         auto hi = u16x8_set(s);
         return { lo, hi };
     }
 
-    static inline u16x16 u16x16_set(
+    inline u16x16 u16x16_set(
         u16 v00, u16 v01, u16 v02, u16 v03, u16 v04, u16 v05, u16 v06, u16 v07,
         u16 v08, u16 v09, u16 v10, u16 v11, u16 v12, u16 v13, u16 v14, u16 v15)
     {
@@ -212,14 +212,14 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u16x16 u16x16_uload(const void* source)
+    inline u16x16 u16x16_uload(const void* source)
     {
         auto lo = u16x8_uload(reinterpret_cast<const u16*>(source) + 0);
         auto hi = u16x8_uload(reinterpret_cast<const u16*>(source) + 8);
         return { lo, hi };
     }
 
-    static inline void u16x16_ustore(void* dest, u16x16 a)
+    inline void u16x16_ustore(void* dest, u16x16 a)
     {
         u16x8_ustore(reinterpret_cast<u16*>(dest) + 0, a.data[0]);
         u16x8_ustore(reinterpret_cast<u16*>(dest) + 8, a.data[1]);
@@ -267,7 +267,7 @@ namespace mango::simd
     // shift by constant
 
     template <int Count>
-    static inline u16x16 slli(u16x16 a)
+    inline u16x16 slli(u16x16 a)
     {
         auto lo = slli<Count>(a.data[0]);
         auto hi = slli<Count>(a.data[1]);
@@ -275,7 +275,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline u16x16 srli(u16x16 a)
+    inline u16x16 srli(u16x16 a)
     {
         auto lo = srli<Count>(a.data[0]);
         auto hi = srli<Count>(a.data[1]);
@@ -283,7 +283,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline u16x16 srai(u16x16 a)
+    inline u16x16 srai(u16x16 a)
     {
         auto lo = srai<Count>(a.data[0]);
         auto hi = srai<Count>(a.data[1]);
@@ -292,21 +292,21 @@ namespace mango::simd
 
     // shift by scalar
 
-    static inline u16x16 sll(u16x16 a, int count)
+    inline u16x16 sll(u16x16 a, int count)
     {
         auto lo = sll(a.data[0], count);
         auto hi = sll(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline u16x16 srl(u16x16 a, int count)
+    inline u16x16 srl(u16x16 a, int count)
     {
         auto lo = srl(a.data[0], count);
         auto hi = srl(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline u16x16 sra(u16x16 a, int count)
+    inline u16x16 sra(u16x16 a, int count)
     {
         auto lo = sra(a.data[0], count);
         auto hi = sra(a.data[1], count);
@@ -318,7 +318,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline u32x8 set_component(u32x8 a, u32 b)
+    inline u32x8 set_component(u32x8 a, u32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 3, Index);
@@ -326,41 +326,41 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline u32 get_component(u32x8 a)
+    inline u32 get_component(u32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 3, Index);
     }
 
-    static inline u32x8 u32x8_zero()
+    inline u32x8 u32x8_zero()
     {
         auto lo = u32x4_zero();
         auto hi = u32x4_zero();
         return { lo, hi };
     }
 
-    static inline u32x8 u32x8_set(u32 s)
+    inline u32x8 u32x8_set(u32 s)
     {
         auto lo = u32x4_set(s);
         auto hi = u32x4_set(s);
         return { lo, hi };
     }
 
-    static inline u32x8 u32x8_set(u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5, u32 v6, u32 v7)
+    inline u32x8 u32x8_set(u32 v0, u32 v1, u32 v2, u32 v3, u32 v4, u32 v5, u32 v6, u32 v7)
     {
         auto lo = u32x4_set(v0, v1, v2, v3);
         auto hi = u32x4_set(v4, v5, v6, v7);
         return { lo, hi };
     }
 
-    static inline u32x8 u32x8_uload(const void* source)
+    inline u32x8 u32x8_uload(const void* source)
     {
         auto lo = u32x4_uload(reinterpret_cast<const u32*>(source) + 0);
         auto hi = u32x4_uload(reinterpret_cast<const u32*>(source) + 4);
         return { lo, hi };
     }
 
-    static inline void u32x8_ustore(void* dest, u32x8 a)
+    inline void u32x8_ustore(void* dest, u32x8 a)
     {
         u32x4_ustore(reinterpret_cast<u32*>(dest) + 0, a.data[0]);
         u32x4_ustore(reinterpret_cast<u32*>(dest) + 4, a.data[1]);
@@ -408,7 +408,7 @@ namespace mango::simd
     // shift by constant
 
     template <int Count>
-    static inline u32x8 slli(u32x8 a)
+    inline u32x8 slli(u32x8 a)
     {
         auto lo = slli<Count>(a.data[0]);
         auto hi = slli<Count>(a.data[1]);
@@ -416,7 +416,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline u32x8 srli(u32x8 a)
+    inline u32x8 srli(u32x8 a)
     {
         auto lo = srli<Count>(a.data[0]);
         auto hi = srli<Count>(a.data[1]);
@@ -424,7 +424,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline u32x8 srai(u32x8 a)
+    inline u32x8 srai(u32x8 a)
     {
         auto lo = srai<Count>(a.data[0]);
         auto hi = srai<Count>(a.data[1]);
@@ -433,21 +433,21 @@ namespace mango::simd
 
     // shift by scalar
 
-    static inline u32x8 sll(u32x8 a, int count)
+    inline u32x8 sll(u32x8 a, int count)
     {
         auto lo = sll(a.data[0], count);
         auto hi = sll(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline u32x8 srl(u32x8 a, int count)
+    inline u32x8 srl(u32x8 a, int count)
     {
         auto lo = srl(a.data[0], count);
         auto hi = srl(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline u32x8 sra(u32x8 a, int count)
+    inline u32x8 sra(u32x8 a, int count)
     {
         auto lo = sra(a.data[0], count);
         auto hi = sra(a.data[1], count);
@@ -456,21 +456,21 @@ namespace mango::simd
 
     // shift by vector
 
-    static inline u32x8 sll(u32x8 a, u32x8 count)
+    inline u32x8 sll(u32x8 a, u32x8 count)
     {
         auto lo = sll(a.data[0], count.data[0]);
         auto hi = sll(a.data[1], count.data[1]);
         return { lo, hi };
     }
 
-    static inline u32x8 srl(u32x8 a, u32x8 count)
+    inline u32x8 srl(u32x8 a, u32x8 count)
     {
         auto lo = srl(a.data[0], count.data[0]);
         auto hi = srl(a.data[1], count.data[1]);
         return { lo, hi };
     }
 
-    static inline u32x8 sra(u32x8 a, u32x8 count)
+    inline u32x8 sra(u32x8 a, u32x8 count)
     {
         auto lo = sra(a.data[0], count.data[0]);
         auto hi = sra(a.data[1], count.data[1]);
@@ -482,7 +482,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <u32 x_, u32 y_, u32 z_, u32 w_>
-    static inline u64x4 shuffle(u64x4 v)
+    inline u64x4 shuffle(u64x4 v)
     {
         static_assert(x_ < 4 && y_ < 4 && z_ < 4 && w_ < 4, "Index out of range.");
         const u64 x = SIMD_GET_COMPONENT(v, 1, x_);
@@ -495,7 +495,7 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline u64x4 set_component(u64x4 a, u64 b)
+    inline u64x4 set_component(u64x4 a, u64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 1, Index);
@@ -503,41 +503,41 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline u64 get_component(u64x4 a)
+    inline u64 get_component(u64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 1, Index);
     }
 
-    static inline u64x4 u64x4_zero()
+    inline u64x4 u64x4_zero()
     {
         auto lo = u64x2_zero();
         auto hi = u64x2_zero();
         return { lo, hi };
     }
 
-    static inline u64x4 u64x4_set(u64 s)
+    inline u64x4 u64x4_set(u64 s)
     {
         auto lo = u64x2_set(s);
         auto hi = u64x2_set(s);
         return { lo, hi };
     }
 
-    static inline u64x4 u64x4_set(u64 x, u64 y, u64 z, u64 w)
+    inline u64x4 u64x4_set(u64 x, u64 y, u64 z, u64 w)
     {
         auto lo = u64x2_set(x, y);
         auto hi = u64x2_set(z, w);
         return { lo, hi };
     }
 
-    static inline u64x4 u64x4_uload(const void* source)
+    inline u64x4 u64x4_uload(const void* source)
     {
         auto lo = u64x2_uload(reinterpret_cast<const u64*>(source) + 0);
         auto hi = u64x2_uload(reinterpret_cast<const u64*>(source) + 2);
         return { lo, hi };
     }
 
-    static inline void u64x4_ustore(void* dest, u64x4 a)
+    inline void u64x4_ustore(void* dest, u64x4 a)
     {
         u64x2_ustore(reinterpret_cast<u64*>(dest) + 0, a.data[0]);
         u64x2_ustore(reinterpret_cast<u64*>(dest) + 2, a.data[1]);
@@ -577,7 +577,7 @@ namespace mango::simd
     // shift by constant
 
     template <int Count>
-    static inline u64x4 slli(u64x4 a)
+    inline u64x4 slli(u64x4 a)
     {
         auto lo = slli<Count>(a.data[0]);
         auto hi = slli<Count>(a.data[1]);
@@ -585,7 +585,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline u64x4 srli(u64x4 a)
+    inline u64x4 srli(u64x4 a)
     {
         auto lo = srli<Count>(a.data[0]);
         auto hi = srli<Count>(a.data[1]);
@@ -594,14 +594,14 @@ namespace mango::simd
 
     // shift by scalar
 
-    static inline u64x4 sll(u64x4 a, int count)
+    inline u64x4 sll(u64x4 a, int count)
     {
         auto lo = sll(a.data[0], count);
         auto hi = sll(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline u64x4 srl(u64x4 a, int count)
+    inline u64x4 srl(u64x4 a, int count)
     {
         auto lo = srl(a.data[0], count);
         auto hi = srl(a.data[1], count);
@@ -613,7 +613,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline s8x32 set_component(s8x32 a, s8 b)
+    inline s8x32 set_component(s8x32 a, s8 b)
     {
         static_assert(Index < 32, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 15, Index);
@@ -621,27 +621,27 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline s8 get_component(s8x32 a)
+    inline s8 get_component(s8x32 a)
     {
         static_assert(Index < 32, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 15, Index);
     }
 
-    static inline s8x32 s8x32_zero()
+    inline s8x32 s8x32_zero()
     {
         auto lo = s8x16_zero();
         auto hi = s8x16_zero();
         return { lo, hi };
     }
 
-    static inline s8x32 s8x32_set(s8 s)
+    inline s8x32 s8x32_set(s8 s)
     {
         auto lo = s8x16_set(s);
         auto hi = s8x16_set(s);
         return { lo, hi };
     }
 
-    static inline s8x32 s8x32_set(
+    inline s8x32 s8x32_set(
         s8 v00, s8 v01, s8 v02, s8 v03, s8 v04, s8 v05, s8 v06, s8 v07,
         s8 v08, s8 v09, s8 v10, s8 v11, s8 v12, s8 v13, s8 v14, s8 v15,
         s8 v16, s8 v17, s8 v18, s8 v19, s8 v20, s8 v21, s8 v22, s8 v23,
@@ -654,14 +654,14 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s8x32 s8x32_uload(const void* source)
+    inline s8x32 s8x32_uload(const void* source)
     {
         auto lo = s8x16_uload(reinterpret_cast<const s8*>(source) +  0);
         auto hi = s8x16_uload(reinterpret_cast<const s8*>(source) + 16);
         return { lo, hi };
     }
 
-    static inline void s8x32_ustore(void* dest, s8x32 a)
+    inline void s8x32_ustore(void* dest, s8x32 a)
     {
         s8x16_ustore(reinterpret_cast<s8*>(dest) +  0, a.data[0]);
         s8x16_ustore(reinterpret_cast<s8*>(dest) + 16, a.data[1]);
@@ -714,7 +714,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline s16x16 set_component(s16x16 a, s16 b)
+    inline s16x16 set_component(s16x16 a, s16 b)
     {
         static_assert(Index < 16, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 7, Index);
@@ -722,27 +722,27 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline s16 get_component(s16x16 a)
+    inline s16 get_component(s16x16 a)
     {
         static_assert(Index < 16, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 7, Index);
     }
 
-    static inline s16x16 s16x16_zero()
+    inline s16x16 s16x16_zero()
     {
         auto lo = s16x8_zero();
         auto hi = s16x8_zero();
         return { lo, hi };
     }
 
-    static inline s16x16 s16x16_set(s16 s)
+    inline s16x16 s16x16_set(s16 s)
     {
         auto lo = s16x8_set(s);
         auto hi = s16x8_set(s);
         return { lo, hi };
     }
 
-    static inline s16x16 s16x16_set(
+    inline s16x16 s16x16_set(
         s16 v00, s16 v01, s16 v02, s16 v03, s16 v04, s16 v05, s16 v06, s16 v07,
         s16 v08, s16 v09, s16 v10, s16 v11, s16 v12, s16 v13, s16 v14, s16 v15)
     {
@@ -751,14 +751,14 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s16x16 s16x16_uload(const void* source)
+    inline s16x16 s16x16_uload(const void* source)
     {
         auto lo = s16x8_uload(reinterpret_cast<const s16*>(source) + 0);
         auto hi = s16x8_uload(reinterpret_cast<const s16*>(source) + 8);
         return { lo, hi };
     }
 
-    static inline void s16x16_ustore(void* dest, s16x16 a)
+    inline void s16x16_ustore(void* dest, s16x16 a)
     {
         s16x8_ustore(reinterpret_cast<s16*>(dest) + 0, a.data[0]);
         s16x8_ustore(reinterpret_cast<s16*>(dest) + 8, a.data[1]);
@@ -817,7 +817,7 @@ namespace mango::simd
     // shift by constant
 
     template <int Count>
-    static inline s16x16 slli(s16x16 a)
+    inline s16x16 slli(s16x16 a)
     {
         auto lo = slli<Count>(a.data[0]);
         auto hi = slli<Count>(a.data[1]);
@@ -825,7 +825,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline s16x16 srli(s16x16 a)
+    inline s16x16 srli(s16x16 a)
     {
         auto lo = srli<Count>(a.data[0]);
         auto hi = srli<Count>(a.data[1]);
@@ -833,7 +833,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline s16x16 srai(s16x16 a)
+    inline s16x16 srai(s16x16 a)
     {
         auto lo = srai<Count>(a.data[0]);
         auto hi = srai<Count>(a.data[1]);
@@ -842,21 +842,21 @@ namespace mango::simd
 
     // shift by scalar
 
-    static inline s16x16 sll(s16x16 a, int count)
+    inline s16x16 sll(s16x16 a, int count)
     {
         auto lo = sll(a.data[0], count);
         auto hi = sll(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline s16x16 srl(s16x16 a, int count)
+    inline s16x16 srl(s16x16 a, int count)
     {
         auto lo = srl(a.data[0], count);
         auto hi = srl(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline s16x16 sra(s16x16 a, int count)
+    inline s16x16 sra(s16x16 a, int count)
     {
         auto lo = sra(a.data[0], count);
         auto hi = sra(a.data[1], count);
@@ -868,7 +868,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <unsigned int Index>
-    static inline s32x8 set_component(s32x8 a, s32 b)
+    inline s32x8 set_component(s32x8 a, s32 b)
     {
         static_assert(Index < 8, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 3, Index);
@@ -876,41 +876,41 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline s32 get_component(s32x8 a)
+    inline s32 get_component(s32x8 a)
     {
         static_assert(Index < 8, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 3, Index);
     }
 
-    static inline s32x8 s32x8_zero()
+    inline s32x8 s32x8_zero()
     {
         auto lo = s32x4_zero();
         auto hi = s32x4_zero();
         return { lo, hi };
     }
 
-    static inline s32x8 s32x8_set(s32 s)
+    inline s32x8 s32x8_set(s32 s)
     {
         auto lo = s32x4_set(s);
         auto hi = s32x4_set(s);
         return { lo, hi };
     }
 
-    static inline s32x8 s32x8_set(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7)
+    inline s32x8 s32x8_set(s32 v0, s32 v1, s32 v2, s32 v3, s32 v4, s32 v5, s32 v6, s32 v7)
     {
         auto lo = s32x4_set(v0, v1, v2, v3);
         auto hi = s32x4_set(v4, v5, v6, v7);
         return { lo, hi };
     }
 
-    static inline s32x8 s32x8_uload(const void* source)
+    inline s32x8 s32x8_uload(const void* source)
     {
         auto lo = s32x4_uload(reinterpret_cast<const s32*>(source) + 0);
         auto hi = s32x4_uload(reinterpret_cast<const s32*>(source) + 4);
         return { lo, hi };
     }
 
-    static inline void s32x8_ustore(void* dest, s32x8 a)
+    inline void s32x8_ustore(void* dest, s32x8 a)
     {
         s32x4_ustore(reinterpret_cast<s32*>(dest) + 0, a.data[0]);
         s32x4_ustore(reinterpret_cast<s32*>(dest) + 4, a.data[1]);
@@ -964,7 +964,7 @@ namespace mango::simd
     // shift by constant
 
     template <int Count>
-    static inline s32x8 slli(s32x8 a)
+    inline s32x8 slli(s32x8 a)
     {
         auto lo = slli<Count>(a.data[0]);
         auto hi = slli<Count>(a.data[1]);
@@ -972,7 +972,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline s32x8 srli(s32x8 a)
+    inline s32x8 srli(s32x8 a)
     {
         auto lo = srli<Count>(a.data[0]);
         auto hi = srli<Count>(a.data[1]);
@@ -980,7 +980,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline s32x8 srai(s32x8 a)
+    inline s32x8 srai(s32x8 a)
     {
         auto lo = srai<Count>(a.data[0]);
         auto hi = srai<Count>(a.data[1]);
@@ -989,21 +989,21 @@ namespace mango::simd
 
     // shift by scalar
 
-    static inline s32x8 sll(s32x8 a, int count)
+    inline s32x8 sll(s32x8 a, int count)
     {
         auto lo = sll(a.data[0], count);
         auto hi = sll(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline s32x8 srl(s32x8 a, int count)
+    inline s32x8 srl(s32x8 a, int count)
     {
         auto lo = srl(a.data[0], count);
         auto hi = srl(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline s32x8 sra(s32x8 a, int count)
+    inline s32x8 sra(s32x8 a, int count)
     {
         auto lo = sra(a.data[0], count);
         auto hi = sra(a.data[1], count);
@@ -1012,21 +1012,21 @@ namespace mango::simd
 
     // shift by vector
 
-    static inline s32x8 sll(s32x8 a, u32x8 count)
+    inline s32x8 sll(s32x8 a, u32x8 count)
     {
         auto lo = sll(a.data[0], count.data[0]);
         auto hi = sll(a.data[1], count.data[1]);
         return { lo, hi };
     }
 
-    static inline s32x8 srl(s32x8 a, u32x8 count)
+    inline s32x8 srl(s32x8 a, u32x8 count)
     {
         auto lo = srl(a.data[0], count.data[0]);
         auto hi = srl(a.data[1], count.data[1]);
         return { lo, hi };
     }
 
-    static inline s32x8 sra(s32x8 a, u32x8 count)
+    inline s32x8 sra(s32x8 a, u32x8 count)
     {
         auto lo = sra(a.data[0], count.data[0]);
         auto hi = sra(a.data[1], count.data[1]);
@@ -1038,7 +1038,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <u32 x_, u32 y_, u32 z_, u32 w_>
-    static inline s64x4 shuffle(s64x4 v)
+    inline s64x4 shuffle(s64x4 v)
     {
         static_assert(x_ < 4 && y_ < 4 && z_ < 4 && w_ < 4, "Index out of range.");
         const s64 x = SIMD_GET_COMPONENT(v, 1, x_);
@@ -1051,7 +1051,7 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline s64x4 set_component(s64x4 a, s64 b)
+    inline s64x4 set_component(s64x4 a, s64 b)
     {
         static_assert(Index < 4, "Index out of range.");
         SIMD_SET_COMPONENT(a, b, 1, Index);
@@ -1059,41 +1059,41 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline s64 get_component(s64x4 a)
+    inline s64 get_component(s64x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return SIMD_GET_COMPONENT(a, 1, Index);
     }
 
-    static inline s64x4 s64x4_zero()
+    inline s64x4 s64x4_zero()
     {
         auto lo = s64x2_zero();
         auto hi = s64x2_zero();
         return { lo, hi };
     }
 
-    static inline s64x4 s64x4_set(s64 s)
+    inline s64x4 s64x4_set(s64 s)
     {
         auto lo = s64x2_set(s);
         auto hi = s64x2_set(s);
         return { lo, hi };
     }
 
-    static inline s64x4 s64x4_set(s64 x, s64 y, s64 z, s64 w)
+    inline s64x4 s64x4_set(s64 x, s64 y, s64 z, s64 w)
     {
         auto lo = s64x2_set(x, y);
         auto hi = s64x2_set(z, w);
         return { lo, hi };
     }
 
-    static inline s64x4 s64x4_uload(const void* source)
+    inline s64x4 s64x4_uload(const void* source)
     {
         auto lo = s64x2_uload(reinterpret_cast<const s64*>(source) + 0);
         auto hi = s64x2_uload(reinterpret_cast<const s64*>(source) + 2);
         return { lo, hi };
     }
 
-    static inline void s64x4_ustore(void* dest, s64x4 a)
+    inline void s64x4_ustore(void* dest, s64x4 a)
     {
         s64x2_ustore(reinterpret_cast<s64*>(dest) + 0, a.data[0]);
         s64x2_ustore(reinterpret_cast<s64*>(dest) + 2, a.data[1]);
@@ -1134,7 +1134,7 @@ namespace mango::simd
     // shift by constant
 
     template <int Count>
-    static inline s64x4 slli(s64x4 a)
+    inline s64x4 slli(s64x4 a)
     {
         auto lo = slli<Count>(a.data[0]);
         auto hi = slli<Count>(a.data[1]);
@@ -1142,7 +1142,7 @@ namespace mango::simd
     }
 
     template <int Count>
-    static inline s64x4 srli(s64x4 a)
+    inline s64x4 srli(s64x4 a)
     {
         auto lo = srli<Count>(a.data[0]);
         auto hi = srli<Count>(a.data[1]);
@@ -1151,14 +1151,14 @@ namespace mango::simd
 
     // shift by scalar
 
-    static inline s64x4 sll(s64x4 a, int count)
+    inline s64x4 sll(s64x4 a, int count)
     {
         auto lo = sll(a.data[0], count);
         auto hi = sll(a.data[1], count);
         return { lo, hi };
     }
 
-    static inline s64x4 srl(s64x4 a, int count)
+    inline s64x4 srl(s64x4 a, int count)
     {
         auto lo = srl(a.data[0], count);
         auto hi = srl(a.data[1], count);
@@ -1169,51 +1169,51 @@ namespace mango::simd
     // mask8x32
     // -----------------------------------------------------------------
 
-    static inline mask8x32 mask_and(mask8x32 a, mask8x32 b)
+    inline mask8x32 mask_and(mask8x32 a, mask8x32 b)
     {
         auto lo = mask_and(a.data[0], b.data[0]);
         auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask8x32 mask_or(mask8x32 a, mask8x32 b)
+    inline mask8x32 mask_or(mask8x32 a, mask8x32 b)
     {
         auto lo = mask_or(a.data[0], b.data[0]);
         auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask8x32 mask_xor(mask8x32 a, mask8x32 b)
+    inline mask8x32 mask_xor(mask8x32 a, mask8x32 b)
     {
         auto lo = mask_xor(a.data[0], b.data[0]);
         auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask8x32 mask_not(mask8x32 a)
+    inline mask8x32 mask_not(mask8x32 a)
     {
         auto lo = mask_not(a.data[0]);
         auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
-    static inline u32 get_mask(mask8x32 a)
+    inline u32 get_mask(mask8x32 a)
     {
         u32 mask = get_mask(a.data[0]) | (get_mask(a.data[1]) << 16);
         return mask;
     }
 
-    static inline bool none_of(mask8x32 a)
+    inline bool none_of(mask8x32 a)
     {
         return get_mask(a) == 0;
     }
 
-    static inline bool any_of(mask8x32 a)
+    inline bool any_of(mask8x32 a)
     {
         return get_mask(a) != 0;
     }
 
-    static inline bool all_of(mask8x32 a)
+    inline bool all_of(mask8x32 a)
     {
         return get_mask(a) == 0xffffffff;
     }
@@ -1222,51 +1222,51 @@ namespace mango::simd
     // mask16x16
     // -----------------------------------------------------------------
 
-    static inline mask16x16 mask_and(mask16x16 a, mask16x16 b)
+    inline mask16x16 mask_and(mask16x16 a, mask16x16 b)
     {
         auto lo = mask_and(a.data[0], b.data[0]);
         auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask16x16 mask_or(mask16x16 a, mask16x16 b)
+    inline mask16x16 mask_or(mask16x16 a, mask16x16 b)
     {
         auto lo = mask_or(a.data[0], b.data[0]);
         auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask16x16 mask_xor(mask16x16 a, mask16x16 b)
+    inline mask16x16 mask_xor(mask16x16 a, mask16x16 b)
     {
         auto lo = mask_xor(a.data[0], b.data[0]);
         auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask16x16 mask_not(mask16x16 a)
+    inline mask16x16 mask_not(mask16x16 a)
     {
         auto lo = mask_not(a.data[0]);
         auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
-    static inline u32 get_mask(mask16x16 a)
+    inline u32 get_mask(mask16x16 a)
     {
         u32 mask = get_mask(a.data[0]) | (get_mask(a.data[1]) << 8);
         return mask;
     }
 
-    static inline bool none_of(mask16x16 a)
+    inline bool none_of(mask16x16 a)
     {
         return get_mask(a) == 0;
     }
 
-    static inline bool any_of(mask16x16 a)
+    inline bool any_of(mask16x16 a)
     {
         return get_mask(a) != 0;
     }
 
-    static inline bool all_of(mask16x16 a)
+    inline bool all_of(mask16x16 a)
     {
         return get_mask(a) == 0xffff;
     }
@@ -1275,51 +1275,51 @@ namespace mango::simd
     // mask32x8
     // -----------------------------------------------------------------
 
-    static inline mask32x8 mask_and(mask32x8 a, mask32x8 b)
+    inline mask32x8 mask_and(mask32x8 a, mask32x8 b)
     {
         auto lo = mask_and(a.data[0], b.data[0]);
         auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask32x8 mask_or(mask32x8 a, mask32x8 b)
+    inline mask32x8 mask_or(mask32x8 a, mask32x8 b)
     {
         auto lo = mask_or(a.data[0], b.data[0]);
         auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask32x8 mask_xor(mask32x8 a, mask32x8 b)
+    inline mask32x8 mask_xor(mask32x8 a, mask32x8 b)
     {
         auto lo = mask_xor(a.data[0], b.data[0]);
         auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask32x8 mask_not(mask32x8 a)
+    inline mask32x8 mask_not(mask32x8 a)
     {
         auto lo = mask_not(a.data[0]);
         auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
-    static inline u32 get_mask(mask32x8 a)
+    inline u32 get_mask(mask32x8 a)
     {
         u32 mask = get_mask(a.data[0]) | (get_mask(a.data[1]) << 4);
         return mask;
     }
 
-    static inline bool none_of(mask32x8 a)
+    inline bool none_of(mask32x8 a)
     {
         return get_mask(a) == 0;
     }
 
-    static inline bool any_of(mask32x8 a)
+    inline bool any_of(mask32x8 a)
     {
         return get_mask(a) != 0;
     }
 
-    static inline bool all_of(mask32x8 a)
+    inline bool all_of(mask32x8 a)
     {
         return get_mask(a) == 0xff;
     }
@@ -1328,51 +1328,51 @@ namespace mango::simd
     // mask64x4
     // -----------------------------------------------------------------
 
-    static inline mask64x4 mask_and(mask64x4 a, mask64x4 b)
+    inline mask64x4 mask_and(mask64x4 a, mask64x4 b)
     {
         auto lo = mask_and(a.data[0], b.data[0]);
         auto hi = mask_and(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask64x4 mask_or(mask64x4 a, mask64x4 b)
+    inline mask64x4 mask_or(mask64x4 a, mask64x4 b)
     {
         auto lo = mask_or(a.data[0], b.data[0]);
         auto hi = mask_or(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask64x4 mask_xor(mask64x4 a, mask64x4 b)
+    inline mask64x4 mask_xor(mask64x4 a, mask64x4 b)
     {
         auto lo = mask_xor(a.data[0], b.data[0]);
         auto hi = mask_xor(a.data[1], b.data[1]);
         return { lo, hi };
     }
 
-    static inline mask64x4 mask_not(mask64x4 a)
+    inline mask64x4 mask_not(mask64x4 a)
     {
         auto lo = mask_not(a.data[0]);
         auto hi = mask_not(a.data[1]);
         return { lo, hi };
     }
 
-    static inline u32 get_mask(mask64x4 a)
+    inline u32 get_mask(mask64x4 a)
     {
         u32 mask = get_mask(a.data[0]) | (get_mask(a.data[1]) << 2);
         return mask;
     }
 
-    static inline bool none_of(mask64x4 a)
+    inline bool none_of(mask64x4 a)
     {
         return get_mask(a) == 0;
     }
 
-    static inline bool any_of(mask64x4 a)
+    inline bool any_of(mask64x4 a)
     {
         return get_mask(a) != 0;
     }
 
-    static inline bool all_of(mask64x4 a)
+    inline bool all_of(mask64x4 a)
     {
         return get_mask(a) == 0xf;
     }

@@ -10,7 +10,7 @@ namespace mango::simd::detail
 {
 
     template <typename ScalarType, int Size>
-    static inline scalar_vector<ScalarType, Size>
+    inline scalar_vector<ScalarType, Size>
     scalar_set(ScalarType value)
     {
         scalar_vector<ScalarType, Size> v;
@@ -24,7 +24,7 @@ namespace mango::simd::detail
     // unary
 
     template <typename ScalarType, int Size>
-    static inline scalar_vector<ScalarType, Size>
+    inline scalar_vector<ScalarType, Size>
     scalar_unroll(ScalarType (*func)(ScalarType), scalar_vector<ScalarType, Size> a)
     {
         scalar_vector<ScalarType, Size> v;
@@ -36,13 +36,13 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_abs(ScalarType a)
+    inline ScalarType scalar_abs(ScalarType a)
     {
         return std::abs(a);
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_neg(ScalarType a)
+    inline ScalarType scalar_neg(ScalarType a)
     {
         return -a;
     }
@@ -50,7 +50,7 @@ namespace mango::simd::detail
     // binary
 
     template <typename ScalarType, int Size>
-    static inline scalar_vector<ScalarType, Size>
+    inline scalar_vector<ScalarType, Size>
     scalar_unroll(ScalarType (*func)(ScalarType, ScalarType), scalar_vector<ScalarType, Size> a, scalar_vector<ScalarType, Size> b)
     {
         scalar_vector<ScalarType, Size> v;
@@ -62,19 +62,19 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_add(ScalarType a, ScalarType b)
+    inline ScalarType scalar_add(ScalarType a, ScalarType b)
     {
         return a + b;
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_sub(ScalarType a, ScalarType b)
+    inline ScalarType scalar_sub(ScalarType a, ScalarType b)
     {
         return a - b;
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_unsigned_adds(ScalarType a, ScalarType b)
+    inline ScalarType scalar_unsigned_adds(ScalarType a, ScalarType b)
     {
         ScalarType v = a + b;
         v |= -(v < a);
@@ -82,7 +82,7 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_unsigned_subs(ScalarType a, ScalarType b)
+    inline ScalarType scalar_unsigned_subs(ScalarType a, ScalarType b)
     {
         ScalarType v = a - b;
         v &= -(v <= a);
@@ -90,7 +90,7 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_signed_adds(ScalarType a, ScalarType b)
+    inline ScalarType scalar_signed_adds(ScalarType a, ScalarType b)
     {
         using UnsignedScalarType = typename std::make_unsigned<ScalarType>::type;
         UnsignedScalarType x = a;
@@ -108,7 +108,7 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_signed_subs(ScalarType a, ScalarType b)
+    inline ScalarType scalar_signed_subs(ScalarType a, ScalarType b)
     {
         using UnsignedScalarType = typename std::make_unsigned<ScalarType>::type;
         UnsignedScalarType x = a;
@@ -127,7 +127,7 @@ namespace mango::simd::detail
 
     /*
     template <typename ScalarType>
-    static inline ScalarType scalar_unsigned_average(ScalarType a, ScalarType b)
+    inline ScalarType scalar_unsigned_average(ScalarType a, ScalarType b)
     {
         ScalarType v = (a & b) + ((a ^ b) >> 1);
         return v;
@@ -135,7 +135,7 @@ namespace mango::simd::detail
     */
 
     template <typename ScalarType>
-    static inline ScalarType scalar_unsigned_rounded_average(ScalarType a, ScalarType b)
+    inline ScalarType scalar_unsigned_rounded_average(ScalarType a, ScalarType b)
     {
         ScalarType v = (a & b) + ((a ^ b) >> 1) + ((a ^ b) & 1);
         return v;
@@ -143,7 +143,7 @@ namespace mango::simd::detail
 
     /*
     template <typename ScalarType>
-    static inline ScalarType scalar_signed_average(ScalarType a, ScalarType b)
+    inline ScalarType scalar_signed_average(ScalarType a, ScalarType b)
     {
         using UnsignedType = typename std::make_unsigned<ScalarType>::type;
 
@@ -153,7 +153,7 @@ namespace mango::simd::detail
     */
 
     template <typename ScalarType>
-    static inline ScalarType scalar_signed_rounded_average(ScalarType a, ScalarType b)
+    inline ScalarType scalar_signed_rounded_average(ScalarType a, ScalarType b)
     {
         using UnsignedType = typename std::make_unsigned<ScalarType>::type;
 
@@ -162,37 +162,37 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_mullo(ScalarType a, ScalarType b)
+    inline ScalarType scalar_mullo(ScalarType a, ScalarType b)
     {
         return ScalarType(a * b);
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_nand(ScalarType a, ScalarType b)
+    inline ScalarType scalar_nand(ScalarType a, ScalarType b)
     {
         return ~a & b;
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_and(ScalarType a, ScalarType b)
+    inline ScalarType scalar_and(ScalarType a, ScalarType b)
     {
         return a & b;
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_or(ScalarType a, ScalarType b)
+    inline ScalarType scalar_or(ScalarType a, ScalarType b)
     {
         return a | b;
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_xor(ScalarType a, ScalarType b)
+    inline ScalarType scalar_xor(ScalarType a, ScalarType b)
     {
         return a ^ b;
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_not(ScalarType a)
+    inline ScalarType scalar_not(ScalarType a)
     {
         return ~a;
     }
@@ -200,7 +200,7 @@ namespace mango::simd::detail
     // shift by constant
 
     template <typename VectorType, typename ScalarType, int Count>
-    static inline VectorType scalar_shift_left(VectorType a)
+    inline VectorType scalar_shift_left(VectorType a)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
@@ -211,7 +211,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType, typename ScalarType, int Count>
-    static inline VectorType scalar_shift_right(VectorType a)
+    inline VectorType scalar_shift_right(VectorType a)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
@@ -224,7 +224,7 @@ namespace mango::simd::detail
     // shift by scalar
 
     template <typename VectorType, typename ScalarType>
-    static inline VectorType scalar_shift_left(VectorType a, int count)
+    inline VectorType scalar_shift_left(VectorType a, int count)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
@@ -235,7 +235,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType, typename ScalarType>
-    static inline VectorType scalar_shift_right(VectorType a, int count)
+    inline VectorType scalar_shift_right(VectorType a, int count)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
@@ -248,7 +248,7 @@ namespace mango::simd::detail
     // shift by vector
 
     template <typename VectorType, typename ScalarType, typename CountVectorType>
-    static inline VectorType scalar_shift_left(VectorType a, CountVectorType count)
+    inline VectorType scalar_shift_left(VectorType a, CountVectorType count)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
@@ -259,7 +259,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType, typename ScalarType, typename CountVectorType>
-    static inline VectorType scalar_shift_right(VectorType a, CountVectorType count)
+    inline VectorType scalar_shift_right(VectorType a, CountVectorType count)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size; ++i)
@@ -270,13 +270,13 @@ namespace mango::simd::detail
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_min(ScalarType a, ScalarType b)
+    inline ScalarType scalar_min(ScalarType a, ScalarType b)
     {
         return std::min(a, b);
     }
 
     template <typename ScalarType>
-    static inline ScalarType scalar_max(ScalarType a, ScalarType b)
+    inline ScalarType scalar_max(ScalarType a, ScalarType b)
     {
         return std::max(a, b);
     }
@@ -284,7 +284,7 @@ namespace mango::simd::detail
     // cmp
 
     template <typename VectorType>
-    static inline u32 scalar_compare_eq(VectorType a, VectorType b)
+    inline u32 scalar_compare_eq(VectorType a, VectorType b)
     {
         u32 mask = 0;
         for (int i = 0; i < VectorType::size; ++i)
@@ -295,7 +295,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline u32 scalar_compare_gt(VectorType a, VectorType b)
+    inline u32 scalar_compare_gt(VectorType a, VectorType b)
     {
         u32 mask = 0;
         for (int i = 0; i < VectorType::size; ++i)
@@ -306,7 +306,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline u32 scalar_compare_neq(VectorType a, VectorType b)
+    inline u32 scalar_compare_neq(VectorType a, VectorType b)
     {
         u32 mask = 0;
         for (int i = 0; i < VectorType::size; ++i)
@@ -317,7 +317,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline u32 scalar_compare_lt(VectorType a, VectorType b)
+    inline u32 scalar_compare_lt(VectorType a, VectorType b)
     {
         u32 mask = 0;
         for (int i = 0; i < VectorType::size; ++i)
@@ -328,7 +328,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline u32 scalar_compare_le(VectorType a, VectorType b)
+    inline u32 scalar_compare_le(VectorType a, VectorType b)
     {
         u32 mask = 0;
         for (int i = 0; i < VectorType::size; ++i)
@@ -339,7 +339,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline u32 scalar_compare_ge(VectorType a, VectorType b)
+    inline u32 scalar_compare_ge(VectorType a, VectorType b)
     {
         u32 mask = 0;
         for (int i = 0; i < VectorType::size; ++i)
@@ -352,7 +352,7 @@ namespace mango::simd::detail
     // misc
 
     template <typename ScalarType, int Size>
-    static inline scalar_vector<ScalarType, Size>
+    inline scalar_vector<ScalarType, Size>
     scalar_select(u32 mask, scalar_vector<ScalarType, Size> a, scalar_vector<ScalarType, Size> b)
     {
         scalar_vector<ScalarType, Size> v;
@@ -364,7 +364,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline VectorType scalar_unpacklo(VectorType a, VectorType b)
+    inline VectorType scalar_unpacklo(VectorType a, VectorType b)
     {
         VectorType v;
         for (int i = 0; i < VectorType::size / 2; ++i)
@@ -376,7 +376,7 @@ namespace mango::simd::detail
     }
 
     template <typename VectorType>
-    static inline VectorType scalar_unpackhi(VectorType a, VectorType b)
+    inline VectorType scalar_unpackhi(VectorType a, VectorType b)
     {
         VectorType v;
         constexpr int half = VectorType::size / 2;

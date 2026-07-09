@@ -205,57 +205,57 @@ namespace mango::simd
 
     // 128 <- 128
 
-    static inline u16x8 extend16x8(u8x16 s)
+    inline u16x8 extend16x8(u8x16 s)
     {
         return (u16x8::vector) vec_mergel(vec_xor(s.data, s.data), s.data);
     }
 
-    static inline u32x4 extend32x4(u8x16 s)
+    inline u32x4 extend32x4(u8x16 s)
     {
         auto temp16x8 = vec_mergel(vec_xor(s.data, s.data), s.data);
         return (u32x4::vector) vec_mergel(vec_xor(temp16x8, temp16x8), temp16x8);
     }
 
-    static inline u64x2 extend64x2(u8x16 s)
+    inline u64x2 extend64x2(u8x16 s)
     {
         auto temp16x8 = vec_mergel(vec_xor(s.data, s.data), s.data);
         auto temp32x4 = vec_mergel(vec_xor(temp16x8, temp16x8), temp16x8);
         return (u64x2::vector) vec_mergel(vec_xor(temp32x4, temp32x4), temp32x4);
     }
 
-    static inline u32x4 extend32x4(u16x8 s)
+    inline u32x4 extend32x4(u16x8 s)
     {
         return (u32x4::vector) vec_mergel(vec_xor(s.data, s.data), s.data);
     }
 
-    static inline u64x2 extend64x2(u16x8 s)
+    inline u64x2 extend64x2(u16x8 s)
     {
         auto temp32x4 = vec_mergel(vec_xor(s.data, s.data), s.data);
         return (u64x2::vector) vec_mergel(vec_xor(temp32x4, temp32x4), temp32x4);
     }
 
-    static inline u64x2 extend64x2(u32x4 s)
+    inline u64x2 extend64x2(u32x4 s)
     {
         return (u64x2::vector) vec_mergel(vec_xor(s.data, s.data), s.data);
     }
 
     // 256 <- 128
 
-    static inline u16x16 extend16x16(u8x16 s)
+    inline u16x16 extend16x16(u8x16 s)
     {
         auto lo = vec_mergel(vec_xor(s.data, s.data), s.data);
         auto hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
         return { lo, hi };
     }
 
-    static inline u32x8 extend32x8(u8x16 s)
+    inline u32x8 extend32x8(u8x16 s)
     {
         auto lo = vec_mergel(vec_xor(s.data, s.data), s.data);
         auto hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u8x16 s)
+    inline u64x4 extend64x4(u8x16 s)
     {
         auto temp16x8 = vec_mergel(vec_xor(s.data, s.data), s.data);
         auto temp32x4 = vec_mergel(vec_xor(temp16x8, temp16x8), temp16x8);
@@ -266,14 +266,14 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u32x8 extend32x8(u16x8 s)
+    inline u32x8 extend32x8(u16x8 s)
     {
         auto lo = vec_mergel(vec_xor(s.data, s.data), s.data);
         auto hi = vec_mergeh(vec_xor(s.data, s.data), s.data);
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u16x8 s)
+    inline u64x4 extend64x4(u16x8 s)
     {
         auto temp32x4 = vec_mergel(vec_xor(s.data, s.data), s.data);
 
@@ -283,7 +283,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u32x4 s)
+    inline u64x4 extend64x4(u32x4 s)
     {
         // NOTE: _ARCH_PWR8 required
         auto lo = vec_mergel(vec_xor(s.data, s.data), s.data);
@@ -297,46 +297,46 @@ namespace mango::simd
 
     // 128 <- 128
 
-    static inline s16x8 extend16x8(s8x16 s)
+    inline s16x8 extend16x8(s8x16 s)
     {
         return vec_unpackl(s.data);
     }
 
-    static inline s32x4 extend32x4(s8x16 s)
+    inline s32x4 extend32x4(s8x16 s)
     {
         return vec_unpackl(vec_unpackl(s.data));
     }
 
-    static inline s64x2 extend64x2(s8x16 s)
+    inline s64x2 extend64x2(s8x16 s)
     {
         return vec_unpackl(vec_unpackl(vec_unpackl(s.data)));
     }
 
-    static inline s32x4 extend32x4(s16x8 s)
+    inline s32x4 extend32x4(s16x8 s)
     {
         return vec_unpackl(s.data);
     }
 
-    static inline s64x2 extend64x2(s16x8 s)
+    inline s64x2 extend64x2(s16x8 s)
     {
         return vec_unpackl(vec_unpackl(s.data));
     }
 
-    static inline s64x2 extend64x2(s32x4 s)
+    inline s64x2 extend64x2(s32x4 s)
     {
         return vec_unpackl(s.data);
     }
 
     // 256 <- 128
 
-    static inline s16x16 extend16x16(s8x16 s)
+    inline s16x16 extend16x16(s8x16 s)
     {
         auto lo = vec_unpackl(s.data);
         auto hi = vec_unpackh(s.data);
         return { lo, hi };
     }
 
-    static inline s32x8 extend32x8(s8x16 s)
+    inline s32x8 extend32x8(s8x16 s)
     {
         const auto temp16x8 = vec_unpackl(s.data);
         auto lo = vec_unpackl(temp16x8);
@@ -344,7 +344,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s8x16 s)
+    inline s64x4 extend64x4(s8x16 s)
     {
         const auto temp16x8 = vec_unpackl(s.data);
         const auto temp32x4 = vec_unpackl(temp16x8);
@@ -353,14 +353,14 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s32x8 extend32x8(s16x8 s)
+    inline s32x8 extend32x8(s16x8 s)
     {
         auto lo = vec_unpackl(s.data);
         auto hi = vec_unpackh(s.data);
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s16x8 s)
+    inline s64x4 extend64x4(s16x8 s)
     {
         const auto temp32x4 = vec_unpackl(s.data);
         auto lo = vec_unpackl(temp32x4);
@@ -368,7 +368,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s32x4 s)
+    inline s64x4 extend64x4(s32x4 s)
     {
         auto lo = vec_unpackl(s.data);
         auto hi = vec_unpackh(s.data);
@@ -379,22 +379,22 @@ namespace mango::simd
     // narrow
     // -----------------------------------------------------------------
 
-    static inline u8x16 narrow(u16x8 a, u16x8 b)
+    inline u8x16 narrow(u16x8 a, u16x8 b)
     {
         return vec_pack(a.data, b.data);
     }
 
-    static inline u16x8 narrow(u32x4 a, u32x4 b)
+    inline u16x8 narrow(u32x4 a, u32x4 b)
     {
         return vec_pack(a.data, b.data);
     }
 
-    static inline s8x16 narrow(s16x8 a, s16x8 b)
+    inline s8x16 narrow(s16x8 a, s16x8 b)
     {
         return vec_pack(a.data, b.data);
     }
 
-    static inline s16x8 narrow(s32x4 a, s32x4 b)
+    inline s16x8 narrow(s32x4 a, s32x4 b)
     {
         return vec_pack(a.data, b.data);
     }
@@ -403,29 +403,29 @@ namespace mango::simd
     // u32
     // -----------------------------------------------------------------
 
-    static inline u32x4 get_low(u32x8 a)
+    inline u32x4 get_low(u32x8 a)
     {
         return a.data[0];
     }
 
-    static inline u32x4 get_high(u32x8 a)
+    inline u32x4 get_high(u32x8 a)
     {
         return a.data[1];
     }
 
-    static inline u32x8 set_low(u32x8 a, u32x4 low)
+    inline u32x8 set_low(u32x8 a, u32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline u32x8 set_high(u32x8 a, u32x4 high)
+    inline u32x8 set_high(u32x8 a, u32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline u32x8 combine(u32x4 a, u32x4 b)
+    inline u32x8 combine(u32x4 a, u32x4 b)
     {
         u32x8 v;
         v.data[0] = a;
@@ -437,29 +437,29 @@ namespace mango::simd
     // s32
     // -----------------------------------------------------------------
 
-    static inline s32x4 get_low(s32x8 a)
+    inline s32x4 get_low(s32x8 a)
     {
         return a.data[0];
     }
 
-    static inline s32x4 get_high(s32x8 a)
+    inline s32x4 get_high(s32x8 a)
     {
         return a.data[1];
     }
 
-    static inline s32x8 set_low(s32x8 a, s32x4 low)
+    inline s32x8 set_low(s32x8 a, s32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline s32x8 set_high(s32x8 a, s32x4 high)
+    inline s32x8 set_high(s32x8 a, s32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline s32x8 combine(s32x4 a, s32x4 b)
+    inline s32x8 combine(s32x4 a, s32x4 b)
     {
         s32x8 v;
         v.data[0] = a;
@@ -471,29 +471,29 @@ namespace mango::simd
     // f32
     // -----------------------------------------------------------------
 
-    static inline f32x4 get_low(f32x8 a)
+    inline f32x4 get_low(f32x8 a)
     {
         return a.data[0];
     }
 
-    static inline f32x4 get_high(f32x8 a)
+    inline f32x4 get_high(f32x8 a)
     {
         return a.data[1];
     }
 
-    static inline f32x8 set_low(f32x8 a, f32x4 low)
+    inline f32x8 set_low(f32x8 a, f32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline f32x8 set_high(f32x8 a, f32x4 high)
+    inline f32x8 set_high(f32x8 a, f32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline f32x8 combine(f32x4 a, f32x4 b)
+    inline f32x8 combine(f32x4 a, f32x4 b)
     {
         return { a, b };
     }
@@ -620,29 +620,29 @@ namespace mango::simd
     // f64
     // -----------------------------------------------------------------
 
-    static inline f64x2 get_low(f64x4 a)
+    inline f64x2 get_low(f64x4 a)
     {
         return a.data[0];
     }
 
-    static inline f64x2 get_high(f64x4 a)
+    inline f64x2 get_high(f64x4 a)
     {
         return a.data[1];
     }
 
-    static inline f64x4 set_low(f64x4 a, f64x2 low)
+    inline f64x4 set_low(f64x4 a, f64x2 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline f64x4 set_high(f64x4 a, f64x2 high)
+    inline f64x4 set_high(f64x4 a, f64x2 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline f64x4 combine(f64x2 a, f64x2 b)
+    inline f64x4 combine(f64x2 a, f64x2 b)
     {
         return { a, b };
     }

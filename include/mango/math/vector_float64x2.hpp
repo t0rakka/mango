@@ -135,14 +135,14 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline
+    inline
     double dot(Vector<double, 2> a, Vector<double, 2> b)
     {
         return simd::dot2(a, b);
     }
 
     template <int x, int y>
-    static inline
+    inline
     Vector<double, 2> shuffle(Vector<double, 2> a, Vector<double, 2> b)
     {
         return simd::shuffle<x, y>(a, b);

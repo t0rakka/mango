@@ -183,7 +183,7 @@ namespace mango::math
     };
 
     template <typename ScalarType>
-    static inline
+    inline
     Matrix<ScalarType, 2, 2> operator * (const Matrix<ScalarType, 2, 2>& m, ScalarType s)
     {
         return Matrix<ScalarType, 2, 2>(
@@ -192,7 +192,7 @@ namespace mango::math
     }
 
     template <typename ScalarType>
-    static inline
+    inline
     Vector<ScalarType, 2> operator * (const Vector<ScalarType, 2>& v, const Matrix<ScalarType, 2, 2>& m)
     {
         return Vector<ScalarType, 2>(
@@ -296,7 +296,7 @@ namespace mango::math
     };
 
     template <typename ScalarType>
-    static inline
+    inline
     Matrix<ScalarType, 3, 3> operator * (const Matrix<ScalarType, 3, 3>& m, ScalarType s)
     {
         return Matrix<ScalarType, 3, 3>(
@@ -306,7 +306,7 @@ namespace mango::math
     }
 
     template <typename ScalarType>
-    static inline
+    inline
     Vector<ScalarType, 3> operator * (const Vector<ScalarType, 3>& v, const Matrix<ScalarType, 3, 3>& m)
     {
         return Vector<ScalarType, 3>(

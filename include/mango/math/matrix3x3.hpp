@@ -200,7 +200,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline
+    inline
     Vector<float, 3> operator * (const Vector<float, 3>& v, const Matrix3x3& m)
     {
         float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0);
@@ -209,7 +209,7 @@ namespace mango::math
         return Vector<float, 3>(x, y, z);
     }
 
-    static inline
+    inline
     Matrix3x3 operator * (const Matrix3x3& a, const Matrix3x3& b)
     {
         return Matrix3x3(
@@ -231,7 +231,7 @@ namespace mango::math
     Matrix3x3 rotateXYZ(const Matrix3x3& matrix, float x, float y, float z);
     Matrix3x3 normalize(const Matrix3x3& matrix);
 
-    static inline
+    inline
     Matrix3x3 transpose(const Matrix3x3& m)
     {
         return Matrix3x3(
@@ -240,7 +240,7 @@ namespace mango::math
             m(0, 2), m(1, 2), m(2, 2));
     }
 
-    static inline
+    inline
     Matrix3x3 inverse(const Matrix3x3& m)
     {
         float s = m.determinant3x3();

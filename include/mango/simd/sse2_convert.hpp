@@ -138,69 +138,69 @@ namespace mango::simd
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline u16x8 extend16x8(u8x16 s)
+    inline u16x8 extend16x8(u8x16 s)
     {
         return _mm_cvtepu8_epi16(s);
     }
 
-    static inline u32x4 extend32x4(u8x16 s)
+    inline u32x4 extend32x4(u8x16 s)
     {
         return _mm_cvtepu8_epi32(s);
     }
 
-    static inline u64x2 extend64x2(u8x16 s)
+    inline u64x2 extend64x2(u8x16 s)
     {
         return _mm_cvtepu8_epi64(s);
     }
 
-    static inline u32x4 extend32x4(u16x8 s)
+    inline u32x4 extend32x4(u16x8 s)
     {
         return _mm_cvtepu16_epi32(s);
     }
 
-    static inline u64x2 extend64x2(u16x8 s)
+    inline u64x2 extend64x2(u16x8 s)
     {
         return _mm_cvtepu16_epi64(s);
     }
 
-    static inline u64x2 extend64x2(u32x4 s)
+    inline u64x2 extend64x2(u32x4 s)
     {
         return _mm_cvtepu32_epi64(s);
     }
 
 #else
 
-    static inline u16x8 extend16x8(u8x16 s)
+    inline u16x8 extend16x8(u8x16 s)
     {
         const __m128i zero = _mm_setzero_si128();
         return _mm_unpacklo_epi8(s, zero);
     }
 
-    static inline u32x4 extend32x4(u8x16 s)
+    inline u32x4 extend32x4(u8x16 s)
     {
         const __m128i zero = _mm_setzero_si128();
         return _mm_unpacklo_epi16(_mm_unpacklo_epi8(s, zero), zero);
     }
 
-    static inline u64x2 extend64x2(u8x16 s)
+    inline u64x2 extend64x2(u8x16 s)
     {
         const __m128i zero = _mm_setzero_si128();
         return _mm_unpacklo_epi32(_mm_unpacklo_epi16(_mm_unpacklo_epi8(s, zero), zero), zero);
     }
 
-    static inline u32x4 extend32x4(u16x8 s)
+    inline u32x4 extend32x4(u16x8 s)
     {
         const __m128i zero = _mm_setzero_si128();
         return _mm_unpacklo_epi16(s, zero);
     }
 
-    static inline u64x2 extend64x2(u16x8 s)
+    inline u64x2 extend64x2(u16x8 s)
     {
         const __m128i zero = _mm_setzero_si128();
         return _mm_unpacklo_epi32(_mm_unpacklo_epi16(s, zero), zero);
     }
 
-    static inline u64x2 extend64x2(u32x4 s)
+    inline u64x2 extend64x2(u32x4 s)
     {
         const __m128i zero = _mm_setzero_si128();
         return _mm_unpacklo_epi32(s, zero);
@@ -210,7 +210,7 @@ namespace mango::simd
 
     // 256 <- 128
 
-    static inline u16x16 extend16x16(u8x16 s)
+    inline u16x16 extend16x16(u8x16 s)
     {
         u8x16 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend16x8(s);
@@ -218,7 +218,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u32x8 extend32x8(u8x16 s)
+    inline u32x8 extend32x8(u8x16 s)
     {
         u8x16 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend32x4(s);
@@ -226,7 +226,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u8x16 s)
+    inline u64x4 extend64x4(u8x16 s)
     {
         u8x16 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend64x2(s);
@@ -234,7 +234,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u32x8 extend32x8(u16x8 s)
+    inline u32x8 extend32x8(u16x8 s)
     {
         u16x8 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend32x4(s);
@@ -242,7 +242,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u16x8 s)
+    inline u64x4 extend64x4(u16x8 s)
     {
         u16x8 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend64x2(s);
@@ -250,7 +250,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline u64x4 extend64x4(u32x4 s)
+    inline u64x4 extend64x4(u32x4 s)
     {
         u32x4 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend64x2(s);
@@ -266,71 +266,71 @@ namespace mango::simd
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline s16x8 extend16x8(s8x16 s)
+    inline s16x8 extend16x8(s8x16 s)
     {
         return _mm_cvtepi8_epi16(s);
     }
 
-    static inline s32x4 extend32x4(s8x16 s)
+    inline s32x4 extend32x4(s8x16 s)
     {
         return _mm_cvtepi8_epi32(s);
     }
 
-    static inline s64x2 extend64x2(s8x16 s)
+    inline s64x2 extend64x2(s8x16 s)
     {
         return _mm_cvtepi8_epi64(s);
     }
 
-    static inline s32x4 extend32x4(s16x8 s)
+    inline s32x4 extend32x4(s16x8 s)
     {
         return _mm_cvtepi16_epi32(s);
     }
 
-    static inline s64x2 extend64x2(s16x8 s)
+    inline s64x2 extend64x2(s16x8 s)
     {
         return _mm_cvtepi16_epi64(s);
     }
 
-    static inline s64x2 extend64x2(s32x4 s)
+    inline s64x2 extend64x2(s32x4 s)
     {
         return _mm_cvtepi32_epi64(s);
     }
 
 #else
 
-    static inline s16x8 extend16x8(s8x16 s)
+    inline s16x8 extend16x8(s8x16 s)
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi8(s, sign);
         //return _mm_srai_epi16(_mm_unpacklo_epi8(s, s), 8);
     }
 
-    static inline s32x4 extend32x4(s8x16 s)
+    inline s32x4 extend32x4(s8x16 s)
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi16(_mm_unpacklo_epi8(s, sign), sign);
     }
 
-    static inline s64x2 extend64x2(s8x16 s)
+    inline s64x2 extend64x2(s8x16 s)
     {
         const __m128i sign = _mm_cmpgt_epi8(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi32(_mm_unpacklo_epi16(_mm_unpacklo_epi8(s, sign), sign), sign);
     }
 
-    static inline s32x4 extend32x4(s16x8 s)
+    inline s32x4 extend32x4(s16x8 s)
     {
         const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi16(s, sign);
         //return _mm_srai_epi32(_mm_unpacklo_epi16(s, s), 16);
     }
 
-    static inline s64x2 extend64x2(s16x8 s)
+    inline s64x2 extend64x2(s16x8 s)
     {
         const __m128i sign = _mm_cmpgt_epi16(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi32(_mm_unpacklo_epi16(s, sign), sign);
     }
 
-    static inline s64x2 extend64x2(s32x4 s)
+    inline s64x2 extend64x2(s32x4 s)
     {
         const __m128i sign = _mm_cmpgt_epi32(_mm_setzero_si128(), s);
         return _mm_unpacklo_epi32(s, sign);
@@ -340,7 +340,7 @@ namespace mango::simd
 
     // 256 <- 128
 
-    static inline s16x16 extend16x16(s8x16 s)
+    inline s16x16 extend16x16(s8x16 s)
     {
         s8x16 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend16x8(s);
@@ -348,7 +348,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s32x8 extend32x8(s8x16 s)
+    inline s32x8 extend32x8(s8x16 s)
     {
         s8x16 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend32x4(s);
@@ -356,7 +356,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s8x16 s)
+    inline s64x4 extend64x4(s8x16 s)
     {
         s8x16 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend64x2(s);
@@ -364,7 +364,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s32x8 extend32x8(s16x8 s)
+    inline s32x8 extend32x8(s16x8 s)
     {
         s16x8 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend32x4(s);
@@ -372,7 +372,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s16x8 s)
+    inline s64x4 extend64x4(s16x8 s)
     {
         s16x8 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend64x2(s);
@@ -380,7 +380,7 @@ namespace mango::simd
         return { lo, hi };
     }
 
-    static inline s64x4 extend64x4(s32x4 s)
+    inline s64x4 extend64x4(s32x4 s)
     {
         s32x4 high = _mm_unpackhi_epi64(s, s);
         auto lo = extend64x2(s);
@@ -392,21 +392,21 @@ namespace mango::simd
     // narrow
     // -----------------------------------------------------------------
 
-    static inline u8x16 narrow(u16x8 a, u16x8 b)
+    inline u8x16 narrow(u16x8 a, u16x8 b)
     {
         return _mm_packus_epi16(a, b);
     }
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    static inline u16x8 narrow(u32x4 a, u32x4 b)
+    inline u16x8 narrow(u32x4 a, u32x4 b)
     {
         return _mm_packus_epi32(a, b);
     }
 
 #else
 
-    static inline u16x8 narrow(u32x4 a, u32x4 b)
+    inline u16x8 narrow(u32x4 a, u32x4 b)
     {
         a = _mm_slli_epi32(a, 16);
         a = _mm_srai_epi32(a, 16);
@@ -417,12 +417,12 @@ namespace mango::simd
 
 #endif
 
-    static inline s8x16 narrow(s16x8 a, s16x8 b)
+    inline s8x16 narrow(s16x8 a, s16x8 b)
     {
         return _mm_packs_epi16(a, b);
     }
 
-    static inline s16x8 narrow(s32x4 a, s32x4 b)
+    inline s16x8 narrow(s32x4 a, s32x4 b)
     {
         return _mm_packs_epi32(a, b);
     }
@@ -431,29 +431,29 @@ namespace mango::simd
     // u32
     // -----------------------------------------------------------------
 
-    static inline u32x4 get_low(u32x8 a)
+    inline u32x4 get_low(u32x8 a)
     {
         return a.data[0];
     }
 
-    static inline u32x4 get_high(u32x8 a)
+    inline u32x4 get_high(u32x8 a)
     {
         return a.data[1];
     }
 
-    static inline u32x8 set_low(u32x8 a, u32x4 low)
+    inline u32x8 set_low(u32x8 a, u32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline u32x8 set_high(u32x8 a, u32x4 high)
+    inline u32x8 set_high(u32x8 a, u32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline u32x8 combine(u32x4 a, u32x4 b)
+    inline u32x8 combine(u32x4 a, u32x4 b)
     {
         u32x8 v;
         v.data[0] = a;
@@ -465,29 +465,29 @@ namespace mango::simd
     // s32
     // -----------------------------------------------------------------
 
-    static inline s32x4 get_low(s32x8 a)
+    inline s32x4 get_low(s32x8 a)
     {
         return a.data[0];
     }
 
-    static inline s32x4 get_high(s32x8 a)
+    inline s32x4 get_high(s32x8 a)
     {
         return a.data[1];
     }
 
-    static inline s32x8 set_low(s32x8 a, s32x4 low)
+    inline s32x8 set_low(s32x8 a, s32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline s32x8 set_high(s32x8 a, s32x4 high)
+    inline s32x8 set_high(s32x8 a, s32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline s32x8 combine(s32x4 a, s32x4 b)
+    inline s32x8 combine(s32x4 a, s32x4 b)
     {
         s32x8 v;
         v.data[0] = a;
@@ -499,29 +499,29 @@ namespace mango::simd
     // f32
     // -----------------------------------------------------------------
 
-    static inline f32x4 get_low(f32x8 a)
+    inline f32x4 get_low(f32x8 a)
     {
         return a.data[0];
     }
 
-    static inline f32x4 get_high(f32x8 a)
+    inline f32x4 get_high(f32x8 a)
     {
         return a.data[1];
     }
 
-    static inline f32x8 set_low(f32x8 a, f32x4 low)
+    inline f32x8 set_low(f32x8 a, f32x4 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline f32x8 set_high(f32x8 a, f32x4 high)
+    inline f32x8 set_high(f32x8 a, f32x4 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline f32x8 combine(f32x4 a, f32x4 b)
+    inline f32x8 combine(f32x4 a, f32x4 b)
     {
         return { a, b };
     }
@@ -651,29 +651,29 @@ namespace mango::simd
     // f64
     // -----------------------------------------------------------------
 
-    static inline f64x2 get_low(f64x4 a)
+    inline f64x2 get_low(f64x4 a)
     {
         return a.data[0];
     }
 
-    static inline f64x2 get_high(f64x4 a)
+    inline f64x2 get_high(f64x4 a)
     {
         return a.data[1];
     }
 
-    static inline f64x4 set_low(f64x4 a, f64x2 low)
+    inline f64x4 set_low(f64x4 a, f64x2 low)
     {
         a.data[0] = low;
         return a;
     }
 
-    static inline f64x4 set_high(f64x4 a, f64x2 high)
+    inline f64x4 set_high(f64x4 a, f64x2 high)
     {
         a.data[1] = high;
         return a;
     }
 
-    static inline f64x4 combine(f64x2 a, f64x2 b)
+    inline f64x4 combine(f64x2 a, f64x2 b)
     {
         return { a, b };
     }
