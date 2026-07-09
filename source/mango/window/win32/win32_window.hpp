@@ -1,19 +1,15 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
 
-#if defined(MANGO_ENABLE_WIN32)
-
 namespace mango
 {
 
-    // Concrete Win32 backend. Sole backend on Windows; kept named WindowContext
-    // (the historical name used across the win32/ and opengl/wgl/ TUs).
     struct WindowContext : WindowBackend
     {
         HWND hwnd { nullptr };
@@ -40,13 +36,6 @@ namespace mango
         bool isKeyPressed(Keycode code) const override;
         void runEventLoop() override;
         void wakeEventLoop() override;
-
-#if defined(MANGO_ENABLE_VULKAN)
-        VkSurfaceKHR createVulkanSurface(VkInstance instance) override;
-        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex) override;
-#endif
     };
 
 } // namespace mango
-
-#endif // defined(MANGO_ENABLE_WIN32)

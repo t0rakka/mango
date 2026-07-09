@@ -83,8 +83,17 @@ public:
 
     void onKeyPress(Keycode key, u32 mask) override
     {
-        if (key == KEYCODE_ESC)
-            breakEventLoop();
+        switch (key)
+        {
+            case KEYCODE_ESC:
+                breakEventLoop();
+                break;
+            case KEYCODE_F:
+                toggleFullscreen();
+                break;
+            default:
+                break;
+        }
     }
 
     void onFrame(const FrameInfo& info) override
@@ -159,8 +168,6 @@ int mangoMain(const mango::CommandLine& commands)
     ImageAnimation animation(filename);
     DemoWindow demo(animation);
 
-    // OnDemand: the first frame fires automatically, after which animations re-arm a
-    // timed wake via requestFrameIn() and still images simply idle until invalidated.
     EventLoopConfig config;
     config.mode = FrameMode::OnDemand;
     config.trackDisplayRefreshRate = false;

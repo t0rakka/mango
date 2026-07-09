@@ -1457,13 +1457,13 @@ namespace mango::vulkan
     {
         swapchain().cmdTransitionImageToColorAttachment(cmd, imageIndex);
 
-        int32x2 window = getWindowSize();
-        window.x = std::max(1, window.x);
-        window.y = std::max(1, window.y);
+        VkExtent2D extent = swapchainExtent();
+        u32 width = std::max(1u, extent.width);
+        u32 height = std::max(1u, extent.height);
 
         float32x2 aspect;
-        aspect.x = float(window.x) / float(m_width);
-        aspect.y = float(window.y) / float(m_height);
+        aspect.x = float(width) / float(m_width);
+        aspect.y = float(height) / float(m_height);
 
         if (aspect.x < aspect.y)
         {
@@ -1494,7 +1494,7 @@ namespace mango::vulkan
         VkRenderingInfo renderingInfo =
         {
             .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-            .renderArea = { .extent = { u32(window.x), u32(window.y) } },
+            .renderArea = { .extent = { width, height } },
             .layerCount = 1,
             .colorAttachmentCount = 1,
             .pColorAttachments = &colorAttachment,
@@ -1504,14 +1504,14 @@ namespace mango::vulkan
 
         VkViewport viewport =
         {
-            .width = float(window.x),
-            .height = float(window.y),
+            .width = float(width),
+            .height = float(height),
             .maxDepth = 1.0f,
         };
 
         VkRect2D scissor =
         {
-            .extent = { u32(window.x), u32(window.y) },
+            .extent = { width, height },
         };
 
         vkCmdSetViewport(cmd, 0, 1, &viewport);

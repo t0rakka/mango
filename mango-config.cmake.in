@@ -5,4 +5,45 @@ find_dependency(fmt CONFIG REQUIRED)
 
 include("${CMAKE_CURRENT_LIST_DIR}/mango-targets.cmake")
 
+# Installed targets are exported as mango::mango-core (NAMESPACE + target name).
+# Re-create the same ALIAS names used in the build tree.
+set(_mango_aliases core image window opengl vulkan import3d)
+set(_mango_installed_names mango-core mango-image mango-window mango-opengl mango-vulkan mango-import3d)
+list(LENGTH _mango_aliases _mango_alias_count)
+math(EXPR _mango_alias_last "${_mango_alias_count} - 1")
+foreach(_mango_i RANGE ${_mango_alias_last})
+    list(GET _mango_aliases ${_mango_i} _mango_alias)
+    list(GET _mango_installed_names ${_mango_i} _mango_installed)
+    set(_mango_installed_target "mango::${_mango_installed}")
+    set(_mango_alias_target "mango::${_mango_alias}")
+    if (TARGET ${_mango_installed_target} AND NOT TARGET ${_mango_alias_target})
+        add_library(${_mango_alias_target} ALIAS ${_mango_installed_target})
+    endif ()
+endforeach ()
+unset(_mango_aliases)
+unset(_mango_installed_names)
+unset(_mango_alias_count)
+unset(_mango_alias_last)
+unset(_mango_i)
+unset(_mango_alias)
+unset(_mango_installed)
+unset(_mango_installed_target)
+unset(_mango_alias_target)
+
+# Convenience aggregate matching the in-tree mango::mango target.
+set(_mango_aggregate_libs "")
+foreach(_mango_lib IN ITEMS mango::core mango::image mango::window mango::opengl mango::vulkan mango::import3d)
+    if (TARGET ${_mango_lib})
+        list(APPEND _mango_aggregate_libs ${_mango_lib})
+    endif ()
+endforeach ()
+if (_mango_aggregate_libs AND NOT TARGET mango::mango)
+    add_library(mango::mango INTERFACE IMPORTED)
+    set_target_properties(mango::mango PROPERTIES
+        INTERFACE_LINK_LIBRARIES "${_mango_aggregate_libs}"
+    )
+endif ()
+unset(_mango_aggregate_libs)
+unset(_mango_lib)
+
 check_required_components(mango)

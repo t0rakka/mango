@@ -9,8 +9,6 @@
 #include <mango/filesystem/filesystem.hpp>
 #include <mango/opengl/context.hpp>
 
-#if defined(MANGO_ENABLE_OPENGL)
-
 namespace mango::opengl
 {
 
@@ -24,5 +22,3 @@ namespace mango::opengl
     GLuint createProgram(filesystem::Path& path, const std::vector<std::string>& vertexShaderFilenames, const std::vector<std::string>& fragmentShaderFilenames);
 
 } // namespace mango::opengl
-
-#endif // defined(MANGO_ENABLE_OPENGL)

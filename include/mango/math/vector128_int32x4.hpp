@@ -147,7 +147,7 @@ namespace mango::math
     };
 
     template <int x, int y, int z, int w>
-    static inline Vector<s32, 4> shuffle(Vector<s32, 4> v)
+    inline Vector<s32, 4> shuffle(Vector<s32, 4> v)
     {
         return simd::shuffle<x, y, z, w>(v);
     }
@@ -158,7 +158,7 @@ namespace mango::math
         return simd::s32x4_load_low(source);
     }
 
-    static inline void store_low(s32 *dest, Vector<s32, 4> v) noexcept
+    inline void store_low(s32 *dest, Vector<s32, 4> v) noexcept
     {
         simd::s32x4_store_low(dest, v);
     }
@@ -167,17 +167,17 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<s32, 4> hadd(Vector<s32, 4> a, Vector<s32, 4> b)
+    inline Vector<s32, 4> hadd(Vector<s32, 4> a, Vector<s32, 4> b)
     {
         return simd::hadd(a, b);
     }
 
-    static inline Vector<s32, 4> hsub(Vector<s32, 4> a, Vector<s32, 4> b)
+    inline Vector<s32, 4> hsub(Vector<s32, 4> a, Vector<s32, 4> b)
     {
         return simd::hsub(a, b);
     }
 
-    static inline Vector<s32, 4> mullo(Vector<s32, 4> a, Vector<s32, 4> b)
+    inline Vector<s32, 4> mullo(Vector<s32, 4> a, Vector<s32, 4> b)
     {
         return simd::mullo(a, b);
     }
@@ -186,22 +186,22 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<s32, 4> operator << (Vector<s32, 4> a, int b)
+    inline Vector<s32, 4> operator << (Vector<s32, 4> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s32, 4> operator >> (Vector<s32, 4> a, int b)
+    inline Vector<s32, 4> operator >> (Vector<s32, 4> a, int b)
     {
         return simd::sra(a, b);
     }
 
-    static inline Vector<s32, 4> operator << (Vector<s32, 4> a, Vector<u32, 4> b)
+    inline Vector<s32, 4> operator << (Vector<s32, 4> a, Vector<u32, 4> b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s32, 4> operator >> (Vector<s32, 4> a, Vector<u32, 4> b)
+    inline Vector<s32, 4> operator >> (Vector<s32, 4> a, Vector<u32, 4> b)
     {
         return simd::sra(a, b);
     }

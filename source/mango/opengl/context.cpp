@@ -6,8 +6,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/system.hpp>
 #include <mango/opengl/opengl.hpp>
-
-#if defined(MANGO_ENABLE_OPENGL)
+#include <mango/window/registry.hpp>
 
 namespace
 {
@@ -230,13 +229,13 @@ namespace mango
         // Wayland and whenever the caller requests it explicitly (OpenGLWindow::EGL).
         const WindowSystem ws = Window::getWindowSystem();
 
-    #if defined(MANGO_ENABLE_XLIB)
+    #if defined(MANGO_HAS_XLIB_WINDOW)
         if (ws == WindowSystem::Xlib)
         {
             create = createOpenGLContextGLX_Xlib;
         }
     #endif
-    #if defined(MANGO_ENABLE_XCB)
+    #if defined(MANGO_HAS_XCB_WINDOW)
         if (ws == WindowSystem::Xcb)
         {
             create = createOpenGLContextGLX_Xcb;
@@ -753,5 +752,3 @@ namespace mango
     }
 
 } // namespace mango
-
-#endif // defined(MANGO_ENABLE_OPENGL)

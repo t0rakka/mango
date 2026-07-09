@@ -18,20 +18,20 @@ namespace mango::simd
 #ifdef MANGO_ENABLE_ARM_FP16
 
     template <unsigned int Index>
-    static inline f16x4 set_component(f16x4 a, f16 s)
+    inline f16x4 set_component(f16x4 a, f16 s)
     {
         static_assert(Index < 4, "Index out of range.");
         return vset_lane_f16(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline f16 get_component(f16x4 a)
+    inline f16 get_component(f16x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         return vget_lane_f16(a, Index);
     }
 
-    static inline f16x4 f16x4_set(f16 x, f16 y, f16 z, f16 w)
+    inline f16x4 f16x4_set(f16 x, f16 y, f16 z, f16 w)
     {
         float16x4_t temp = { x, y, z, w };
         return temp;
@@ -40,7 +40,7 @@ namespace mango::simd
 #else
 
     template <unsigned int Index>
-    static inline f16x4 set_component(f16x4 a, f16 s)
+    inline f16x4 set_component(f16x4 a, f16 s)
     {
         static_assert(Index < 4, "Index out of range.");
         u64 mask = u64(0xffff) << (Index * 16);
@@ -49,14 +49,14 @@ namespace mango::simd
     }
 
     template <unsigned int Index>
-    static inline f16 get_component(f16x4 a)
+    inline f16 get_component(f16x4 a)
     {
         static_assert(Index < 4, "Index out of range.");
         u16 value = (a.data >> (Index * 16)) & 0xffff;
         return f16(value);
     }
 
-    static inline f16x4 f16x4_set(f16 x, f16 y, f16 z, f16 w)
+    inline f16x4 f16x4_set(f16 x, f16 y, f16 z, f16 w)
     {
         u64 data = (u64(w.u) << 48) | (u64(z.u) << 32) | (u64(y.u) << 16) | u64(x.u);
         return f16x4(data);
@@ -69,7 +69,7 @@ namespace mango::simd
     // -----------------------------------------------------------------
 
     template <u32 x, u32 y>
-    static inline f32x2 shuffle(f32x2 v)
+    inline f32x2 shuffle(f32x2 v)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         float32x2_t result;
@@ -79,7 +79,7 @@ namespace mango::simd
     }
 
     template <u32 x, u32 y>
-    static inline f32x2 shuffle(f32x2 a, f32x2 b)
+    inline f32x2 shuffle(f32x2 a, f32x2 b)
     {
         static_assert(x < 2 && y < 2, "Index out of range.");
         float32x2_t result;
@@ -91,30 +91,30 @@ namespace mango::simd
     // indexed access
 
     template <unsigned int Index>
-    static inline f32x2 set_component(f32x2 a, f32 s)
+    inline f32x2 set_component(f32x2 a, f32 s)
     {
         static_assert(Index < 2, "Index out of range.");
         return vset_lane_f32(s, a, Index);
     }
 
     template <unsigned int Index>
-    static inline f32 get_component(f32x2 a)
+    inline f32 get_component(f32x2 a)
     {
         static_assert(Index < 2, "Index out of range.");
         return vget_lane_f32(a, Index);
     }
 
-    static inline f32x2 f32x2_zero()
+    inline f32x2 f32x2_zero()
     {
         return vdup_n_f32(0.0f);
     }
 
-    static inline f32x2 f32x2_set(f32 s)
+    inline f32x2 f32x2_set(f32 s)
     {
         return vdup_n_f32(s);
     }
 
-    static inline f32x2 f32x2_set(f32 x, f32 y)
+    inline f32x2 f32x2_set(f32 x, f32 y)
     {
         float32x2_t temp = { x, y };
         return temp;
@@ -122,39 +122,39 @@ namespace mango::simd
 
 #if defined(MANGO_COMPILER_GCC)
 
-    static inline f32x2 f32x2_uload(const void* source)
+    inline f32x2 f32x2_uload(const void* source)
     {
         f32x2 temp;
         std::memcpy(&temp, source, sizeof(temp));
         return temp;
     }
 
-    static inline void f32x2_ustore(void* dest, f32x2 a)
+    inline void f32x2_ustore(void* dest, f32x2 a)
     {
         std::memcpy(dest, &a, sizeof(a));
     }
 
 #else
 
-    static inline f32x2 f32x2_uload(const void* source)
+    inline f32x2 f32x2_uload(const void* source)
     {
         return vld1_f32(reinterpret_cast<const f32*>(source));
     }
 
-    static inline void f32x2_ustore(void* dest, f32x2 a)
+    inline void f32x2_ustore(void* dest, f32x2 a)
     {
         vst1_f32(reinterpret_cast<f32*>(dest), a);
     }
 
 #endif
 
-    static inline f32x2 unpacklo(f32x2 a, f32x2 b)
+    inline f32x2 unpacklo(f32x2 a, f32x2 b)
     {
         float32x2x2_t v = vzip_f32(a, b);
         return v.val[1];
     }
 
-    static inline f32x2 unpackhi(f32x2 a, f32x2 b)
+    inline f32x2 unpackhi(f32x2 a, f32x2 b)
     {
         float32x2x2_t v = vzip_f32(a, b);
         return v.val[0];
@@ -162,52 +162,52 @@ namespace mango::simd
 
     // bitwise
 
-    static inline f32x2 bitwise_nand(f32x2 a, f32x2 b)
+    inline f32x2 bitwise_nand(f32x2 a, f32x2 b)
     {
         return vreinterpret_f32_s32(vbic_s32(vreinterpret_s32_f32(a), vreinterpret_s32_f32(b)));
     }
 
-    static inline f32x2 bitwise_and(f32x2 a, f32x2 b)
+    inline f32x2 bitwise_and(f32x2 a, f32x2 b)
     {
         return vreinterpret_f32_s32(vand_s32(vreinterpret_s32_f32(a), vreinterpret_s32_f32(b)));
     }
 
-    static inline f32x2 bitwise_or(f32x2 a, f32x2 b)
+    inline f32x2 bitwise_or(f32x2 a, f32x2 b)
     {
         return vreinterpret_f32_s32(vorr_s32(vreinterpret_s32_f32(a), vreinterpret_s32_f32(b)));
     }
 
-    static inline f32x2 bitwise_xor(f32x2 a, f32x2 b)
+    inline f32x2 bitwise_xor(f32x2 a, f32x2 b)
     {
         return vreinterpret_f32_s32(veor_s32(vreinterpret_s32_f32(a), vreinterpret_s32_f32(b)));
     }
 
-    static inline f32x2 bitwise_not(f32x2 a)
+    inline f32x2 bitwise_not(f32x2 a)
     {
         return vreinterpret_f32_u32(veor_u32(vreinterpret_u32_f32(a), vceq_f32(a, a)));
     }
 
-    static inline f32x2 min(f32x2 a, f32x2 b)
+    inline f32x2 min(f32x2 a, f32x2 b)
     {
         return vmin_f32(a, b);
     }
 
-    static inline f32x2 max(f32x2 a, f32x2 b)
+    inline f32x2 max(f32x2 a, f32x2 b)
     {
         return vmax_f32(a, b);
     }
 
-    static inline f32x2 abs(f32x2 a)
+    inline f32x2 abs(f32x2 a)
     {
         return vabs_f32(a);
     }
 
-    static inline f32x2 neg(f32x2 a)
+    inline f32x2 neg(f32x2 a)
     {
         return vneg_f32(a);
     }
 
-    static inline f32x2 sign(f32x2 a)
+    inline f32x2 sign(f32x2 a)
     {
         auto i = vreinterpret_u32_f32(a);
         auto value_mask = vmvn_u32(vceq_u32(i, vdup_n_u32(0)));
@@ -216,29 +216,29 @@ namespace mango::simd
         return vreinterpret_f32_u32(vorr_u32(value_bits, sign_bits));
     }
 
-    static inline f32x2 add(f32x2 a, f32x2 b)
+    inline f32x2 add(f32x2 a, f32x2 b)
     {
         return vadd_f32(a, b);
     }
 
-    static inline f32x2 sub(f32x2 a, f32x2 b)
+    inline f32x2 sub(f32x2 a, f32x2 b)
     {
         return vsub_f32(a, b);
     }
 
-    static inline f32x2 mul(f32x2 a, f32x2 b)
+    inline f32x2 mul(f32x2 a, f32x2 b)
     {
         return vmul_f32(a, b);
     }
 
 #ifdef __aarch64__
 
-    static inline f32x2 div(f32x2 a, f32x2 b)
+    inline f32x2 div(f32x2 a, f32x2 b)
     {
         return vdiv_f32(a, b);
     }
 
-    static inline f32x2 div(f32x2 a, f32 b)
+    inline f32x2 div(f32x2 a, f32 b)
     {
         f32x2 s = vdup_n_f32(b);
         return vdiv_f32(a, s);
@@ -246,7 +246,7 @@ namespace mango::simd
 
 #else
 
-    static inline f32x2 div(f32x2 a, f32x2 b)
+    inline f32x2 div(f32x2 a, f32x2 b)
     {
         f32x2 n = vrecpe_f32(b);
         n = vmul_f32(vrecps_f32(n, b), n);
@@ -254,7 +254,7 @@ namespace mango::simd
         return vmul_f32(a, n);
     }
 
-    static inline f32x2 div(f32x2 a, f32 b)
+    inline f32x2 div(f32x2 a, f32 b)
     {
         f32x2 s = vdup_n_f32(b);
         f32x2 n = vrecpe_f32(s);
@@ -265,42 +265,42 @@ namespace mango::simd
 
 #endif
 
-    static inline f32x2 hadd(f32x2 a, f32x2 b)
+    inline f32x2 hadd(f32x2 a, f32x2 b)
     {
         return vpadd_f32(a, b);
     }
 
-    static inline f32x2 hsub(f32x2 a, f32x2 b)
+    inline f32x2 hsub(f32x2 a, f32x2 b)
     {
         b = vneg_f32(b);
         return vpadd_f32(a, b);
     }
 
-    static inline f32x2 madd(f32x2 a, f32x2 b, f32x2 c)
+    inline f32x2 madd(f32x2 a, f32x2 b, f32x2 c)
     {
         // a + b * c
         return vmla_f32(a, b, c);
     }
 
-    static inline f32x2 msub(f32x2 a, f32x2 b, f32x2 c)
+    inline f32x2 msub(f32x2 a, f32x2 b, f32x2 c)
     {
         // b * c - a
         return vneg_f32(vmls_f32(a, b, c));
     }
 
-    static inline f32x2 nmadd(f32x2 a, f32x2 b, f32x2 c)
+    inline f32x2 nmadd(f32x2 a, f32x2 b, f32x2 c)
     {
         // a - b * c
         return vmls_f32(a, b, c);
     }
 
-    static inline f32x2 nmsub(f32x2 a, f32x2 b, f32x2 c)
+    inline f32x2 nmsub(f32x2 a, f32x2 b, f32x2 c)
     {
         // -(a + b * c)
         return vneg_f32(vmla_f32(a, b, c));
     }
 
-    static inline f32x2 lerp(f32x2 a, f32x2 b, f32x2 s)
+    inline f32x2 lerp(f32x2 a, f32x2 b, f32x2 s)
     {
         // a * (1.0 - s) + b * s
         // (a - a * s) + (b * s)
@@ -309,14 +309,14 @@ namespace mango::simd
 
 #if defined(MANGO_FAST_MATH)
 
-    static inline f32x2 rcp(f32x2 a)
+    inline f32x2 rcp(f32x2 a)
     {
         f32x2 e = vrecpe_f32(a);
         e = vmul_f32(vrecps_f32(a, e), e);
         return e;
     }
 
-    static inline f32x2 rsqrt(f32x2 a)
+    inline f32x2 rsqrt(f32x2 a)
     {
         f32x2 e = vrsqrte_f32(a);
         e = vmul_f32(vrsqrts_f32(vmul_f32(a, e), e), e);
@@ -325,14 +325,14 @@ namespace mango::simd
 
 #ifdef __aarch64__
 
-    static inline f32x2 sqrt(f32x2 a)
+    inline f32x2 sqrt(f32x2 a)
     {
         return vsqrt_f32(a);
     }
 
 #else
 
-    static inline f32x2 sqrt(f32x2 a)
+    inline f32x2 sqrt(f32x2 a)
     {
         f32x2 e = vrsqrte_f32(a);
         e = vmul_f32(vrsqrts_f32(vmul_f32(a, e), e), e);
@@ -343,7 +343,7 @@ namespace mango::simd
 
 #else // MANGO_FAST_MATH
 
-    static inline f32x2 rcp(f32x2 a)
+    inline f32x2 rcp(f32x2 a)
     {
         f32x2 e = vrecpe_f32(a);
         e = vmul_f32(vrecps_f32(a, e), e);
@@ -351,7 +351,7 @@ namespace mango::simd
         return e;
     }
 
-    static inline f32x2 rsqrt(f32x2 a)
+    inline f32x2 rsqrt(f32x2 a)
     {
         f32x2 e = vrsqrte_f32(a);
         e = vmul_f32(vrsqrts_f32(vmul_f32(a, e), e), e);
@@ -361,14 +361,14 @@ namespace mango::simd
 
 #ifdef __aarch64__
     
-    static inline f32x2 sqrt(f32x2 a)
+    inline f32x2 sqrt(f32x2 a)
     {
         return vsqrt_f32(a);
     }
 
 #else
 
-    static inline f32x2 sqrt(f32x2 a)
+    inline f32x2 sqrt(f32x2 a)
     {
         f32x2 e = vrsqrte_f32(a);
         e = vmul_f32(vrsqrts_f32(vmul_f32(a, e), e), e);
@@ -382,7 +382,7 @@ namespace mango::simd
 
 #ifdef __aarch64__
 
-    static inline f32 dot2(f32x2 a, f32x2 b)
+    inline f32 dot2(f32x2 a, f32x2 b)
     {
         float32x2_t prod = vmul_f32(a, b);
         return vaddv_f32(prod);
@@ -390,7 +390,7 @@ namespace mango::simd
 
 #else
 
-    static inline f32 dot2(f32x2 a, f32x2 b)
+    inline f32 dot2(f32x2 a, f32x2 b)
     {
         const float32x2_t prod = vmul_f32(a, b);
         return vget_lane_f32(vpadd_f32(prod, prod), 0);
@@ -402,29 +402,29 @@ namespace mango::simd
 
 #if __ARM_ARCH >= 8
 
-    static inline f32x2 round(f32x2 s)
+    inline f32x2 round(f32x2 s)
     {
         return vrnda_f32(s);
     }
 
-    static inline f32x2 trunc(f32x2 s)
+    inline f32x2 trunc(f32x2 s)
     {
         return vrnd_f32(s);
     }
 
-    static inline f32x2 floor(f32x2 s)
+    inline f32x2 floor(f32x2 s)
     {
         return vrndm_f32(s);
     }
 
-    static inline f32x2 ceil(f32x2 s)
+    inline f32x2 ceil(f32x2 s)
     {
         return vrndp_f32(s);
     }
 
 #else
 
-    static inline f32x2 round(f32x2 s)
+    inline f32x2 round(f32x2 s)
     {
         float32x2_t magic = vdup_n_f32(12582912.0f); // 1.5 * (1 << 23)
         float32x2_t result = vsub_f32(vadd_f32(s, magic), magic);
@@ -432,7 +432,7 @@ namespace mango::simd
         return vbsl_f32(mask, result, s);
     }
 
-    static inline f32x2 trunc(f32x2 s)
+    inline f32x2 trunc(f32x2 s)
     {
         int32x2_t truncated = vcvt_s32_f32(s);
         float32x2_t result = vcvt_f32_s32(truncated);
@@ -440,7 +440,7 @@ namespace mango::simd
         return vbsl_f32(mask, result, s);
     }
 
-    static inline f32x2 floor(f32x2 s)
+    inline f32x2 floor(f32x2 s)
     {
         const f32x2 temp = round(s);
         const uint32x2_t mask = vclt_f32(s, temp);
@@ -448,7 +448,7 @@ namespace mango::simd
         return vsub_f32(temp, vreinterpret_f32_u32(vand_u32(mask, one)));
     }
 
-    static inline f32x2 ceil(f32x2 s)
+    inline f32x2 ceil(f32x2 s)
     {
         const f32x2 temp = round(s);
         const uint32x2_t mask = vcgt_f32(s, temp);
@@ -458,7 +458,7 @@ namespace mango::simd
 
 #endif
 
-    static inline f32x2 fract(f32x2 s)
+    inline f32x2 fract(f32x2 s)
     {
         return sub(s, floor(s));
     }

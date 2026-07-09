@@ -121,7 +121,7 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 32> mullo(Vector<s16, 32> a, Vector<s16, 32> b)
+    inline Vector<s16, 32> mullo(Vector<s16, 32> a, Vector<s16, 32> b)
     {
         return simd::mullo(a, b);
     }
@@ -130,12 +130,12 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<s16, 32> operator << (Vector<s16, 32> a, int b)
+    inline Vector<s16, 32> operator << (Vector<s16, 32> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<s16, 32> operator >> (Vector<s16, 32> a, int b)
+    inline Vector<s16, 32> operator >> (Vector<s16, 32> a, int b)
     {
         return simd::sra(a, b);
     }

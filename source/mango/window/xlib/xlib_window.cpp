@@ -8,12 +8,6 @@
 #include <mango/core/system.hpp>
 #include <mango/core/timer.hpp>
 
-#if defined(MANGO_ENABLE_XLIB)
-
-#if defined(MANGO_ENABLE_VULKAN)
-    #define VK_USE_PLATFORM_XLIB_KHR
-#endif
-
 #include "xlib_window.hpp"
 
 #include <cstdint>
@@ -604,7 +598,6 @@ namespace
 namespace mango
 {
     using namespace mango::math;
-    using namespace mango::image;
 
     // -----------------------------------------------------------------------
     // XlibBackend
@@ -1346,43 +1339,8 @@ namespace mango
         }
     }
 
-#if defined(MANGO_ENABLE_VULKAN)
-
-    VkSurfaceKHR XlibBackend::createVulkanSurface(VkInstance instance)
+    void* XlibBackend::createNativeWindowForGraphics(int width, int height, u32 flags)
     {
-        VkXlibSurfaceCreateInfoKHR createInfo;
-
-        createInfo.sType = VK_STRUCTURE_TYPE_XLIB_SURFACE_CREATE_INFO_KHR;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
-        createInfo.dpy = x11Display();
-        createInfo.window = x11Window();
-
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-        VkResult result = vkCreateXlibSurfaceKHR(instance, &createInfo, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
-            MANGO_EXCEPTION("[XlibBackend] vkCreateXlibSurfaceKHR() failed.");
-        }
-
-        return surface;
-    }
-
-    bool XlibBackend::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
-    {
-        VisualID visualid = x11VisualID();
-        VkBool32 support = vkGetPhysicalDeviceXlibPresentationSupportKHR(
-            physicalDevice, queueFamilyIndex, x11Display(), visualid);
-        return support == VK_TRUE;
-    }
-
-#endif // defined(MANGO_ENABLE_VULKAN)
-
-#if defined(MANGO_ENABLE_EGL)
-
-    void* XlibBackend::eglNativeWindow(int width, int height, u32 flags)
-    {
-        // Create a default X11 window (EGL chooses the visual itself).
         if (!init(0, 0, nullptr, width, height, flags, "OpenGL|ES"))
         {
             return nullptr;
@@ -1391,8 +1349,7 @@ namespace mango
         return reinterpret_cast<void*>(static_cast<std::uintptr_t>(window));
     }
 
-#endif // defined(MANGO_ENABLE_EGL)
-
 } // namespace mango
 
-#endif // defined(MANGO_ENABLE_XLIB)
+#include "../window_registry.hpp"
+MANGO_REGISTER_WINDOW_BACKEND(Xlib, createXlibBackend);

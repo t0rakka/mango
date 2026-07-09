@@ -5,7 +5,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/print.hpp>
 #include <mango/vulkan/vulkan.hpp>
-#include "../window/window_backend.hpp"
+#include "window_surface.hpp"
 
 namespace mango::vulkan
 {
@@ -82,7 +82,8 @@ namespace mango::vulkan
         , m_instance(instance)
         , m_surface(VK_NULL_HANDLE)
     {
-        m_surface = m_backend->createVulkanSurface(m_instance);
+        ensureVulkanWindowContent(this, backend(), width, height);
+        m_surface = createVulkanSurface(backend(), m_instance);
         if (!m_surface)
         {
             MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
@@ -103,7 +104,7 @@ namespace mango::vulkan
 
     bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
     {
-        return m_backend->getPresentationSupport(physicalDevice, queueFamilyIndex);
+        return getVulkanPresentationSupport(backend(), physicalDevice, queueFamilyIndex);
     }
 
     Swapchain& VulkanWindow::swapchain()

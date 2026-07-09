@@ -8,8 +8,6 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_WP2)
-
 #include <wp2/base.h>
 #include <wp2/decode.h>
 #include <wp2/encode.h>
@@ -162,17 +160,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecWP2()
-    {
-        // WP2 codec is disabled
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_WP2)

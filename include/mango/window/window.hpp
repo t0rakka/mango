@@ -9,10 +9,7 @@
 #include <vector>
 #include <memory>
 #include <mango/math/math.hpp>
-#include <mango/image/surface.hpp>
 #include <mango/filesystem/filesystem.hpp>
-
-#if defined(MANGO_ENABLE_WINDOW)
 
 namespace mango
 {
@@ -348,5 +345,3 @@ namespace mango
     };
 
 } // namespace mango
-
-#endif // defined(MANGO_ENABLE_WINDOW)

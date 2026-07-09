@@ -50,6 +50,7 @@
 CMakeFiles
 CMakeCache.txt
 *.cmake
+!cmake/*.cmake
 install_manifest.txt
 Makefile
 build

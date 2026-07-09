@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2020 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     Based on Half/Float conversion code by Fabian "ryg" Giesen.
@@ -340,74 +340,9 @@ namespace mango
         }
     };
 
-    // ----------------------------------------------------------------------------
-    // UnsignedInt24
-    // ----------------------------------------------------------------------------
-
-    struct UnsignedInt24
-    {
-        u8 data[3];
-
-        UnsignedInt24()
-            : data { 0 }
-        {
-        }
-
-        UnsignedInt24(u32 v)
-        {
-            *this = v;
-        }
-
-        operator u32 () const
-        {
-            u32 v = u32((data[2] << 16) | (data[1] << 8) | data[0]);
-            return v;
-        }
-
-        operator u8* ()
-        {
-            return data;
-        }
-
-        operator const u8* () const
-        {
-            return data;
-        }
-
-        UnsignedInt24& operator = (u32 v)
-        {
-            data[0] = u8(v >>  0);
-            data[1] = u8(v >>  8);
-            data[2] = u8(v >> 16);
-            return *this;
-        }
-    };
-
-    // -----------------------------------------------------------------------
-    // conversions
-    // -----------------------------------------------------------------------
-
-    static inline
-    double unsignedIntToDouble(u32 i)
-    {
-        const double bias = (1ll << 52) * 1.5;
-        Double x(u64(0x4338000000000000UL | i));
-        return x.f - bias;
-    }
-
-    static inline
-    u32 doubleToUnsignedInt(double d)
-    {
-        const double bias = (1ll << 52) * 1.5;
-        Double x = d + bias;
-        return u32(x.u);
-    }
-
     // -----------------------------------------------------------------------
     // types
     // -----------------------------------------------------------------------
-
-    using u24 = UnsignedInt24;
 
     using float16 = Half;
     using float32 = float;

@@ -5,8 +5,6 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_JP2)
-
 #include <openjpeg.h>
 
 namespace
@@ -1148,16 +1146,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecJP2()
-    {
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_JP2)

@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -74,7 +74,6 @@
     #define MANGO_PLATFORM_MINGW
     #define MANGO_PLATFORM_WINDOWS
     #define MANGO_PLATFORM_NAME "MinGW"
-    #define MANGO_ENABLE_WIN32
 
     #ifndef NOMINMAX
     #define NOMINMAX
@@ -92,7 +91,6 @@
     // Microsoft Windows
     #define MANGO_PLATFORM_WINDOWS
     #define MANGO_PLATFORM_NAME "Windows"
-    #define MANGO_ENABLE_WIN32
 
     #ifndef NOMINMAX
     #define NOMINMAX
@@ -145,15 +143,6 @@
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "Linux"
 
-    // Runtime window-system selection: the Xlib, Xcb and Wayland backends are
-    // compiled and linked together and chosen at runtime via WindowSystem. The
-    // MANGO_ENABLE_* toggles (set by CMake) decide which backends exist in the
-    // binary; multiple may be enabled simultaneously. If none were requested,
-    // default to Xlib so the library always has at least one backend.
-    #if !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB) && !defined(MANGO_ENABLE_WAYLAND)
-        #define MANGO_ENABLE_XLIB
-    #endif
-
     #include <stdint.h>
     #include <malloc.h>
 
@@ -193,7 +182,6 @@
     #define MANGO_PLATFORM_IRIX
     #define MANGO_PLATFORM_UNIX
     #define MANGO_PLATFORM_NAME "SGI IRIX"
-    #define MANGO_ENABLE_XLIB
 
 #elif defined (__EMSCRIPTEN__)
 
@@ -209,33 +197,6 @@
     // unsupported
     #error "Platform not supported."
 
-#endif
-
-// -----------------------------------------------------------------------
-// window system
-// -----------------------------------------------------------------------
-
-// A window-system backend is identified by its own MANGO_ENABLE_<BACKEND> macro.
-// They are mutually exclusive across platforms: WIN32 (Windows) and COCOA (macOS)
-// are set above from the platform, while XLIB / XCB / WAYLAND are set only on
-// Linux by CMake. On Linux those three may coexist in one build, the active one
-// chosen at runtime. These are capability/selection flags: they say which
-// backend(s) this build *could* use.
-//
-// The window subsystem exists only to host an OpenGL or Vulkan surface, so it is
-// what actually drives the need for a window; the backend is just the default
-// vehicle. CMake mirrors this by compiling the window translation units only for
-// BUILD_OPENGL / BUILD_VULKAN. MANGO_ENABLE_WINDOW is therefore the roll-up
-// "windowing is active": a graphics API needs a window AND a backend exists to
-// provide one. The window / OpenGL / Vulkan public headers and their translation
-// units are inert without it.
-#if (defined(MANGO_ENABLE_OPENGL) || defined(MANGO_ENABLE_VULKAN)) && \
-    (defined(MANGO_ENABLE_WIN32)  || \
-     defined(MANGO_ENABLE_COCOA)  || \
-     defined(MANGO_ENABLE_XLIB)   || \
-     defined(MANGO_ENABLE_XCB)    || \
-     defined(MANGO_ENABLE_WAYLAND))
-    #define MANGO_ENABLE_WINDOW
 #endif
 
 // -----------------------------------------------------------------------

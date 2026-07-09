@@ -374,6 +374,7 @@ int mangoMain(const mango::CommandLine& commands)
 
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
+    config.trackDisplayRefreshRate = true;
     config.waitForFrame = true;
 
     window.enterEventLoop(config);

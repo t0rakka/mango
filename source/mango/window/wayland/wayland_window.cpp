@@ -7,12 +7,6 @@
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 
-#if defined(MANGO_ENABLE_WAYLAND)
-
-#if defined(MANGO_ENABLE_VULKAN)
-    #define VK_USE_PLATFORM_WAYLAND_KHR
-#endif
-
 #include <unistd.h>
 #include <poll.h>
 #include <sys/mman.h>
@@ -24,9 +18,6 @@
 
 #include "wayland_window.hpp"
 #include <wayland-client-protocol.h>
-#if defined(MANGO_ENABLE_EGL)
-#include <wayland-egl.h>
-#endif
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "xdg-shell-client-protocol.h"
 
@@ -262,7 +253,7 @@ namespace
     {
         WaylandBackend* window = static_cast<WaylandBackend*>(data);
         window->syncSurfaceScale();
-        window->syncEGLWindow();
+        window->syncGraphicsSurfaceFromResize();
         window->syncOpaqueRegion();
         xdg_surface_ack_configure(xdg_surface, serial);
         window->configured = true;
@@ -901,9 +892,6 @@ namespace mango
         if (xdg_wm_base) xdg_wm_base_destroy(xdg_wm_base);
         if (pointer) wl_pointer_destroy(pointer);
         if (keyboard) wl_keyboard_destroy(keyboard);
-#if defined(MANGO_ENABLE_EGL)
-        if (egl_window) wl_egl_window_destroy(static_cast<struct wl_egl_window*>(egl_window));
-#endif
         if (seat) wl_seat_destroy(seat);
         if (compositor) wl_compositor_destroy(compositor);
         if (registry) wl_registry_destroy(registry);
@@ -954,13 +942,6 @@ namespace mango
         {
             return int32x2(size[0], size[1]);
         }
-
-#if defined(MANGO_ENABLE_EGL)
-        if (egl_window && egl_synced_size[0] > 0 && egl_synced_size[1] > 0)
-        {
-            return int32x2(egl_synced_size[0], egl_synced_size[1]);
-        }
-#endif
 
         return int32x2(size[0], size[1]);
     }
@@ -1049,28 +1030,16 @@ namespace mango
         wl_region_add(region, 0, 0, size[0], size[1]);
         wl_surface_set_opaque_region(surface, region);
         wl_region_destroy(region);
+
+        if (display)
+        {
+            wl_display_flush(display);
+        }
     }
 
-    void WaylandBackend::syncEGLWindow()
+    void WaylandBackend::syncGraphicsSurfaceFromResize()
     {
-#if defined(MANGO_ENABLE_EGL)
-        if (!egl_window || size[0] <= 0 || size[1] <= 0)
-        {
-            return;
-        }
-
-        syncSurfaceScale();
-
-        if (egl_synced_size[0] == size[0] && egl_synced_size[1] == size[1])
-        {
-            return;
-        }
-
-        wl_egl_window_resize(static_cast<struct wl_egl_window*>(egl_window), size[0], size[1], 0, 0);
-
-        egl_synced_size[0] = size[0];
-        egl_synced_size[1] = size[1];
-#endif
+        syncGraphicsSurface();
     }
 
     void WaylandBackend::dispatchPendingResize()
@@ -1088,7 +1057,7 @@ namespace mango
         }
 
         syncSurfaceScale();
-        syncEGLWindow();
+        syncGraphicsSurfaceFromResize();
         syncOpaqueRegion();
         owner->onResize(size[0], size[1]);
         owner->invalidate();
@@ -1130,7 +1099,7 @@ namespace mango
     // Window (static, screen queries)
     // -----------------------------------------------------------------------
 
-#if !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB)
+#if !defined(MANGO_HAS_XLIB_WINDOW) && !defined(MANGO_HAS_XCB_WINDOW)
 
     // Provided by the X11 backends when present; defined here only when the build
     // has neither Xlib nor Xcb, so the single Window::getScreen* definition is unique.
@@ -1151,7 +1120,7 @@ namespace mango
         return int32x2(output.width, output.height);
     }
 
-#endif // !defined(MANGO_ENABLE_XLIB) && !defined(MANGO_ENABLE_XCB)
+#endif // !defined(MANGO_HAS_XLIB_WINDOW) && !defined(MANGO_HAS_XCB_WINDOW)
 
     // -----------------------------------------------------------------------
     // WaylandBackend (window operations + event loop)
@@ -1173,7 +1142,7 @@ namespace mango
         size[0] = width;
         size[1] = height;
         pending_resize = true;
-        syncEGLWindow();
+        syncGraphicsSurfaceFromResize();
         requestRefresh();
     }
 
@@ -1246,11 +1215,18 @@ namespace mango
         // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
+    void WaylandBackend::beforePresent()
+    {
+        // wl_surface opaque region is double-buffered and must be set before each
+        // attach/commit (EGL swap / Vulkan present), not only on configure/resize.
+        syncOpaqueRegion();
+    }
+
     void WaylandBackend::runEventLoop()
     {
         processEvents();
         syncSurfaceScale();
-        syncEGLWindow();
+        syncGraphicsSurfaceFromResize();
         owner->syncDisplayRefreshRate();
 
         if (!busy)
@@ -1312,75 +1288,7 @@ namespace mango
         }
     }
 
-#if defined(MANGO_ENABLE_VULKAN)
-
-    VkSurfaceKHR WaylandBackend::createVulkanSurface(VkInstance instance)
-    {
-        VkWaylandSurfaceCreateInfoKHR createInfo;
-
-        createInfo.sType = VK_STRUCTURE_TYPE_WAYLAND_SURFACE_CREATE_INFO_KHR;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
-        createInfo.display = display;
-        createInfo.surface = surface;
-
-        VkSurfaceKHR vk_surface = VK_NULL_HANDLE;
-        VkResult result = vkCreateWaylandSurfaceKHR(instance, &createInfo, nullptr, &vk_surface);
-        if (result != VK_SUCCESS)
-        {
-            MANGO_EXCEPTION("[WaylandBackend] vkCreateWaylandSurfaceKHR() failed.");
-        }
-
-        return vk_surface;
-    }
-
-    bool WaylandBackend::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
-    {
-        VkBool32 support = vkGetPhysicalDeviceWaylandPresentationSupportKHR(
-            physicalDevice, queueFamilyIndex, display);
-        return support == VK_TRUE;
-    }
-
-#endif // defined(MANGO_ENABLE_VULKAN)
-
-#if defined(MANGO_ENABLE_EGL)
-
-    void* WaylandBackend::eglNativeDisplay()
-    {
-        return display;
-    }
-
-    void* WaylandBackend::eglNativeWindow(int width, int height, u32 flags)
-    {
-        MANGO_UNREFERENCED(flags);
-
-        if (!surface)
-        {
-            return nullptr;
-        }
-
-        const int egl_width = std::max(1, size[0] > 0 ? size[0] : width);
-        const int egl_height = std::max(1, size[1] > 0 ? size[1] : height);
-
-        egl_window = wl_egl_window_create(surface, egl_width, egl_height);
-        return egl_window;
-    }
-
-    void WaylandBackend::eglPresent()
-    {
-        // The first present (right after the EGL surface is created) needs a
-        // roundtrip so the compositor processes the initial attach; subsequent
-        // frames only resync the egl-window size to match a resize.
-        const bool first = (egl_synced_size[0] == 0 && egl_synced_size[1] == 0);
-        if (first && display)
-        {
-            wl_display_roundtrip(display);
-        }
-        syncEGLWindow();
-    }
-
-#endif // defined(MANGO_ENABLE_EGL)
-
 } // namespace mango
 
-#endif // defined(MANGO_ENABLE_WAYLAND)
+#include "../window_registry.hpp"
+MANGO_REGISTER_WINDOW_BACKEND(Wayland, createWaylandBackend);

@@ -13,11 +13,11 @@ The external libraries are divided into three categories: REQUIRED libraries MUS
 
 There are different package managers but our examples use apt-get (Ubuntu, Mint, etc.).
 
-### REQUIRED Libraries
+### REQUIRED Libraries (Core, Image)
 
     sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev
 
-### OPTIONAL Libraries
+### OPTIONAL Libraries (Core, Image)
 
     sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev
 
@@ -29,11 +29,11 @@ There are different package managers but our examples use apt-get (Ubuntu, Mint,
 
     sudo apt-get install glslang-dev
 
-### OPTIONAL Libraries (Import3D)
+### REQUIRED Libraries (Import3D)
 
     sudo apt-get install libsimdjson-dev
 
-### OPTIONAL Libraries (examples)
+### OPTIONAL Libraries (Examples)
 
     sudo apt-get install libjpeg-dev libpng-dev
 
@@ -52,11 +52,11 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 <h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch Linux</h2>
 
 
-### REQUIRED Libraries
+### REQUIRED Libraries (Core, Image)
 
     sudo pacman -S fmt z libdeflate zstd lcms2
 
-### OPTIONAL Libraries
+### OPTIONAL Libraries (Core, Image)
 
     sudo pacman -S libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib
 
@@ -68,11 +68,11 @@ Above uses ninja as build system, cmake users know what time it is. If you want 
 
     sudo pacman -S glslang
 
-### OPTIONAL Libraries (Import3D)
+### REQUIRED Libraries (Import3D)
 
     sudo pacman -S simdjson
 
-### OPTIONAL Libraries (examples)
+### OPTIONAL Libraries (Examples)
 
     sudo pacman -S libjpeg-turbo libpng
 
@@ -84,19 +84,19 @@ On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
 
 
-### REQUIRED Libraries
+### REQUIRED Libraries (Core, Image)
 
     brew install fmt zlib libdeflate zstd lcms2
 
-### OPTIONAL Libraries
+### OPTIONAL Libraries (Core, Image)
 
     brew install jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib
 
-### OPTIONAL Libraries (Import3D)
+### REQUIRED Libraries (Import3D)
 
     brew install simdjson
 
-### OPTIONAL Libraries (examples)
+### OPTIONAL Libraries (Examples)
 
     brew install libjpeg-turbo libpng
 
@@ -110,7 +110,7 @@ On macOS the building is exactly same as it is on Linux.
 
 The Emscripten build is still work-in-progress but is partially working. The recommended way is to install dependencies using vcpkg, the preset builds examples so the libraries usually in examples are included in the required libraries below. The target is currently node and the cmake configuration builds specifically for node with native filesystem access enabled for testing purposes.
 
-### REQUIRED Libraries
+### REQUIRED Libraries (Core, Image)
 
     vcpkg install --triplet wasm32-emscripten fmt zlib libdeflate zstd lcms libjpeg-turbo libpng
 
@@ -127,11 +127,11 @@ Here are the environment variables that are needed, the x64-windows is just exam
     path: <vcpkg_root>\installed\x64-windows\bin
           <vcpkg_root>
 
-### REQUIRED Libraries
+### REQUIRED Libraries (Core, Image)
 
     vcpkg install pkgconf fmt zlib libdeflate zstd lcms
 
-### OPTIONAL Libraries
+### OPTIONAL Libraries (Core, Image)
 
     vcpkg install libjxl openjpeg libwebp libavif libheif libraw isal lz4 bzip2 jxrlib
 
@@ -139,11 +139,11 @@ Here are the environment variables that are needed, the x64-windows is just exam
 
     vcpkg install glslang
 
-### OPTIONAL Libraries (Import3D)
+### REQUIRED Libraries (Import3D)
 
     vcpkg install simdjson
 
-### OPTIONAL Libraries (examples)
+### OPTIONAL Libraries (Examples)
 
     vcpkg install libjpeg-turbo libpng blend2d
 

@@ -142,7 +142,7 @@ namespace mango::math
     };
 
     template <int x, int y, int z, int w>
-    static inline Vector<u32, 4> shuffle(Vector<u32, 4> v)
+    inline Vector<u32, 4> shuffle(Vector<u32, 4> v)
     {
         return simd::shuffle<x, y, z, w>(v);
     }
@@ -153,7 +153,7 @@ namespace mango::math
         return simd::u32x4_load_low(source);
     }
 
-    static inline void store_low(u32 *dest, Vector<u32, 4> v) noexcept
+    inline void store_low(u32 *dest, Vector<u32, 4> v) noexcept
     {
         simd::u32x4_store_low(dest, v);
     }
@@ -162,7 +162,7 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline Vector<u32, 4> mullo(Vector<u32, 4> a, Vector<u32, 4> b)
+    inline Vector<u32, 4> mullo(Vector<u32, 4> a, Vector<u32, 4> b)
     {
         return simd::mullo(a, b);
     }
@@ -171,22 +171,22 @@ namespace mango::math
     // shift
     // ------------------------------------------------------------------
 
-    static inline Vector<u32, 4> operator << (Vector<u32, 4> a, int b)
+    inline Vector<u32, 4> operator << (Vector<u32, 4> a, int b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<u32, 4> operator >> (Vector<u32, 4> a, int b)
+    inline Vector<u32, 4> operator >> (Vector<u32, 4> a, int b)
     {
         return simd::srl(a, b);
     }
 
-    static inline Vector<u32, 4> operator << (Vector<u32, 4> a, Vector<u32, 4> b)
+    inline Vector<u32, 4> operator << (Vector<u32, 4> a, Vector<u32, 4> b)
     {
         return simd::sll(a, b);
     }
 
-    static inline Vector<u32, 4> operator >> (Vector<u32, 4> a, Vector<u32, 4> b)
+    inline Vector<u32, 4> operator >> (Vector<u32, 4> a, Vector<u32, 4> b)
     {
         return simd::srl(a, b);
     }

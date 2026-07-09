@@ -120,31 +120,51 @@ namespace mango::image
     void registerImageCodecHDR();
     void registerImageCodecGIF();
     void registerImageCodecKTX();
+#if defined(IMAGE_FORMAT_KTX2)
     void registerImageCodecKTX2();
+#endif
     void registerImageCodecPVR();
     void registerImageCodecASTC();
     void registerImageCodecZPNG();
     void registerImageCodecSGI();
     void registerImageCodecPNM();
+#if defined(IMAGE_FORMAT_RETRO)
     void registerImageCodecATARI();
     void registerImageCodecATARI8();
     void registerImageCodecC64();
     void registerImageCodecMSX();
     void registerImageCodecRETRO();
+#endif
     void registerImageCodecEXR();
     void registerImageCodecQOI();
     void registerImageCodecPIC();
     void registerImageCodecPICT();
     void registerImageCodecPSD();
     void registerImageCodecRAW();
+#if defined(IMAGE_FORMAT_CAMERA)
     void registerImageCodecCAMERA();
+#endif
+#if defined(IMAGE_FORMAT_JXR)
     void registerImageCodecJXR();
+#endif
+#if defined(IMAGE_FORMAT_JXL)
     void registerImageCodecJXL();
+#endif
+#if defined(IMAGE_FORMAT_JP2)
     void registerImageCodecJP2();
+#endif
+#if defined(IMAGE_FORMAT_HEIF)
     void registerImageCodecHEIF();
+#endif
+#if defined(IMAGE_FORMAT_AVIF)
     void registerImageCodecAVIF();
+#endif
+#if defined(IMAGE_FORMAT_WEBP)
     void registerImageCodecWEBP();
+#endif
+#if defined(IMAGE_FORMAT_WP2)
     void registerImageCodecWP2();
+#endif
 
     class ImageServer
     {
@@ -167,31 +187,51 @@ namespace mango::image
             registerImageCodecHDR();
             registerImageCodecGIF();
             registerImageCodecKTX();
+#if defined(IMAGE_FORMAT_KTX2)
             registerImageCodecKTX2();
+#endif
             registerImageCodecPVR();
             registerImageCodecASTC();
             registerImageCodecZPNG();
             registerImageCodecSGI();
             registerImageCodecPNM();
+#if defined(IMAGE_FORMAT_RETRO)
             registerImageCodecATARI();
             registerImageCodecATARI8();
             registerImageCodecC64();
             registerImageCodecMSX();
             registerImageCodecRETRO();
+#endif
             registerImageCodecEXR();
             registerImageCodecQOI();
             registerImageCodecPIC();
             registerImageCodecPICT();
             registerImageCodecPSD();
             registerImageCodecRAW();
+#if defined(IMAGE_FORMAT_CAMERA)
             registerImageCodecCAMERA();
+#endif
+#if defined(IMAGE_FORMAT_JXR)
             registerImageCodecJXR();
+#endif
+#if defined(IMAGE_FORMAT_JXL)
             registerImageCodecJXL();
+#endif
+#if defined(IMAGE_FORMAT_JP2)
             registerImageCodecJP2();
+#endif
+#if defined(IMAGE_FORMAT_HEIF)
             registerImageCodecHEIF();
+#endif
+#if defined(IMAGE_FORMAT_AVIF)
             registerImageCodecAVIF();
+#endif
+#if defined(IMAGE_FORMAT_WEBP)
             registerImageCodecWEBP();
+#endif
+#if defined(IMAGE_FORMAT_WP2)
             registerImageCodecWP2();
+#endif
         }
 
         ~ImageServer()

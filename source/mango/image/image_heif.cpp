@@ -5,8 +5,6 @@
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_HEIF)
-
 #include <libheif/heif.h>
 
 namespace
@@ -374,17 +372,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecHEIF()
-    {
-        // HEIF codec is disabled
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_HEIF)

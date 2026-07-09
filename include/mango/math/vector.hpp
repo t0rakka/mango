@@ -62,91 +62,91 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto abs(const T& a)
+    inline auto abs(const T& a)
     {
         return std::abs(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto sqrt(const T& a)
+    inline auto sqrt(const T& a)
     {
         return std::sqrt(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto sin(const T& a)
+    inline auto sin(const T& a)
     {
         return std::sin(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto cos(const T& a)
+    inline auto cos(const T& a)
     {
         return std::cos(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto tan(const T& a)
+    inline auto tan(const T& a)
     {
         return std::tan(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto asin(const T& a)
+    inline auto asin(const T& a)
     {
         return std::asin(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto acos(const T& a)
+    inline auto acos(const T& a)
     {
         return std::acos(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto atan(const T& a)
+    inline auto atan(const T& a)
     {
         return std::atan(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto exp(const T& a)
+    inline auto exp(const T& a)
     {
         return std::exp(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto log(const T& a)
+    inline auto log(const T& a)
     {
         return std::log(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto exp2(const T& a)
+    inline auto exp2(const T& a)
     {
         return std::exp2(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto log2(const T& a)
+    inline auto log2(const T& a)
     {
         return std::log2(a);
     }
 
     template <typename A, typename B>
         requires is_scalar<A> && is_scalar<B>
-    static inline auto pow(const A& a, const B& b)
+    inline auto pow(const A& a, const B& b)
     {
         using ScalarType = std::common_type_t<A, B>;
         return std::pow(ScalarType(a), ScalarType(b));
@@ -154,7 +154,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_scalar<A> && is_scalar<B>
-    static inline auto atan2(const A& a, const B& b)
+    inline auto atan2(const A& a, const B& b)
     {
         using ScalarType = std::common_type_t<A, B>;
         return std::atan2(ScalarType(a), ScalarType(b));
@@ -162,42 +162,42 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto round(const T& a)
+    inline auto round(const T& a)
     {
         return std::round(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto floor(const T& a)
+    inline auto floor(const T& a)
     {
         return std::floor(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto ceil(const T& a)
+    inline auto ceil(const T& a)
     {
         return std::ceil(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto trunc(const T& a)
+    inline auto trunc(const T& a)
     {
         return std::trunc(a);
     }
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto fract(const T& a)
+    inline auto fract(const T& a)
     {
         return a - math::floor(a);
     }
 
     template <typename A, typename B>
         requires is_scalar<A> && is_scalar<B>
-    static inline auto mod(const A& a, const B& b)
+    inline auto mod(const A& a, const B& b)
     {
         using ScalarType = std::common_type_t<A, B>;
         return ScalarType(a) - ScalarType(b) * math::floor(ScalarType(a) / ScalarType(b));
@@ -205,7 +205,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_scalar<A> && is_scalar<B>
-    static inline auto min(const A& a, const B& b)
+    inline auto min(const A& a, const B& b)
     {
         using ScalarType = std::common_type_t<A, B>;
         return std::min(ScalarType(a), ScalarType(b));
@@ -213,7 +213,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_scalar<A> && is_scalar<B>
-    static inline auto max(const A& a, const B& b)
+    inline auto max(const A& a, const B& b)
     {
         using ScalarType = std::common_type_t<A, B>;
         return std::max(ScalarType(a), ScalarType(b));
@@ -221,7 +221,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires is_scalar<A> && is_scalar<B> && is_scalar<C>
-    static inline auto clamp(const A& value, const B& low, const C& high)
+    inline auto clamp(const A& value, const B& low, const C& high)
     {
         using ScalarType = std::common_type_t<A, B, C>;
         return std::max(ScalarType(low), std::min(ScalarType(high), ScalarType(value)));
@@ -229,7 +229,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires is_scalar<A> && is_scalar<B> && is_scalar<C>
-    static inline auto lerp(const A& a, const B& b, const C& factor)
+    inline auto lerp(const A& a, const B& b, const C& factor)
     {
         using ScalarType = std::common_type_t<A, B, C>;
         return ScalarType(a) + (ScalarType(b) - ScalarType(a)) * ScalarType(factor);
@@ -237,7 +237,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires is_scalar<A> && is_scalar<B> && is_scalar<C>
-    static inline auto smoothstep(const A& a, const B& b, const C& factor)
+    inline auto smoothstep(const A& a, const B& b, const C& factor)
     {
         using ScalarType = std::common_type_t<A, B, C>;
         ScalarType t = clamp((ScalarType(factor) - ScalarType(a)) / (ScalarType(b) - ScalarType(a)), ScalarType(0.0), ScalarType(1.0));
@@ -246,7 +246,7 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto sign(T a)
+    inline auto sign(T a)
     {
         using ScalarType = std::common_type_t<T>;
         const ScalarType zero(0);
@@ -255,7 +255,7 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto radians(const T& a)
+    inline auto radians(const T& a)
     {
         using ScalarType = std::common_type_t<T>;
         return a * ScalarType(0.01745329251);
@@ -263,7 +263,7 @@ namespace mango::math
 
     template <typename T>
         requires is_scalar<T>
-    static inline auto degrees(const T& a)
+    inline auto degrees(const T& a)
     {
         using ScalarType = std::common_type_t<T>;
         return a * ScalarType(57.2957795131);
@@ -1468,14 +1468,14 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline T operator + (const T& a)
+    inline T operator + (const T& a)
     {
         return a;
     }
 
     template <typename T>
         requires is_signed_vector<T>
-    static inline T operator - (const T& a)
+    inline T operator - (const T& a)
     {
         return vector_ops<T>::neg(a);
     }
@@ -1484,7 +1484,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires (resolves_to_vector<A> || resolves_to_vector<B>)
-    static inline auto operator + (const A& a, const B& b)
+    inline auto operator + (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::add(T(a), T(b));
@@ -1492,7 +1492,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires (resolves_to_vector<A> || resolves_to_vector<B>)
-    static inline auto operator - (const A& a, const B& b)
+    inline auto operator - (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::sub(T(a), T(b));
@@ -1500,7 +1500,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires has_vector<A, B> && is_float_vector<first_vector_t<A, B>>
-    static inline auto operator * (const A& a, const B& b)
+    inline auto operator * (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::mul(T(a), T(b));
@@ -1508,7 +1508,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires (resolves_to_vector<A> || resolves_to_vector<B>) &&  is_float_vector<first_vector_t<A, B>>
-    static inline auto operator / (const A& a, const B& b)
+    inline auto operator / (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::div(T(a), T(b));
@@ -1518,7 +1518,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator += (A& a, const B& b)
+    inline A& operator += (A& a, const B& b)
     {
         a = vector_ops<A>::add(a, A(b));
         return a;
@@ -1526,7 +1526,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator -= (A& a, const B& b)
+    inline A& operator -= (A& a, const B& b)
     {
         a = vector_ops<A>::sub(a, A(b));
         return a;
@@ -1534,7 +1534,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator *= (A& a, const B& b)
+    inline A& operator *= (A& a, const B& b)
     {
         a = vector_ops<A>::mul(a, A(b));
         return a;
@@ -1542,7 +1542,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_vector<A> && is_float_vector<A> && is_vector_or_scalar<B>
-    static inline A& operator /= (A& a, const B& b)
+    inline A& operator /= (A& a, const B& b)
     {
         a = vector_ops<A>::div(a, A(b));
         return a;
@@ -1552,7 +1552,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto abs(const A& a)
+    inline auto abs(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::abs(T(a));
@@ -1560,7 +1560,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto madd(const A& a, const B& b, const C& c)
+    inline auto madd(const A& a, const B& b, const C& c)
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         return vector_ops<T>::madd(T(a), T(b), T(c));
@@ -1568,7 +1568,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto msub(const A& a, const B& b, const C& c)
+    inline auto msub(const A& a, const B& b, const C& c)
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         return vector_ops<T>::msub(T(a), T(b), T(c));
@@ -1576,7 +1576,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto nmadd(const A& a, const B& b, const C& c)
+    inline auto nmadd(const A& a, const B& b, const C& c)
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         return vector_ops<T>::nmadd(T(a), T(b), T(c));
@@ -1584,7 +1584,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto nmsub(const A& a, const B& b, const C& c)
+    inline auto nmsub(const A& a, const B& b, const C& c)
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         return vector_ops<T>::nmsub(T(a), T(b), T(c));
@@ -1592,7 +1592,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto min(const A& a, const B& b)
+    inline auto min(const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::min(T(a), T(b));
@@ -1600,7 +1600,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto max(const A& a, const B& b)
+    inline auto max(const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::max(T(a), T(b));
@@ -1608,7 +1608,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A> && (A::VectorSize >= 2 || A::VectorSize <= 4)
-    static inline auto sign(const A& a)
+    inline auto sign(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::sign(T(a));
@@ -1616,7 +1616,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto lerp(const A& a, const B& b, C factor)
+    inline auto lerp(const A& a, const B& b, C factor)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::lerp(T(a), T(b), typename T::ScalarType(factor));
@@ -1624,7 +1624,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto radians(const A& a)
+    inline auto radians(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::radians(T(a));
@@ -1632,7 +1632,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto degrees(const A& a)
+    inline auto degrees(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::degrees(T(a));
@@ -1640,7 +1640,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto rcp(const A& a)
+    inline auto rcp(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::rcp(T(a));
@@ -1648,7 +1648,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto sqrt(const A& a)
+    inline auto sqrt(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::sqrt(T(a));
@@ -1656,7 +1656,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto rsqrt(const A& a)
+    inline auto rsqrt(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::rsqrt(T(a));
@@ -1664,7 +1664,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto round(const A& a)
+    inline auto round(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::round(T(a));
@@ -1672,7 +1672,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto floor(const A& a)
+    inline auto floor(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::floor(T(a));
@@ -1680,7 +1680,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto ceil(const A& a)
+    inline auto ceil(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::ceil(T(a));
@@ -1688,7 +1688,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto trunc(const A& a)
+    inline auto trunc(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::trunc(T(a));
@@ -1696,7 +1696,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto fract(const A& a)
+    inline auto fract(const A& a)
     {
         using T = resolve_t<A, A>;
         return vector_ops<T>::fract(T(a));
@@ -1704,7 +1704,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires (resolves_to_vector<A> || resolves_to_vector<B>)
-    static inline auto mod(const A& a, const B& b)
+    inline auto mod(const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return vector_ops<T>::mod(T(a), T(b));
@@ -2113,7 +2113,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 2) && 
                  resolves_to_vector<B> && (B::VectorSize == 2)
-    static inline auto dot(const A& va, const B& vb)
+    inline auto dot(const A& va, const B& vb)
     {
         using VectorType = resolve_t<A, B>;
         VectorType a(va);
@@ -2124,7 +2124,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 3) && 
                  resolves_to_vector<B> && (B::VectorSize == 3)
-    static inline auto dot(const A& va, const B& vb)
+    inline auto dot(const A& va, const B& vb)
     {
         using VectorType = resolve_t<A, B>;
         VectorType a(va);
@@ -2135,7 +2135,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 4) && 
                  resolves_to_vector<B> && (B::VectorSize == 4)
-    static inline auto dot(const A& va, const B& vb)
+    inline auto dot(const A& va, const B& vb)
     {
         using VectorType = resolve_t<A, B>;
         VectorType a(va);
@@ -2145,14 +2145,14 @@ namespace mango::math
 
     template <typename T>
         requires resolves_to_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
-    static inline auto square(const T& a)
+    inline auto square(const T& a)
     {
         return dot(a, a);
     }
 
     template <typename T>
         requires resolves_to_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
-    static inline auto length(const T& a)
+    inline auto length(const T& a)
     {
         return math::sqrt(square(a));
     }
@@ -2160,7 +2160,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize >= 2 && A::VectorSize <= 4) &&
                  resolves_to_vector<B> && (A::VectorSize == B::VectorSize)
-    static inline auto distance(const A& a, const B& b)
+    inline auto distance(const A& a, const B& b)
     {
         using VectorType = resolve_t<A, B>;
         return length(VectorType(a) - VectorType(b));
@@ -2168,7 +2168,7 @@ namespace mango::math
 
     template <typename T>
         requires resolves_to_vector<T> && (T::VectorSize >= 2 && T::VectorSize <= 4)
-    static inline auto normalize(const T& a)
+    inline auto normalize(const T& a)
     {
         using ScalarType = typename T::ScalarType;
         return a * (ScalarType(1.0) / length(a));
@@ -2177,7 +2177,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
                  resolves_to_vector<B> && (A::VectorSize == B::VectorSize)
-    static inline auto project(const A& v__, const B& normal__)
+    inline auto project(const A& v__, const B& normal__)
     {
         using VectorType = resolve_t<A, B>;
         VectorType v(v__);
@@ -2188,7 +2188,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
                  resolves_to_vector<B> && (B::VectorSize == 2 || B::VectorSize == 3)
-    static inline auto reflect(const A& v__, const B& normal__)
+    inline auto reflect(const A& v__, const B& normal__)
     {
         using VectorType = resolve_t<A, B>;
         using ScalarType = typename VectorType::ScalarType;
@@ -2201,7 +2201,7 @@ namespace mango::math
         requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
                  resolves_to_vector<B> && (B::VectorSize == 2 || B::VectorSize == 3) &&
                  (is_scalar<typename A::ScalarType> || is_scalar<typename B::ScalarType>)
-    static inline auto refract(const A& v__, const B& normal__, S factor__)
+    inline auto refract(const A& v__, const B& normal__, S factor__)
     {
         using VectorType = resolve_t<A, B>;
         using ScalarType = typename VectorType::ScalarType;
@@ -2222,7 +2222,7 @@ namespace mango::math
         requires resolves_to_vector<A> && (A::VectorSize == 2 || A::VectorSize == 3) &&
                  resolves_to_vector<B> && (B::VectorSize == 2 || B::VectorSize == 3) &&
                  (!is_scalar<typename A::ScalarType> && !is_scalar<typename B::ScalarType>)
-    static inline auto refract(const A& v__, const B& normal__, S factor__)
+    inline auto refract(const A& v__, const B& normal__, S factor__)
     {
         using VectorType = resolve_t<A, B>;
         using ScalarType = typename VectorType::ScalarType;
@@ -2239,7 +2239,7 @@ namespace mango::math
     template <typename A, typename B>
         requires resolves_to_vector<A> && (A::VectorSize == 3) &&
                  resolves_to_vector<B> && (B::VectorSize == 3)
-    static inline auto cross(const A& a__, const B& b__)
+    inline auto cross(const A& a__, const B& b__)
     {
         using VectorType = resolve_t<A, B>;
         VectorType a(a__);
@@ -2252,7 +2252,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T> && (T::VectorSize == 2)
-    static inline auto hmin(const T& a)
+    inline auto hmin(const T& a)
     {
         auto s = math::min(a.x, a.y);
         return T(s);
@@ -2260,7 +2260,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T> && (T::VectorSize == 2)
-    static inline auto hmax(const T& a)
+    inline auto hmax(const T& a)
     {
         auto s = math::max(a.x, a.y);
         return T(s);
@@ -2268,7 +2268,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T> && (T::VectorSize == 3)
-    static inline auto hmin(const T& a)
+    inline auto hmin(const T& a)
     {
         auto s = math::min(a.x, math::min(a.y, a.z));
         return T(s);
@@ -2276,7 +2276,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T> && (T::VectorSize == 3)
-    static inline auto hmax(const T& a)
+    inline auto hmax(const T& a)
     {
         auto s = math::max(a.x, math::max(a.y, a.z));
         return T(s);
@@ -2284,7 +2284,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto clamp(const A& a, const B& low, const C& high)
+    inline auto clamp(const A& a, const B& low, const C& high)
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         return math::max(T(low), math::min(T(high), T(a)));
@@ -2292,7 +2292,7 @@ namespace mango::math
 
     template <typename A, typename B, typename C>
         requires resolves_to_vector<A> || resolves_to_vector<B> || resolves_to_vector<C>
-    static inline auto smoothstep(const A& a, const B& b, const C& factor)
+    inline auto smoothstep(const A& a, const B& b, const C& factor)
     {
         using T = resolve_t<A, resolve_t<B, C>>;
         T t = clamp((T(factor) - T(a)) / (T(b) - T(a)), T(0.0), T(1.0));
@@ -2308,7 +2308,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto sin(const T& a)
+    inline auto sin(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2320,7 +2320,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto cos(const T& a)
+    inline auto cos(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2332,7 +2332,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto tan(const T& a)
+    inline auto tan(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2344,7 +2344,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto asin(const T& a)
+    inline auto asin(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2356,7 +2356,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto acos(const T& a)
+    inline auto acos(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2368,7 +2368,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto atan(const T& a)
+    inline auto atan(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2380,7 +2380,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto exp(const T& a)
+    inline auto exp(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2392,7 +2392,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto log(const T& a)
+    inline auto log(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2404,7 +2404,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto exp2(const T& a)
+    inline auto exp2(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2416,7 +2416,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto log2(const T& a)
+    inline auto log2(const T& a)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2428,7 +2428,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto pow(const T& a, const T& b)
+    inline auto pow(const T& a, const T& b)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2440,7 +2440,7 @@ namespace mango::math
 
     template <typename T>
         requires is_vector<T>
-    static inline auto atan2(const T& a, const T& b)
+    inline auto atan2(const T& a, const T& b)
     {
         T temp;
         for (int i = 0; i < T::VectorSize; ++i)
@@ -2456,14 +2456,14 @@ namespace mango::math
 
     template <typename T>
         requires is_simd_vector<T>
-    static inline auto unpacklo(const T& a, const T& b) -> T
+    inline auto unpacklo(const T& a, const T& b) -> T
     {
         return simd::unpacklo(a, b);
     }
 
     template <typename T>
         requires is_simd_vector<T>
-    static inline auto unpackhi(const T& a, const T& b) -> T
+    inline auto unpackhi(const T& a, const T& b) -> T
     {
         return simd::unpackhi(a, b);
     }
@@ -2481,14 +2481,14 @@ namespace mango::math
 
     template <typename T>
         requires is_saturating_integer_vector<T>
-    static inline auto adds(const T& a, const T& b) -> T
+    inline auto adds(const T& a, const T& b) -> T
     {
         return simd::adds(a, b);
     }
 
     template <typename T>
         requires is_saturating_integer_vector<T>
-    static inline auto subs(const T& a, const T& b) -> T
+    inline auto subs(const T& a, const T& b) -> T
     {
         return simd::subs(a, b);
     }
@@ -2501,7 +2501,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires is_multiplying_integer_vector<A, B>
-    static inline auto operator * (const A& a, const B& b)
+    inline auto operator * (const A& a, const B& b)
     {
         using T = first_simd_vector_t<A, B>;
         return T(simd::mullo(T(a), T(b)));
@@ -2516,84 +2516,84 @@ namespace mango::math
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto add(const T& a, const T& b, M mask) -> T
+    inline auto add(const T& a, const T& b, M mask) -> T
     {
         return simd::add(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto add(const T& a, const T& b, M mask, const T& value) -> T
+    inline auto add(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::add(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto sub(const T& a, const T& b, M mask) -> T
+    inline auto sub(const T& a, const T& b, M mask) -> T
     {
         return simd::sub(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto sub(const T& a, const T& b, M mask, const T& value) -> T
+    inline auto sub(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::sub(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto min(const T& a, const T& b, M mask) -> T
+    inline auto min(const T& a, const T& b, M mask) -> T
     {
         return simd::min(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto min(const T& a, const T& b, M mask, const T& value) -> T
+    inline auto min(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::min(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto max(const T& a, const T& b, M mask) -> T
+    inline auto max(const T& a, const T& b, M mask) -> T
     {
         return simd::max(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && simd::is_mask<M>
-    static inline auto max(const T& a, const T& b, M mask, const T& value) -> T
+    inline auto max(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::max(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
-    static inline auto mul(const T& a, const T& b, M mask) -> T
+    inline auto mul(const T& a, const T& b, M mask) -> T
     {
         return simd::mul(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
-    static inline auto mul(const T& a, const T& b, M mask, const T& value) -> T
+    inline auto mul(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::mul(a, b, mask, value);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
-    static inline auto div(const T& a, const T& b, M mask) -> T
+    inline auto div(const T& a, const T& b, M mask) -> T
     {
         return simd::div(a, b, mask);
     }
 
     template <typename T, typename M>
         requires is_simd_vector<T> && is_float_vector<T> && simd::is_mask<M>
-    static inline auto div(const T& a, const T& b, M mask, const T& value) -> T
+    inline auto div(const T& a, const T& b, M mask, const T& value) -> T
     {
         return simd::div(a, b, mask, value);
     }
@@ -2604,7 +2604,7 @@ namespace mango::math
 
     template <typename A>
         requires resolves_to_vector<A>
-    static inline auto operator ~ (const A& a)
+    inline auto operator ~ (const A& a)
     {
         using T = resolve_t<A, A>;
         return T(simd::bitwise_not(T(a)));
@@ -2612,7 +2612,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator & (const A& a, const B& b)
+    inline auto operator & (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return T(simd::bitwise_and(T(a), T(b)));
@@ -2620,7 +2620,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator | (const A& a, const B& b)
+    inline auto operator | (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return T(simd::bitwise_or(T(a), T(b)));
@@ -2628,7 +2628,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator ^ (const A& a, const B& b)
+    inline auto operator ^ (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return T(simd::bitwise_xor(T(a), T(b)));
@@ -2636,7 +2636,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto nand(const A& a, const B& b)
+    inline auto nand(const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return T(simd::bitwise_nand(T(a), T(b)));
@@ -2652,7 +2652,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator > (const A& a, const B& b)
+    inline auto operator > (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return simd::compare_gt(T(a), T(b));
@@ -2660,7 +2660,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator >= (const A& a, const B& b)
+    inline auto operator >= (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return simd::compare_ge(T(a), T(b));
@@ -2668,7 +2668,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator < (const A& a, const B& b)
+    inline auto operator < (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return simd::compare_lt(T(a), T(b));
@@ -2676,7 +2676,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator <= (const A& a, const B& b)
+    inline auto operator <= (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return simd::compare_le(T(a), T(b));
@@ -2684,7 +2684,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator == (const A& a, const B& b)
+    inline auto operator == (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return simd::compare_eq(T(a), T(b));
@@ -2692,7 +2692,7 @@ namespace mango::math
 
     template <typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto operator != (const A& a, const B& b)
+    inline auto operator != (const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return simd::compare_neq(T(a), T(b));
@@ -2700,7 +2700,7 @@ namespace mango::math
 
     template <typename M, typename A, typename B>
         requires resolves_to_vector<A> || resolves_to_vector<B>
-    static inline auto select(M mask, const A& a, const B& b)
+    inline auto select(M mask, const A& a, const B& b)
     {
         using T = resolve_t<A, B>;
         return T(simd::select(mask, T(a), T(b)));
@@ -2712,62 +2712,62 @@ namespace mango::math
 
     // These will convert the SIMD specific mask type to ALU integer mask
 
-    static inline u32 maskToInt(mask8x16 mask) noexcept
+    inline u32 maskToInt(mask8x16 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask16x8 mask) noexcept
+    inline u32 maskToInt(mask16x8 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask32x4 mask) noexcept
+    inline u32 maskToInt(mask32x4 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask64x2 mask) noexcept
+    inline u32 maskToInt(mask64x2 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask8x32 mask) noexcept
+    inline u32 maskToInt(mask8x32 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask16x16 mask) noexcept
+    inline u32 maskToInt(mask16x16 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask32x8 mask) noexcept
+    inline u32 maskToInt(mask32x8 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask64x4 mask) noexcept
+    inline u32 maskToInt(mask64x4 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u64 maskToInt(mask8x64 mask) noexcept
+    inline u64 maskToInt(mask8x64 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask16x32 mask) noexcept
+    inline u32 maskToInt(mask16x32 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask32x16 mask) noexcept
+    inline u32 maskToInt(mask32x16 mask) noexcept
     {
         return simd::get_mask(mask);
     }
 
-    static inline u32 maskToInt(mask64x8 mask) noexcept
+    inline u32 maskToInt(mask64x8 mask) noexcept
     {
         return simd::get_mask(mask);
     }
@@ -2779,19 +2779,19 @@ namespace mango::math
     // These will reduce the SIMD mask to a single boolean value
 
     template <typename T>
-    static inline bool none_of(T mask) noexcept
+    inline bool none_of(T mask) noexcept
     {
         return simd::none_of(mask);
     }
 
     template <typename T>
-    static inline bool any_of(T mask) noexcept
+    inline bool any_of(T mask) noexcept
     {
         return simd::any_of(mask);
     }
 
     template <typename T>
-    static inline bool all_of(T mask) noexcept
+    inline bool all_of(T mask) noexcept
     {
         return simd::all_of(mask);
     }

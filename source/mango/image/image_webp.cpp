@@ -9,8 +9,6 @@
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
 
-#if defined(MANGO_ENABLE_WEBP)
-
 #include <webp/decode.h>
 #include <webp/demux.h>
 #include <webp/encode.h>
@@ -405,17 +403,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecWEBP()
-    {
-        // WEBP codec is disabled
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_WEBP)

@@ -111,8 +111,8 @@ namespace mango::filesystem
     {
     protected:
         std::shared_ptr<Mapper> m_parent_mapper;
+        std::vector<std::unique_ptr<VirtualMemory>> m_parent_memories;
         std::vector<std::unique_ptr<AbstractMapper>> m_mappers;
-        std::unique_ptr<VirtualMemory> m_parent_memory { nullptr };
         AbstractMapper* m_current_mapper { nullptr };
 
         std::string m_basepath;

@@ -236,7 +236,7 @@ namespace mango::math
     // operators
     // ------------------------------------------------------------------
 
-    static inline
+    inline
     float32x3 operator * (const float32x3& v, const Matrix4x4& m)
     {
         float x = v[0] * m(0, 0) + v[1] * m(1, 0) + v[2] * m(2, 0) + m(3, 0);
@@ -245,7 +245,7 @@ namespace mango::math
         return float32x3(x, y, z);
     }
 
-    static inline
+    inline
     float32x4 operator * (const float32x4& v, const Matrix4x4& m)
     {
         float32x4 temp = m[0] * v.xxxx;
@@ -255,7 +255,7 @@ namespace mango::math
         return temp;
     }
 
-    static inline
+    inline
     Matrix4x4 operator * (const Matrix4x4& a, const Matrix4x4& b)
     {
         float32x4 m0 = b[0] * a[0][0];
@@ -281,13 +281,13 @@ namespace mango::math
         return Matrix4x4(m0, m1, m2, m3);
     }
 
-    static inline
+    inline
     Matrix4x4 operator + (const Matrix4x4& a, const Matrix4x4& b)
     {
         return Matrix4x4(a[0] + b[0], a[1] + b[1], a[2] + b[2], a[3] + b[3]);
     }
 
-    static inline
+    inline
     Matrix4x4 operator - (const Matrix4x4& a, const Matrix4x4& b)
     {
         return Matrix4x4(a[0] - b[0], a[1] - b[1], a[2] - b[2], a[3] - b[3]);
@@ -314,7 +314,7 @@ namespace mango::math
     Matrix4x4 obliqueVK(const Matrix4x4& matrix, const float32x4& nearclip);
     Matrix4x4 obliqueD3D(const Matrix4x4& matrix, const float32x4& nearclip);
 
-    static inline
+    inline
     void transpose(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         float32x4 temp0 = unpacklo(m0, m1);
@@ -327,7 +327,7 @@ namespace mango::math
         result[3] = movehl(temp3, temp2);
     }
 
-    static inline
+    inline
     void inverse(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         // Original Intel SSE code (C) Rune Stubbe. All rights reserved.
@@ -381,7 +381,7 @@ namespace mango::math
         result[3] = minors3 * rcp_denom_ppnn;
     }
 
-    static inline
+    inline
     void inverseTranspose(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         const float32x4 m0yxxx = m0.yxxx;
@@ -435,7 +435,7 @@ namespace mango::math
     //     - last column is [0 0 0 1]
     //     - matrix may contain: translation, rotation and scaling
 
-    static inline
+    inline
     void inverseTRS(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         // 3x3 transpose
@@ -466,7 +466,7 @@ namespace mango::math
     //     - matrix may contain: translation and rotation
     //     - no scaling (scale must be 1.0)
 
-    static inline
+    inline
     void inverseTR(float32x4* result, float32x4 m0, float32x4 m1, float32x4 m2, float32x4 m3)
     {
         // 3x3 transpose
@@ -485,7 +485,7 @@ namespace mango::math
         result[3] = m3;
     }
 
-    static inline
+    inline
     Matrix4x4 transpose(const Matrix4x4& m)
     {
         Matrix4x4 result;
@@ -493,7 +493,7 @@ namespace mango::math
         return result;
     }
 
-    static inline
+    inline
     Matrix4x4 inverse(const Matrix4x4& m)
     {
         Matrix4x4 result;
@@ -501,7 +501,7 @@ namespace mango::math
         return result;
     }
 
-    static inline
+    inline
     Matrix4x4 inverseTranspose(const Matrix4x4& m)
     {
         Matrix4x4 result;
@@ -509,7 +509,7 @@ namespace mango::math
         return result;
     }
 
-    static inline
+    inline
     Matrix4x4 inverseTRS(const Matrix4x4& m)
     {
         Matrix4x4 result;
@@ -517,7 +517,7 @@ namespace mango::math
         return result;
     }
 
-    static inline
+    inline
     Matrix4x4 inverseTR(const Matrix4x4& m)
     {
         Matrix4x4 result;

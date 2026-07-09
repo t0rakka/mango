@@ -7,12 +7,6 @@
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 
-#if defined(MANGO_ENABLE_XCB)
-
-#if defined(MANGO_ENABLE_VULKAN)
-    #define VK_USE_PLATFORM_XCB_KHR
-#endif
-
 #include <unistd.h>
 #include <poll.h>
 #include <cstdint>
@@ -451,7 +445,6 @@ namespace
 namespace mango
 {
     using namespace mango::math;
-    using namespace mango::image;
 
     // -----------------------------------------------------------------------
     // XcbBackend
@@ -848,7 +841,7 @@ namespace mango
     // Window (static, screen queries)
     // -----------------------------------------------------------------------
 
-#if !defined(MANGO_ENABLE_XLIB)
+#if !defined(MANGO_HAS_XLIB_WINDOW)
 
     // Provided by the Xlib backend when it is present; defined here only when the
     // build excludes Xlib, so the single Window::getScreen* definition is unique.
@@ -1314,40 +1307,7 @@ namespace mango
         }
     }
 
-#if defined(MANGO_ENABLE_VULKAN)
-
-    VkSurfaceKHR XcbBackend::createVulkanSurface(VkInstance instance)
-    {
-        VkXcbSurfaceCreateInfoKHR createInfo;
-
-        createInfo.sType = VK_STRUCTURE_TYPE_XCB_SURFACE_CREATE_INFO_KHR;
-        createInfo.pNext = nullptr;
-        createInfo.flags = 0;
-        createInfo.connection = connection;
-        createInfo.window = window;
-
-        VkSurfaceKHR surface = VK_NULL_HANDLE;
-        VkResult result = vkCreateXcbSurfaceKHR(instance, &createInfo, nullptr, &surface);
-        if (result != VK_SUCCESS)
-        {
-            MANGO_EXCEPTION("[XcbBackend] vkCreateXcbSurfaceKHR() failed.");
-        }
-
-        return surface;
-    }
-
-    bool XcbBackend::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
-    {
-        VkBool32 support = vkGetPhysicalDeviceXcbPresentationSupportKHR(
-            physicalDevice, queueFamilyIndex, connection, visualid);
-        return support == VK_TRUE;
-    }
-
-#endif // defined(MANGO_ENABLE_VULKAN)
-
-#if defined(MANGO_ENABLE_EGL)
-
-    void* XcbBackend::eglNativeWindow(int width, int height, u32 flags)
+    void* XcbBackend::createNativeWindowForGraphics(int width, int height, u32 flags)
     {
         if (!init(width, height, flags, "OpenGL|ES"))
         {
@@ -1357,8 +1317,7 @@ namespace mango
         return reinterpret_cast<void*>(static_cast<std::uintptr_t>(window));
     }
 
-#endif // defined(MANGO_ENABLE_EGL)
-
 } // namespace mango
 
-#endif // defined(MANGO_ENABLE_XCB)
+#include "../window_registry.hpp"
+MANGO_REGISTER_WINDOW_BACKEND(Xcb, createXcbBackend);

@@ -12,9 +12,6 @@
 namespace mango
 {
 
-    // Concrete Cocoa backend. Kept named WindowContext (the historical name used
-    // throughout the cocoa/ and opengl/cocoa/ translation units); it is the sole
-    // backend on macOS so no name collision with other window systems occurs.
     struct WindowContext : WindowBackend
     {
         void* layer { nullptr };        // CAMetalLayer*, set when created with API_VULKAN
@@ -52,11 +49,6 @@ namespace mango
         bool isKeyPressed(Keycode code) const override;
         void runEventLoop() override;
         void wakeEventLoop() override;
-
-#if defined(MANGO_ENABLE_VULKAN)
-        VkSurfaceKHR createVulkanSurface(VkInstance instance) override;
-        bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex) override;
-#endif
     };
 
 } // namespace mango

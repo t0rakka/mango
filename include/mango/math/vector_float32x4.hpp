@@ -191,44 +191,44 @@ namespace mango::math
     // functions
     // ------------------------------------------------------------------
 
-    static inline
+    inline
     float dot(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::dot4(a, b);
     }
 
-    static inline
+    inline
     Vector<float, 4> cross(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::cross3(a, b);
     }
 
-    static inline
+    inline
     Vector<float, 4> hmin(Vector<float, 4> v)
     {
         return simd::hmin(v);
     }
 
-    static inline
+    inline
     Vector<float, 4> hmax(Vector<float, 4> v)
     {
         return simd::hmax(v);
     }
 
     template <int x, int y, int z, int w>
-    static inline
+    inline
     Vector<float, 4> shuffle(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::shuffle<x, y, z, w>(a, b);
     }
 
-    static inline
+    inline
     Vector<float, 4> movelh(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::movelh(a, b);
     }
 
-    static inline
+    inline
     Vector<float, 4> movehl(Vector<float, 4> a, Vector<float, 4> b)
     {
         return simd::movehl(a, b);

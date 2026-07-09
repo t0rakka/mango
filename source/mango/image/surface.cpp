@@ -6,6 +6,7 @@
 #include <algorithm>
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
+#include <mango/core/endian.hpp>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
 
@@ -494,7 +495,11 @@ namespace
 
     void clear_u24_scan(u8* dest, int count, u32 color)
     {
-        std::fill_n(reinterpret_cast<u24*>(dest), count, u24(color));
+        for (int i = 0; i < count; ++i)
+        {
+            ustore24(dest, color);
+            dest += 3;
+        }
     }
 
     void clear_u32_scan(u8* dest, int count, u32 color)

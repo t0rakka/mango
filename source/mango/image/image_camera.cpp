@@ -15,8 +15,6 @@
 // lets the caller decide: a memcpy when their surface already matches, a blit
 // conversion otherwise, or linearize() to reach a scene-linear float space.
 
-#if defined(MANGO_ENABLE_LIBRAW)
-
 #include <libraw/libraw.h>
 
 namespace
@@ -243,17 +241,3 @@ namespace mango::image
     }
 
 } // namespace mango::image
-
-#else
-
-namespace mango::image
-{
-
-    void registerImageCodecCAMERA()
-    {
-        // Camera raw (LibRaw) codec is disabled
-    }
-
-} // namespace mango::image
-
-#endif // defined(MANGO_ENABLE_LIBRAW)
