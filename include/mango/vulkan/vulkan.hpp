@@ -12,6 +12,7 @@
 
 #include <mango/core/configure.hpp>
 #include <mango/window/window.hpp>
+#include <mango/vulkan/colorspace.hpp>
 #include <mango/vulkan/swapchain.hpp>
 #include <mango/vulkan/compiler.hpp>
 

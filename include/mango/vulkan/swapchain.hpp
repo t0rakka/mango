@@ -4,7 +4,9 @@
 */
 #pragma once
 
+#include <string>
 #include <vector>
+#include <mango/vulkan/colorspace.hpp>
 #include <mango/vulkan/vulkan.hpp>
 
 namespace mango::vulkan
@@ -78,8 +80,7 @@ namespace mango::vulkan
         VkSurfaceKHR m_surface;
         VkQueue m_presentQueue;
 
-        VkFormat m_format;
-        VkColorSpaceKHR m_colorSpace;
+        VkSurfaceFormatKHR m_surfaceFormat {};
         VkExtent2D m_extent { 0, 0 };
         VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 
@@ -119,9 +120,13 @@ namespace mango::vulkan
         ~Swapchain();
 
         u32 getImageCount() const;
+        VkSurfaceFormatKHR getSurfaceFormat() const;
         VkFormat getFormat() const;
         VkColorSpaceKHR getColorSpace() const;
         VkExtent2D getExtent() const;
+
+        std::string getOutputTransformGLSL() const;
+        std::string getOutputTransformGLSL(const OutputTransformOptions& options) const;
         VkImage getImage(u32 imageIndex) const;
         VkImageView getImageView(u32 imageIndex) const;
 

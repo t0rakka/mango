@@ -21,8 +21,7 @@ namespace mango::vulkan
         : m_device(device)
         , m_physicalDevice(physicalDevice)
         , m_surface(surface)
-        , m_format(format.format)
-        , m_colorSpace(format.colorSpace)
+        , m_surfaceFormat(format)
         , m_presentQueue(presentQueue)
         , m_window(window)
     {
@@ -125,7 +124,7 @@ namespace mango::vulkan
                 .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
                 .image = m_images[i],
                 .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .format = m_format,
+                .format = m_surfaceFormat.format,
                 .components =
                 {
                     VK_COMPONENT_SWIZZLE_IDENTITY,
@@ -223,8 +222,8 @@ namespace mango::vulkan
             .sType = VK_STRUCTURE_TYPE_SWAPCHAIN_CREATE_INFO_KHR,
             .surface = m_surface,
             .minImageCount = imageCount,
-            .imageFormat = m_format,
-            .imageColorSpace = m_colorSpace,
+            .imageFormat = m_surfaceFormat.format,
+            .imageColorSpace = m_surfaceFormat.colorSpace,
             .imageExtent = extent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT,
@@ -311,14 +310,29 @@ namespace mango::vulkan
         return u32(m_images.size());
     }
 
+    VkSurfaceFormatKHR Swapchain::getSurfaceFormat() const
+    {
+        return m_surfaceFormat;
+    }
+
     VkFormat Swapchain::getFormat() const
     {
-        return m_format;
+        return m_surfaceFormat.format;
     }
 
     VkColorSpaceKHR Swapchain::getColorSpace() const
     {
-        return m_colorSpace;
+        return m_surfaceFormat.colorSpace;
+    }
+
+    std::string Swapchain::getOutputTransformGLSL() const
+    {
+        return mango::vulkan::getOutputTransformGLSL(m_surfaceFormat);
+    }
+
+    std::string Swapchain::getOutputTransformGLSL(const OutputTransformOptions& options) const
+    {
+        return mango::vulkan::getOutputTransformGLSL(m_surfaceFormat, options);
     }
 
     VkExtent2D Swapchain::getExtent() const
