@@ -144,7 +144,7 @@ Unified interface for large number of supported compression methods.
 
 <h1><img src="docs/encrypt.jpg"  width="384"/></h1>
 
-Unified encryption API with hardware acceleration for Intel AES-NI and AMD Crypto instructions.
+Unified encryption API with hardware acceleration for Intel AES-NI and ARM Crypto instructions.
 
 
 ## Testimonials
