@@ -21,25 +21,15 @@ namespace mango::vulkan
         VkSurfaceFormatKHR selectSurfaceFormat(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
                                                const VulkanDeviceConfig& settings)
         {
-            static const VkSurfaceFormatKHR defaultFormat =
-            {
-                .format = VK_FORMAT_B8G8R8A8_UNORM,
-                .colorSpace = VK_COLOR_SPACE_SRGB_NONLINEAR_KHR,
-            };
+            const std::vector<VkSurfaceFormatKHR> surfaceFormats =
+                getSurfaceFormats(physicalDevice, surface);
 
-            std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(physicalDevice, surface);
-            if (surfaceFormats.empty())
+            if (settings.preferredFormats.empty())
             {
-                return defaultFormat;
+                return mango::vulkan::selectSurfaceFormat(surfaceFormats, settings.surfaceFormatIntent).format;
             }
 
-            std::vector<VkSurfaceFormatKHR> candidates = settings.preferredFormats;
-            if (candidates.empty())
-            {
-                candidates.push_back(defaultFormat);
-            }
-
-            for (const VkSurfaceFormatKHR& preferred : candidates)
+            for (const VkSurfaceFormatKHR& preferred : settings.preferredFormats)
             {
                 for (const VkSurfaceFormatKHR& format : surfaceFormats)
                 {
@@ -50,7 +40,12 @@ namespace mango::vulkan
                 }
             }
 
-            return surfaceFormats[0];
+            if (surfaceFormats.empty())
+            {
+                return mango::vulkan::selectSurfaceFormat(surfaceFormats, settings.surfaceFormatIntent).format;
+            }
+
+            return surfaceFormats.front();
         }
 
         u32 selectGraphicsPresentQueueFamily(VulkanWindow& window, VkPhysicalDevice physicalDevice)
@@ -185,9 +180,16 @@ namespace mango::vulkan
             deviceExtensions.push_back(extension);
         }
 
+        VkPhysicalDeviceVulkan12Features features12 =
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+            .timelineSemaphore = VK_TRUE,
+        };
+
         VkPhysicalDeviceVulkan13Features features13 =
         {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
+            .pNext = &features12,
             .dynamicRendering = VK_TRUE,
         };
 

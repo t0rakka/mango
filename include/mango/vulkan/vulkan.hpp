@@ -122,14 +122,31 @@ namespace mango::vulkan
     // VulkanDeviceConfig
     // -------------------------------------------------------------------
 
+    enum class SurfaceFormatIntent
+    {
+        PreferSDR,  // best SDR format; never pick HDR
+        PreferHDR,  // best HDR if available, else best SDR
+        ForceHDR,   // best HDR only; matchedIntent false when unavailable
+    };
+
+    struct SurfaceFormatSelection
+    {
+        VkSurfaceFormatKHR format {};
+        SurfaceFormatIntent requested = SurfaceFormatIntent::PreferSDR;
+        bool matchedIntent = false;
+        bool isHdr = false;
+        OutputTransform outputTransform = OutputTransform::Pass;
+    };
+
     struct VulkanDeviceConfig
     {
         // VK_NULL_HANDLE selects via selectPhysicalDevice().
         VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
 
         // Swapchain surface formats in preference order (first supported match wins).
-        // When empty, B8G8R8A8_UNORM + SRGB_NONLINEAR is tried, then surfaceFormats[0].
+        // When empty, selectSurfaceFormat() uses surfaceFormatIntent and the built-in tier list.
         std::vector<VkSurfaceFormatKHR> preferredFormats;
+        SurfaceFormatIntent surfaceFormatIntent = SurfaceFormatIntent::PreferSDR;
 
         // Optional pNext for VkDeviceCreateInfo (feature structs, etc.).
         // When null, VulkanWindow enables Vulkan 1.3 dynamic rendering by default.
@@ -234,6 +251,24 @@ namespace mango::vulkan
     std::vector<VkQueueFamilyProperties> getPhysicalDeviceQueueFamilyProperties(VkPhysicalDevice physicalDevice);
     std::vector<VkExtensionProperties>   getDeviceExtensionProperties(VkPhysicalDevice physicalDevice);
     std::vector<VkSurfaceFormatKHR>      getSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface);
+
+    // Recommended (format, colorSpace) pairs in preference order for HDR and SDR tiers.
+    std::vector<VkSurfaceFormatKHR> getRecommendedSurfaceFormats(SurfaceFormatIntent intent);
+    void applyRecommendedSurfaceFormats(VulkanDeviceConfig& config, SurfaceFormatIntent intent);
+
+    SurfaceFormatSelection selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& available,
+                                               SurfaceFormatIntent intent);
+    SurfaceFormatSelection selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& available,
+                                               bool hdr);
+    SurfaceFormatSelection selectSurfaceFormat(VkPhysicalDevice physicalDevice,
+                                               VkSurfaceKHR surface,
+                                               SurfaceFormatIntent intent);
+
+    void logSurfaceFormats(VkPhysicalDevice physicalDevice, VkSurfaceKHR surface,
+                           const SurfaceFormatSelection* selected = nullptr);
+
+    // Log formats for a live window using its bound swapchain format.
+    void logSurfaceFormats(const VulkanWindow& window, SurfaceFormatIntent requested);
 
     std::string_view getString(VkResult result);
     std::string_view getString(VkPhysicalDeviceType deviceType);
