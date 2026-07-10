@@ -15,7 +15,7 @@ namespace mango::vulkan
 
         std::string formatGlslFloat(float value)
         {
-            return fmt::format("{:.8g}f", value);
+            return fmt::format("{:.5f}", value);
         }
 
         std::string formatGlslRatio(float numerator, float denominator)
