@@ -40,12 +40,7 @@ namespace mango::vulkan
                 }
             }
 
-            if (surfaceFormats.empty())
-            {
-                return mango::vulkan::selectSurfaceFormat(surfaceFormats, settings.surfaceFormatIntent).format;
-            }
-
-            return surfaceFormats.front();
+            return mango::vulkan::selectSurfaceFormat(surfaceFormats, settings.surfaceFormatIntent).format;
         }
 
         u32 selectGraphicsPresentQueueFamily(VulkanWindow& window, VkPhysicalDevice physicalDevice)

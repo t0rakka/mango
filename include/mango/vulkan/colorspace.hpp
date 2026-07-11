@@ -22,22 +22,6 @@ namespace mango::vulkan
         Reinhard,
     };
 
-    // Resolve-stage output transform selected from the swapchain surface format.
-    enum class OutputTransform : int
-    {
-        Pass = 0,                   // sRGB surface: texture decode is sufficient
-        SrgbEncode = 1,             // float/UNORM SDR: linear BT.709 -> sRGB gamma
-        SdrToHdrPQ = 2,             // HDR10 ST2084: BT.709 -> BT.2020 -> PQ
-        SdrToHdrHLG = 3,            // HDR10 HLG: BT.709 -> BT.2020 -> BT.2408 gain -> HLG OETF
-        SdrToAdobeRgb = 4,          // Adobe RGB nonlinear: BT.709 -> Adobe RGB -> Adobe OETF
-        SdrToBt709Nonlinear = 5,    // BT.709 nonlinear: SMPTE 170M / ITU OETF
-        SdrToDciP3Nonlinear = 6,    // DCI-P3 nonlinear: BT.709 -> P3 -> gamma 2.6
-        SdrToExtendedSrgbLinear = 7,// EXTENDED_SRGB_LINEAR + sRGB RT: pre-compensate encode
-        SdrToLinearSurface = 8,     // linear color space + UNORM/float: linear passthrough
-        SdrToDisplayP3Linear = 9,   // Display P3 linear float: gamut map + linear out
-        SdrToBt2020Linear = 10,     // BT.2020 linear float: gamut map + linear out
-    };
-
     struct OutputTransformOptions
     {
         InputColorSpace input = InputColorSpace::BT709_LINEAR;
@@ -48,22 +32,21 @@ namespace mango::vulkan
     };
 
     bool isSRGB(VkFormat format);
-    bool isLinearSdrColorSpace(VkColorSpaceKHR colorSpace);
+    bool isLinear(VkColorSpaceKHR colorSpace);
     bool isHDR(VkSurfaceFormatKHR surfaceFormat);
     bool isSDR(VkSurfaceFormatKHR surfaceFormat);
-
-    OutputTransform selectOutputTransform(VkSurfaceFormatKHR surfaceFormat);
-
-    // SDR diffuse white in nits. PQ: linear * nits / peakNits. HLG: BT.2408 gain * (nits / 203).
-    float defaultSdrWhiteNits(VkColorSpaceKHR colorSpace);
 
     OutputTransformOptions defaultOutputOptions(VkSurfaceFormatKHR surfaceFormat,
                                                 float exposure = 1.0f);
 
+    // Display-referred sRGB input (vertex colors, 8-bit textures): no tonemap or grading.
+    OutputTransformOptions defaultDisplayOutputOptions(VkSurfaceFormatKHR surfaceFormat);
+
     // Returns GLSL helpers plus encodeOutput(vec4) for the given swapchain surface format.
     // Constants such as exposure and nits are baked into the generated source.
     std::string getOutputTransformGLSL(VkSurfaceFormatKHR surfaceFormat);
-    std::string getOutputTransformGLSL(VkSurfaceFormatKHR surfaceFormat,
-                                       const OutputTransformOptions& options);
+    std::string getOutputTransformGLSL(VkSurfaceFormatKHR surfaceFormat, const OutputTransformOptions& options);
+
+    std::string getDisplayOutputTransformGLSL(VkSurfaceFormatKHR surfaceFormat);
 
 } // namespace mango::vulkan

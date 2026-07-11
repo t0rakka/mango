@@ -127,6 +127,7 @@ namespace mango::vulkan
 
         std::string getOutputTransformGLSL() const;
         std::string getOutputTransformGLSL(const OutputTransformOptions& options) const;
+        std::string getDisplayOutputTransformGLSL() const;
         VkImage getImage(u32 imageIndex) const;
         VkImageView getImageView(u32 imageIndex) const;
 

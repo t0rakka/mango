@@ -47,16 +47,12 @@ namespace mango::vulkan
             { VK_FORMAT_A2B10G10R10_UNORM_PACK32, VK_COLOR_SPACE_BT2020_LINEAR_EXT },
         };
 
-        // SDR tiers: hardware sRGB first, then wide-gamut and scRGB options.
+        // Default SDR: write display-referred values directly (VGA-style), compositor treats as sRGB.
         constexpr VkSurfaceFormatKHR g_sdrSurfaceFormats[] =
         {
+            { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR },
             { VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR },
             { VK_FORMAT_R8G8B8A8_SRGB, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR },
-            { VK_FORMAT_B8G8R8A8_UNORM, VK_COLOR_SPACE_SRGB_NONLINEAR_KHR },
-
-            { VK_FORMAT_R16G16B16A16_SFLOAT, VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT },
-            { VK_FORMAT_R16G16B16A16_SFLOAT, VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT },
-            { VK_FORMAT_B8G8R8A8_SRGB, VK_COLOR_SPACE_DISPLAY_P3_NONLINEAR_EXT },
         };
 
         constexpr VkSurfaceFormatKHR g_defaultSurfaceFormat =
@@ -99,6 +95,24 @@ namespace mango::vulkan
             return nullptr;
         }
 
+        VkSurfaceFormatKHR fallbackSdrFormat(const std::vector<VkSurfaceFormatKHR>& available)
+        {
+            if (const VkSurfaceFormatKHR* match = findAvailable(available, g_defaultSurfaceFormat))
+            {
+                return *match;
+            }
+
+            for (const VkSurfaceFormatKHR& format : available)
+            {
+                if (!isHDR(format) && isSupportedSurfaceFormat(format))
+                {
+                    return format;
+                }
+            }
+
+            return g_defaultSurfaceFormat;
+        }
+
         SurfaceFormatSelection makeSelection(VkSurfaceFormatKHR format,
                                              SurfaceFormatIntent requested,
                                              bool matchedIntent)
@@ -108,7 +122,6 @@ namespace mango::vulkan
             selection.requested = requested;
             selection.matchedIntent = matchedIntent;
             selection.isHdr = isHDR(format);
-            selection.outputTransform = selectOutputTransform(format);
             return selection;
         }
 
@@ -118,17 +131,14 @@ namespace mango::vulkan
     {
         std::vector<VkSurfaceFormatKHR> formats;
 
-        if (intent != SurfaceFormatIntent::PreferSDR)
+        if (intent == SurfaceFormatIntent::PreferHDR)
         {
             formats.insert(formats.end(),
                 std::begin(g_hdrSurfaceFormats), std::end(g_hdrSurfaceFormats));
         }
 
-        if (intent != SurfaceFormatIntent::ForceHDR)
-        {
-            formats.insert(formats.end(),
-                std::begin(g_sdrSurfaceFormats), std::end(g_sdrSurfaceFormats));
-        }
+        formats.insert(formats.end(),
+            std::begin(g_sdrSurfaceFormats), std::end(g_sdrSurfaceFormats));
 
         return formats;
     }
@@ -147,17 +157,12 @@ namespace mango::vulkan
             return makeSelection(g_defaultSurfaceFormat, intent, false);
         }
 
-        if (intent != SurfaceFormatIntent::PreferSDR)
+        if (intent == SurfaceFormatIntent::PreferHDR)
         {
             if (const VkSurfaceFormatKHR* match = selectFromList(available,
                     g_hdrSurfaceFormats, std::size(g_hdrSurfaceFormats)))
             {
                 return makeSelection(*match, intent, true);
-            }
-
-            if (intent == SurfaceFormatIntent::ForceHDR)
-            {
-                return makeSelection(available.front(), intent, false);
             }
         }
 
@@ -168,7 +173,12 @@ namespace mango::vulkan
             return makeSelection(*match, intent, matchedIntent);
         }
 
-        return makeSelection(available.front(), intent, false);
+        if (intent == SurfaceFormatIntent::PreferSDR)
+        {
+            return makeSelection(fallbackSdrFormat(available), intent, false);
+        }
+
+        return makeSelection(fallbackSdrFormat(available), intent, false);
     }
 
     SurfaceFormatSelection selectSurfaceFormat(const std::vector<VkSurfaceFormatKHR>& available,
@@ -190,7 +200,7 @@ namespace mango::vulkan
     {
         const std::vector<VkSurfaceFormatKHR> surfaceFormats = getSurfaceFormats(physicalDevice, surface);
 
-        printLine(Print::Info, "Vulkan: PhysicalDeviceSurfaceFormats:");
+        printLine(Print::Info, "PhysicalDeviceSurfaceFormats:");
 
         for (const VkSurfaceFormatKHR& format : surfaceFormats)
         {
@@ -204,11 +214,10 @@ namespace mango::vulkan
 
         if (selected)
         {
-            printLine(Print::Info, "Vulkan: selected {} | {} (HDR: {}, output transform: {})",
+            printLine(Print::Info, "SurfaceFormat {} | {} (HDR: {})",
                 getString(selected->format.format),
                 getString(selected->format.colorSpace),
-                selected->isHdr ? "yes" : "no",
-                int(selected->outputTransform));
+                selected->isHdr ? "yes" : "no");
         }
     }
 
@@ -218,7 +227,6 @@ namespace mango::vulkan
         selection.format = window.surfaceFormat();
         selection.requested = requested;
         selection.isHdr = isHDR(selection.format);
-        selection.outputTransform = selectOutputTransform(selection.format);
 
         logSurfaceFormats(window.physicalDevice(), window.surface(), &selection);
     }

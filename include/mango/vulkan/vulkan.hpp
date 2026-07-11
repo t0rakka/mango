@@ -124,9 +124,8 @@ namespace mango::vulkan
 
     enum class SurfaceFormatIntent
     {
-        PreferSDR,  // best SDR format; never pick HDR
-        PreferHDR,  // best HDR if available, else best SDR
-        ForceHDR,   // best HDR only; matchedIntent false when unavailable
+        PreferSDR,  // default: sRGB SDR only; never picks HDR
+        PreferHDR,  // HDR when available, else same sRGB SDR fallback as PreferSDR
     };
 
     struct SurfaceFormatSelection
@@ -135,7 +134,6 @@ namespace mango::vulkan
         SurfaceFormatIntent requested = SurfaceFormatIntent::PreferSDR;
         bool matchedIntent = false;
         bool isHdr = false;
-        OutputTransform outputTransform = OutputTransform::Pass;
     };
 
     struct VulkanDeviceConfig

@@ -10,18 +10,23 @@
 namespace mango::vulkan
 {
 
+    enum class OutputTransform : int
+    {
+        Pass = 0,                   // sRGB surface: texture decode is sufficient
+        SrgbEncode = 1,             // float/UNORM SDR: linear BT.709 -> sRGB gamma
+        SdrToHdrPQ = 2,             // HDR10 ST2084: BT.709 -> BT.2020 -> PQ
+        SdrToHdrHLG = 3,            // HDR10 HLG: BT.709 -> BT.2020 -> BT.2408 gain -> HLG OETF
+        SdrToAdobeRgb = 4,          // Adobe RGB nonlinear: BT.709 -> Adobe RGB -> Adobe OETF
+        SdrToBt709Nonlinear = 5,    // BT.709 nonlinear: SMPTE 170M / ITU OETF
+        SdrToDciP3Nonlinear = 6,    // DCI-P3 nonlinear: BT.709 -> P3 -> gamma 2.6
+        SdrToExtendedSrgbLinear = 7,// EXTENDED_SRGB_LINEAR + sRGB RT: pre-compensate encode
+        SdrToLinearSurface = 8,     // linear color space + UNORM/float: linear passthrough
+        SdrToDisplayP3Linear = 9,   // Display P3 linear float: gamut map + linear out
+        SdrToBt2020Linear = 10,     // BT.2020 linear float: gamut map + linear out
+    };
+
     namespace
     {
-
-        std::string formatGlslFloat(float value)
-        {
-            return fmt::format("{:.5f}", value);
-        }
-
-        std::string formatGlslRatio(float numerator, float denominator)
-        {
-            return formatGlslFloat(numerator / denominator);
-        }
 
         const char* g_linear_to_srgb = R"(
 vec3 linearToSrgb(vec3 linear)
@@ -131,6 +136,11 @@ vec3 bt709ToAdobeRgb(vec3 linear)
 }
 )";
 
+        std::string formatGlslFloat(float value)
+        {
+            return fmt::format("{:.5f}", value);
+        }
+
         struct OutputRecipe
         {
             std::string helpers;
@@ -166,7 +176,7 @@ vec3 bt709ToAdobeRgb(vec3 linear)
                 {
                     appendHelper(recipe.helpers, g_bt709_to_bt2020);
                     appendHelper(recipe.helpers, g_linear_to_pq);
-                    const std::string pqScale = formatGlslRatio(options.sdrWhiteNits, options.peakNits);
+                    const std::string pqScale = formatGlslFloat(options.sdrWhiteNits / options.peakNits);
                     recipe.body =
                         "vec3 linear = bt709ToBt2020(color.rgb);\n"
                         "    color.rgb = linearToPQ(linear * " + pqScale + ");";
@@ -224,6 +234,26 @@ vec3 bt709ToAdobeRgb(vec3 linear)
                     break;
             }
 
+            if (options.input == InputColorSpace::BT709_NONLINEAR)
+            {
+                switch (transform)
+                {
+                    case OutputTransform::Pass:
+                        recipe.helpers.clear();
+                        appendHelper(recipe.helpers, g_srgb_to_linear);
+                        recipe.body = "color.rgb = srgbToLinear(color.rgb);";
+                        break;
+
+                    case OutputTransform::SrgbEncode:
+                        recipe.helpers.clear();
+                        recipe.body = "// display-referred sRGB passthrough.";
+                        break;
+
+                    default:
+                        break;
+                }
+            }
+
             return recipe;
         }
 
@@ -252,22 +282,66 @@ vec3 tonemapSdr(vec3 color)
     {
         switch (format)
         {
+            case VK_FORMAT_R8_SRGB:
+            case VK_FORMAT_R8G8_SRGB:
+            case VK_FORMAT_R8G8B8_SRGB:
+            case VK_FORMAT_B8G8R8_SRGB:
             case VK_FORMAT_R8G8B8A8_SRGB:
             case VK_FORMAT_B8G8R8A8_SRGB:
             case VK_FORMAT_A8B8G8R8_SRGB_PACK32:
+            case VK_FORMAT_BC1_RGB_SRGB_BLOCK:
+            case VK_FORMAT_BC1_RGBA_SRGB_BLOCK:
+            case VK_FORMAT_BC2_SRGB_BLOCK:
+            case VK_FORMAT_BC3_SRGB_BLOCK:
+            case VK_FORMAT_BC7_SRGB_BLOCK:
+            case VK_FORMAT_ETC2_R8G8B8_SRGB_BLOCK:
+            case VK_FORMAT_ETC2_R8G8B8A1_SRGB_BLOCK:
+            case VK_FORMAT_ETC2_R8G8B8A8_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_4x4_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_5x4_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_5x5_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_6x5_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_6x6_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_8x5_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_8x6_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_8x8_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_10x5_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_10x6_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_10x8_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_10x10_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_12x10_SRGB_BLOCK:
+            case VK_FORMAT_ASTC_12x12_SRGB_BLOCK:
+            case VK_FORMAT_PVRTC1_2BPP_SRGB_BLOCK_IMG:
+            case VK_FORMAT_PVRTC1_4BPP_SRGB_BLOCK_IMG:
+            case VK_FORMAT_PVRTC2_2BPP_SRGB_BLOCK_IMG:
+            case VK_FORMAT_PVRTC2_4BPP_SRGB_BLOCK_IMG:
+            /*
+            case VK_FORMAT_ASTC_3x3x3_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_4x3x3_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_4x4x3_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_4x4x4_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_5x4x4_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_5x5x4_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_5x5x5_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_6x5x5_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_6x6x5_SRGB_BLOCK_EXT:
+            case VK_FORMAT_ASTC_6x6x6_SRGB_BLOCK_EXT:
+            */
                 return true;
             default:
                 return false;
         }
     }
 
-    bool isLinearSdrColorSpace(VkColorSpaceKHR colorSpace)
+    bool isLinear(VkColorSpaceKHR colorSpace)
     {
         switch (colorSpace)
         {
             case VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT:
             case VK_COLOR_SPACE_DISPLAY_P3_LINEAR_EXT:
+            case VK_COLOR_SPACE_BT709_LINEAR_EXT:
             case VK_COLOR_SPACE_BT2020_LINEAR_EXT:
+            case VK_COLOR_SPACE_ADOBERGB_LINEAR_EXT:
                 return true;
             default:
                 return false;
@@ -278,9 +352,10 @@ vec3 tonemapSdr(vec3 color)
     {
         switch (surfaceFormat.colorSpace)
         {
+            case VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT:
+            case VK_COLOR_SPACE_BT2020_LINEAR_EXT:
             case VK_COLOR_SPACE_HDR10_ST2084_EXT:
             case VK_COLOR_SPACE_HDR10_HLG_EXT:
-            case VK_COLOR_SPACE_BT2020_LINEAR_EXT:
                 return true;
             default:
                 return false;
@@ -301,15 +376,14 @@ vec3 tonemapSdr(vec3 color)
             case VK_COLOR_SPACE_PASS_THROUGH_EXT:
             case VK_COLOR_SPACE_DISPLAY_NATIVE_AMD:
                 return false;
-
             case VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT:
                 return isSRGB(surfaceFormat.format);
-
             default:
                 return true;
         }
     }
 
+    static
     OutputTransform selectOutputTransform(VkSurfaceFormatKHR surfaceFormat)
     {
         if (surfaceFormat.colorSpace == VK_COLOR_SPACE_HDR10_ST2084_EXT)
@@ -338,7 +412,7 @@ vec3 tonemapSdr(vec3 color)
             return OutputTransform::SdrToDciP3Nonlinear;
         }
 
-        if (isLinearSdrColorSpace(surfaceFormat.colorSpace))
+        if (isLinear(surfaceFormat.colorSpace))
         {
             if (surfaceFormat.colorSpace == VK_COLOR_SPACE_EXTENDED_SRGB_LINEAR_EXT &&
                 isSRGB(surfaceFormat.format))
@@ -367,6 +441,7 @@ vec3 tonemapSdr(vec3 color)
         return OutputTransform::Pass;
     }
 
+    static
     float defaultSdrWhiteNits(VkColorSpaceKHR colorSpace)
     {
         switch (colorSpace)
@@ -397,6 +472,20 @@ vec3 tonemapSdr(vec3 color)
         return options;
     }
 
+    OutputTransformOptions defaultDisplayOutputOptions(VkSurfaceFormatKHR surfaceFormat)
+    {
+        OutputTransformOptions options;
+        options.input = InputColorSpace::BT709_NONLINEAR;
+        options.tonemap = TonemapMode::None;
+        options.sdrWhiteNits = defaultSdrWhiteNits(surfaceFormat.colorSpace);
+        return options;
+    }
+
+    std::string getDisplayOutputTransformGLSL(VkSurfaceFormatKHR surfaceFormat)
+    {
+        return getOutputTransformGLSL(surfaceFormat, defaultDisplayOutputOptions(surfaceFormat));
+    }
+
     std::string getOutputTransformGLSL(VkSurfaceFormatKHR surfaceFormat)
     {
         return getOutputTransformGLSL(surfaceFormat, defaultOutputOptions(surfaceFormat));
@@ -407,13 +496,6 @@ vec3 tonemapSdr(vec3 color)
     {
         OutputTransform transform = selectOutputTransform(surfaceFormat);
         OutputRecipe recipe = buildRecipe(transform, options);
-
-        if (options.input == InputColorSpace::BT709_NONLINEAR &&
-            transform != OutputTransform::SdrToExtendedSrgbLinear)
-        {
-            recipe.helpers.clear();
-            recipe.body = "// BT709_NONLINEAR input passthrough.";
-        }
 
         std::string source = buildTonemapGlsl(options.tonemap, options.exposure);
         source += recipe.helpers;

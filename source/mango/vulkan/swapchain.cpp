@@ -335,6 +335,11 @@ namespace mango::vulkan
         return mango::vulkan::getOutputTransformGLSL(m_surfaceFormat, options);
     }
 
+    std::string Swapchain::getDisplayOutputTransformGLSL() const
+    {
+        return mango::vulkan::getDisplayOutputTransformGLSL(m_surfaceFormat);
+    }
+
     VkExtent2D Swapchain::getExtent() const
     {
         return m_extent;
