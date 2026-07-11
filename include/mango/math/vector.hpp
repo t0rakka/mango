@@ -2885,7 +2885,7 @@ namespace mango::math
     // Types which support load_low() will implement this in their specific header.
 
     template <typename ScalarType, int VectorSize>
-    static constexpr
+    inline
     Vector<ScalarType, VectorSize> load_low(const ScalarType* source) noexcept
     {
         MANGO_UNREFERENCED(source);
@@ -2903,7 +2903,6 @@ namespace mango::math
     // the shift was a normal function. CLANG implementation for example does not
     // accept anything else so we do this immoral macro sleight-of-hand to get
     // what we want. The count still has to be a compile-time constant, of course.
-
 
     #define slli(Value, Count) decltype(Value)(simd::slli<Count>(Value))
     #define srli(Value, Count) decltype(Value)(simd::srli<Count>(Value))
