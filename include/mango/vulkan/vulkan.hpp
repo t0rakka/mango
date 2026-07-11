@@ -122,16 +122,26 @@ namespace mango::vulkan
     // VulkanDeviceConfig
     // -------------------------------------------------------------------
 
+    // Declares the client's color workflow, not just a pixel format preference.
+    //
+    // SDR (default): display-referred output. Shaders write non-linear values
+    // directly (e.g. outColor = vec4(1, 0, 0, 1)). Mango picks a classic SDR swapchain;
+    // do not append colorspace GLSL or call encodeOutput().
+    //
+    // HDR: scene-linear workflow (PBR, raytracing, HDR image viewing). Render
+    // in linear; append getOutputTransformGLSL() and finish with encodeOutput() in
+    // the resolve pass. Mango requests an HDR swapchain when available; otherwise
+    // falls back to SDR and the generated shader tonemaps linear input to SDR output.
     enum class SurfaceFormatIntent
     {
-        PreferSDR,  // default: sRGB SDR only; never picks HDR
-        PreferHDR,  // HDR when available, else same sRGB SDR fallback as PreferSDR
+        SDR,  // display-referred SDR; direct shader output, no output transform
+        HDR,  // scene-linear workflow; requires getOutputTransformGLSL() + encodeOutput()
     };
 
     struct SurfaceFormatSelection
     {
         VkSurfaceFormatKHR format {};
-        SurfaceFormatIntent requested = SurfaceFormatIntent::PreferSDR;
+        SurfaceFormatIntent requested = SurfaceFormatIntent::SDR;
         bool matchedIntent = false;
         bool isHdr = false;
     };
@@ -144,7 +154,7 @@ namespace mango::vulkan
         // Swapchain surface formats in preference order (first supported match wins).
         // When empty, selectSurfaceFormat() uses surfaceFormatIntent and the built-in tier list.
         std::vector<VkSurfaceFormatKHR> preferredFormats;
-        SurfaceFormatIntent surfaceFormatIntent = SurfaceFormatIntent::PreferSDR;
+        SurfaceFormatIntent surfaceFormatIntent = SurfaceFormatIntent::SDR;
 
         // Optional pNext for VkDeviceCreateInfo (feature structs, etc.).
         // When null, VulkanWindow enables Vulkan 1.3 dynamic rendering by default.
