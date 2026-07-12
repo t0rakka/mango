@@ -1,9 +1,6 @@
 /*
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
-
-    Scanline Sweeper font rendering demo (Vulkan).
-    https://rookandpossum.com/papers/scanline_sweeper_preprint.pdf
 */
 #include <cmath>
 #include <algorithm>
@@ -493,20 +490,9 @@ public:
     }
 };
 
-static std::string default_font_path()
-{
-#if defined(MANGO_PLATFORM_WINDOWS)
-    return "C:/Windows/Fonts/arial.ttf";
-#elif defined(MANGO_PLATFORM_MACOS)
-    return "/System/Library/Fonts/Supplemental/Arial.ttf";
-#else
-    return "/usr/share/fonts/truetype/dejavu/DejaVuSans.ttf";
-#endif
-}
-
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string fontPath = default_font_path();
+    std::string fontPath = "data/NotoSans-Regular.ttf";
 
     for (size_t i = 1; i < commands.size(); ++i)
     {
