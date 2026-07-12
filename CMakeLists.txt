@@ -467,12 +467,14 @@ if (BUILD_VULKAN)
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
+            "${MANGO_SOURCE_DIR}/vulkan/font/*.cpp"
         )
 
     elseif (NOT EMSCRIPTEN)
 
         FILE(GLOB VULKAN_SOURCES
             "${MANGO_SOURCE_DIR}/vulkan/*.cpp"
+            "${MANGO_SOURCE_DIR}/vulkan/font/*.cpp"
         )
 
     endif ()

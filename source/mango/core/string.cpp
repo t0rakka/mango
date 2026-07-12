@@ -157,6 +157,59 @@ namespace
         return ptr;
     }
 
+    static inline
+    bool isValidUnicodeScalar(u32 code)
+    {
+        return code <= 0x10FFFF && !(code >= 0xD800 && code <= 0xDFFF);
+    }
+
+    static inline
+    char32_t sanitizeUnicodeScalar(u32 code)
+    {
+        if (!isValidUnicodeScalar(code))
+        {
+            return char32_t(0xFFFD);
+        }
+
+        return char32_t(code);
+    }
+
+    template <typename Emit>
+    static void utf8_decode_view(std::string_view source, Emit emit)
+    {
+        u32 state = UTF8_ACCEPT;
+        u32 code = 0;
+
+        for (u8 byte : source)
+        {
+            for (;;)
+            {
+                const u32 status = utf8_decode(state, code, byte);
+
+                if (status == UTF8_ACCEPT)
+                {
+                    emit(sanitizeUnicodeScalar(code));
+                    break;
+                }
+
+                if (status == UTF8_REJECT)
+                {
+                    emit(char32_t(0xFFFD));
+                    state = UTF8_ACCEPT;
+                    code = 0;
+                    continue;
+                }
+
+                break;
+            }
+        }
+
+        if (state != UTF8_ACCEPT)
+        {
+            emit(char32_t(0xFFFD));
+        }
+    }
+
 } // namespace
 
 namespace mango
@@ -166,38 +219,46 @@ namespace mango
     // unicode conversions
     // -----------------------------------------------------------------
 
-    bool is_utf8(const std::string& source)
+    bool is_utf8(std::string_view source)
     {
         u32 code = 0;
-        u32 state = 0;
+        u32 state = UTF8_ACCEPT;
 
         for (u8 c : source)
         {
-            utf8_decode(state, code, c);
+            const u32 status = utf8_decode(state, code, c);
+            if (status == UTF8_REJECT)
+            {
+                return false;
+            }
         }
 
         return state == UTF8_ACCEPT;
     }
 
-    std::u32string utf32_from_utf8(const std::string& source)
+    bool is_utf8(const std::string& source)
+    {
+        return is_utf8(std::string_view(source));
+    }
+
+    std::u32string utf32_from_utf8(std::string_view source)
     {
         std::u32string s;
         StringBuilder<char32_t, 256, 1> sb(s);
 
-        u32 state = 0;
-        u32 code = 0;
-
-        for (u8 c : source)
+        utf8_decode_view(source, [&](char32_t code)
         {
-            if (!utf8_decode(state, code, c))
-            {
-                sb.ensure();
-                *sb.ptr++ = code;
-            }
-        }
+            sb.ensure();
+            *sb.ptr++ = code;
+        });
 
         sb.flush();
         return s;
+    }
+
+    std::u32string utf32_from_utf8(const std::string& source)
+    {
+        return utf32_from_utf8(std::string_view(source));
     }
 
     std::string utf8_from_utf32(const std::u32string& source)
@@ -227,37 +288,34 @@ namespace mango
         return s;
     }
 
-    std::u16string utf16_from_utf8(const std::string& source)
+    std::u16string utf16_from_utf8(std::string_view source)
     {
         std::u16string s;
         StringBuilder<char16_t, 256, 2> sb(s);
 
-        u32 state = 0;
-        u32 code = 0;
-
-        for (u8 c : source)
+        utf8_decode_view(source, [&](char32_t code)
         {
-            if (!utf8_decode(state, code, c))
-            {
-                sb.ensure();
+            sb.ensure();
 
-                // encode into temporary buffer
-                if (code <= 0xffff)
-                {
-                    *sb.ptr++ = char16_t(code);
-                }
-                else
-                {
-                    // encode code points above U+FFFF as surrogate pair
-                    sb.ptr[0] = 0xd7c0 + (code >> 10);
-                    sb.ptr[1] = 0xdc00 + (code & 0x3ff);
-                    sb.ptr += 2;
-                }
+            if (code <= 0xffff)
+            {
+                *sb.ptr++ = char16_t(code);
             }
-        }
+            else
+            {
+                sb.ptr[0] = char16_t(0xd7c0 + (code >> 10));
+                sb.ptr[1] = char16_t(0xdc00 + (code & 0x3ff));
+                sb.ptr += 2;
+            }
+        });
 
         sb.flush();
         return s;
+    }
+
+    std::u16string utf16_from_utf8(const std::string& source)
+    {
+        return utf16_from_utf8(std::string_view(source));
     }
 
     std::string utf8_from_utf16(const std::u16string& source)

@@ -190,7 +190,10 @@ if (BUILD_VULKAN)
 
     mango_set_library_properties(mango-vulkan)
     mango_apply_shared_config(mango-vulkan)
-    target_include_directories(mango-vulkan PRIVATE "${EXTERNAL_SOURCE_DIR}/vma")
+    target_include_directories(mango-vulkan PRIVATE
+        "${EXTERNAL_SOURCE_DIR}/vma"
+        "${EXTERNAL_SOURCE_DIR}/stb"
+    )
 
     if (APPLE)
         target_sources(mango-vulkan PRIVATE

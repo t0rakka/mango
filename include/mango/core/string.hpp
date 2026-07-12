@@ -20,10 +20,16 @@
 namespace mango
 {
 
-    // unicode conversions
+    // Unicode conversions (UTF-8 decoder DFA by Bjoern Hoehrmann, 2008-2010;
+    // see http://bjoern.hoehrmann.de/utf-8/decoder/dfa/ ).
+    bool is_utf8(std::string_view s);
     bool is_utf8(const std::string& s);
-    std::u16string utf16_from_utf8(const std::string& str);
+
+    std::u32string utf32_from_utf8(std::string_view str);
     std::u32string utf32_from_utf8(const std::string& str);
+
+    std::u16string utf16_from_utf8(std::string_view str);
+    std::u16string utf16_from_utf8(const std::string& str);
     std::string utf8_from_utf16(const std::u16string& str);
     std::string utf8_from_utf32(const std::u32string& str);
 
