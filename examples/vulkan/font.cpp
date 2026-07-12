@@ -386,7 +386,7 @@ public:
         m_renderer->setSize(m_body, m_fontPixelHeight);
 
         const float line_step = m_renderer->lineHeight(m_body) * 1.12f;
-        float baseline_y = 100.0f;
+        float baseline_y = 132.0f;
         TextStyle bodyStyle { .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f) };
 
         for (const std::string& line : m_lines)

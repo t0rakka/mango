@@ -8,9 +8,6 @@
     FontRenderer is not thread-safe: load(), unload(), setSize(), and warmup() must not run
     concurrently with clear(), draw(), drawParagraph(), or resolve() on the same FontRenderer
     instance. Use the thread that records the VkCommandBuffers passed to the draw/resolve methods.
-
-    Font is a lightweight handle to a loaded typeface (.ttf). Default-constructed Font is invalid
-  (operator bool() is false). load() returns Font on success, or an invalid Font on failure.
 */
 #pragma once
 
