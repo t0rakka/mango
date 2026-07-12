@@ -72,6 +72,7 @@ namespace mango::vulkan
             float em_per_pixel = 1.0f;
             u32 pixel_width = 1;
             u32 pixel_height = 1;
+            float stem_darkening = 1.0f;
             float32x4 color { 1.0f, 1.0f, 1.0f, 1.0f };
         };
 
@@ -433,7 +434,8 @@ namespace mango::vulkan
         }
 
         void queueGlyphsForLine(u32 faceIndex, float pen_x, float baseline_y,
-                                const std::u32string& codepoints, float32x4 color, float pixelHeight)
+                                const std::u32string& codepoints, float32x4 color, float pixelHeight,
+                                float stemDarkening)
         {
             if (codepoints.empty())
             {
@@ -505,6 +507,7 @@ namespace mango::vulkan
                     params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
                     params.pixel_height = line_pixel_height;
                     params.color = color;
+                    params.stem_darkening = stemDarkening;
 
                     queueGlyph(cached.atlas, params);
 
@@ -527,6 +530,7 @@ namespace mango::vulkan
             PendingGlyph pending {};
             pending.gpu.header[0] = float(atlas.contour_offset);
             pending.gpu.header[1] = float(atlas.contour_count);
+            pending.gpu.header[2] = params.stem_darkening;
             pending.gpu.color[0] = params.color.x;
             pending.gpu.color[1] = params.color.y;
             pending.gpu.color[2] = params.color.z;
@@ -546,7 +550,8 @@ namespace mango::vulkan
             pendingGlyphs.push_back(pending);
         }
 
-        void queueGlyphsForLayoutLine(u32 faceIndex, const font::LayoutLine& line, float32x4 color, float pixelHeight)
+        void queueGlyphsForLayoutLine(u32 faceIndex, const font::LayoutLine& line, float32x4 color,
+                                      float pixelHeight, float stemDarkening)
         {
             if (line.glyphs.empty())
             {
@@ -612,6 +617,7 @@ namespace mango::vulkan
                     params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
                     params.pixel_height = line_pixel_height;
                     params.color = color;
+                    params.stem_darkening = stemDarkening;
 
                     queueGlyph(cached.atlas, params);
                 }
@@ -1779,7 +1785,7 @@ namespace mango::vulkan
         }
 
         const std::u32string codepoints = utf32_from_utf8(utf8);
-        m_impl->queueGlyphsForLine(font.index, x, y, codepoints, style.color, style.pixelHeight);
+        m_impl->queueGlyphsForLine(font.index, x, y, codepoints, style.color, style.pixelHeight, style.stemDarkening);
     }
 
     void FontRenderer::draw(TextCursor& cursor, Font font, std::string_view utf8, const TextStyle& style)
@@ -1814,7 +1820,7 @@ namespace mango::vulkan
             const font::LayoutResult layout = font::layoutParagraph(face, bounds, codepoints, style);
             for (const font::LayoutLine& line : layout.lines)
             {
-                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, height);
+                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, height, style.stemDarkening);
             }
         });
     }
@@ -1840,7 +1846,7 @@ namespace mango::vulkan
             const font::LayoutResult layout = font::layoutParagraph(face, bounds, codepoints, style);
             for (const font::LayoutLine& line : layout.lines)
             {
-                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, pixelHeight);
+                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, pixelHeight, style.stemDarkening);
             }
 
             if (!layout.lines.empty())

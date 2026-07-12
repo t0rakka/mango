@@ -52,6 +52,7 @@ struct GlyphInstance
 {
     uint contour_offset;
     uint contour_count;
+    float stem_darkening;
     vec4 color;
     vec4 params0;
     vec4 params1;
@@ -63,6 +64,7 @@ GlyphInstance load_instance(uint index)
     GlyphInstance inst;
     inst.contour_offset = uint(instance_data[base + 0u].x);
     inst.contour_count = uint(instance_data[base + 0u].y);
+    inst.stem_darkening = instance_data[base + 0u].z;
     inst.color = instance_data[base + 1u];
     inst.params0 = instance_data[base + 2u];
     inst.params1 = instance_data[base + 3u];
@@ -190,6 +192,30 @@ float scanline_sweep(vec2 size, vec2 offset, vec2 p0, vec2 p1, vec2 p2)
     return coverage;
 }
 
+// Pull mid-range coverage toward full opacity when stems are sub-pixel wide.
+float apply_stem_darkening(float alpha, vec2 em_per_pixel, float strength)
+{
+    if (strength <= 0.0 || alpha <= 0.0)
+    {
+        return alpha;
+    }
+
+    float e = max(em_per_pixel.x, em_per_pixel.y);
+    // Font units per pixel: rises as pixel height falls (~60 at 32px, ~250 at 8px for typical TTF).
+    const float e0 = 55.0;
+    const float e1 = 210.0;
+    const float max_exponent = 1.45;
+    float t = clamp((e - e0) / (e1 - e0), 0.0, 1.0) * strength;
+    if (t <= 0.0)
+    {
+        return alpha;
+    }
+
+    float exponent = mix(1.0, max_exponent, t);
+    alpha = clamp(alpha, 0.0, 1.0);
+    return 1.0 - pow(1.0 - alpha, exponent);
+}
+
 float compute_glyph_alpha(GlyphInstance inst, ivec2 pixel)
 {
     vec2 pixel_size = inst.params1.zw;
@@ -235,6 +261,7 @@ float compute_glyph_alpha(GlyphInstance inst, ivec2 pixel)
     }
 
     float alpha = area > 0.0 ? coverage_sum / area : 0.0;
+    alpha = apply_stem_darkening(alpha, em_per_pixel, inst.stem_darkening);
     return alpha * inst.color.a;
 }
 

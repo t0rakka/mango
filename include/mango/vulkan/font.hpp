@@ -59,6 +59,8 @@ namespace mango::vulkan
         float lineSpacing = 1.0f;
         // 0 = use the size from setSize(); otherwise rasterize at this pixel height.
         float pixelHeight = 0.0f;
+        // Boost sub-pixel stem coverage at small sizes. 0 = off, 1 = default.
+        float stemDarkening = 1.0f;
     };
 
     enum class TextAlign
