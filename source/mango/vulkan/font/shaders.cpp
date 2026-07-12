@@ -272,6 +272,7 @@ void main()
 
     vec4 dst = imageLoad(canvas, pixel);
     vec3 rgb = dst.rgb;
+    float alpha_out = dst.a;
 
     for (uint gi = 0u; gi < glyph_count; ++gi)
     {
@@ -285,9 +286,10 @@ void main()
         }
 
         rgb = mix(rgb, inst.color.rgb, alpha);
+        alpha_out = max(alpha_out, alpha);
     }
 
-    imageStore(canvas, pixel, vec4(rgb, 1.0));
+    imageStore(canvas, pixel, vec4(rgb, alpha_out));
 }
 )";
 }
@@ -335,6 +337,10 @@ void main()
     }
 
     outColor = texelFetch(uTexture, pixel, 0);
+    if (outColor.a <= 0.0)
+    {
+        discard;
+    }
 }
 )";
 }

@@ -84,6 +84,18 @@ namespace mango::vulkan
         bool truncated = false;
     };
 
+    // How resolve() composites the internal canvas onto the target image.
+    enum class ResolveMode
+    {
+        // Alpha-blend text onto existing target contents (LOAD + blend). Clear the canvas
+        // transparent before drawing. Typical use: HUD/text over a rendered scene.
+        Overlay,
+
+        // Copy the full canvas over the target (DONT_CARE + replace). Clear the canvas
+        // with your background color before drawing. Typical use: text-only applications.
+        Replace,
+    };
+
     class FontRenderer : public NonCopyable
     {
     public:
@@ -130,7 +142,8 @@ namespace mango::vulkan
         void drawParagraph(VkCommandBuffer cmd, Font font, const math::Rectangle& bounds,
                            std::string_view utf8, const ParagraphStyle& style = {});
 
-        void resolve(VkCommandBuffer cmd, VkImageView target, VkExtent2D extent);
+        void resolve(VkCommandBuffer cmd, VkImageView target, VkExtent2D extent,
+                     ResolveMode mode = ResolveMode::Overlay);
 
     private:
         struct Impl;

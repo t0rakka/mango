@@ -124,7 +124,8 @@ namespace mango::vulkan
         VkPipelineLayout computePipelineLayout = VK_NULL_HANDLE;
         VkPipelineLayout blitPipelineLayout = VK_NULL_HANDLE;
         VkPipeline computePipeline = VK_NULL_HANDLE;
-        VkPipeline blitPipeline = VK_NULL_HANDLE;
+        VkPipeline overlayBlitPipeline = VK_NULL_HANDLE;
+        VkPipeline replaceBlitPipeline = VK_NULL_HANDLE;
 
         VkDescriptorPool canvasDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorPool batchDescriptorPool = VK_NULL_HANDLE;
@@ -187,9 +188,14 @@ namespace mango::vulkan
                 vkDestroySampler(device, sampler, nullptr);
             }
 
-            if (blitPipeline)
+            if (replaceBlitPipeline)
             {
-                vkDestroyPipeline(device, blitPipeline, nullptr);
+                vkDestroyPipeline(device, replaceBlitPipeline, nullptr);
+            }
+
+            if (overlayBlitPipeline)
+            {
+                vkDestroyPipeline(device, overlayBlitPipeline, nullptr);
             }
 
             if (computePipeline)
@@ -735,7 +741,7 @@ namespace mango::vulkan
             vkCmdDispatch(cmd, tiles_x * subgroups_per_axis, tiles_y * subgroups_per_axis, 1);
         }
 
-        void blitToTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent)
+        void blitToTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent, ResolveMode mode)
         {
             if (!canvasImage)
             {
@@ -746,12 +752,14 @@ namespace mango::vulkan
                 VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
                 VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
 
+            const bool overlay = (mode == ResolveMode::Overlay);
+
             VkRenderingAttachmentInfo colorAttachment =
             {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                 .imageView = targetView,
                 .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                .loadOp = overlay ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             };
 
@@ -765,7 +773,8 @@ namespace mango::vulkan
             };
 
             vkCmdBeginRendering(cmd, &renderingInfo);
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, blitPipeline);
+            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
+                overlay ? overlayBlitPipeline : replaceBlitPipeline);
 
             VkViewport viewport =
             {
@@ -993,8 +1002,20 @@ namespace mango::vulkan
             VkPipelineDynamicStateCreateInfo dynamicState { .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, .dynamicStateCount = 2, .pDynamicStates = dynamicStates };
             VkPipelineRasterizationStateCreateInfo rasterizer { .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, .polygonMode = VK_POLYGON_MODE_FILL, .cullMode = VK_CULL_MODE_NONE, .lineWidth = 1.0f };
             VkPipelineMultisampleStateCreateInfo multisampling { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT };
-            VkPipelineColorBlendAttachmentState colorBlendAttachment { .colorWriteMask = 0xF };
-            VkPipelineColorBlendStateCreateInfo colorBlending { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &colorBlendAttachment };
+            VkPipelineColorBlendAttachmentState overlayBlendAttachment
+            {
+                .blendEnable = VK_TRUE,
+                .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
+                .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .colorBlendOp = VK_BLEND_OP_ADD,
+                .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
+                .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
+                .alphaBlendOp = VK_BLEND_OP_ADD,
+                .colorWriteMask = 0xF,
+            };
+            VkPipelineColorBlendAttachmentState replaceBlendAttachment { .colorWriteMask = 0xF };
+            VkPipelineColorBlendStateCreateInfo overlayBlending { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &overlayBlendAttachment };
+            VkPipelineColorBlendStateCreateInfo replaceBlending { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &replaceBlendAttachment };
 
             VkFormat colorFormat = blitColorFormat;
             VkPipelineRenderingCreateInfo renderingCreateInfo =
@@ -1004,7 +1025,7 @@ namespace mango::vulkan
                 .pColorAttachmentFormats = &colorFormat,
             };
 
-            VkGraphicsPipelineCreateInfo blitPipelineInfo =
+            VkGraphicsPipelineCreateInfo overlayBlitPipelineInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
                 .pNext = &renderingCreateInfo,
@@ -1015,12 +1036,30 @@ namespace mango::vulkan
                 .pViewportState = &viewportState,
                 .pRasterizationState = &rasterizer,
                 .pMultisampleState = &multisampling,
-                .pColorBlendState = &colorBlending,
+                .pColorBlendState = &overlayBlending,
                 .pDynamicState = &dynamicState,
                 .layout = blitPipelineLayout,
             };
 
-            vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &blitPipelineInfo, nullptr, &blitPipeline);
+            vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &overlayBlitPipelineInfo, nullptr, &overlayBlitPipeline);
+
+            VkGraphicsPipelineCreateInfo replaceBlitPipelineInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+                .pNext = &renderingCreateInfo,
+                .stageCount = 2,
+                .pStages = blitStages,
+                .pVertexInputState = &vertexInputInfo,
+                .pInputAssemblyState = &inputAssembly,
+                .pViewportState = &viewportState,
+                .pRasterizationState = &rasterizer,
+                .pMultisampleState = &multisampling,
+                .pColorBlendState = &replaceBlending,
+                .pDynamicState = &dynamicState,
+                .layout = blitPipelineLayout,
+            };
+
+            vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &replaceBlitPipelineInfo, nullptr, &replaceBlitPipeline);
         }
 
         void createSampler()
@@ -1571,10 +1610,10 @@ namespace mango::vulkan
         }
     }
 
-    void FontRenderer::resolve(VkCommandBuffer cmd, VkImageView target, VkExtent2D extent)
+    void FontRenderer::resolve(VkCommandBuffer cmd, VkImageView target, VkExtent2D extent, ResolveMode mode)
     {
         m_impl->flushTextBatch(cmd);
-        m_impl->blitToTarget(cmd, target, extent);
+        m_impl->blitToTarget(cmd, target, extent, mode);
         m_impl->pendingGlyphs.clear();
     }
 
