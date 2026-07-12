@@ -279,14 +279,16 @@ void main()
         uint inst_index = tile_glyphs[glyph_start + gi];
         GlyphInstance inst = load_instance(inst_index);
 
-        float alpha = compute_glyph_alpha(inst, pixel);
-        if (alpha <= 0.0)
+        float src_a = compute_glyph_alpha(inst, pixel);
+        if (src_a <= 0.0)
         {
             continue;
         }
 
-        rgb = mix(rgb, inst.color.rgb, alpha);
-        alpha_out = max(alpha_out, alpha);
+        vec3 src_rgb = inst.color.rgb;
+        float out_a = src_a + alpha_out * (1.0 - src_a);
+        rgb = (src_rgb * src_a + rgb * alpha_out * (1.0 - src_a)) / max(out_a, 1e-6);
+        alpha_out = out_a;
     }
 
     imageStore(canvas, pixel, vec4(rgb, alpha_out));

@@ -11,7 +11,7 @@
         renderer.beginFrame(clearColor);
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
-        renderer.encode(cmd, { targetView, extent, ResolveMode::Overlay });
+        renderer.encode(cmd, { .imageView = targetView, .extent = extent, .clearTarget = true });
 */
 #pragma once
 
@@ -107,6 +107,9 @@ namespace mango::vulkan
         VkImageView imageView = VK_NULL_HANDLE;
         VkExtent2D extent {};
         ResolveMode mode = ResolveMode::Overlay;
+        // When true, clear the target to beginFrame() color before compositing text.
+        // Use for text-only frames; leave false when overlaying onto existing content.
+        bool clearTarget = false;
     };
 
     class FontRenderer : public NonCopyable
@@ -148,7 +151,8 @@ namespace mango::vulkan
         void resize(VkExtent2D extent);
 
         // Phase A: describe text (CPU only, no VkCommandBuffer).
-        void beginFrame(math::float32x4 clearColor = math::float32x4(0.0f, 0.0f, 0.0f, 0.0f));
+        // Target background when EncodeTarget::clearTarget is true.
+        void beginFrame(math::float32x4 clearColor = math::float32x4(0.0f, 0.0f, 0.0f, 1.0f));
 
         TextCursor cursor(Font font, float x, float baseline_y) const;
         TextCursor cursorTopLeft(Font font, float x, float top, const TextStyle& style = {}) const;

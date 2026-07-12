@@ -152,6 +152,7 @@ public:
             .imageView = swapchain().getImageView(imageIndex),
             .extent = extent,
             .mode = ResolveMode::Overlay,
+            .clearTarget = true,
         });
         swapchain().cmdTransitionImageToPresent(cmd, imageIndex);
 

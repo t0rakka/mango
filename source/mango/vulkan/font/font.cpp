@@ -84,6 +84,19 @@ namespace mango::vulkan
             float rect_y1 = 0.0f;
         };
 
+        struct TextBounds
+        {
+            u32 x0 = 0;
+            u32 y0 = 0;
+            u32 x1 = 0;
+            u32 y1 = 0;
+
+            bool empty() const
+            {
+                return x1 <= x0 || y1 <= y0;
+            }
+        };
+
         struct FaceSlot
         {
             font::Face face;
@@ -166,6 +179,10 @@ namespace mango::vulkan
         std::deque<FaceSlot> faces;
         std::unordered_map<u64, CachedGlyph> glyphCache;
         std::vector<PendingGlyph> pendingGlyphs;
+
+        std::vector<GpuTileInfo> batchTileInfos;
+        std::vector<u32> batchTileGlyphs;
+        std::vector<u32> batchTileFill;
 
         math::float32x4 frameClearColor { 0.0f, 0.0f, 0.0f, 0.0f };
         bool frameOpen = false;
@@ -346,7 +363,7 @@ namespace mango::vulkan
         void cacheGlyph(u32 faceIndex, u32 codepoint)
         {
             const u64 key = glyphCacheKey(faceIndex, codepoint);
-            if (glyphCache.count(key))
+            if (glyphCache.find(key) != glyphCache.end())
             {
                 return;
             }
@@ -359,13 +376,19 @@ namespace mango::vulkan
                 cached.atlas = appendGlyphToAtlas(cached.cpu);
             }
 
-            glyphCache[key] = std::move(cached);
+            glyphCache.emplace(key, std::move(cached));
         }
 
         const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 codepoint)
         {
-            cacheGlyph(faceIndex, codepoint);
-            return glyphCache.at(glyphCacheKey(faceIndex, codepoint));
+            const u64 key = glyphCacheKey(faceIndex, codepoint);
+            auto it = glyphCache.find(key);
+            if (it == glyphCache.end())
+            {
+                cacheGlyph(faceIndex, codepoint);
+                it = glyphCache.find(key);
+            }
+            return it->second;
         }
 
         GlyphAtlasSlot appendGlyphToAtlas(const font::GlyphGpuData& glyph)
@@ -613,6 +636,34 @@ namespace mango::vulkan
             createCanvas();
         }
 
+        TextBounds computePendingBounds() const
+        {
+            TextBounds bounds;
+            if (pendingGlyphs.empty())
+            {
+                return bounds;
+            }
+
+            float x0 = pendingGlyphs[0].rect_x0;
+            float y0 = pendingGlyphs[0].rect_y0;
+            float x1 = pendingGlyphs[0].rect_x1;
+            float y1 = pendingGlyphs[0].rect_y1;
+
+            for (const PendingGlyph& glyph : pendingGlyphs)
+            {
+                x0 = std::min(x0, glyph.rect_x0);
+                y0 = std::min(y0, glyph.rect_y0);
+                x1 = std::max(x1, glyph.rect_x1);
+                y1 = std::max(y1, glyph.rect_y1);
+            }
+
+            bounds.x0 = u32(std::max(0.0f, std::floor(x0)));
+            bounds.y0 = u32(std::max(0.0f, std::floor(y0)));
+            bounds.x1 = u32(std::min(float(extent.width), std::ceil(x1)));
+            bounds.y1 = u32(std::min(float(extent.height), std::ceil(y1)));
+            return bounds;
+        }
+
         void clearCanvas(VkCommandBuffer cmd, float r, float g, float b, float a)
         {
             if (!canvasImage)
@@ -651,9 +702,9 @@ namespace mango::vulkan
                 0, 0, nullptr, 0, nullptr, 1, &barrier);
         }
 
-        void flushTextBatch(VkCommandBuffer cmd)
+        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds)
         {
-            if (!canvasImage || pendingGlyphs.empty())
+            if (!canvasImage || pendingGlyphs.empty() || bounds.empty())
             {
                 return;
             }
@@ -664,75 +715,90 @@ namespace mango::vulkan
                 atlasDescriptorsDirty = false;
             }
 
-            float bbox_x0 = pendingGlyphs[0].rect_x0;
-            float bbox_y0 = pendingGlyphs[0].rect_y0;
-            float bbox_x1 = pendingGlyphs[0].rect_x1;
-            float bbox_y1 = pendingGlyphs[0].rect_y1;
-
-            for (const PendingGlyph& glyph : pendingGlyphs)
-            {
-                bbox_x0 = std::min(bbox_x0, glyph.rect_x0);
-                bbox_y0 = std::min(bbox_y0, glyph.rect_y0);
-                bbox_x1 = std::max(bbox_x1, glyph.rect_x1);
-                bbox_y1 = std::max(bbox_y1, glyph.rect_y1);
-            }
-
-            bbox_x0 = std::floor(bbox_x0);
-            bbox_y0 = std::floor(bbox_y0);
-            bbox_x1 = std::ceil(bbox_x1);
-            bbox_y1 = std::ceil(bbox_y1);
-
-            bbox_x0 = std::max(0.0f, bbox_x0);
-            bbox_y0 = std::max(0.0f, bbox_y0);
-            bbox_x1 = std::min(float(extent.width), bbox_x1);
-            bbox_y1 = std::min(float(extent.height), bbox_y1);
-
-            if (bbox_x1 <= bbox_x0 || bbox_y1 <= bbox_y0)
-            {
-                return;
-            }
-
-            u32 tile_origin_x = u32(bbox_x0) / kTileSize * kTileSize;
-            u32 tile_origin_y = u32(bbox_y0) / kTileSize * kTileSize;
+            u32 tile_origin_x = bounds.x0 / kTileSize * kTileSize;
+            u32 tile_origin_y = bounds.y0 / kTileSize * kTileSize;
             u32 tile_size = kTileSize;
-            u32 tiles_x = (u32(std::ceil(bbox_x1)) - tile_origin_x + tile_size - 1) / tile_size;
-            u32 tiles_y = (u32(std::ceil(bbox_y1)) - tile_origin_y + tile_size - 1) / tile_size;
+            u32 tiles_x = (bounds.x1 - tile_origin_x + tile_size - 1) / tile_size;
+            u32 tiles_y = (bounds.y1 - tile_origin_y + tile_size - 1) / tile_size;
 
-            std::vector<GpuTileInfo> tile_infos(tiles_x * tiles_y);
-            std::vector<u32> tile_glyphs;
-            tile_glyphs.reserve(pendingGlyphs.size() * 2);
+            const u32 tile_count = tiles_x * tiles_y;
+            batchTileInfos.assign(tile_count, {});
 
-            for (u32 ty = 0; ty < tiles_y; ++ty)
+            auto overlapsTile = [](const PendingGlyph& glyph, float tile_x0, float tile_y0, float tile_x1, float tile_y1)
             {
-                for (u32 tx = 0; tx < tiles_x; ++tx)
+                return glyph.rect_x1 > tile_x0 && glyph.rect_x0 < tile_x1 &&
+                       glyph.rect_y1 > tile_y0 && glyph.rect_y0 < tile_y1;
+            };
+
+            for (u32 i = 0; i < u32(pendingGlyphs.size()); ++i)
+            {
+                const PendingGlyph& glyph = pendingGlyphs[i];
+                const u32 tx0 = u32(std::max(0.0f, glyph.rect_x0 - float(tile_origin_x))) / tile_size;
+                const u32 ty0 = u32(std::max(0.0f, glyph.rect_y0 - float(tile_origin_y))) / tile_size;
+                const u32 tx1 = u32(std::max(0.0f, glyph.rect_x1 - 1.0f - float(tile_origin_x))) / tile_size;
+                const u32 ty1 = u32(std::max(0.0f, glyph.rect_y1 - 1.0f - float(tile_origin_y))) / tile_size;
+
+                for (u32 ty = ty0; ty <= std::min(ty1, tiles_y - 1); ++ty)
                 {
-                    const float tile_x0 = float(tile_origin_x + tx * tile_size);
-                    const float tile_y0 = float(tile_origin_y + ty * tile_size);
-                    const float tile_x1 = tile_x0 + float(tile_size);
-                    const float tile_y1 = tile_y0 + float(tile_size);
-
-                    GpuTileInfo& tile = tile_infos[ty * tiles_x + tx];
-                    tile.glyph_start = u32(tile_glyphs.size());
-
-                    for (u32 i = 0; i < u32(pendingGlyphs.size()); ++i)
+                    for (u32 tx = tx0; tx <= std::min(tx1, tiles_x - 1); ++tx)
                     {
-                        const PendingGlyph& glyph = pendingGlyphs[i];
-                        if (glyph.rect_x1 <= tile_x0 || glyph.rect_x0 >= tile_x1 ||
-                            glyph.rect_y1 <= tile_y0 || glyph.rect_y0 >= tile_y1)
+                        const float tile_x0 = float(tile_origin_x + tx * tile_size);
+                        const float tile_y0 = float(tile_origin_y + ty * tile_size);
+                        const float tile_x1 = tile_x0 + float(tile_size);
+                        const float tile_y1 = tile_y0 + float(tile_size);
+
+                        if (!overlapsTile(glyph, tile_x0, tile_y0, tile_x1, tile_y1))
                         {
                             continue;
                         }
 
-                        tile_glyphs.push_back(i);
+                        batchTileInfos[ty * tiles_x + tx].glyph_count++;
                     }
+                }
+            }
 
-                    tile.glyph_count = u32(tile_glyphs.size()) - tile.glyph_start;
+            u32 glyph_index_count = 0;
+            for (GpuTileInfo& tile : batchTileInfos)
+            {
+                tile.glyph_start = glyph_index_count;
+                glyph_index_count += tile.glyph_count;
+            }
+
+            batchTileGlyphs.resize(std::max(glyph_index_count, 1u));
+            batchTileFill.assign(tile_count, 0);
+
+            for (u32 i = 0; i < u32(pendingGlyphs.size()); ++i)
+            {
+                const PendingGlyph& glyph = pendingGlyphs[i];
+                const u32 tx0 = u32(std::max(0.0f, glyph.rect_x0 - float(tile_origin_x))) / tile_size;
+                const u32 ty0 = u32(std::max(0.0f, glyph.rect_y0 - float(tile_origin_y))) / tile_size;
+                const u32 tx1 = u32(std::max(0.0f, glyph.rect_x1 - 1.0f - float(tile_origin_x))) / tile_size;
+                const u32 ty1 = u32(std::max(0.0f, glyph.rect_y1 - 1.0f - float(tile_origin_y))) / tile_size;
+
+                for (u32 ty = ty0; ty <= std::min(ty1, tiles_y - 1); ++ty)
+                {
+                    for (u32 tx = tx0; tx <= std::min(tx1, tiles_x - 1); ++tx)
+                    {
+                        const float tile_x0 = float(tile_origin_x + tx * tile_size);
+                        const float tile_y0 = float(tile_origin_y + ty * tile_size);
+                        const float tile_x1 = tile_x0 + float(tile_size);
+                        const float tile_y1 = tile_y0 + float(tile_size);
+
+                        if (!overlapsTile(glyph, tile_x0, tile_y0, tile_x1, tile_y1))
+                        {
+                            continue;
+                        }
+
+                        const u32 tile_index = ty * tiles_x + tx;
+                        GpuTileInfo& tile = batchTileInfos[tile_index];
+                        batchTileGlyphs[tile.glyph_start + batchTileFill[tile_index]++] = i;
+                    }
                 }
             }
 
             const VkDeviceSize instance_bytes = sizeof(GpuGlyphInstance) * pendingGlyphs.size();
-            const VkDeviceSize tile_bytes = sizeof(GpuTileInfo) * tile_infos.size();
-            const VkDeviceSize index_bytes = sizeof(u32) * std::max<size_t>(tile_glyphs.size(), 1);
+            const VkDeviceSize tile_bytes = sizeof(GpuTileInfo) * batchTileInfos.size();
+            const VkDeviceSize index_bytes = sizeof(u32) * batchTileGlyphs.size();
 
             ensureBatchBuffer(instanceBuffer, instanceBufferCapacity, instance_bytes);
             ensureBatchBuffer(tileBuffer, tileBufferCapacity, tile_bytes);
@@ -743,16 +809,8 @@ namespace mango::vulkan
                 std::memcpy(static_cast<u8*>(instanceBuffer.mapped) + i * sizeof(GpuGlyphInstance),
                     &pendingGlyphs[i].gpu, sizeof(GpuGlyphInstance));
             }
-            std::memcpy(tileBuffer.mapped, tile_infos.data(), size_t(tile_bytes));
-            if (tile_glyphs.empty())
-            {
-                u32 zero = 0;
-                std::memcpy(tileGlyphBuffer.mapped, &zero, sizeof(zero));
-            }
-            else
-            {
-                std::memcpy(tileGlyphBuffer.mapped, tile_glyphs.data(), size_t(index_bytes));
-            }
+            std::memcpy(tileBuffer.mapped, batchTileInfos.data(), size_t(tile_bytes));
+            std::memcpy(tileGlyphBuffer.mapped, batchTileGlyphs.data(), size_t(index_bytes));
 
             BatchPushConstants push {};
             push.tile_origin_x = tile_origin_x;
@@ -772,7 +830,41 @@ namespace mango::vulkan
             vkCmdDispatch(cmd, tiles_x * subgroups_per_axis, tiles_y * subgroups_per_axis, 1);
         }
 
-        void blitToTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent, ResolveMode mode)
+        void clearTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent, float32x4 clearColor)
+        {
+            VkClearValue clearValue {};
+            clearValue.color.float32[0] = clearColor.x;
+            clearValue.color.float32[1] = clearColor.y;
+            clearValue.color.float32[2] = clearColor.z;
+            clearValue.color.float32[3] = clearColor.w;
+
+            VkRenderingAttachmentInfo colorAttachment =
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+                .imageView = targetView,
+                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
+                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                .clearValue = clearValue,
+            };
+
+            VkRect2D renderArea = { .extent = targetExtent };
+
+            VkRenderingInfo renderingInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+                .renderArea = renderArea,
+                .layerCount = 1,
+                .colorAttachmentCount = 1,
+                .pColorAttachments = &colorAttachment,
+            };
+
+            vkCmdBeginRendering(cmd, &renderingInfo);
+            vkCmdEndRendering(cmd);
+        }
+
+        void blitToTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent,
+                          ResolveMode mode, bool clearTarget, float32x4 clearColor)
         {
             if (!canvasImage)
             {
@@ -785,19 +877,38 @@ namespace mango::vulkan
 
             const bool overlay = (mode == ResolveMode::Overlay);
 
+            VkClearValue clearValue {};
+            clearValue.color.float32[0] = clearColor.x;
+            clearValue.color.float32[1] = clearColor.y;
+            clearValue.color.float32[2] = clearColor.z;
+            clearValue.color.float32[3] = clearColor.w;
+
+            VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
+            if (clearTarget)
+            {
+                loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
+            }
+            else if (overlay)
+            {
+                loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
+            }
+
             VkRenderingAttachmentInfo colorAttachment =
             {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
                 .imageView = targetView,
                 .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                .loadOp = overlay ? VK_ATTACHMENT_LOAD_OP_LOAD : VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+                .loadOp = loadOp,
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+                .clearValue = clearValue,
             };
+
+            VkRect2D renderArea = { .extent = targetExtent };
 
             VkRenderingInfo renderingInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-                .renderArea = { .extent = targetExtent },
+                .renderArea = renderArea,
                 .layerCount = 1,
                 .colorAttachmentCount = 1,
                 .pColorAttachments = &colorAttachment,
@@ -817,9 +928,7 @@ namespace mango::vulkan
                 .maxDepth = 1.0f,
             };
             vkCmdSetViewport(cmd, 0, 1, &viewport);
-
-            VkRect2D scissor = { .extent = targetExtent };
-            vkCmdSetScissor(cmd, 0, 1, &scissor);
+            vkCmdSetScissor(cmd, 0, 1, &renderArea);
 
             VkDescriptorSet blitSet = blitDescriptorSet;
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, blitPipelineLayout, 0, 1, &blitSet, 0, nullptr);
@@ -1512,8 +1621,14 @@ namespace mango::vulkan
             return;
         }
 
+        const float rounded = std::max(1.0f, std::round(pixelHeight));
+        if (rounded == std::max(1.0f, std::round(slot->pixelHeight)))
+        {
+            return;
+        }
+
         slot->pixelHeight = pixelHeight;
-        slot->face.setPixelHeight(std::max(1.0f, std::round(pixelHeight)));
+        slot->face.setPixelHeight(rounded);
     }
 
     float FontRenderer::size(Font font) const
@@ -1738,9 +1853,32 @@ namespace mango::vulkan
     void FontRenderer::encode(VkCommandBuffer cmd, const EncodeTarget& target)
     {
         const float32x4 clear = m_impl->frameClearColor;
-        m_impl->clearCanvas(cmd, clear.x, clear.y, clear.z, clear.w);
-        m_impl->flushTextBatch(cmd);
-        m_impl->blitToTarget(cmd, target.imageView, target.extent, target.mode);
+
+        if (m_impl->pendingGlyphs.empty())
+        {
+            if (target.clearTarget)
+            {
+                m_impl->clearTarget(cmd, target.imageView, target.extent, clear);
+            }
+            m_impl->frameOpen = false;
+            return;
+        }
+
+        const TextBounds bounds = m_impl->computePendingBounds();
+        if (bounds.empty())
+        {
+            if (target.clearTarget)
+            {
+                m_impl->clearTarget(cmd, target.imageView, target.extent, clear);
+            }
+            m_impl->pendingGlyphs.clear();
+            m_impl->frameOpen = false;
+            return;
+        }
+
+        m_impl->clearCanvas(cmd, 0.0f, 0.0f, 0.0f, 0.0f);
+        m_impl->flushTextBatch(cmd, bounds);
+        m_impl->blitToTarget(cmd, target.imageView, target.extent, target.mode, target.clearTarget, clear);
         m_impl->pendingGlyphs.clear();
         m_impl->frameOpen = false;
     }

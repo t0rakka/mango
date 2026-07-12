@@ -82,6 +82,8 @@ namespace mango::font
         float pixelScale() const;
         float emPerPixel() const;
 
+        float advanceWidth(u32 codepoint) const;
+
         GlyphOutline loadOutline(u32 codepoint) const;
         GlyphGpuData loadGpuGlyph(u32 codepoint) const;
         int kerning(u32 codepoint1, u32 codepoint2) const;

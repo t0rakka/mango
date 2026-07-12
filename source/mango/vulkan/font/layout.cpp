@@ -24,8 +24,7 @@ namespace mango::font
 
         float glyphAdvance(const Face& face, u32 codepoint, u32 next_codepoint)
         {
-            GlyphGpuData gpu = face.loadGpuGlyph(codepoint);
-            float advance = gpu.advance;
+            float advance = face.advanceWidth(codepoint);
             if (next_codepoint)
             {
                 advance += float(face.kerning(codepoint, next_codepoint));
@@ -129,8 +128,7 @@ namespace mango::font
             u32 cp = u32(codepoints[i]);
             u32 next = (i + 1 < codepoints.size()) ? u32(codepoints[i + 1]) : 0;
 
-            GlyphGpuData gpu = face.loadGpuGlyph(cp);
-            width += gpu.advance * scale;
+            width += face.advanceWidth(cp) * scale;
             if (next)
             {
                 width += float(face.kerning(cp, next)) * scale;
@@ -190,8 +188,7 @@ namespace mango::font
                 pg.y = y;
                 line.glyphs.push_back(pg);
 
-                GlyphGpuData gpu = face.loadGpuGlyph(cp);
-                pen_x += gpu.advance * scale;
+                pen_x += face.advanceWidth(cp) * scale;
                 if (next)
                 {
                     pen_x += float(face.kerning(cp, next)) * scale;

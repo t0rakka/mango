@@ -101,6 +101,18 @@ namespace mango::font
         return stbtt_GetCodepointKernAdvance(&m_info->info, int(codepoint1), int(codepoint2));
     }
 
+    float Face::advanceWidth(u32 codepoint) const
+    {
+        if (!m_info)
+        {
+            return 0.0f;
+        }
+
+        int advance = 0;
+        stbtt_GetCodepointHMetrics(&m_info->info, int(codepoint), &advance, nullptr);
+        return float(advance);
+    }
+
     GlyphOutline Face::loadOutline(u32 codepoint) const
     {
         GlyphOutline outline;
