@@ -30,7 +30,6 @@ protected:
 
     float m_fontPixelHeight = 32.0f;
 
-    static constexpr float kHudPixelHeight = 32.0f;
     static constexpr size_t kFrameTimeHistory = 60;
 
     float m_frameTimeMs = 0.0f;
@@ -110,6 +109,27 @@ public:
         }
     }
 
+    void buildText()
+    {
+        m_renderer->beginFrame(float32x4(0.1f, 0.14f, 0.23f, 1.0f));
+
+        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 32.0f };
+        TextStyle hudValueStyle { .color = float32x4(1.0f, 0.98f, 1.0f, 1.0f), .pixelHeight = 32.0f };
+
+        TextCursor hud = m_renderer->cursorTopLeft(m_body, 8.0f, 32.0f, hudStyle);
+        m_renderer->draw(hud, m_body, m_hudPrefix, hudStyle);
+        hud.x += m_renderer->textWidth(m_body, m_hudPrefix, hudStyle);
+        m_renderer->draw(hud, m_body, m_hudTextTime, hudValueStyle);
+
+        TextStyle bodyStyle { .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f), .pixelHeight = m_fontPixelHeight };
+        TextCursor body = m_renderer->cursorTopLeft(m_body, 40.0f, 132.0f, bodyStyle);
+
+        for (const std::string& line : m_lines)
+        {
+            m_renderer->drawLine(body, m_body, line, bodyStyle);
+        }
+    }
+
     void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
     {
         vkResetCommandBuffer(cmd, 0);
@@ -124,31 +144,15 @@ public:
 
         const u64 text_begin = Time::us();
 
-        m_renderer->clear(cmd, float32x4(0.1f, 0.14f, 0.23f, 1.0f));
-
-        m_renderer->setSize(m_body, kHudPixelHeight);
-        const float hud_baseline = 32.0f + m_renderer->ascender(m_body);
-        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f) };
-        TextStyle hudValueStyle { .color = float32x4(1.0f, 0.98f, 1.0f, 1.0f) };
-        m_renderer->draw(cmd, m_body, 8.0f, hud_baseline, m_hudPrefix, hudStyle);
-        m_renderer->draw(cmd, m_body, 8.0f + m_renderer->textWidth(m_body, m_hudPrefix),
-            hud_baseline, m_hudTextTime, hudValueStyle);
-
-        m_renderer->setSize(m_body, m_fontPixelHeight);
-
-        const float line_step = m_renderer->lineHeight(m_body) * 1.12f;
-        const float min_body_baseline = hud_baseline - m_renderer->descender(m_body) + 28.0f + m_renderer->ascender(m_body);
-        float baseline_y = std::max(132.0f, min_body_baseline);
-        TextStyle bodyStyle { .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f) };
-
-        for (const std::string& line : m_lines)
-        {
-            m_renderer->draw(cmd, m_body, 40.0f, baseline_y, line, bodyStyle);
-            baseline_y += line_step;
-        }
+        buildText();
 
         swapchain().cmdTransitionImageToColorAttachment(cmd, imageIndex);
-        m_renderer->resolve(cmd, swapchain().getImageView(imageIndex), extent, ResolveMode::Overlay);
+        m_renderer->encode(cmd,
+        {
+            .imageView = swapchain().getImageView(imageIndex),
+            .extent = extent,
+            .mode = ResolveMode::Overlay,
+        });
         swapchain().cmdTransitionImageToPresent(cmd, imageIndex);
 
         m_textTimeMs = float(Time::us() - text_begin) / 1000.0f;
@@ -179,6 +183,7 @@ public:
         const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
         const float t = 0.5f + 0.5f * std::sin(phase * float(2.0 * 3.14159265358979323846) - float(3.14159265358979323846) * 0.5f);
         m_fontPixelHeight = min_size + t * (max_size - min_size);
+        m_renderer->setSize(m_body, m_fontPixelHeight);
 
         const float frame_ms = float(info.dt * 1000.0);
         m_frameTimeHistory[m_frameTimeIndex] = frame_ms;
@@ -196,7 +201,6 @@ public:
         m_hudPrefix = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  text: ", m_frameTimeMs, fps);
         m_hudTextTime = fmt::format("{:6.3f} ms", m_textTimeMs);
 
-        m_renderer->setSize(m_body, m_fontPixelHeight);
         render();
     }
 

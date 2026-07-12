@@ -5,9 +5,13 @@
     Scanline Sweeper vector font rendering (Vulkan).
     https://rookandpossum.com/papers/scanline_sweeper_preprint.pdf
 
-    FontRenderer is not thread-safe: load(), unload(), setSize(), and warmup() must not run
-    concurrently with clear(), draw(), drawParagraph(), or resolve() on the same FontRenderer
-    instance. Use the thread that records the VkCommandBuffers passed to the draw/resolve methods.
+    FontRenderer is not thread-safe.
+
+    Typical frame:
+        renderer.beginFrame(clearColor);
+        auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
+        renderer.drawLine(cursor, font, "Hello", style);
+        renderer.encode(cmd, { targetView, extent, ResolveMode::Overlay });
 */
 #pragma once
 
@@ -28,7 +32,6 @@
 namespace mango::vulkan
 {
 
-    // Handle to a loaded typeface. Invalid when default-constructed or when load() fails.
     struct Font
     {
         u32 index = ~0u;
@@ -54,6 +57,8 @@ namespace mango::vulkan
     {
         math::float32x4 color { 1.0f, 1.0f, 1.0f, 1.0f };
         float lineSpacing = 1.0f;
+        // 0 = use the size from setSize(); otherwise rasterize at this pixel height.
+        float pixelHeight = 0.0f;
     };
 
     enum class TextAlign
@@ -84,16 +89,24 @@ namespace mango::vulkan
         bool truncated = false;
     };
 
-    // How resolve() composites the internal canvas onto the target image.
+    // Baseline position for sequential text layout.
+    struct TextCursor
+    {
+        float x = 0.0f;
+        float y = 0.0f;
+    };
+
     enum class ResolveMode
     {
-        // Alpha-blend text onto existing target contents (LOAD + blend). Clear the canvas
-        // transparent before drawing. Typical use: HUD/text over a rendered scene.
         Overlay,
-
-        // Copy the full canvas over the target (DONT_CARE + replace). Clear the canvas
-        // with your background color before drawing. Typical use: text-only applications.
         Replace,
+    };
+
+    struct EncodeTarget
+    {
+        VkImageView imageView = VK_NULL_HANDLE;
+        VkExtent2D extent {};
+        ResolveMode mode = ResolveMode::Overlay;
     };
 
     class FontRenderer : public NonCopyable
@@ -120,30 +133,38 @@ namespace mango::vulkan
 
         void setSize(Font font, float pixelHeight);
         float size(Font font) const;
-        float lineHeight(Font font) const;
-        float ascender(Font font) const;
-        float descender(Font font) const;
 
         void warmup(Font font, std::string_view utf8);
 
-        TextMetrics measure(Font font, std::string_view utf8) const;
+        TextMetrics measure(Font font, std::string_view utf8, const TextStyle& style = {}) const;
         TextMetrics measureParagraph(Font font, const math::Rectangle& bounds,
                                      std::string_view utf8,
                                      const ParagraphStyle& style = {}) const;
-        float textWidth(Font font, std::string_view utf8) const;
+        float textWidth(Font font, std::string_view utf8, const TextStyle& style = {}) const;
+        float lineHeight(Font font, const TextStyle& style = {}) const;
+        float ascender(Font font, const TextStyle& style = {}) const;
+        float descender(Font font, const TextStyle& style = {}) const;
 
         void resize(VkExtent2D extent);
 
-        void clear(VkCommandBuffer cmd, math::float32x4 color = math::float32x4(0.0f, 0.0f, 0.0f, 0.0f));
+        // Phase A: describe text (CPU only, no VkCommandBuffer).
+        void beginFrame(math::float32x4 clearColor = math::float32x4(0.0f, 0.0f, 0.0f, 0.0f));
 
-        void draw(VkCommandBuffer cmd, Font font, float x, float y,
-                  std::string_view utf8, const TextStyle& style = {});
+        TextCursor cursor(Font font, float x, float baseline_y) const;
+        TextCursor cursorTopLeft(Font font, float x, float top, const TextStyle& style = {}) const;
 
-        void drawParagraph(VkCommandBuffer cmd, Font font, const math::Rectangle& bounds,
+        void draw(Font font, float x, float y, std::string_view utf8, const TextStyle& style = {});
+        void draw(TextCursor& cursor, Font font, std::string_view utf8, const TextStyle& style = {});
+        void drawLine(TextCursor& cursor, Font font, std::string_view utf8, const TextStyle& style = {});
+        void newline(TextCursor& cursor, Font font, const TextStyle& style = {});
+
+        void drawParagraph(Font font, const math::Rectangle& bounds,
+                           std::string_view utf8, const ParagraphStyle& style = {});
+        void drawParagraph(TextCursor& cursor, Font font, float width,
                            std::string_view utf8, const ParagraphStyle& style = {});
 
-        void resolve(VkCommandBuffer cmd, VkImageView target, VkExtent2D extent,
-                     ResolveMode mode = ResolveMode::Overlay);
+        // Phase B: record GPU work into an existing command buffer.
+        void encode(VkCommandBuffer cmd, const EncodeTarget& target);
 
     private:
         struct Impl;
