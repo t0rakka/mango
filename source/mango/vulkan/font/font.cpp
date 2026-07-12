@@ -98,10 +98,9 @@ namespace mango::vulkan
             GlyphAtlasSlot atlas;
         };
 
-        static u64 glyphCacheKey(u32 faceIndex, u32 codepoint, float pixelHeight)
+        static u64 glyphCacheKey(u32 faceIndex, u32 codepoint)
         {
-            const u32 height_bits = std::bit_cast<u32>(pixelHeight);
-            return (u64(faceIndex) << 48) | (u64(height_bits) << 32) | u64(codepoint);
+            return (u64(faceIndex) << 32) | u64(codepoint);
         }
 
         static float effectivePixelHeight(const FaceSlot& slot, float stylePixelHeight)
@@ -155,6 +154,7 @@ namespace mango::vulkan
         VkDeviceSize atlasCurveBytes = 0;
         u32 atlasContourCount = 0;
         u32 atlasCurveCount = 0;
+        bool atlasDescriptorsDirty = false;
 
         BufferAllocation instanceBuffer;
         BufferAllocation tileBuffer;
@@ -322,7 +322,7 @@ namespace mango::vulkan
         {
             for (auto it = glyphCache.begin(); it != glyphCache.end(); )
             {
-                if (u32(it->first >> 48) == faceIndex)
+                if (u32(it->first >> 32) == faceIndex)
                 {
                     it = glyphCache.erase(it);
                 }
@@ -343,21 +343,16 @@ namespace mango::vulkan
             slot.face.setPixelHeight(saved);
         }
 
-        void cacheGlyph(u32 faceIndex, u32 codepoint, float pixelHeight)
+        void cacheGlyph(u32 faceIndex, u32 codepoint)
         {
-            FaceSlot& slot = faces[faceIndex];
-            const float height = effectivePixelHeight(slot, pixelHeight);
-            const u64 key = glyphCacheKey(faceIndex, codepoint, height);
+            const u64 key = glyphCacheKey(faceIndex, codepoint);
             if (glyphCache.count(key))
             {
                 return;
             }
 
             CachedGlyph cached;
-            const float saved = slot.pixelHeight;
-            slot.face.setPixelHeight(height);
-            cached.cpu = slot.face.loadGpuGlyph(codepoint);
-            slot.face.setPixelHeight(saved);
+            cached.cpu = faces[faceIndex].face.loadGpuGlyph(codepoint);
 
             if (!cached.cpu.curve_bytes.empty())
             {
@@ -367,12 +362,10 @@ namespace mango::vulkan
             glyphCache[key] = std::move(cached);
         }
 
-        const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 codepoint, float pixelHeight)
+        const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 codepoint)
         {
-            FaceSlot& slot = faces[faceIndex];
-            const float height = effectivePixelHeight(slot, pixelHeight);
-            cacheGlyph(faceIndex, codepoint, height);
-            return glyphCache.at(glyphCacheKey(faceIndex, codepoint, height));
+            cacheGlyph(faceIndex, codepoint);
+            return glyphCache.at(glyphCacheKey(faceIndex, codepoint));
         }
 
         GlyphAtlasSlot appendGlyphToAtlas(const font::GlyphGpuData& glyph)
@@ -412,7 +405,7 @@ namespace mango::vulkan
             atlasContourCount += contour_count;
             atlasCurveCount += curve_count;
 
-            updateAtlasDescriptors();
+            atlasDescriptorsDirty = true;
             return slot;
         }
 
@@ -435,7 +428,7 @@ namespace mango::vulkan
 
                 for (char32_t cp : codepoints)
                 {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, u32(cp), height);
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, u32(cp));
                     if (cached.cpu.curve_bytes.empty())
                     {
                         continue;
@@ -461,7 +454,7 @@ namespace mango::vulkan
                 {
                     const u32 cp = u32(codepoints[i]);
                     const u32 next = (i + 1 < codepoints.size()) ? u32(codepoints[i + 1]) : 0;
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cp, height);
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cp);
 
                     if (cached.cpu.curve_bytes.empty())
                     {
@@ -549,7 +542,7 @@ namespace mango::vulkan
 
                 for (const font::PositionedGlyph& pg : line.glyphs)
                 {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint, height);
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint);
                     if (cached.cpu.curve_bytes.empty())
                     {
                         continue;
@@ -573,7 +566,7 @@ namespace mango::vulkan
 
                 for (const font::PositionedGlyph& pg : line.glyphs)
                 {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint, height);
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint);
 
                     if (cached.cpu.curve_bytes.empty())
                     {
@@ -663,6 +656,12 @@ namespace mango::vulkan
             if (!canvasImage || pendingGlyphs.empty())
             {
                 return;
+            }
+
+            if (atlasDescriptorsDirty)
+            {
+                updateAtlasDescriptors();
+                atlasDescriptorsDirty = false;
             }
 
             float bbox_x0 = pendingGlyphs[0].rect_x0;
@@ -1514,8 +1513,7 @@ namespace mango::vulkan
         }
 
         slot->pixelHeight = pixelHeight;
-        slot->face.setPixelHeight(pixelHeight);
-        m_impl->removeGlyphCacheForFace(font.index);
+        slot->face.setPixelHeight(std::max(1.0f, std::round(pixelHeight)));
     }
 
     float FontRenderer::size(Font font) const
@@ -1586,7 +1584,7 @@ namespace mango::vulkan
         const std::u32string codepoints = utf32_from_utf8(utf8);
         for (char32_t cp : codepoints)
         {
-            m_impl->cacheGlyph(font.index, u32(cp), slot->pixelHeight);
+            m_impl->cacheGlyph(font.index, u32(cp));
         }
     }
 
