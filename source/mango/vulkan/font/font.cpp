@@ -76,14 +76,40 @@ namespace mango::vulkan
             float32x4 color { 1.0f, 1.0f, 1.0f, 1.0f };
         };
 
-        struct PendingGlyph
+        struct GlyphRect
         {
-            GpuGlyphInstance gpu;
-            float rect_x0 = 0.0f;
-            float rect_y0 = 0.0f;
-            float rect_x1 = 0.0f;
-            float rect_y1 = 0.0f;
+            float x0 = 0.0f;
+            float y0 = 0.0f;
+            float x1 = 0.0f;
+            float y1 = 0.0f;
         };
+
+        struct GlyphTileRange
+        {
+            u32 tx0 = 0;
+            u32 ty0 = 0;
+            u32 tx1 = 0;
+            u32 ty1 = 0;
+        };
+
+        struct LineInkMetrics
+        {
+            float screen_y = 0.0f;
+            float em_window_y0 = 0.0f;
+            u32 pixel_height = 1;
+        };
+
+        static LineInkMetrics computeLineInkMetrics(const font::Face& face, float baseline_y)
+        {
+            const float pixel_scale = face.pixelScale();
+            const float em_per_pixel = face.emPerPixel();
+
+            LineInkMetrics metrics;
+            metrics.screen_y = std::floor(baseline_y - float(face.ascent) * pixel_scale);
+            metrics.em_window_y0 = (baseline_y - (metrics.screen_y + 1.0f)) * em_per_pixel;
+            metrics.pixel_height = std::max(1u, u32(std::ceil(float(face.ascent - face.descent) * pixel_scale)));
+            return metrics;
+        }
 
         struct TextBounds
         {
@@ -132,33 +158,20 @@ namespace mango::vulkan
         Allocator* allocator = nullptr;
 
         VkExtent2D extent { 0, 0 };
-        VkFormat blitColorFormat = VK_FORMAT_B8G8R8A8_UNORM;
+        VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
         VkShaderModule computeShader = VK_NULL_HANDLE;
-        VkShaderModule blitVertexShader = VK_NULL_HANDLE;
-        VkShaderModule blitFragmentShader = VK_NULL_HANDLE;
 
-        VkDescriptorSetLayout canvasDescriptorSetLayout = VK_NULL_HANDLE;
+        VkDescriptorSetLayout targetDescriptorSetLayout = VK_NULL_HANDLE;
         VkDescriptorSetLayout batchDescriptorSetLayout = VK_NULL_HANDLE;
-        VkDescriptorSetLayout blitDescriptorSetLayout = VK_NULL_HANDLE;
         VkPipelineLayout computePipelineLayout = VK_NULL_HANDLE;
-        VkPipelineLayout blitPipelineLayout = VK_NULL_HANDLE;
         VkPipeline computePipeline = VK_NULL_HANDLE;
-        VkPipeline overlayBlitPipeline = VK_NULL_HANDLE;
-        VkPipeline replaceBlitPipeline = VK_NULL_HANDLE;
 
-        VkDescriptorPool canvasDescriptorPool = VK_NULL_HANDLE;
+        VkDescriptorPool targetDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorPool batchDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorPool blitDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet canvasDescriptorSet = VK_NULL_HANDLE;
         VkDescriptorSet batchDescriptorSet = VK_NULL_HANDLE;
-        VkDescriptorSet blitDescriptorSet = VK_NULL_HANDLE;
 
-        VkSampler sampler = VK_NULL_HANDLE;
-
-        ImageAllocation canvasAllocation;
-        VkImage canvasImage = VK_NULL_HANDLE;
-        VkImageView canvasView = VK_NULL_HANDLE;
+        std::unordered_map<VkImageView, VkDescriptorSet> targetDescriptorSets;
 
         BufferAllocation atlasContours;
         BufferAllocation atlasCurves;
@@ -179,25 +192,24 @@ namespace mango::vulkan
 
         std::deque<FaceSlot> faces;
         std::unordered_map<u64, CachedGlyph> glyphCache;
-        std::vector<PendingGlyph> pendingGlyphs;
+        std::vector<GpuGlyphInstance> pendingInstances;
+        std::vector<GlyphRect> pendingRects;
+        std::u32string utf32Scratch;
 
         std::vector<GpuTileInfo> batchTileInfos;
         std::vector<u32> batchTileGlyphs;
         std::vector<u32> batchTileFill;
+        std::vector<GlyphTileRange> glyphTileRanges;
 
-        math::float32x4 frameClearColor { 0.0f, 0.0f, 0.0f, 0.0f };
-        bool frameOpen = false;
-
-        Impl(VkDevice dev, VkQueue q, u32 family, Allocator& alloc, VkFormat targetFormat)
+        Impl(VkDevice dev, VkQueue q, u32 family, Allocator& alloc, VkFormat format)
             : device(dev)
             , queue(q)
             , queueFamily(family)
             , allocator(&alloc)
-            , blitColorFormat(targetFormat)
+            , targetFormat(format)
         {
             createDescriptorSetLayouts();
             createPipelines();
-            createSampler();
         }
 
         ~Impl()
@@ -209,31 +221,9 @@ namespace mango::vulkan
 
             vkDeviceWaitIdle(device);
 
-            destroyCanvas();
-
-            if (sampler)
-            {
-                vkDestroySampler(device, sampler, nullptr);
-            }
-
-            if (replaceBlitPipeline)
-            {
-                vkDestroyPipeline(device, replaceBlitPipeline, nullptr);
-            }
-
-            if (overlayBlitPipeline)
-            {
-                vkDestroyPipeline(device, overlayBlitPipeline, nullptr);
-            }
-
             if (computePipeline)
             {
                 vkDestroyPipeline(device, computePipeline, nullptr);
-            }
-
-            if (blitPipelineLayout)
-            {
-                vkDestroyPipelineLayout(device, blitPipelineLayout, nullptr);
             }
 
             if (computePipelineLayout)
@@ -249,19 +239,9 @@ namespace mango::vulkan
             destroyAtlas();
             destroyBatchBuffers();
 
-            if (canvasDescriptorPool)
+            if (targetDescriptorPool)
             {
-                vkDestroyDescriptorPool(device, canvasDescriptorPool, nullptr);
-            }
-
-            if (blitDescriptorPool)
-            {
-                vkDestroyDescriptorPool(device, blitDescriptorPool, nullptr);
-            }
-
-            if (blitDescriptorSetLayout)
-            {
-                vkDestroyDescriptorSetLayout(device, blitDescriptorSetLayout, nullptr);
+                vkDestroyDescriptorPool(device, targetDescriptorPool, nullptr);
             }
 
             if (batchDescriptorSetLayout)
@@ -269,24 +249,14 @@ namespace mango::vulkan
                 vkDestroyDescriptorSetLayout(device, batchDescriptorSetLayout, nullptr);
             }
 
-            if (canvasDescriptorSetLayout)
+            if (targetDescriptorSetLayout)
             {
-                vkDestroyDescriptorSetLayout(device, canvasDescriptorSetLayout, nullptr);
+                vkDestroyDescriptorSetLayout(device, targetDescriptorSetLayout, nullptr);
             }
 
             if (computeShader)
             {
                 vkDestroyShaderModule(device, computeShader, nullptr);
-            }
-
-            if (blitVertexShader)
-            {
-                vkDestroyShaderModule(device, blitVertexShader, nullptr);
-            }
-
-            if (blitFragmentShader)
-            {
-                vkDestroyShaderModule(device, blitFragmentShader, nullptr);
             }
         }
 
@@ -442,38 +412,11 @@ namespace mango::vulkan
                 return;
             }
 
-            withFaceAtHeight(faceIndex, pixelHeight, [&](font::Face& face, float height)
+            withFaceAtHeight(faceIndex, pixelHeight, [&](font::Face& face, float)
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
-
-                float line_ink_top = baseline_y;
-                float line_ink_bottom = baseline_y;
-                bool has_ink = false;
-
-                for (char32_t cp : codepoints)
-                {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, u32(cp));
-                    if (cached.cpu.curve_bytes.empty())
-                    {
-                        continue;
-                    }
-
-                    has_ink = true;
-                    const float ink_top = baseline_y - cached.cpu.bounds_max.y * pixel_scale;
-                    const float ink_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
-                    line_ink_top = std::min(line_ink_top, ink_top);
-                    line_ink_bottom = std::max(line_ink_bottom, ink_bottom);
-                }
-
-                if (!has_ink)
-                {
-                    return;
-                }
-
-                const float line_screen_y = std::floor(line_ink_top);
-                const float em_window_y0 = (baseline_y - (line_screen_y + 1.0f)) * em_per_pixel;
-                const u32 line_pixel_height = std::max(1u, u32(std::ceil(line_ink_bottom - line_screen_y)));
+                const LineInkMetrics line = computeLineInkMetrics(face, baseline_y);
 
                 for (size_t i = 0; i < codepoints.size(); ++i)
                 {
@@ -500,12 +443,12 @@ namespace mango::vulkan
 
                     GlyphDrawParams params;
                     params.screen_x = screen_x;
-                    params.screen_y = line_screen_y;
+                    params.screen_y = line.screen_y;
                     params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
-                    params.em_window_y0 = em_window_y0;
+                    params.em_window_y0 = line.em_window_y0;
                     params.em_per_pixel = em_per_pixel;
                     params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
-                    params.pixel_height = line_pixel_height;
+                    params.pixel_height = line.pixel_height;
                     params.color = color;
                     params.stem_darkening = stemDarkening;
 
@@ -527,27 +470,34 @@ namespace mango::vulkan
                 return;
             }
 
-            PendingGlyph pending {};
-            pending.gpu.header[0] = float(atlas.contour_offset);
-            pending.gpu.header[1] = float(atlas.contour_count);
-            pending.gpu.header[2] = params.stem_darkening;
-            pending.gpu.color[0] = params.color.x;
-            pending.gpu.color[1] = params.color.y;
-            pending.gpu.color[2] = params.color.z;
-            pending.gpu.color[3] = params.color.w;
-            pending.gpu.params0[0] = params.em_window_x0;
-            pending.gpu.params0[1] = params.em_window_y0;
-            pending.gpu.params0[2] = params.em_per_pixel;
-            pending.gpu.params0[3] = params.em_per_pixel;
-            pending.gpu.params1[0] = params.screen_x;
-            pending.gpu.params1[1] = params.screen_y;
-            pending.gpu.params1[2] = float(std::max(1u, params.pixel_width));
-            pending.gpu.params1[3] = float(std::max(1u, params.pixel_height));
-            pending.rect_x0 = params.screen_x;
-            pending.rect_y0 = params.screen_y;
-            pending.rect_x1 = params.screen_x + float(std::max(1u, params.pixel_width));
-            pending.rect_y1 = params.screen_y + float(std::max(1u, params.pixel_height));
-            pendingGlyphs.push_back(pending);
+            const u32 pixel_width = std::max(1u, params.pixel_width);
+            const u32 pixel_height = std::max(1u, params.pixel_height);
+
+            GpuGlyphInstance gpu {};
+            gpu.header[0] = float(atlas.contour_offset);
+            gpu.header[1] = float(atlas.contour_count);
+            gpu.header[2] = params.stem_darkening;
+            gpu.color[0] = params.color.x;
+            gpu.color[1] = params.color.y;
+            gpu.color[2] = params.color.z;
+            gpu.color[3] = params.color.w;
+            gpu.params0[0] = params.em_window_x0;
+            gpu.params0[1] = params.em_window_y0;
+            gpu.params0[2] = params.em_per_pixel;
+            gpu.params0[3] = params.em_per_pixel;
+            gpu.params1[0] = params.screen_x;
+            gpu.params1[1] = params.screen_y;
+            gpu.params1[2] = float(pixel_width);
+            gpu.params1[3] = float(pixel_height);
+
+            pendingInstances.push_back(gpu);
+            pendingRects.push_back(
+            {
+                params.screen_x,
+                params.screen_y,
+                params.screen_x + float(pixel_width),
+                params.screen_y + float(pixel_height),
+            });
         }
 
         void queueGlyphsForLayoutLine(u32 faceIndex, const font::LayoutLine& line, float32x4 color,
@@ -558,39 +508,12 @@ namespace mango::vulkan
                 return;
             }
 
-            withFaceAtHeight(faceIndex, pixelHeight, [&](font::Face& face, float height)
+            withFaceAtHeight(faceIndex, pixelHeight, [&](font::Face& face, float)
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
                 const float baseline_y = line.glyphs[0].y;
-
-                float line_ink_top = baseline_y;
-                float line_ink_bottom = baseline_y;
-                bool has_ink = false;
-
-                for (const font::PositionedGlyph& pg : line.glyphs)
-                {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint);
-                    if (cached.cpu.curve_bytes.empty())
-                    {
-                        continue;
-                    }
-
-                    has_ink = true;
-                    const float ink_top = baseline_y - cached.cpu.bounds_max.y * pixel_scale;
-                    const float ink_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
-                    line_ink_top = std::min(line_ink_top, ink_top);
-                    line_ink_bottom = std::max(line_ink_bottom, ink_bottom);
-                }
-
-                if (!has_ink)
-                {
-                    return;
-                }
-
-                const float line_screen_y = std::floor(line_ink_top);
-                const float em_window_y0 = (baseline_y - (line_screen_y + 1.0f)) * em_per_pixel;
-                const u32 line_pixel_height = std::max(1u, u32(std::ceil(line_ink_bottom - line_screen_y)));
+                const LineInkMetrics line_metrics = computeLineInkMetrics(face, baseline_y);
 
                 for (const font::PositionedGlyph& pg : line.glyphs)
                 {
@@ -610,12 +533,12 @@ namespace mango::vulkan
 
                     GlyphDrawParams params;
                     params.screen_x = screen_x;
-                    params.screen_y = line_screen_y;
+                    params.screen_y = line_metrics.screen_y;
                     params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
-                    params.em_window_y0 = em_window_y0;
+                    params.em_window_y0 = line_metrics.em_window_y0;
                     params.em_per_pixel = em_per_pixel;
                     params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
-                    params.pixel_height = line_pixel_height;
+                    params.pixel_height = line_metrics.pixel_height;
                     params.color = color;
                     params.stem_darkening = stemDarkening;
 
@@ -631,36 +554,73 @@ namespace mango::vulkan
                 return;
             }
 
-            if (newExtent.width == extent.width && newExtent.height == extent.height && canvasImage)
+            extent = newExtent;
+            resetTargetDescriptors();
+        }
+
+        void resetTargetDescriptors()
+        {
+            targetDescriptorSets.clear();
+            if (targetDescriptorPool)
             {
-                return;
+                vkResetDescriptorPool(device, targetDescriptorPool, 0);
+            }
+        }
+
+        VkDescriptorSet getOrCreateTargetDescriptorSet(VkImageView imageView)
+        {
+            const auto found = targetDescriptorSets.find(imageView);
+            if (found != targetDescriptorSets.end())
+            {
+                return found->second;
             }
 
-            vkDeviceWaitIdle(device);
-            destroyCanvas();
-            extent = newExtent;
-            createCanvas();
+            VkDescriptorSet descriptorSet = VK_NULL_HANDLE;
+            VkDescriptorSetAllocateInfo allocInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+                .descriptorPool = targetDescriptorPool,
+                .descriptorSetCount = 1,
+                .pSetLayouts = &targetDescriptorSetLayout,
+            };
+
+            vkAllocateDescriptorSets(device, &allocInfo, &descriptorSet);
+
+            VkDescriptorImageInfo imageInfo = { VK_NULL_HANDLE, imageView, VK_IMAGE_LAYOUT_GENERAL };
+            VkWriteDescriptorSet write =
+            {
+                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                .dstSet = descriptorSet,
+                .dstBinding = 0,
+                .descriptorCount = 1,
+                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
+                .pImageInfo = &imageInfo,
+            };
+
+            vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
+            targetDescriptorSets.emplace(imageView, descriptorSet);
+            return descriptorSet;
         }
 
         TextBounds computePendingBounds() const
         {
             TextBounds bounds;
-            if (pendingGlyphs.empty())
+            if (pendingRects.empty())
             {
                 return bounds;
             }
 
-            float x0 = pendingGlyphs[0].rect_x0;
-            float y0 = pendingGlyphs[0].rect_y0;
-            float x1 = pendingGlyphs[0].rect_x1;
-            float y1 = pendingGlyphs[0].rect_y1;
+            float x0 = pendingRects[0].x0;
+            float y0 = pendingRects[0].y0;
+            float x1 = pendingRects[0].x1;
+            float y1 = pendingRects[0].y1;
 
-            for (const PendingGlyph& glyph : pendingGlyphs)
+            for (const GlyphRect& rect : pendingRects)
             {
-                x0 = std::min(x0, glyph.rect_x0);
-                y0 = std::min(y0, glyph.rect_y0);
-                x1 = std::max(x1, glyph.rect_x1);
-                y1 = std::max(y1, glyph.rect_y1);
+                x0 = std::min(x0, rect.x0);
+                y0 = std::min(y0, rect.y0);
+                x1 = std::max(x1, rect.x1);
+                y1 = std::max(y1, rect.y1);
             }
 
             bounds.x0 = u32(std::max(0.0f, std::floor(x0)));
@@ -670,47 +630,9 @@ namespace mango::vulkan
             return bounds;
         }
 
-        void clearCanvas(VkCommandBuffer cmd, float r, float g, float b, float a)
+        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds, VkDescriptorSet targetSet)
         {
-            if (!canvasImage)
-            {
-                return;
-            }
-
-            VkImageMemoryBarrier barrier =
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-                .dstAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
-                .newLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL,
-                .image = canvasImage,
-                .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },
-            };
-
-            vkCmdPipelineBarrier(cmd,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                0, 0, nullptr, 0, nullptr, 1, &barrier);
-
-            VkClearColorValue clear = {{ r, g, b, a }};
-            VkImageSubresourceRange range = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 };
-            vkCmdClearColorImage(cmd, canvasImage, VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL, &clear, 1, &range);
-
-            barrier.srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT;
-            barrier.dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
-            barrier.oldLayout = VK_IMAGE_LAYOUT_TRANSFER_DST_OPTIMAL;
-            barrier.newLayout = VK_IMAGE_LAYOUT_GENERAL;
-
-            vkCmdPipelineBarrier(cmd,
-                VK_PIPELINE_STAGE_TRANSFER_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
-                0, 0, nullptr, 0, nullptr, 1, &barrier);
-        }
-
-        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds)
-        {
-            if (!canvasImage || pendingGlyphs.empty() || bounds.empty())
+            if (pendingInstances.empty() || bounds.empty())
             {
                 return;
             }
@@ -721,43 +643,35 @@ namespace mango::vulkan
                 atlasDescriptorsDirty = false;
             }
 
-            u32 tile_origin_x = bounds.x0 / kTileSize * kTileSize;
-            u32 tile_origin_y = bounds.y0 / kTileSize * kTileSize;
-            u32 tile_size = kTileSize;
-            u32 tiles_x = (bounds.x1 - tile_origin_x + tile_size - 1) / tile_size;
-            u32 tiles_y = (bounds.y1 - tile_origin_y + tile_size - 1) / tile_size;
+            const u32 tile_origin_x = bounds.x0 / kTileSize * kTileSize;
+            const u32 tile_origin_y = bounds.y0 / kTileSize * kTileSize;
+            const u32 tile_size = kTileSize;
+            const u32 tiles_x = (bounds.x1 - tile_origin_x + tile_size - 1) / tile_size;
+            const u32 tiles_y = (bounds.y1 - tile_origin_y + tile_size - 1) / tile_size;
 
             const u32 tile_count = tiles_x * tiles_y;
             batchTileInfos.assign(tile_count, {});
 
-            auto overlapsTile = [](const PendingGlyph& glyph, float tile_x0, float tile_y0, float tile_x1, float tile_y1)
-            {
-                return glyph.rect_x1 > tile_x0 && glyph.rect_x0 < tile_x1 &&
-                       glyph.rect_y1 > tile_y0 && glyph.rect_y0 < tile_y1;
-            };
+            const u32 glyph_count = u32(pendingRects.size());
+            glyphTileRanges.resize(glyph_count);
 
-            for (u32 i = 0; i < u32(pendingGlyphs.size()); ++i)
-            {
-                const PendingGlyph& glyph = pendingGlyphs[i];
-                const u32 tx0 = u32(std::max(0.0f, glyph.rect_x0 - float(tile_origin_x))) / tile_size;
-                const u32 ty0 = u32(std::max(0.0f, glyph.rect_y0 - float(tile_origin_y))) / tile_size;
-                const u32 tx1 = u32(std::max(0.0f, glyph.rect_x1 - 1.0f - float(tile_origin_x))) / tile_size;
-                const u32 ty1 = u32(std::max(0.0f, glyph.rect_y1 - 1.0f - float(tile_origin_y))) / tile_size;
+            const float origin_x = float(tile_origin_x);
+            const float origin_y = float(tile_origin_y);
 
-                for (u32 ty = ty0; ty <= std::min(ty1, tiles_y - 1); ++ty)
+            for (u32 i = 0; i < glyph_count; ++i)
+            {
+                const GlyphRect& rect = pendingRects[i];
+                GlyphTileRange& range = glyphTileRanges[i];
+
+                range.tx0 = u32(std::max(0.0f, rect.x0 - origin_x)) / tile_size;
+                range.ty0 = u32(std::max(0.0f, rect.y0 - origin_y)) / tile_size;
+                range.tx1 = std::min(tiles_x - 1, u32(std::max(0.0f, rect.x1 - 1.0f - origin_x)) / tile_size);
+                range.ty1 = std::min(tiles_y - 1, u32(std::max(0.0f, rect.y1 - 1.0f - origin_y)) / tile_size);
+
+                for (u32 ty = range.ty0; ty <= range.ty1; ++ty)
                 {
-                    for (u32 tx = tx0; tx <= std::min(tx1, tiles_x - 1); ++tx)
+                    for (u32 tx = range.tx0; tx <= range.tx1; ++tx)
                     {
-                        const float tile_x0 = float(tile_origin_x + tx * tile_size);
-                        const float tile_y0 = float(tile_origin_y + ty * tile_size);
-                        const float tile_x1 = tile_x0 + float(tile_size);
-                        const float tile_y1 = tile_y0 + float(tile_size);
-
-                        if (!overlapsTile(glyph, tile_x0, tile_y0, tile_x1, tile_y1))
-                        {
-                            continue;
-                        }
-
                         batchTileInfos[ty * tiles_x + tx].glyph_count++;
                     }
                 }
@@ -773,28 +687,14 @@ namespace mango::vulkan
             batchTileGlyphs.resize(std::max(glyph_index_count, 1u));
             batchTileFill.assign(tile_count, 0);
 
-            for (u32 i = 0; i < u32(pendingGlyphs.size()); ++i)
+            for (u32 i = 0; i < glyph_count; ++i)
             {
-                const PendingGlyph& glyph = pendingGlyphs[i];
-                const u32 tx0 = u32(std::max(0.0f, glyph.rect_x0 - float(tile_origin_x))) / tile_size;
-                const u32 ty0 = u32(std::max(0.0f, glyph.rect_y0 - float(tile_origin_y))) / tile_size;
-                const u32 tx1 = u32(std::max(0.0f, glyph.rect_x1 - 1.0f - float(tile_origin_x))) / tile_size;
-                const u32 ty1 = u32(std::max(0.0f, glyph.rect_y1 - 1.0f - float(tile_origin_y))) / tile_size;
+                const GlyphTileRange& range = glyphTileRanges[i];
 
-                for (u32 ty = ty0; ty <= std::min(ty1, tiles_y - 1); ++ty)
+                for (u32 ty = range.ty0; ty <= range.ty1; ++ty)
                 {
-                    for (u32 tx = tx0; tx <= std::min(tx1, tiles_x - 1); ++tx)
+                    for (u32 tx = range.tx0; tx <= range.tx1; ++tx)
                     {
-                        const float tile_x0 = float(tile_origin_x + tx * tile_size);
-                        const float tile_y0 = float(tile_origin_y + ty * tile_size);
-                        const float tile_x1 = tile_x0 + float(tile_size);
-                        const float tile_y1 = tile_y0 + float(tile_size);
-
-                        if (!overlapsTile(glyph, tile_x0, tile_y0, tile_x1, tile_y1))
-                        {
-                            continue;
-                        }
-
                         const u32 tile_index = ty * tiles_x + tx;
                         GpuTileInfo& tile = batchTileInfos[tile_index];
                         batchTileGlyphs[tile.glyph_start + batchTileFill[tile_index]++] = i;
@@ -802,7 +702,7 @@ namespace mango::vulkan
                 }
             }
 
-            const VkDeviceSize instance_bytes = sizeof(GpuGlyphInstance) * pendingGlyphs.size();
+            const VkDeviceSize instance_bytes = sizeof(GpuGlyphInstance) * pendingInstances.size();
             const VkDeviceSize tile_bytes = sizeof(GpuTileInfo) * batchTileInfos.size();
             const VkDeviceSize index_bytes = sizeof(u32) * batchTileGlyphs.size();
 
@@ -810,11 +710,7 @@ namespace mango::vulkan
             ensureBatchBuffer(tileBuffer, tileBufferCapacity, tile_bytes);
             ensureBatchBuffer(tileGlyphBuffer, tileGlyphBufferCapacity, index_bytes);
 
-            for (size_t i = 0; i < pendingGlyphs.size(); ++i)
-            {
-                std::memcpy(static_cast<u8*>(instanceBuffer.mapped) + i * sizeof(GpuGlyphInstance),
-                    &pendingGlyphs[i].gpu, sizeof(GpuGlyphInstance));
-            }
+            std::memcpy(instanceBuffer.mapped, pendingInstances.data(), size_t(instance_bytes));
             std::memcpy(tileBuffer.mapped, batchTileInfos.data(), size_t(tile_bytes));
             std::memcpy(tileGlyphBuffer.mapped, batchTileGlyphs.data(), size_t(index_bytes));
 
@@ -828,7 +724,7 @@ namespace mango::vulkan
 
             const u32 subgroups_per_axis = (tile_size + push.workgroup_size - 1) / push.workgroup_size;
 
-            VkDescriptorSet sets[] = { canvasDescriptorSet, batchDescriptorSet };
+            VkDescriptorSet sets[] = { targetSet, batchDescriptorSet };
 
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 2, sets, 0, nullptr);
@@ -836,119 +732,9 @@ namespace mango::vulkan
             vkCmdDispatch(cmd, tiles_x * subgroups_per_axis, tiles_y * subgroups_per_axis, 1);
         }
 
-        void clearTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent, float32x4 clearColor)
-        {
-            VkClearValue clearValue {};
-            clearValue.color.float32[0] = clearColor.x;
-            clearValue.color.float32[1] = clearColor.y;
-            clearValue.color.float32[2] = clearColor.z;
-            clearValue.color.float32[3] = clearColor.w;
-
-            VkRenderingAttachmentInfo colorAttachment =
-            {
-                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-                .imageView = targetView,
-                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                .loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR,
-                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue = clearValue,
-            };
-
-            VkRect2D renderArea = { .extent = targetExtent };
-
-            VkRenderingInfo renderingInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-                .renderArea = renderArea,
-                .layerCount = 1,
-                .colorAttachmentCount = 1,
-                .pColorAttachments = &colorAttachment,
-            };
-
-            vkCmdBeginRendering(cmd, &renderingInfo);
-            vkCmdEndRendering(cmd);
-        }
-
-        void blitToTarget(VkCommandBuffer cmd, VkImageView targetView, VkExtent2D targetExtent,
-                          ResolveMode mode, bool clearTarget, float32x4 clearColor)
-        {
-            if (!canvasImage)
-            {
-                return;
-            }
-
-            transitionCanvas(cmd, VK_IMAGE_LAYOUT_GENERAL, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
-
-            const bool overlay = (mode == ResolveMode::Overlay);
-
-            VkClearValue clearValue {};
-            clearValue.color.float32[0] = clearColor.x;
-            clearValue.color.float32[1] = clearColor.y;
-            clearValue.color.float32[2] = clearColor.z;
-            clearValue.color.float32[3] = clearColor.w;
-
-            VkAttachmentLoadOp loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE;
-            if (clearTarget)
-            {
-                loadOp = VK_ATTACHMENT_LOAD_OP_CLEAR;
-            }
-            else if (overlay)
-            {
-                loadOp = VK_ATTACHMENT_LOAD_OP_LOAD;
-            }
-
-            VkRenderingAttachmentInfo colorAttachment =
-            {
-                .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
-                .imageView = targetView,
-                .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
-                .loadOp = loadOp,
-                .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
-                .clearValue = clearValue,
-            };
-
-            VkRect2D renderArea = { .extent = targetExtent };
-
-            VkRenderingInfo renderingInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
-                .renderArea = renderArea,
-                .layerCount = 1,
-                .colorAttachmentCount = 1,
-                .pColorAttachments = &colorAttachment,
-            };
-
-            vkCmdBeginRendering(cmd, &renderingInfo);
-            vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS,
-                overlay ? overlayBlitPipeline : replaceBlitPipeline);
-
-            VkViewport viewport =
-            {
-                .x = 0.0f,
-                .y = 0.0f,
-                .width = float(targetExtent.width),
-                .height = float(targetExtent.height),
-                .minDepth = 0.0f,
-                .maxDepth = 1.0f,
-            };
-            vkCmdSetViewport(cmd, 0, 1, &viewport);
-            vkCmdSetScissor(cmd, 0, 1, &renderArea);
-
-            VkDescriptorSet blitSet = blitDescriptorSet;
-            vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, blitPipelineLayout, 0, 1, &blitSet, 0, nullptr);
-            vkCmdDraw(cmd, 3, 1, 0, 0);
-            vkCmdEndRendering(cmd);
-
-            transitionCanvas(cmd, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL, VK_IMAGE_LAYOUT_GENERAL,
-                VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
-                VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
-        }
-
         void createDescriptorSetLayouts()
         {
-            VkDescriptorSetLayoutBinding canvasBinding =
+            VkDescriptorSetLayoutBinding targetBinding =
             {
                 .binding = 0,
                 .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
@@ -956,14 +742,14 @@ namespace mango::vulkan
                 .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT,
             };
 
-            VkDescriptorSetLayoutCreateInfo canvasLayoutInfo =
+            VkDescriptorSetLayoutCreateInfo targetLayoutInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
                 .bindingCount = 1,
-                .pBindings = &canvasBinding,
+                .pBindings = &targetBinding,
             };
 
-            vkCreateDescriptorSetLayout(device, &canvasLayoutInfo, nullptr, &canvasDescriptorSetLayout);
+            vkCreateDescriptorSetLayout(device, &targetLayoutInfo, nullptr, &targetDescriptorSetLayout);
 
             VkDescriptorSetLayoutBinding batchBindings[] =
             {
@@ -983,33 +769,16 @@ namespace mango::vulkan
 
             vkCreateDescriptorSetLayout(device, &batchLayoutInfo, nullptr, &batchDescriptorSetLayout);
 
-            VkDescriptorSetLayoutBinding blitBinding =
-            {
-                .binding = 0,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .descriptorCount = 1,
-                .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
-            };
-
-            VkDescriptorSetLayoutCreateInfo blitLayoutInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
-                .bindingCount = 1,
-                .pBindings = &blitBinding,
-            };
-
-            vkCreateDescriptorSetLayout(device, &blitLayoutInfo, nullptr, &blitDescriptorSetLayout);
-
-            VkDescriptorPoolSize canvasPoolSize = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 1 };
-            VkDescriptorPoolCreateInfo canvasPoolInfo =
+            VkDescriptorPoolSize targetPoolSize = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8 };
+            VkDescriptorPoolCreateInfo targetPoolInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                .maxSets = 1,
+                .maxSets = 8,
                 .poolSizeCount = 1,
-                .pPoolSizes = &canvasPoolSize,
+                .pPoolSizes = &targetPoolSize,
             };
 
-            vkCreateDescriptorPool(device, &canvasPoolInfo, nullptr, &canvasDescriptorPool);
+            vkCreateDescriptorPool(device, &targetPoolInfo, nullptr, &targetDescriptorPool);
 
             VkDescriptorPoolSize batchPoolSizes[] =
             {
@@ -1025,37 +794,6 @@ namespace mango::vulkan
             };
 
             vkCreateDescriptorPool(device, &batchPoolInfo, nullptr, &batchDescriptorPool);
-
-            VkDescriptorPoolSize blitPoolSize = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 };
-            VkDescriptorPoolCreateInfo blitPoolInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                .maxSets = 1,
-                .poolSizeCount = 1,
-                .pPoolSizes = &blitPoolSize,
-            };
-
-            vkCreateDescriptorPool(device, &blitPoolInfo, nullptr, &blitDescriptorPool);
-
-            VkDescriptorSetAllocateInfo canvasAllocInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                .descriptorPool = canvasDescriptorPool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &canvasDescriptorSetLayout,
-            };
-
-            vkAllocateDescriptorSets(device, &canvasAllocInfo, &canvasDescriptorSet);
-
-            VkDescriptorSetAllocateInfo blitAllocInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
-                .descriptorPool = blitDescriptorPool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &blitDescriptorSetLayout,
-            };
-
-            vkAllocateDescriptorSets(device, &blitAllocInfo, &blitDescriptorSet);
 
             VkDescriptorSetAllocateInfo batchAllocInfo =
             {
@@ -1075,10 +813,8 @@ namespace mango::vulkan
         {
             Compiler compiler;
             Shader compute = compiler.compile(font_shaders::computeShader(), ShaderStage::Compute);
-            Shader blit_vs = compiler.compile(font_shaders::blitVertexShader(), ShaderStage::Vertex);
-            Shader blit_fs = compiler.compile(font_shaders::blitFragmentShader(), ShaderStage::Fragment);
 
-            if (!compute.valid() || !blit_vs.valid() || !blit_fs.valid())
+            if (!compute.valid())
             {
                 printLine(Print::Error, "Font shader compilation failed.");
                 if (!compute.log.empty()) printLine(Print::Error, "{}", compute.log);
@@ -1086,8 +822,6 @@ namespace mango::vulkan
             }
 
             computeShader = Compiler::createShaderModule(device, compute);
-            blitVertexShader = Compiler::createShaderModule(device, blit_vs);
-            blitFragmentShader = Compiler::createShaderModule(device, blit_fs);
 
             VkPushConstantRange pushConstantRange =
             {
@@ -1096,7 +830,7 @@ namespace mango::vulkan
                 .size = sizeof(BatchPushConstants),
             };
 
-            VkDescriptorSetLayout computeSetLayouts[] = { canvasDescriptorSetLayout, batchDescriptorSetLayout };
+            VkDescriptorSetLayout computeSetLayouts[] = { targetDescriptorSetLayout, batchDescriptorSetLayout };
 
             VkPipelineLayoutCreateInfo computeLayoutInfo =
             {
@@ -1108,15 +842,6 @@ namespace mango::vulkan
             };
 
             vkCreatePipelineLayout(device, &computeLayoutInfo, nullptr, &computePipelineLayout);
-
-            VkPipelineLayoutCreateInfo blitLayoutInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
-                .setLayoutCount = 1,
-                .pSetLayouts = &blitDescriptorSetLayout,
-            };
-
-            vkCreatePipelineLayout(device, &blitLayoutInfo, nullptr, &blitPipelineLayout);
 
             VkPipelineShaderStageCreateInfo computeStage =
             {
@@ -1134,243 +859,6 @@ namespace mango::vulkan
             };
 
             vkCreateComputePipelines(device, VK_NULL_HANDLE, 1, &computePipelineInfo, nullptr, &computePipeline);
-
-            VkPipelineShaderStageCreateInfo blitStages[] =
-            {
-                { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, .stage = VK_SHADER_STAGE_VERTEX_BIT, .module = blitVertexShader, .pName = "main" },
-                { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, .stage = VK_SHADER_STAGE_FRAGMENT_BIT, .module = blitFragmentShader, .pName = "main" },
-            };
-
-            VkPipelineVertexInputStateCreateInfo vertexInputInfo { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
-            VkPipelineInputAssemblyStateCreateInfo inputAssembly { .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
-            VkPipelineViewportStateCreateInfo viewportState { .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO, .viewportCount = 1, .scissorCount = 1 };
-            VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
-            VkPipelineDynamicStateCreateInfo dynamicState { .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, .dynamicStateCount = 2, .pDynamicStates = dynamicStates };
-            VkPipelineRasterizationStateCreateInfo rasterizer { .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, .polygonMode = VK_POLYGON_MODE_FILL, .cullMode = VK_CULL_MODE_NONE, .lineWidth = 1.0f };
-            VkPipelineMultisampleStateCreateInfo multisampling { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT };
-            VkPipelineColorBlendAttachmentState overlayBlendAttachment
-            {
-                .blendEnable = VK_TRUE,
-                .srcColorBlendFactor = VK_BLEND_FACTOR_SRC_ALPHA,
-                .dstColorBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .colorBlendOp = VK_BLEND_OP_ADD,
-                .srcAlphaBlendFactor = VK_BLEND_FACTOR_ONE,
-                .dstAlphaBlendFactor = VK_BLEND_FACTOR_ONE_MINUS_SRC_ALPHA,
-                .alphaBlendOp = VK_BLEND_OP_ADD,
-                .colorWriteMask = 0xF,
-            };
-            VkPipelineColorBlendAttachmentState replaceBlendAttachment { .colorWriteMask = 0xF };
-            VkPipelineColorBlendStateCreateInfo overlayBlending { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &overlayBlendAttachment };
-            VkPipelineColorBlendStateCreateInfo replaceBlending { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &replaceBlendAttachment };
-
-            VkFormat colorFormat = blitColorFormat;
-            VkPipelineRenderingCreateInfo renderingCreateInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
-                .colorAttachmentCount = 1,
-                .pColorAttachmentFormats = &colorFormat,
-            };
-
-            VkGraphicsPipelineCreateInfo overlayBlitPipelineInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-                .pNext = &renderingCreateInfo,
-                .stageCount = 2,
-                .pStages = blitStages,
-                .pVertexInputState = &vertexInputInfo,
-                .pInputAssemblyState = &inputAssembly,
-                .pViewportState = &viewportState,
-                .pRasterizationState = &rasterizer,
-                .pMultisampleState = &multisampling,
-                .pColorBlendState = &overlayBlending,
-                .pDynamicState = &dynamicState,
-                .layout = blitPipelineLayout,
-            };
-
-            vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &overlayBlitPipelineInfo, nullptr, &overlayBlitPipeline);
-
-            VkGraphicsPipelineCreateInfo replaceBlitPipelineInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
-                .pNext = &renderingCreateInfo,
-                .stageCount = 2,
-                .pStages = blitStages,
-                .pVertexInputState = &vertexInputInfo,
-                .pInputAssemblyState = &inputAssembly,
-                .pViewportState = &viewportState,
-                .pRasterizationState = &rasterizer,
-                .pMultisampleState = &multisampling,
-                .pColorBlendState = &replaceBlending,
-                .pDynamicState = &dynamicState,
-                .layout = blitPipelineLayout,
-            };
-
-            vkCreateGraphicsPipelines(device, VK_NULL_HANDLE, 1, &replaceBlitPipelineInfo, nullptr, &replaceBlitPipeline);
-        }
-
-        void createSampler()
-        {
-            VkSamplerCreateInfo samplerInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                .magFilter = VK_FILTER_NEAREST,
-                .minFilter = VK_FILTER_NEAREST,
-                .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-                .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
-            };
-
-            vkCreateSampler(device, &samplerInfo, nullptr, &sampler);
-        }
-
-        void createCanvas()
-        {
-            if (extent.width == 0 || extent.height == 0)
-            {
-                return;
-            }
-
-            VkImageCreateInfo imageInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-                .imageType = VK_IMAGE_TYPE_2D,
-                .format = VK_FORMAT_R8G8B8A8_UNORM,
-                .extent = { extent.width, extent.height, 1 },
-                .mipLevels = 1,
-                .arrayLayers = 1,
-                .samples = VK_SAMPLE_COUNT_1_BIT,
-                .tiling = VK_IMAGE_TILING_OPTIMAL,
-                .usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
-                .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            };
-
-            canvasAllocation = allocator->createImage(imageInfo, MemoryUsage::GpuOnly);
-            canvasImage = canvasAllocation.image;
-
-            VkImageViewCreateInfo viewInfo =
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
-                .image = canvasImage,
-                .viewType = VK_IMAGE_VIEW_TYPE_2D,
-                .format = VK_FORMAT_R8G8B8A8_UNORM,
-                .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },
-            };
-
-            vkCreateImageView(device, &viewInfo, nullptr, &canvasView);
-
-            VkImageMemoryBarrier barrier =
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .dstAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
-                .oldLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-                .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-                .image = canvasImage,
-                .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },
-            };
-
-            VkCommandPoolCreateInfo poolInfo = { .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO, .queueFamilyIndex = queueFamily };
-            VkCommandPool pool = VK_NULL_HANDLE;
-            vkCreateCommandPool(device, &poolInfo, nullptr, &pool);
-
-            VkCommandBufferAllocateInfo allocInfo = { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO, .commandPool = pool, .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY, .commandBufferCount = 1 };
-            VkCommandBuffer cmd = VK_NULL_HANDLE;
-            vkAllocateCommandBuffers(device, &allocInfo, &cmd);
-
-            VkCommandBufferBeginInfo beginInfo = { .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO, .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT };
-            vkBeginCommandBuffer(cmd, &beginInfo);
-            vkCmdPipelineBarrier(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, 0, 0, nullptr, 0, nullptr, 1, &barrier);
-            vkEndCommandBuffer(cmd);
-
-            VkSubmitInfo submitInfo = { .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO, .commandBufferCount = 1, .pCommandBuffers = &cmd };
-
-            VkFence fence = VK_NULL_HANDLE;
-            VkFenceCreateInfo fenceInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
-            vkCreateFence(device, &fenceInfo, nullptr, &fence);
-
-            vkQueueSubmit(queue, 1, &submitInfo, fence);
-            vkWaitForFences(device, 1, &fence, VK_TRUE, UINT64_MAX);
-            vkDestroyFence(device, fence, nullptr);
-
-            vkFreeCommandBuffers(device, pool, 1, &cmd);
-            vkDestroyCommandPool(device, pool, nullptr);
-
-            updateCanvasDescriptor();
-            updateBlitDescriptor();
-        }
-
-        void destroyCanvas()
-        {
-            if (canvasView)
-            {
-                vkDestroyImageView(device, canvasView, nullptr);
-                canvasView = VK_NULL_HANDLE;
-            }
-
-            if (canvasAllocation)
-            {
-                allocator->destroyImage(canvasAllocation);
-                canvasImage = VK_NULL_HANDLE;
-            }
-        }
-
-        void updateCanvasDescriptor()
-        {
-            if (!canvasView)
-            {
-                return;
-            }
-
-            VkDescriptorImageInfo imageInfo = { VK_NULL_HANDLE, canvasView, VK_IMAGE_LAYOUT_GENERAL };
-            VkWriteDescriptorSet write =
-            {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = canvasDescriptorSet,
-                .dstBinding = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_IMAGE,
-                .pImageInfo = &imageInfo,
-            };
-
-            vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
-        }
-
-        void updateBlitDescriptor()
-        {
-            if (!canvasView)
-            {
-                return;
-            }
-
-            VkDescriptorImageInfo imageInfo = { sampler, canvasView, VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL };
-            VkWriteDescriptorSet write =
-            {
-                .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
-                .dstSet = blitDescriptorSet,
-                .dstBinding = 0,
-                .descriptorCount = 1,
-                .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
-                .pImageInfo = &imageInfo,
-            };
-
-            vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
-        }
-
-        void transitionCanvas(VkCommandBuffer cmd, VkImageLayout oldLayout, VkImageLayout newLayout,
-                              VkAccessFlags srcAccess, VkAccessFlags dstAccess,
-                              VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
-        {
-            VkImageMemoryBarrier barrier =
-            {
-                .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
-                .srcAccessMask = srcAccess,
-                .dstAccessMask = dstAccess,
-                .oldLayout = oldLayout,
-                .newLayout = newLayout,
-                .image = canvasImage,
-                .subresourceRange = { VK_IMAGE_ASPECT_COLOR_BIT, 0, 1, 0, 1 },
-            };
-
-            vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
         }
 
         void createAtlasBuffers()
@@ -1758,11 +1246,10 @@ namespace mango::vulkan
         m_impl->resize(extent);
     }
 
-    void FontRenderer::beginFrame(float32x4 clearColor)
+    void FontRenderer::beginFrame()
     {
-        m_impl->frameClearColor = clearColor;
-        m_impl->frameOpen = true;
-        m_impl->pendingGlyphs.clear();
+        m_impl->pendingInstances.clear();
+        m_impl->pendingRects.clear();
     }
 
     TextCursor FontRenderer::cursor(Font font, float x, float baseline_y) const
@@ -1784,8 +1271,8 @@ namespace mango::vulkan
             return;
         }
 
-        const std::u32string codepoints = utf32_from_utf8(utf8);
-        m_impl->queueGlyphsForLine(font.index, x, y, codepoints, style.color, style.pixelHeight, style.stemDarkening);
+        m_impl->utf32Scratch = utf32_from_utf8(utf8);
+        m_impl->queueGlyphsForLine(font.index, x, y, m_impl->utf32Scratch, style.color, style.pixelHeight, style.stemDarkening);
     }
 
     void FontRenderer::draw(TextCursor& cursor, Font font, std::string_view utf8, const TextStyle& style)
@@ -1813,11 +1300,11 @@ namespace mango::vulkan
             return;
         }
 
+        m_impl->utf32Scratch = utf32_from_utf8(utf8);
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
-        const std::u32string codepoints = utf32_from_utf8(utf8);
         m_impl->withFaceAtHeight(font.index, h, [&](font::Face& face, float height)
         {
-            const font::LayoutResult layout = font::layoutParagraph(face, bounds, codepoints, style);
+            const font::LayoutResult layout = font::layoutParagraph(face, bounds, m_impl->utf32Scratch, style);
             for (const font::LayoutLine& line : layout.lines)
             {
                 m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, height, style.stemDarkening);
@@ -1840,10 +1327,10 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
-        const std::u32string codepoints = utf32_from_utf8(utf8);
+        m_impl->utf32Scratch = utf32_from_utf8(utf8);
         m_impl->withFaceAtHeight(font.index, h, [&](font::Face& face, float pixelHeight)
         {
-            const font::LayoutResult layout = font::layoutParagraph(face, bounds, codepoints, style);
+            const font::LayoutResult layout = font::layoutParagraph(face, bounds, m_impl->utf32Scratch, style);
             for (const font::LayoutLine& line : layout.lines)
             {
                 m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, pixelHeight, style.stemDarkening);
@@ -1858,35 +1345,23 @@ namespace mango::vulkan
 
     void FontRenderer::encode(VkCommandBuffer cmd, const EncodeTarget& target)
     {
-        const float32x4 clear = m_impl->frameClearColor;
-
-        if (m_impl->pendingGlyphs.empty())
+        if (m_impl->pendingInstances.empty())
         {
-            if (target.clearTarget)
-            {
-                m_impl->clearTarget(cmd, target.imageView, target.extent, clear);
-            }
-            m_impl->frameOpen = false;
             return;
         }
 
         const TextBounds bounds = m_impl->computePendingBounds();
         if (bounds.empty())
         {
-            if (target.clearTarget)
-            {
-                m_impl->clearTarget(cmd, target.imageView, target.extent, clear);
-            }
-            m_impl->pendingGlyphs.clear();
-            m_impl->frameOpen = false;
+            m_impl->pendingInstances.clear();
+            m_impl->pendingRects.clear();
             return;
         }
 
-        m_impl->clearCanvas(cmd, 0.0f, 0.0f, 0.0f, 0.0f);
-        m_impl->flushTextBatch(cmd, bounds);
-        m_impl->blitToTarget(cmd, target.imageView, target.extent, target.mode, target.clearTarget, clear);
-        m_impl->pendingGlyphs.clear();
-        m_impl->frameOpen = false;
+        const VkDescriptorSet targetSet = m_impl->getOrCreateTargetDescriptorSet(target.imageView);
+        m_impl->flushTextBatch(cmd, bounds, targetSet);
+        m_impl->pendingInstances.clear();
+        m_impl->pendingRects.clear();
     }
 
 } // namespace mango::vulkan

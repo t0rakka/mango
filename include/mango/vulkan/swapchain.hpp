@@ -132,7 +132,9 @@ namespace mango::vulkan
         VkImageView getImageView(u32 imageIndex) const;
 
         void cmdTransitionImageToColorAttachment(VkCommandBuffer commandBuffer, u32 imageIndex) const;
+        void cmdTransitionImageToGeneral(VkCommandBuffer commandBuffer, u32 imageIndex) const;
         void cmdTransitionImageToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const;
+        void cmdTransitionImageFromGeneralToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const;
 
         // Refreshes the swapchain to match the current surface. Recreation is
         // triggered only when the surface extent changed or a previous frame flagged

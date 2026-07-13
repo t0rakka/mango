@@ -33,12 +33,12 @@ protected:
     static constexpr size_t kFrameTimeHistory = 60;
 
     float m_frameTimeMs = 0.0f;
-    float m_textTimeMs = 0.0f;
+    float m_queueTimeMs = 0.0f;
+    float m_encodeTimeMs = 0.0f;
     std::array<float, kFrameTimeHistory> m_frameTimeHistory {};
     size_t m_frameTimeIndex = 0;
     size_t m_frameTimeCount = 0;
-    std::string m_hudPrefix;
-    std::string m_hudTextTime;
+    std::string m_hudLine;
 
     std::vector<std::string> m_lines =
     {
@@ -111,15 +111,11 @@ public:
 
     void buildText()
     {
-        m_renderer->beginFrame(float32x4(0.1f, 0.14f, 0.23f, 1.0f));
+        m_renderer->beginFrame();
 
         TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 32.0f };
-        TextStyle hudValueStyle { .color = float32x4(1.0f, 0.98f, 1.0f, 1.0f), .pixelHeight = 32.0f };
-
         TextCursor hud = m_renderer->cursorTopLeft(m_body, 8.0f, 32.0f, hudStyle);
-        m_renderer->draw(hud, m_body, m_hudPrefix, hudStyle);
-        hud.x += m_renderer->textWidth(m_body, m_hudPrefix, hudStyle);
-        m_renderer->draw(hud, m_body, m_hudTextTime, hudValueStyle);
+        m_renderer->draw(hud, m_body, m_hudLine, hudStyle);
 
         TextStyle bodyStyle { .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f), .pixelHeight = m_fontPixelHeight };
         TextCursor body = m_renderer->cursorTopLeft(m_body, 40.0f, 132.0f, bodyStyle);
@@ -128,6 +124,44 @@ public:
         {
             m_renderer->drawLine(body, m_body, line, bodyStyle);
         }
+    }
+
+    void clearSwapchain(VkCommandBuffer cmd, u32 imageIndex)
+    {
+        VkImage image = swapchain().getImage(imageIndex);
+
+        VkClearColorValue clearValue {};
+        clearValue.float32[0] = 0.1f;
+        clearValue.float32[1] = 0.14f;
+        clearValue.float32[2] = 0.23f;
+        clearValue.float32[3] = 1.0f;
+
+        VkImageSubresourceRange range =
+        {
+            .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+            .baseMipLevel = 0,
+            .levelCount = 1,
+            .baseArrayLayer = 0,
+            .layerCount = 1,
+        };
+
+        vkCmdClearColorImage(cmd, image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &range);
+
+        VkImageMemoryBarrier barrier =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = VK_ACCESS_TRANSFER_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+            .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .newLayout = VK_IMAGE_LAYOUT_GENERAL,
+            .image = image,
+            .subresourceRange = range,
+        };
+
+        vkCmdPipelineBarrier(cmd,
+            VK_PIPELINE_STAGE_TRANSFER_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
+            0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
     void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
@@ -142,21 +176,25 @@ public:
 
         vkBeginCommandBuffer(cmd, &beginInfo);
 
-        const u64 text_begin = Time::us();
+        const u64 queue_begin = Time::us();
 
         buildText();
 
-        swapchain().cmdTransitionImageToColorAttachment(cmd, imageIndex);
+        m_queueTimeMs = float(Time::us() - queue_begin) / 1000.0f;
+
+        swapchain().cmdTransitionImageToGeneral(cmd, imageIndex);
+        clearSwapchain(cmd, imageIndex);
+
+        const u64 encode_begin = Time::us();
         m_renderer->encode(cmd,
         {
+            .image = swapchain().getImage(imageIndex),
             .imageView = swapchain().getImageView(imageIndex),
             .extent = extent,
-            .mode = ResolveMode::Overlay,
-            .clearTarget = true,
         });
-        swapchain().cmdTransitionImageToPresent(cmd, imageIndex);
+        m_encodeTimeMs = float(Time::us() - encode_begin) / 1000.0f;
 
-        m_textTimeMs = float(Time::us() - text_begin) / 1000.0f;
+        swapchain().cmdTransitionImageFromGeneralToPresent(cmd, imageIndex);
 
         vkEndCommandBuffer(cmd);
     }
@@ -199,8 +237,8 @@ public:
         m_frameTimeMs = frame_sum / float(m_frameTimeCount);
 
         const float fps = 1000.0f / std::max(m_frameTimeMs, 0.001f);
-        m_hudPrefix = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  text: ", m_frameTimeMs, fps);
-        m_hudTextTime = fmt::format("{:6.3f} ms", m_textTimeMs);
+        m_hudLine = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  queue: {:5.3f} ms  encode: {:5.3f} ms",
+            m_frameTimeMs, fps, m_queueTimeMs, m_encodeTimeMs);
 
         render();
     }

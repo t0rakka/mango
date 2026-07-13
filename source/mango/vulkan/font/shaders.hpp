@@ -8,7 +8,5 @@ namespace mango::vulkan::font_shaders
 {
 
     const char* computeShader();
-    const char* blitVertexShader();
-    const char* blitFragmentShader();
 
 } // namespace mango::vulkan::font_shaders

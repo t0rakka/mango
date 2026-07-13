@@ -8,10 +8,11 @@
     FontRenderer is not thread-safe.
 
     Typical frame:
-        renderer.beginFrame(clearColor);
+        renderer.beginFrame();
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
-        renderer.encode(cmd, { .imageView = targetView, .extent = extent, .clearTarget = true });
+        // Application clears/renders its framebuffer first, then:
+        renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent });
 */
 #pragma once
 
@@ -98,20 +99,11 @@ namespace mango::vulkan
         float y = 0.0f;
     };
 
-    enum class ResolveMode
-    {
-        Overlay,
-        Replace,
-    };
-
     struct EncodeTarget
     {
+        VkImage image = VK_NULL_HANDLE;
         VkImageView imageView = VK_NULL_HANDLE;
         VkExtent2D extent {};
-        ResolveMode mode = ResolveMode::Overlay;
-        // When true, clear the target to beginFrame() color before compositing text.
-        // Use for text-only frames; leave false when overlaying onto existing content.
-        bool clearTarget = false;
     };
 
     class FontRenderer : public NonCopyable
@@ -152,9 +144,8 @@ namespace mango::vulkan
 
         void resize(VkExtent2D extent);
 
-        // Phase A: describe text (CPU only, no VkCommandBuffer).
-        // Target background when EncodeTarget::clearTarget is true.
-        void beginFrame(math::float32x4 clearColor = math::float32x4(0.0f, 0.0f, 0.0f, 1.0f));
+        // Phase A: queue text for this frame (CPU only, no VkCommandBuffer).
+        void beginFrame();
 
         TextCursor cursor(Font font, float x, float baseline_y) const;
         TextCursor cursorTopLeft(Font font, float x, float top, const TextStyle& style = {}) const;
@@ -169,7 +160,8 @@ namespace mango::vulkan
         void drawParagraph(TextCursor& cursor, Font font, float width,
                            std::string_view utf8, const ParagraphStyle& style = {});
 
-        // Phase B: record GPU work into an existing command buffer.
+        // Phase B: composite queued text into target.
+        // Target image must be in VK_IMAGE_LAYOUT_GENERAL with storage access.
         void encode(VkCommandBuffer cmd, const EncodeTarget& target);
 
     private:

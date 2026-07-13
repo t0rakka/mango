@@ -46,7 +46,7 @@ layout(std430, set = 1, binding = 4) readonly buffer TileGlyphBuffer
     uint tile_glyphs[];
 };
 
-layout(set = 0, binding = 0, rgba8) uniform image2D canvas;
+layout(set = 0, binding = 0, rgba8) uniform image2D target;
 
 struct GlyphInstance
 {
@@ -281,8 +281,8 @@ void main()
         + ivec2(sub_wg) * int(pc.workgroup_size)
         + ivec2(gl_LocalInvocationID.xy);
 
-    ivec2 canvas_size = imageSize(canvas);
-    if (pixel.x < 0 || pixel.y < 0 || pixel.x >= canvas_size.x || pixel.y >= canvas_size.y)
+    ivec2 target_size = imageSize(target);
+    if (pixel.x < 0 || pixel.y < 0 || pixel.x >= target_size.x || pixel.y >= target_size.y)
     {
         return;
     }
@@ -297,7 +297,7 @@ void main()
         return;
     }
 
-    vec4 dst = imageLoad(canvas, pixel);
+    vec4 dst = imageLoad(target, pixel);
     vec3 rgb = dst.rgb;
     float alpha_out = dst.a;
 
@@ -318,58 +318,7 @@ void main()
         alpha_out = out_a;
     }
 
-    imageStore(canvas, pixel, vec4(rgb, alpha_out));
-}
-)";
-}
-
-const char* blitVertexShader()
-{
-    return R"(#version 450
-layout(location = 0) out vec2 vTexcoord;
-
-vec2 positions[3] = vec2[](
-    vec2(-1.0, -1.0),
-    vec2( 3.0, -1.0),
-    vec2(-1.0,  3.0)
-);
-
-vec2 texcoords[3] = vec2[](
-    vec2(0.0, 0.0),
-    vec2(2.0, 0.0),
-    vec2(0.0, 2.0)
-);
-
-void main()
-{
-    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
-    vTexcoord = texcoords[gl_VertexIndex];
-}
-)";
-}
-
-const char* blitFragmentShader()
-{
-    return R"(#version 450
-layout(location = 0) in vec2 vTexcoord;
-layout(location = 0) out vec4 outColor;
-
-layout(set = 0, binding = 0) uniform sampler2D uTexture;
-
-void main()
-{
-    ivec2 pixel = ivec2(gl_FragCoord.xy);
-    ivec2 size = textureSize(uTexture, 0);
-    if (pixel.x >= size.x || pixel.y >= size.y)
-    {
-        discard;
-    }
-
-    outColor = texelFetch(uTexture, pixel, 0);
-    if (outColor.a <= 0.0)
-    {
-        discard;
-    }
+    imageStore(target, pixel, vec4(rgb, alpha_out));
 }
 )";
 }
