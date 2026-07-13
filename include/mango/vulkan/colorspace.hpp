@@ -20,6 +20,8 @@ namespace mango::vulkan
     {
         None,
         Reinhard,
+        Aces,
+        Agx,
     };
 
     struct OutputTransformOptions

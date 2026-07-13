@@ -152,20 +152,6 @@ float sraymarch(vec3 RO, vec3 RD, float init) {
   return z;
 }
 
-// License: Unknown, author: Matt Taylor (https://github.com/64), found: https://64.github.io/tonemapping/
-vec3 aces_approx(vec3 v) {
-  const float
-    a = 2.51
-  , b = 0.03
-  , c = 2.43
-  , d = 0.59
-  , e = 0.14
-  ;
-  v = max(v, 0.);
-  v *= .6;
-  return clamp((v*(a*v+b))/(v*(c*v+d)+e), 0., 1.);
-}
-
 void mainImage(out vec4 O, vec2 C) {
   vec2
     r2=iResolution.xy
@@ -227,13 +213,9 @@ void mainImage(out vec4 O, vec2 C) {
     o=y;
   }
 
-  // Post process  
-  o*=2.;
-  // Tone mapping
-  o=aces_approx(o);
-  // Approximate RBG => sRGB
-  o=sqrt(o)-.04;
-  O = vec4(o,1);
+  // Post process
+  o *= 2.;
+  O = vec4(o, 1);
 }
 
 void main()

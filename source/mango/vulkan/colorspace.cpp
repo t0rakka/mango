@@ -266,14 +266,113 @@ vec3 bt709ToAdobeRgb(vec3 linear)
 
             const std::string exposureLiteral = formatGlslFloat(exposure);
 
+            if (mode == TonemapMode::Aces)
+            {
+                return std::string(R"(
+vec3 tonemapAces(vec3 color)
+{
+    const float kExposure = )") + exposureLiteral + R"(;
+    color = max(color, vec3(0.0)) * kExposure;
+
+    const mat3 acesInput = mat3(
+        0.59719, 0.07600, 0.02840,
+        0.35458, 0.90834, 0.13383,
+        0.04823, 0.01566, 0.83777
+    );
+    const mat3 acesOutput = mat3(
+        1.60475, -0.10208, -0.00327,
+       -0.53108,  1.10813, -0.07276,
+       -0.07367, -0.00605,  1.07602
+    );
+
+    vec3 v = acesInput * color;
+    vec3 a = v * (v + 0.0245786) - 0.000090537;
+    vec3 b = v * (0.983729 * v + 0.4329510) + 0.238081;
+    return acesOutput * (a / b);
+}
+)";
+            }
+
+            if (mode == TonemapMode::Agx)
+            {
+                return std::string(R"(
+vec3 agxDefaultContrastApprox(vec3 x)
+{
+    vec3 x2 = x * x;
+    vec3 x4 = x2 * x2;
+    return + 15.5     * x4 * x2
+           - 40.14    * x4 * x
+           + 31.96    * x4
+           - 6.868    * x2 * x
+           + 0.4298   * x2
+           + 0.1191   * x
+           - 0.00232;
+}
+
+vec3 tonemapAgx(vec3 color)
+{
+    const float kExposure = )") + exposureLiteral + R"(;
+    const float kMinEv = -12.47393;
+    const float kMaxEv = 4.026069;
+
+    color = max(color, vec3(0.0)) * kExposure;
+
+    const mat3 linearSrgbToLinearRec2020 = mat3(
+        0.6274, 0.0691, 0.0164,
+        0.3293, 0.9195, 0.0880,
+        0.0433, 0.0113, 0.8956
+    );
+    const mat3 agxInset = mat3(
+        0.856627153315983, 0.137318972929847, 0.11189821299995,
+        0.0951212405381588, 0.761241990602591, 0.0767994186031903,
+        0.0482516061458583, 0.101439036467562, 0.811302368396859
+    );
+    const mat3 agxOutset = mat3(
+        1.1271005818144368, -0.1413297634984383, -0.14132976349843826,
+       -0.11060664309660323, 1.157823702216272, -0.11060664309660294,
+       -0.016493938717834573, -0.016493938717834257, 1.2519364065950405
+    );
+    const mat3 linearRec2020ToLinearSrgb = mat3(
+        1.6605, -0.1246, -0.0182,
+       -0.5876, 1.1329, -0.1006,
+       -0.0728, -0.0083, 1.1187
+    );
+
+    color = linearSrgbToLinearRec2020 * color;
+    color = agxInset * max(color, vec3(1e-10));
+    color = clamp(log2(color), kMinEv, kMaxEv);
+    color = (color - kMinEv) / (kMaxEv - kMinEv);
+    color = clamp(agxDefaultContrastApprox(color), 0.0, 1.0);
+    color = agxOutset * color;
+    color = linearRec2020ToLinearSrgb * max(color, vec3(0.0));
+    return clamp(color, 0.0, 1.0);
+}
+)";
+            }
+
             return std::string(R"(
-vec3 tonemapSdr(vec3 color)
+vec3 tonemapReinhard(vec3 color)
 {
     const float kExposure = )") + exposureLiteral + R"(;
     color = max(color, vec3(0.0)) * kExposure;
     return color / (1.0 + color);
 }
 )";
+        }
+
+        const char* tonemapFunctionName(TonemapMode mode)
+        {
+            switch (mode)
+            {
+                case TonemapMode::Reinhard:
+                    return "tonemapReinhard";
+                case TonemapMode::Aces:
+                    return "tonemapAces";
+                case TonemapMode::Agx:
+                    return "tonemapAgx";
+                default:
+                    return nullptr;
+            }
         }
 
     } // namespace
@@ -508,7 +607,12 @@ vec4 encodeOutput(vec4 color)
 
         if (options.tonemap != TonemapMode::None)
         {
-            source += "    color.rgb = tonemapSdr(color.rgb);\n";
+            if (const char* tonemapFn = tonemapFunctionName(options.tonemap))
+            {
+                source += "    color.rgb = ";
+                source += tonemapFn;
+                source += "(color.rgb);\n";
+            }
         }
 
         source += "    ";
