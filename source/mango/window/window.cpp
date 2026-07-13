@@ -257,7 +257,7 @@ namespace mango
         }
 
         g_window_system = resolveWindowSystem(ws);
-        printLine("WindowSystem: {}", getString(g_window_system));
+        printLine(Print::Info, "WindowSystem: {}", getString(g_window_system));
     }
 
     WindowSystem Window::getWindowSystem()
@@ -270,7 +270,7 @@ namespace mango
             {
                 // No explicit override; resolve now (env + auto-detect) and log.
                 g_window_system = resolveWindowSystem(WindowSystem::Default);
-                printLine("WindowSystem: {}", getString(g_window_system));
+                printLine(Print::Info, "WindowSystem: {}", getString(g_window_system));
             }
             g_window_system_locked = true;
         }

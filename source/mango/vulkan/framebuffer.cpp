@@ -1543,14 +1543,11 @@ namespace mango::vulkan
 
         if (m_is_float)
         {
-            const float pushConstants[5] =
-            {
-                transform[0], transform[1], transform[2], transform[3], m_exposure,
-            };
+            vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_VERTEX_BIT,
+                0, sizeof(transform), transform);
 
-            vkCmdPushConstants(cmd, m_pipelineLayout,
-                VK_SHADER_STAGE_VERTEX_BIT | VK_SHADER_STAGE_FRAGMENT_BIT,
-                0, sizeof(pushConstants), pushConstants);
+            vkCmdPushConstants(cmd, m_pipelineLayout, VK_SHADER_STAGE_FRAGMENT_BIT,
+                sizeof(float) * 4, sizeof(float), &m_exposure);
         }
         else
         {
