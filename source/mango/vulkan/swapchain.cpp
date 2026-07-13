@@ -227,7 +227,8 @@ namespace mango::vulkan
             .imageExtent = extent,
             .imageArrayLayers = 1,
             .imageUsage = VK_IMAGE_USAGE_COLOR_ATTACHMENT_BIT |
-                (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT),
+                (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_STORAGE_BIT) |
+                (surfaceCapabilities.supportedUsageFlags & VK_IMAGE_USAGE_TRANSFER_DST_BIT),
             .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .queueFamilyIndexCount = 0,
             .pQueueFamilyIndices = nullptr,

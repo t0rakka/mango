@@ -175,9 +175,37 @@ namespace mango::vulkan
             deviceExtensions.push_back(extension);
         }
 
+        VkPhysicalDeviceFeatures supportedFeatures {};
+        vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
+
+        VkPhysicalDeviceFeatures deviceFeatures {};
+        if (supportedFeatures.shaderStorageImageReadWithoutFormat)
+        {
+            deviceFeatures.shaderStorageImageReadWithoutFormat = VK_TRUE;
+        }
+        if (supportedFeatures.shaderStorageImageWriteWithoutFormat)
+        {
+            deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
+        }
+
+        VkPhysicalDeviceDescriptorIndexingFeatures supportedIndexing
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
+        };
+
+        VkPhysicalDeviceFeatures2 supportedFeatures2
+        {
+            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
+            .pNext = &supportedIndexing,
+        };
+
+        vkGetPhysicalDeviceFeatures2(m_physicalDevice, &supportedFeatures2);
+
         VkPhysicalDeviceVulkan12Features features12 =
         {
             .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
+            .descriptorBindingStorageBufferUpdateAfterBind =
+                supportedIndexing.descriptorBindingStorageBufferUpdateAfterBind,
             .timelineSemaphore = VK_TRUE,
         };
 
@@ -196,6 +224,7 @@ namespace mango::vulkan
             .pQueueCreateInfos = &queueCreateInfo,
             .enabledExtensionCount = u32(deviceExtensions.size()),
             .ppEnabledExtensionNames = deviceExtensions.data(),
+            .pEnabledFeatures = &deviceFeatures,
         };
 
         VkResult result = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);

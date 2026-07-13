@@ -760,9 +760,27 @@ namespace mango::vulkan
                 { .binding = 4, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .descriptorCount = 1, .stageFlags = VK_SHADER_STAGE_COMPUTE_BIT },
             };
 
+            VkDescriptorBindingFlags batchBindingFlags[] =
+            {
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+                VK_DESCRIPTOR_BINDING_UPDATE_AFTER_BIND_BIT,
+            };
+
+            VkDescriptorSetLayoutBindingFlagsCreateInfo batchBindingFlagsInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_BINDING_FLAGS_CREATE_INFO,
+                .bindingCount = 5,
+                .pBindingFlags = batchBindingFlags,
+            };
+
             VkDescriptorSetLayoutCreateInfo batchLayoutInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+                .pNext = &batchBindingFlagsInfo,
+                .flags = VK_DESCRIPTOR_SET_LAYOUT_CREATE_UPDATE_AFTER_BIND_POOL_BIT,
                 .bindingCount = 5,
                 .pBindings = batchBindings,
             };
@@ -788,6 +806,7 @@ namespace mango::vulkan
             VkDescriptorPoolCreateInfo batchPoolInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+                .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
                 .maxSets = 1,
                 .poolSizeCount = 1,
                 .pPoolSizes = batchPoolSizes,
@@ -1346,6 +1365,11 @@ namespace mango::vulkan
     void FontRenderer::encode(VkCommandBuffer cmd, const EncodeTarget& target)
     {
         if (m_impl->pendingInstances.empty())
+        {
+            return;
+        }
+
+        if (!m_impl->computePipeline || !target.imageView)
         {
             return;
         }

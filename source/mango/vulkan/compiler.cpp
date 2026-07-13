@@ -602,7 +602,7 @@ namespace mango::vulkan
         const char* sourceCString = sourceStorage.c_str();
         glslShader.setStrings(&sourceCString, 1);
         glslShader.setEntryPoint("main");
-        glslShader.setEnvInput(glslang::EShSourceGlsl, eshStage, glslang::EShClientVulkan, 100);
+        glslShader.setEnvInput(glslang::EShSourceGlsl, eshStage, glslang::EShClientVulkan, 110);
         glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);
         glslShader.setEnvTarget(glslang::EShTargetSpv, glslang::EShTargetSpv_1_5);
 

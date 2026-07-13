@@ -10,6 +10,7 @@ namespace mango::vulkan::font_shaders
 const char* computeShader() 
 {
     return R"(#version 450
+#extension GL_EXT_shader_image_load_formatted : enable
 
 layout(local_size_x = 8, local_size_y = 8, local_size_z = 1) in;
 
@@ -46,7 +47,7 @@ layout(std430, set = 1, binding = 4) readonly buffer TileGlyphBuffer
     uint tile_glyphs[];
 };
 
-layout(set = 0, binding = 0, rgba8) uniform image2D target;
+layout(set = 0, binding = 0) uniform image2D target;
 
 struct GlyphInstance
 {
