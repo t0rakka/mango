@@ -120,6 +120,7 @@ namespace mango::vulkan
         ~Swapchain();
 
         u32 getImageCount() const;
+        u32 currentFrameIndex() const;
         VkSurfaceFormatKHR getSurfaceFormat() const;
         VkFormat getFormat() const;
         VkColorSpaceKHR getColorSpace() const;

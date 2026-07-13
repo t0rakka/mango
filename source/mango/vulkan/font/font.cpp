@@ -31,6 +31,7 @@ namespace mango::vulkan
         using namespace mango::math;
 
         static constexpr u32 kTileSize = 64;
+        static constexpr u32 kFramesInFlight = 2;
         static constexpr VkDeviceSize kAtlasInitialBytes = 256 * 1024;
 
         struct GlyphAtlasSlot
@@ -169,7 +170,7 @@ namespace mango::vulkan
 
         VkDescriptorPool targetDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorPool batchDescriptorPool = VK_NULL_HANDLE;
-        VkDescriptorSet batchDescriptorSet = VK_NULL_HANDLE;
+        VkDescriptorSet batchDescriptorSets[kFramesInFlight] = {};
 
         std::unordered_map<VkImageView, VkDescriptorSet> targetDescriptorSets;
 
@@ -183,12 +184,12 @@ namespace mango::vulkan
         u32 atlasCurveCount = 0;
         bool atlasDescriptorsDirty = false;
 
-        BufferAllocation instanceBuffer;
-        BufferAllocation tileBuffer;
-        BufferAllocation tileGlyphBuffer;
-        VkDeviceSize instanceBufferCapacity = 0;
-        VkDeviceSize tileBufferCapacity = 0;
-        VkDeviceSize tileGlyphBufferCapacity = 0;
+        BufferAllocation instanceBuffers[kFramesInFlight];
+        BufferAllocation tileBuffers[kFramesInFlight];
+        BufferAllocation tileGlyphBuffers[kFramesInFlight];
+        VkDeviceSize instanceBufferCapacity[kFramesInFlight] = {};
+        VkDeviceSize tileBufferCapacity[kFramesInFlight] = {};
+        VkDeviceSize tileGlyphBufferCapacity[kFramesInFlight] = {};
 
         std::deque<FaceSlot> faces;
         std::unordered_map<u64, CachedGlyph> glyphCache;
@@ -630,7 +631,7 @@ namespace mango::vulkan
             return bounds;
         }
 
-        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds, VkDescriptorSet targetSet)
+        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds, VkDescriptorSet targetSet, u32 frameSlot)
         {
             if (pendingInstances.empty() || bounds.empty())
             {
@@ -706,9 +707,14 @@ namespace mango::vulkan
             const VkDeviceSize tile_bytes = sizeof(GpuTileInfo) * batchTileInfos.size();
             const VkDeviceSize index_bytes = sizeof(u32) * batchTileGlyphs.size();
 
-            ensureBatchBuffer(instanceBuffer, instanceBufferCapacity, instance_bytes);
-            ensureBatchBuffer(tileBuffer, tileBufferCapacity, tile_bytes);
-            ensureBatchBuffer(tileGlyphBuffer, tileGlyphBufferCapacity, index_bytes);
+            const u32 slot = frameSlot % kFramesInFlight;
+            BufferAllocation& instanceBuffer = instanceBuffers[slot];
+            BufferAllocation& tileBuffer = tileBuffers[slot];
+            BufferAllocation& tileGlyphBuffer = tileGlyphBuffers[slot];
+
+            ensureBatchBuffer(slot, instanceBuffer, instanceBufferCapacity[slot], instance_bytes);
+            ensureBatchBuffer(slot, tileBuffer, tileBufferCapacity[slot], tile_bytes);
+            ensureBatchBuffer(slot, tileGlyphBuffer, tileGlyphBufferCapacity[slot], index_bytes);
 
             std::memcpy(instanceBuffer.mapped, pendingInstances.data(), size_t(instance_bytes));
             std::memcpy(tileBuffer.mapped, batchTileInfos.data(), size_t(tile_bytes));
@@ -724,7 +730,7 @@ namespace mango::vulkan
 
             const u32 subgroups_per_axis = (tile_size + push.workgroup_size - 1) / push.workgroup_size;
 
-            VkDescriptorSet sets[] = { targetSet, batchDescriptorSet };
+            VkDescriptorSet sets[] = { targetSet, batchDescriptorSets[slot] };
 
             vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, computePipeline);
             vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, computePipelineLayout, 0, 2, sets, 0, nullptr);
@@ -800,29 +806,35 @@ namespace mango::vulkan
 
             VkDescriptorPoolSize batchPoolSizes[] =
             {
-                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5 },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5 * kFramesInFlight },
             };
 
             VkDescriptorPoolCreateInfo batchPoolInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
                 .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
-                .maxSets = 1,
+                .maxSets = kFramesInFlight,
                 .poolSizeCount = 1,
                 .pPoolSizes = batchPoolSizes,
             };
 
             vkCreateDescriptorPool(device, &batchPoolInfo, nullptr, &batchDescriptorPool);
 
+            VkDescriptorSetLayout batchLayouts[kFramesInFlight] = {};
+            for (u32 i = 0; i < kFramesInFlight; ++i)
+            {
+                batchLayouts[i] = batchDescriptorSetLayout;
+            }
+
             VkDescriptorSetAllocateInfo batchAllocInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
                 .descriptorPool = batchDescriptorPool,
-                .descriptorSetCount = 1,
-                .pSetLayouts = &batchDescriptorSetLayout,
+                .descriptorSetCount = kFramesInFlight,
+                .pSetLayouts = batchLayouts,
             };
 
-            vkAllocateDescriptorSets(device, &batchAllocInfo, &batchDescriptorSet);
+            vkAllocateDescriptorSets(device, &batchAllocInfo, batchDescriptorSets);
 
             createAtlasBuffers();
             createBatchBuffers();
@@ -898,17 +910,20 @@ namespace mango::vulkan
 
         void createBatchBuffers()
         {
-            instanceBufferCapacity = 64 * 1024;
-            tileBufferCapacity = 16 * 1024;
-            tileGlyphBufferCapacity = 64 * 1024;
+            for (u32 i = 0; i < kFramesInFlight; ++i)
+            {
+                instanceBufferCapacity[i] = 64 * 1024;
+                tileBufferCapacity[i] = 16 * 1024;
+                tileGlyphBufferCapacity[i] = 64 * 1024;
 
-            instanceBuffer = allocator->createBuffer(instanceBufferCapacity,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
-            tileBuffer = allocator->createBuffer(tileBufferCapacity,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
-            tileGlyphBuffer = allocator->createBuffer(tileGlyphBufferCapacity,
-                VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
-            updateBatchDescriptors();
+                instanceBuffers[i] = allocator->createBuffer(instanceBufferCapacity[i],
+                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+                tileBuffers[i] = allocator->createBuffer(tileBufferCapacity[i],
+                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+                tileGlyphBuffers[i] = allocator->createBuffer(tileGlyphBufferCapacity[i],
+                    VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
+                updateBatchDescriptors(i);
+            }
         }
 
         void destroyAtlas()
@@ -933,24 +948,27 @@ namespace mango::vulkan
 
         void destroyBatchBuffers()
         {
-            if (instanceBuffer)
+            for (u32 i = 0; i < kFramesInFlight; ++i)
             {
-                allocator->destroyBuffer(instanceBuffer);
-            }
+                if (instanceBuffers[i])
+                {
+                    allocator->destroyBuffer(instanceBuffers[i]);
+                }
 
-            if (tileBuffer)
-            {
-                allocator->destroyBuffer(tileBuffer);
-            }
+                if (tileBuffers[i])
+                {
+                    allocator->destroyBuffer(tileBuffers[i]);
+                }
 
-            if (tileGlyphBuffer)
-            {
-                allocator->destroyBuffer(tileGlyphBuffer);
-            }
+                if (tileGlyphBuffers[i])
+                {
+                    allocator->destroyBuffer(tileGlyphBuffers[i]);
+                }
 
-            instanceBufferCapacity = 0;
-            tileBufferCapacity = 0;
-            tileGlyphBufferCapacity = 0;
+                instanceBufferCapacity[i] = 0;
+                tileBufferCapacity[i] = 0;
+                tileGlyphBufferCapacity[i] = 0;
+            }
         }
 
         void ensureAtlasCapacity(VkDeviceSize contour_bytes, VkDeviceSize curve_bytes)
@@ -999,7 +1017,7 @@ namespace mango::vulkan
             updateAtlasDescriptors();
         }
 
-        void ensureBatchBuffer(BufferAllocation& buffer, VkDeviceSize& capacity, VkDeviceSize required)
+        void ensureBatchBuffer(u32 slot, BufferAllocation& buffer, VkDeviceSize& capacity, VkDeviceSize required)
         {
             required = std::max<VkDeviceSize>(required, 16);
             if (required <= capacity)
@@ -1025,7 +1043,7 @@ namespace mango::vulkan
 
             buffer = new_buffer;
             capacity = new_capacity;
-            updateBatchDescriptors();
+            updateBatchDescriptors(slot);
         }
 
         void updateAtlasDescriptors()
@@ -1033,26 +1051,43 @@ namespace mango::vulkan
             VkDescriptorBufferInfo contourInfo = { atlasContours.buffer, 0, VK_WHOLE_SIZE };
             VkDescriptorBufferInfo curveInfo = { atlasCurves.buffer, 0, VK_WHOLE_SIZE };
 
-            VkWriteDescriptorSet writes[2] =
+            VkWriteDescriptorSet writes[kFramesInFlight * 2] = {};
+            for (u32 i = 0; i < kFramesInFlight; ++i)
             {
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSet, .dstBinding = 0, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &contourInfo },
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSet, .dstBinding = 1, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &curveInfo },
-            };
+                writes[i * 2 + 0] =
+                {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .dstSet = batchDescriptorSets[i],
+                    .dstBinding = 0,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                    .pBufferInfo = &contourInfo,
+                };
+                writes[i * 2 + 1] =
+                {
+                    .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+                    .dstSet = batchDescriptorSets[i],
+                    .dstBinding = 1,
+                    .descriptorCount = 1,
+                    .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER,
+                    .pBufferInfo = &curveInfo,
+                };
+            }
 
-            vkUpdateDescriptorSets(device, 2, writes, 0, nullptr);
+            vkUpdateDescriptorSets(device, kFramesInFlight * 2, writes, 0, nullptr);
         }
 
-        void updateBatchDescriptors()
+        void updateBatchDescriptors(u32 slot)
         {
-            VkDescriptorBufferInfo instanceInfo = { instanceBuffer.buffer, 0, VK_WHOLE_SIZE };
-            VkDescriptorBufferInfo tileInfo = { tileBuffer.buffer, 0, VK_WHOLE_SIZE };
-            VkDescriptorBufferInfo indexInfo = { tileGlyphBuffer.buffer, 0, VK_WHOLE_SIZE };
+            VkDescriptorBufferInfo instanceInfo = { instanceBuffers[slot].buffer, 0, VK_WHOLE_SIZE };
+            VkDescriptorBufferInfo tileInfo = { tileBuffers[slot].buffer, 0, VK_WHOLE_SIZE };
+            VkDescriptorBufferInfo indexInfo = { tileGlyphBuffers[slot].buffer, 0, VK_WHOLE_SIZE };
 
             VkWriteDescriptorSet writes[3] =
             {
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSet, .dstBinding = 2, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &instanceInfo },
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSet, .dstBinding = 3, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &tileInfo },
-                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSet, .dstBinding = 4, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &indexInfo },
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSets[slot], .dstBinding = 2, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &instanceInfo },
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSets[slot], .dstBinding = 3, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &tileInfo },
+                { .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET, .dstSet = batchDescriptorSets[slot], .dstBinding = 4, .descriptorCount = 1, .descriptorType = VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, .pBufferInfo = &indexInfo },
             };
 
             vkUpdateDescriptorSets(device, 3, writes, 0, nullptr);
@@ -1383,7 +1418,7 @@ namespace mango::vulkan
         }
 
         const VkDescriptorSet targetSet = m_impl->getOrCreateTargetDescriptorSet(target.imageView);
-        m_impl->flushTextBatch(cmd, bounds, targetSet);
+        m_impl->flushTextBatch(cmd, bounds, targetSet, target.frameSlot);
         m_impl->pendingInstances.clear();
         m_impl->pendingRects.clear();
     }
