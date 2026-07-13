@@ -106,6 +106,18 @@ namespace mango
         }
     }
 
+    math::int32x2 WindowContext::getClientSize() const
+    {
+        if (!content_view)
+        {
+            return math::int32x2(0, 0);
+        }
+
+        NSView* view = (__bridge NSView*)content_view;
+        NSRect rect = [view bounds];
+        return math::int32x2(int(rect.size.width), int(rect.size.height));
+    }
+
     math::int32x2 WindowContext::getWindowSize() const
     {
         if (content_view)

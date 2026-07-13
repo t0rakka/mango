@@ -843,6 +843,11 @@ namespace mango
         return int32x2(attributes.width, attributes.height);
     }
 
+    math::int32x2 XlibBackend::getClientSize() const
+    {
+        return getWindowSize();
+    }
+
     // -----------------------------------------------------------------------
     // XlibBackend factory
     // -----------------------------------------------------------------------

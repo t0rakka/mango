@@ -155,10 +155,112 @@ namespace mango::vulkan
     // Instance
     // ------------------------------------------------------------------------------
 
+    namespace
+    {
+
+        bool layersContainValidation(const std::vector<const char*>& layers)
+        {
+            for (const char* layer : layers)
+            {
+                if (std::strcmp(layer, "VK_LAYER_KHRONOS_validation") == 0)
+                {
+                    return true;
+                }
+            }
+
+            return false;
+        }
+
+        VKAPI_ATTR VkBool32 VKAPI_CALL debugUtilsCallback(
+            VkDebugUtilsMessageSeverityFlagBitsEXT severity,
+            VkDebugUtilsMessageTypeFlagsEXT type,
+            const VkDebugUtilsMessengerCallbackDataEXT* callbackData,
+            void* userData)
+        {
+            MANGO_UNREFERENCED(type);
+            MANGO_UNREFERENCED(userData);
+
+            if (!callbackData || !callbackData->pMessage)
+            {
+                return VK_FALSE;
+            }
+
+            if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT)
+            {
+                printLine(Print::Error, "[Vulkan] {}", callbackData->pMessage);
+            }
+            else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT)
+            {
+                printLine(Print::Warning, "[Vulkan] {}", callbackData->pMessage);
+            }
+            else if (severity & VK_DEBUG_UTILS_MESSAGE_SEVERITY_INFO_BIT_EXT)
+            {
+                printLine(Print::Info, "[Vulkan] {}", callbackData->pMessage);
+            }
+
+            return VK_FALSE;
+        }
+
+    } // namespace
+
+    void Instance::createDebugMessenger()
+    {
+        if (m_handle == VK_NULL_HANDLE)
+        {
+            return;
+        }
+
+        auto vkCreateDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkCreateDebugUtilsMessengerEXT>(
+            vkGetInstanceProcAddr(m_handle, "vkCreateDebugUtilsMessengerEXT"));
+
+        if (!vkCreateDebugUtilsMessengerEXT)
+        {
+            printLine(Print::Warning, "[Vulkan] VK_EXT_debug_utils unavailable; validation layer output disabled.");
+            return;
+        }
+
+        VkDebugUtilsMessengerCreateInfoEXT createInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_DEBUG_UTILS_MESSENGER_CREATE_INFO_EXT,
+            .messageSeverity = VK_DEBUG_UTILS_MESSAGE_SEVERITY_WARNING_BIT_EXT |
+                               VK_DEBUG_UTILS_MESSAGE_SEVERITY_ERROR_BIT_EXT,
+            .messageType = VK_DEBUG_UTILS_MESSAGE_TYPE_GENERAL_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_VALIDATION_BIT_EXT |
+                           VK_DEBUG_UTILS_MESSAGE_TYPE_PERFORMANCE_BIT_EXT,
+            .pfnUserCallback = debugUtilsCallback,
+        };
+
+        const VkResult result = vkCreateDebugUtilsMessengerEXT(m_handle, &createInfo, nullptr, &m_debugMessenger);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Warning, "[Vulkan] vkCreateDebugUtilsMessengerEXT: {}", getString(result));
+        }
+    }
+
     Instance::Instance(const VkApplicationInfo& applicationInfo,
                        std::vector<const char*> layers,
                        std::vector<const char*> extensions)
     {
+        const bool validation = layersContainValidation(layers);
+
+        if (validation)
+        {
+            bool hasDebugUtils = false;
+            for (const char* extension : extensions)
+            {
+                if (std::strcmp(extension, VK_EXT_DEBUG_UTILS_EXTENSION_NAME) == 0)
+                {
+                    hasDebugUtils = true;
+                    break;
+                }
+            }
+
+            if (!hasDebugUtils)
+            {
+                extensions.push_back(VK_EXT_DEBUG_UTILS_EXTENSION_NAME);
+            }
+        }
+
         u32 flags = 0;
 
 #if defined(MANGO_ENABLE_COCOA)
@@ -183,12 +285,29 @@ namespace mango::vulkan
             printLine(Print::Error, "vkCreateInstance: {}", getString(result));
             return;
         }
+
+        if (validation)
+        {
+            printLine(Print::Info, "Vulkan validation layer enabled.");
+            createDebugMessenger();
+        }
     }
 
     Instance::~Instance()
     {
         if (m_handle != VK_NULL_HANDLE)
         {
+            if (m_debugMessenger != VK_NULL_HANDLE)
+            {
+                auto vkDestroyDebugUtilsMessengerEXT = reinterpret_cast<PFN_vkDestroyDebugUtilsMessengerEXT>(
+                    vkGetInstanceProcAddr(m_handle, "vkDestroyDebugUtilsMessengerEXT"));
+
+                if (vkDestroyDebugUtilsMessengerEXT)
+                {
+                    vkDestroyDebugUtilsMessengerEXT(m_handle, m_debugMessenger, nullptr);
+                }
+            }
+
             vkDestroyInstance(m_handle, nullptr);
         }
     }

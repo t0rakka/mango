@@ -99,6 +99,7 @@ namespace mango
         void setTitle(const std::string& title) override;
         void setVisible(bool enable) override;
         math::int32x2 getWindowSize() const override;
+        math::int32x2 getClientSize() const override;
         math::int32x2 getCursorPosition() const override;
         double getDisplayRefreshRate() const override;
         void toggleFullscreen() override;

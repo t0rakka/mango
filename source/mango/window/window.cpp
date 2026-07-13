@@ -311,6 +311,11 @@ namespace mango
         return m_backend->getWindowSize();
     }
 
+    math::int32x2 Window::getClientSize() const
+    {
+        return m_backend->getClientSize();
+    }
+
     math::int32x2 Window::getCursorPosition() const
     {
         return m_backend->getCursorPosition();

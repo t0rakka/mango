@@ -4,6 +4,7 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/print.hpp>
+#include <mango/core/timer.hpp>
 #include <mango/vulkan/vulkan.hpp>
 #include "window_surface.hpp"
 
@@ -362,6 +363,28 @@ namespace mango::vulkan
         return frame;
     }
 
+    void VulkanWindow::presentInitialFrame()
+    {
+        if (!m_swapchain)
+        {
+            return;
+        }
+
+        // The swapchain is created in the constructor while the native window is still
+        // unmapped; the surface extent often settles once the window exists. Recreate
+        // before the first draw so extent-dependent resources match the drawable.
+        m_swapchain->requestRecreate();
+
+        FrameInfo info {};
+        info.time_us = Time::us();
+        info.trigger = FrameTrigger::Invalidate;
+        onFrame(info);
+
+        // Present at least one frame before showing the window so the compositor never
+        // displays an undefined swapchain image (white flash on macOS/Metal).
+        vkDeviceWaitIdle(m_device);
+    }
+
     void VulkanWindow::enterEventLoop()
     {
         if (!m_on_device_ready_called)
@@ -370,6 +393,7 @@ namespace mango::vulkan
             if (isDeviceReady())
             {
                 onDeviceReady();
+                presentInitialFrame();
                 setVisible(true);
             }
         }
@@ -385,6 +409,7 @@ namespace mango::vulkan
             if (isDeviceReady())
             {
                 onDeviceReady();
+                presentInitialFrame();
                 setVisible(true);
             }
         }

@@ -812,6 +812,11 @@ namespace mango
         return int32x2(width, height);
     }
 
+    math::int32x2 XcbBackend::getClientSize() const
+    {
+        return getWindowSize();
+    }
+
     // -----------------------------------------------------------------------
     // XcbBackend factory
     // -----------------------------------------------------------------------

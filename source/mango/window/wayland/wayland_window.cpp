@@ -946,6 +946,11 @@ namespace mango
         return int32x2(size[0], size[1]);
     }
 
+    int32x2 WaylandBackend::getClientSize() const
+    {
+        return getWindowSize();
+    }
+
     bool WaylandBackend::createWaylandWindow(int width, int height, const char* title)
     {
         if (!compositor || !xdg_wm_base)

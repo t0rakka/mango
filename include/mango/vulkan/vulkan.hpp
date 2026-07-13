@@ -93,6 +93,10 @@ namespace mango::vulkan
 
     class Instance : public VulkanHandle<VkInstance>
     {
+        VkDebugUtilsMessengerEXT m_debugMessenger = VK_NULL_HANDLE;
+
+        void createDebugMessenger();
+
     public:
         Instance(const VkApplicationInfo& applicationInfo,
                  std::vector<const char*> layers,
@@ -193,6 +197,7 @@ namespace mango::vulkan
         void destroyDevice();
         void allocateCommandBuffers();
         void ensureCommandBuffers();
+        void presentInitialFrame();
 
         u32 findMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const;
 
@@ -237,7 +242,7 @@ namespace mango::vulkan
         void enterEventLoop();
         void enterEventLoop(const EventLoopConfig& config);
 
-        // Called once before the window is shown and the event loop starts.
+        // Called once while the window is still hidden, before the event loop starts.
         virtual void onDeviceReady();
 
         // Called when the swapchain extent changes (resize / recreate).

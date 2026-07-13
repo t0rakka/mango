@@ -856,6 +856,11 @@ namespace mango
         return int32x2(r.right - r.left, r.bottom - r.top);
     }
 
+    int32x2 WindowContext::getClientSize() const
+    {
+        return getWindowSize();
+    }
+
     int32x2 WindowContext::getCursorPosition() const
     {
         POINT p;

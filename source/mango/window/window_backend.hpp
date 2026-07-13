@@ -42,6 +42,9 @@ namespace mango
         virtual void setVisible(bool enable) = 0;
 
         virtual math::int32x2 getWindowSize() const = 0;
+        // Client area in window coordinates (logical points on macOS Retina).
+        // Differs from getWindowSize() on HiDPI Cocoa; same elsewhere.
+        virtual math::int32x2 getClientSize() const = 0;
         virtual math::int32x2 getCursorPosition() const = 0;
         virtual double getDisplayRefreshRate() const = 0;
 

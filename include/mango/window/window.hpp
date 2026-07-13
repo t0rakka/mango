@@ -298,6 +298,7 @@ namespace mango
         void setVisible(bool enable);
 
         virtual math::int32x2 getWindowSize() const;
+        virtual math::int32x2 getClientSize() const;
         virtual math::int32x2 getCursorPosition() const;
 
         virtual double getDisplayRefreshRate() const;
