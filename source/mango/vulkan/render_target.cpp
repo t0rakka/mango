@@ -608,6 +608,47 @@ void main()
             imageLayout = VK_IMAGE_LAYOUT_GENERAL;
         }
 
+        void beginColorAttachment(VkCommandBuffer commandBuffer)
+        {
+            if (!valid())
+            {
+                return;
+            }
+
+            const bool undefinedLayout = imageLayout == VK_IMAGE_LAYOUT_UNDEFINED;
+            const bool shaderReadLayout = imageLayout == VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL;
+
+            const VkPipelineStageFlags srcStage = undefinedLayout
+                ? VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT
+                : shaderReadLayout
+                ? VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT
+                : VK_PIPELINE_STAGE_ALL_COMMANDS_BIT;
+
+            const VkAccessFlags srcAccess = undefinedLayout
+                ? VkAccessFlags(0)
+                : shaderReadLayout
+                ? VK_ACCESS_SHADER_READ_BIT
+                : VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT;
+
+            imageBarrier(commandBuffer, imageAllocation.image, imageLayout,
+                VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+                srcAccess, VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT,
+                srcStage, VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT);
+        }
+
+        void endColorAttachment(VkCommandBuffer commandBuffer)
+        {
+            if (!valid())
+            {
+                return;
+            }
+
+            imageBarrier(commandBuffer, imageAllocation.image, imageLayout,
+                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+                VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+        }
+
         void resolve(VkCommandBuffer commandBuffer, Swapchain& swapchain, u32 imageIndex,
                         const OutputTransformOptions* colorOptions)
         {
@@ -630,10 +671,24 @@ void main()
                 return;
             }
 
-            imageBarrier(commandBuffer, imageAllocation.image, imageLayout,
-                VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
-                VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
-                VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+            if (imageLayout != VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL)
+            {
+                VkAccessFlags srcAccess = VK_ACCESS_SHADER_WRITE_BIT;
+                VkPipelineStageFlags srcStage = VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT;
+
+                if (imageLayout == VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL)
+                {
+                    srcAccess = VK_ACCESS_COLOR_ATTACHMENT_WRITE_BIT;
+                    srcStage = VK_PIPELINE_STAGE_COLOR_ATTACHMENT_OUTPUT_BIT;
+                }
+
+                imageBarrier(commandBuffer, imageAllocation.image, imageLayout,
+                    VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+                    srcAccess, VK_ACCESS_SHADER_READ_BIT,
+                    srcStage, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+            }
+
+            updateResolveDescriptor();
 
             swapchain.transitionImageToColorAttachment(commandBuffer, imageIndex);
 
@@ -730,6 +785,44 @@ void main()
     void RenderTarget::clear(VkCommandBuffer commandBuffer, float32x4 color)
     {
         m_impl->clear(commandBuffer, color);
+    }
+
+    void RenderTarget::beginColorAttachment(VkCommandBuffer commandBuffer)
+    {
+        m_impl->beginColorAttachment(commandBuffer);
+    }
+
+    void RenderTarget::endColorAttachment(VkCommandBuffer commandBuffer)
+    {
+        m_impl->endColorAttachment(commandBuffer);
+    }
+
+    RenderTarget::ColorAttachmentScope::ColorAttachmentScope(RenderTarget& target, VkCommandBuffer commandBuffer)
+        : m_target(&target)
+        , m_commandBuffer(commandBuffer)
+    {
+        target.beginColorAttachment(commandBuffer);
+    }
+
+    RenderTarget::ColorAttachmentScope::~ColorAttachmentScope()
+    {
+        if (m_target)
+        {
+            m_target->endColorAttachment(m_commandBuffer);
+            m_target = nullptr;
+        }
+    }
+
+    RenderTarget::ColorAttachmentScope::ColorAttachmentScope(ColorAttachmentScope&& other) noexcept
+        : m_target(other.m_target)
+        , m_commandBuffer(other.m_commandBuffer)
+    {
+        other.m_target = nullptr;
+    }
+
+    RenderTarget::ColorAttachmentScope RenderTarget::beginColorAttachmentScope(VkCommandBuffer commandBuffer)
+    {
+        return ColorAttachmentScope(*this, commandBuffer);
     }
 
     void RenderTarget::resolve(VkCommandBuffer commandBuffer, Swapchain& swapchain, u32 imageIndex,
