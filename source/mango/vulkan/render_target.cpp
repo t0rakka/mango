@@ -688,8 +688,6 @@ void main()
                     srcStage, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
             }
 
-            updateResolveDescriptor();
-
             swapchain.transitionImageToColorAttachment(commandBuffer, imageIndex);
 
             VkRenderingAttachmentInfo colorAttachment =

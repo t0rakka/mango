@@ -138,6 +138,7 @@ public:
         if (m_renderer)
         {
             m_renderer->resize(extent);
+            m_renderer->bindTarget(m_renderTarget->view());
         }
     }
 
@@ -158,7 +159,7 @@ public:
         }
     }
 
-    void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
+    void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, u32 frameIndex, VkExtent2D extent)
     {
         vkResetCommandBuffer(cmd, 0);
 
@@ -183,6 +184,7 @@ public:
         {
             .imageView = m_renderTarget->view(),
             .extent = extent,
+            .frameIndex = frameIndex,
         });
         m_encodeTimeMs = float(Time::us() - encode_begin) / 1000.0f;
 
@@ -200,8 +202,9 @@ public:
         }
 
         const VkExtent2D extent = swapchainExtent();
+        const u32 frameIndex = swapchain().frameIndex();
         VkCommandBuffer cmd = commandBuffer(frame.imageIndex());
-        recordCommandBuffer(cmd, frame.imageIndex(), extent);
+        recordCommandBuffer(cmd, frame.imageIndex(), frameIndex, extent);
         frame.submitAndPresent(m_graphicsQueue, cmd);
     }
 

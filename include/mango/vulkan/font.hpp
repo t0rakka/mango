@@ -11,9 +11,10 @@
         renderer.beginFrame();
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
-        // Application owns its render target: clear it, encode text into it,
-        // then resolve/present to the swapchain separately.
-        renderer.encode(commandBuffer, { .imageView = targetView, .extent = extent });
+        // Application owns its render target: bind it after creation/resize,
+        // clear it, encode text into it, then resolve/present separately.
+        renderer.bindTarget(targetView);
+        renderer.encode(commandBuffer, { .imageView = targetView, .extent = extent, .frameIndex = frameIndex });
 */
 #pragma once
 
@@ -105,6 +106,8 @@ namespace mango::vulkan
     {
         VkImageView imageView = VK_NULL_HANDLE;
         VkExtent2D extent {};
+        // Swapchain frame slot from Swapchain::frameIndex() (0 .. frames-in-flight - 1).
+        u32 frameIndex = 0;
     };
 
     class FontRenderer : public NonCopyable
@@ -146,6 +149,10 @@ namespace mango::vulkan
         float descender(Font font, const TextStyle& style = {}) const;
 
         void resize(VkExtent2D extent);
+
+        // Bind the storage-image target. Call after creating or recreating the
+        // render target (not from encode). Waits for the device to become idle.
+        void bindTarget(VkImageView imageView);
 
         // Phase A: queue text for this frame (CPU only, no VkCommandBuffer).
         void beginFrame();
