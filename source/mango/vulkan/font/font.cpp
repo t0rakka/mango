@@ -167,7 +167,6 @@ namespace mango::vulkan
         Allocator* allocator = nullptr;
 
         VkExtent2D extent { 0, 0 };
-        VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
 
         VkShaderModule computeShader = VK_NULL_HANDLE;
 
@@ -212,12 +211,11 @@ namespace mango::vulkan
         std::vector<u32> batchTileFill;
         std::vector<GlyphTileRange> glyphTileRanges;
 
-        Impl(VkDevice dev, VkQueue q, u32 family, Allocator& alloc, VkFormat format)
+        Impl(VkDevice dev, VkQueue q, u32 family, Allocator& alloc)
             : device(dev)
             , queue(q)
             , queueFamily(family)
             , allocator(&alloc)
-            , targetFormat(format)
             , framesInFlight(kFramesInFlight)
         {
             createDescriptorSetLayouts();
@@ -1133,13 +1131,20 @@ namespace mango::vulkan
 
     FontRenderer::FontRenderer(const CreateInfo& info)
     {
-        if (info.device == VK_NULL_HANDLE || info.allocator == nullptr)
+        if (info.physicalDevice == VK_NULL_HANDLE || info.device == VK_NULL_HANDLE || info.allocator == nullptr)
         {
             MANGO_EXCEPTION("[FontRenderer] Invalid CreateInfo.");
         }
 
-        m_impl = std::make_unique<Impl>(info.device, info.queue, info.queueFamily,
-            *info.allocator, info.targetFormat);
+        VkPhysicalDeviceFeatures features {};
+        vkGetPhysicalDeviceFeatures(info.physicalDevice, &features);
+        if (!features.shaderStorageImageReadWithoutFormat || !features.shaderStorageImageWriteWithoutFormat)
+        {
+            MANGO_EXCEPTION("[FontRenderer] Physical device does not support shaderStorageImageReadWithoutFormat "
+                            "and shaderStorageImageWriteWithoutFormat.");
+        }
+
+        m_impl = std::make_unique<Impl>(info.device, info.queue, info.queueFamily, *info.allocator);
     }
 
     FontRenderer::~FontRenderer()

@@ -72,11 +72,11 @@ public:
 
         FontRenderer::CreateInfo fontInfo =
         {
+            .physicalDevice = m_physicalDevice,
             .device = m_device,
             .queue = m_graphicsQueue,
             .queueFamily = m_graphicsQueueFamilyIndex,
             .allocator = m_allocator.get(),
-            .targetFormat = surfaceFormat().format,
         };
 
         m_renderer = std::make_unique<FontRenderer>(fontInfo);

@@ -47,7 +47,7 @@ layout(std430, set = 1, binding = 4) readonly buffer TileGlyphBuffer
     uint tile_glyphs[];
 };
 
-layout(set = 0, binding = 0) uniform image2D target;
+layout(set = 0, binding = 0) uniform image2D target; // format from imageView
 
 struct GlyphInstance
 {

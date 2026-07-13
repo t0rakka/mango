@@ -112,11 +112,13 @@ namespace mango::vulkan
     public:
         struct CreateInfo
         {
+            VkPhysicalDevice physicalDevice = VK_NULL_HANDLE;
             VkDevice device = VK_NULL_HANDLE;
             VkQueue queue = VK_NULL_HANDLE;
             u32 queueFamily = 0;
             Allocator* allocator = nullptr;
-            VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
+            // Logical device must enable shaderStorageImageReadWithoutFormat and
+            // shaderStorageImageWriteWithoutFormat (VulkanWindow does by default).
         };
 
         explicit FontRenderer(const CreateInfo& info);
@@ -162,7 +164,9 @@ namespace mango::vulkan
                            std::string_view utf8, const ParagraphStyle& style = {});
 
         // Phase B: composite queued text into target.
-        // Target image must be in VK_IMAGE_LAYOUT_GENERAL with storage access.
+        // Target must be in VK_IMAGE_LAYOUT_GENERAL with storage usage. Any
+        // storage-compatible image view format is supported (8-bit UNORM/sRGB,
+        // fp16, etc.) when the logical device has shaderStorageImage*WithoutFormat.
         void encode(VkCommandBuffer cmd, const EncodeTarget& target);
 
     private:
