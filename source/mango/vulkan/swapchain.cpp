@@ -233,7 +233,7 @@ namespace mango::vulkan
             .imageSharingMode = VK_SHARING_MODE_EXCLUSIVE,
             .queueFamilyIndexCount = 0,
             .pQueueFamilyIndices = nullptr,
-            .preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR,
+            .preTransform = surfaceCapabilities.currentTransform,
             .compositeAlpha = VK_COMPOSITE_ALPHA_OPAQUE_BIT_KHR,
             .presentMode = presentMode,
             .clipped = VK_TRUE,
@@ -254,6 +254,7 @@ namespace mango::vulkan
         }
 
         m_swapchain = swapchain;
+        m_preTransform = surfaceCapabilities.currentTransform;
 
         return createImageViews();
     }
@@ -602,17 +603,19 @@ namespace mango::vulkan
         // updateSwapchain() recreates when the surface extent changed (or a previous
         // frame flagged it). On VK_SUBOPTIMAL_KHR / VK_ERROR_OUT_OF_DATE_KHR the acquired
         // image no longer matches the surface (the window resized mid-acquire), so we
-        // recreate and re-acquire once rather than hand back a wrong-sized drawable that
-        // would present at the wrong extent for a frame (the resize flash). Bounded to
-        // two attempts: a second consecutive mismatch is rare enough that returning it
-        // beats looping. After this returns a valid frame, getExtent() is final and the
-        // caller can lazily sync its own extent-sized resources to it.
-        for (int attempt = 0; attempt < 2; ++attempt)
+        // recreate and re-acquire rather than hand back a wrong-sized drawable.
+        static constexpr int kMaxAttempts = 8;
+
+        for (int attempt = 0; attempt < kMaxAttempts; ++attempt)
         {
             updateSwapchain();
 
             if (m_extent.width <= 1 || m_extent.height <= 1)
             {
+                if (attempt + 1 < kMaxAttempts)
+                {
+                    continue;
+                }
                 return Frame();
             }
 
@@ -622,17 +625,13 @@ namespace mango::vulkan
             if (result == VK_ERROR_OUT_OF_DATE_KHR)
             {
                 m_recreateRequired = true;
-                if (attempt == 0)
-                {
-                    continue;
-                }
-                return Frame();
+                continue;
             }
 
             if (result == VK_SUBOPTIMAL_KHR)
             {
                 m_recreateRequired = true;
-                if (attempt == 0)
+                if (attempt + 1 < kMaxAttempts)
                 {
                     continue;
                 }
@@ -642,6 +641,11 @@ namespace mango::vulkan
             if (result == VK_SUCCESS)
             {
                 return Frame(this, imageIndex, result);
+            }
+
+            if (attempt + 1 < kMaxAttempts)
+            {
+                continue;
             }
 
             return Frame();
@@ -659,10 +663,15 @@ namespace mango::vulkan
 
         bool recreated = false;
 
-        if (extent.width > 0 && extent.height > 0)
+        if (extent.width > 1 && extent.height > 1)
         {
             const bool extentChanged = extent.width != m_extent.width || extent.height != m_extent.height;
-            if (m_recreateRequired || extentChanged)
+            const bool transformChanged = m_swapchain != VK_NULL_HANDLE &&
+                surfaceCapabilities.currentTransform != m_preTransform;
+            const bool needsRecreate = m_swapchain == VK_NULL_HANDLE ||
+                m_recreateRequired || extentChanged || transformChanged;
+
+            if (needsRecreate)
             {
                 if (!recreateSwapchain(surfaceCapabilities, extent))
                 {
@@ -673,18 +682,18 @@ namespace mango::vulkan
 
                 recreated = true;
             }
-        }
 
-        m_extent = extent;
+            m_extent = extent;
+        }
 
         return recreated;
     }
 
     bool Swapchain::recreateSwapchain(const VkSurfaceCapabilitiesKHR& surfaceCapabilities, VkExtent2D extent)
     {
-        if (!m_fences.empty())
+        if (!m_submitFences.empty())
         {
-            vkWaitForFences(m_device, u32(m_fences.size()), m_fences.data(), VK_TRUE, UINT64_MAX);
+            vkWaitForFences(m_device, u32(m_submitFences.size()), m_submitFences.data(), VK_TRUE, UINT64_MAX);
         }
 
         // Fences only retire the graphics-queue submit; vkQueuePresentKHR may still be
@@ -712,6 +721,7 @@ namespace mango::vulkan
         createSyncObjects();
         m_currentFrame = 0;
         m_recreateRequired = false;
+        ++m_generation;
 
         return true;
     }

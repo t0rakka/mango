@@ -8,12 +8,13 @@
     FontRenderer is not thread-safe.
 
     Typical frame:
-        renderer.beginFrame();
+        auto frame = swapchain.beginFrame();
+        renderer.beginFrame(swapchain.frameIndex());
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
         // Application clears/renders its framebuffer first, then:
-        renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent });
-        frame.submit(graphicsQueue, cmd, renderer.frameFence());
+        renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent, .imageIndex = imageIndex });
+        frame.submitAndPresent(graphicsQueue, cmd);
 */
 #pragma once
 
@@ -57,6 +58,7 @@ namespace mango::vulkan
 
     struct TextStyle
     {
+        // RGB: glyph color. A: coverage scale (0..1) for fading text in/out.
         math::float32x4 color { 1.0f, 1.0f, 1.0f, 1.0f };
         float lineSpacing = 1.0f;
         // 0 = use the size from setSize(); otherwise rasterize at this pixel height.
@@ -105,6 +107,7 @@ namespace mango::vulkan
         VkImage image = VK_NULL_HANDLE;
         VkImageView imageView = VK_NULL_HANDLE;
         VkExtent2D extent {};
+        u32 imageIndex = 0;
     };
 
     class FontRenderer : public NonCopyable
@@ -118,7 +121,7 @@ namespace mango::vulkan
             Allocator* allocator = nullptr;
             VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
             // Ring of GPU batch buffers; must be >= concurrent in-flight encode() calls.
-            u32 maxFramesInFlight = 3;
+            u32 maxFramesInFlight = 2;
         };
 
         explicit FontRenderer(const CreateInfo& info);
@@ -148,7 +151,8 @@ namespace mango::vulkan
         void resize(VkExtent2D extent);
 
         // Phase A: queue text for this frame (CPU only, no VkCommandBuffer).
-        void beginFrame();
+        // Pass swapchain.frameIndex() from the matching beginFrame() acquire.
+        void beginFrame(u32 swapchainFrameIndex = 0);
 
         TextCursor cursor(Font font, float x, float baseline_y) const;
         TextCursor cursorTopLeft(Font font, float x, float top, const TextStyle& style = {}) const;
@@ -165,9 +169,7 @@ namespace mango::vulkan
 
         // Phase B: composite queued text into target.
         // Target image must be in VK_IMAGE_LAYOUT_GENERAL with storage access.
-        // Pass the returned fence to vkQueueSubmit (e.g. swapchain Frame::submit).
         void encode(VkCommandBuffer cmd, const EncodeTarget& target);
-        VkFence frameFence() const;
 
     private:
         struct Impl;

@@ -181,6 +181,7 @@ namespace mango::vulkan
 
         VkSurfaceFormatKHR m_surfaceFormat {};
         VkExtent2D m_swapchainExtent { 0, 0 };
+        u32 m_swapchainGeneration = 0;
 
         std::unique_ptr<Swapchain> m_swapchain;
         VkCommandPool m_commandPool = VK_NULL_HANDLE;
@@ -227,9 +228,10 @@ namespace mango::vulkan
         VkCommandPool commandPool() const { return m_commandPool; }
         VkCommandBuffer commandBuffer(u32 imageIndex) const;
 
-        // Acquire a swapchain image (handles resize/recreate internally).
+        // Acquire a swapchain image (resize/recreate/retry handled internally).
         // After a successful return, swapchainExtent() matches the drawable.
-        // Calls onSwapchainResize() when the surface extent changes.
+        // Calls onSwapchainResize() when the swapchain is recreated or the extent changes.
+        // Skip rendering when the returned Frame is empty (e.g. minimized).
         Swapchain::Frame beginDraw();
 
         void enterEventLoop();
@@ -241,6 +243,8 @@ namespace mango::vulkan
         // Called when the swapchain extent changes (resize / recreate).
         // Rebuild extent-dependent resources (depth, pipelines with fixed sizes, etc.).
         virtual void onSwapchainResize(VkExtent2D extent);
+
+        void onResize(int width, int height) override;
     };
 
     VkPhysicalDevice selectPhysicalDevice(VkInstance instance);

@@ -83,6 +83,7 @@ namespace mango::vulkan
 
         VkSurfaceFormatKHR m_surfaceFormat {};
         VkExtent2D m_extent { 0, 0 };
+        VkSurfaceTransformFlagBitsKHR m_preTransform = VK_SURFACE_TRANSFORM_IDENTITY_BIT_KHR;
         VkSwapchainKHR m_swapchain = VK_NULL_HANDLE;
 
         const Window* m_window = nullptr;
@@ -101,6 +102,7 @@ namespace mango::vulkan
         std::vector<VkFence> m_submitFences;
         std::vector<VkFence> m_imagesInFlight;
         u32 m_currentFrame = 0;
+        u32 m_generation = 0;
         bool m_recreateRequired = false;
 
         void cleanup();
@@ -143,7 +145,22 @@ namespace mango::vulkan
         // VK_SUBOPTIMAL_KHR / VK_ERROR_OUT_OF_DATE_KHR; returns true when a recreation
         // actually happened (so the caller can rebuild size-dependent resources).
         bool updateSwapchain();
+
+        // Acquire a drawable image, recreating/retrying internally on resize,
+        // OUT_OF_DATE, and SUBOPTIMAL. Callers only need to test the returned
+        // Frame (skip the frame when empty, e.g. minimized surface).
         Frame beginFrame();
+
+        // Swapchain frame slot used for the current acquire (0 .. maxImagesInFlight-1).
+        // Valid after beginFrame() returns a successful Frame, until present() advances it.
+        u32 frameIndex() const { return m_currentFrame; }
+
+        // Incremented on every successful swapchain recreation (new images/views).
+        u32 generation() const { return m_generation; }
+
+        // Request recreation on the next beginFrame() (e.g. when the host window
+        // surface has settled after fullscreen or live resize).
+        void requestRecreate() { m_recreateRequired = true; }
     };
 
 } // namespace mango::vulkan

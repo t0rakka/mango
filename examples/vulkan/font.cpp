@@ -118,9 +118,9 @@ public:
         }
     }
 
-    void buildText()
+    void buildText(u32 swapchainFrameIndex)
     {
-        m_renderer->beginFrame();
+        m_renderer->beginFrame(swapchainFrameIndex);
 
         TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 32.0f };
         TextCursor hud = m_renderer->cursorTopLeft(m_hud, 8.0f, 32.0f, hudStyle);
@@ -173,7 +173,7 @@ public:
             0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
-    void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
+    void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent, u32 swapchainFrameIndex)
     {
         vkResetCommandBuffer(cmd, 0);
 
@@ -187,7 +187,7 @@ public:
 
         const u64 queue_begin = Time::us();
 
-        buildText();
+        buildText(swapchainFrameIndex);
 
         m_queueTimeMs = float(Time::us() - queue_begin) / 1000.0f;
 
@@ -200,6 +200,7 @@ public:
             .image = swapchain().getImage(imageIndex),
             .imageView = swapchain().getImageView(imageIndex),
             .extent = extent,
+            .imageIndex = imageIndex,
         });
         m_encodeTimeMs = float(Time::us() - encode_begin) / 1000.0f;
 
@@ -216,16 +217,16 @@ public:
             return;
         }
 
+        const VkExtent2D extent = swapchainExtent();
         VkCommandBuffer cmd = commandBuffer(frame.imageIndex());
-        recordCommandBuffer(cmd, frame.imageIndex(), swapchainExtent());
-        frame.submit(m_graphicsQueue, cmd, m_renderer->frameFence());
-        frame.present();
+        recordCommandBuffer(cmd, frame.imageIndex(), extent, swapchain().frameIndex());
+        frame.submitAndPresent(m_graphicsQueue, cmd);
     }
 
     void onFrame(const FrameInfo& info) override
     {
-        constexpr float min_size = 8.0f;
-        constexpr float max_size = 120.0f;
+        constexpr float min_size = 16.0f;
+        constexpr float max_size = 128.0f;
         constexpr float cycle_seconds = 18.0f;
 
         const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;

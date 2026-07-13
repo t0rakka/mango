@@ -256,6 +256,7 @@ namespace mango::vulkan
         }
 
         m_swapchainExtent = m_swapchain->getExtent();
+        m_swapchainGeneration = m_swapchain->generation();
         allocateCommandBuffers();
     }
 
@@ -335,6 +336,7 @@ namespace mango::vulkan
         }
 
         VkExtent2D prevExtent = m_swapchainExtent;
+        const u32 prevGeneration = m_swapchainGeneration;
 
         Swapchain::Frame frame = m_swapchain->beginFrame();
         if (!frame)
@@ -345,8 +347,14 @@ namespace mango::vulkan
         VkExtent2D extent = m_swapchain->getExtent();
         ensureCommandBuffers();
 
-        if (extent.width != prevExtent.width || extent.height != prevExtent.height)
+        const u32 generation = m_swapchain->generation();
+        const bool swapchainRecreated = generation != prevGeneration;
+        const bool extentChanged = extent.width > 1 && extent.height > 1 &&
+            (extent.width != prevExtent.width || extent.height != prevExtent.height);
+
+        if (swapchainRecreated || extentChanged)
         {
+            m_swapchainGeneration = generation;
             m_swapchainExtent = extent;
             onSwapchainResize(extent);
         }
@@ -391,6 +399,19 @@ namespace mango::vulkan
     void VulkanWindow::onSwapchainResize(VkExtent2D extent)
     {
         MANGO_UNREFERENCED(extent);
+    }
+
+    void VulkanWindow::onResize(int width, int height)
+    {
+        Window::onResize(width, height);
+
+        if (m_swapchain && width > 1 && height > 1)
+        {
+            // The host surface (e.g. CAMetalLayer after fullscreen exit) can settle one
+            // frame after the last reported extent. Recreate proactively so we do not
+            // present a single stretched/clear-only SUBOPTIMAL frame.
+            m_swapchain->requestRecreate();
+        }
     }
 
 } // namespace mango::vulkan
