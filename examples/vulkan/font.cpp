@@ -59,7 +59,7 @@ protected:
 
     std::string m_bodyFontPath;
 
-    static constexpr const char* kHudFontPath = "data/NotoSans-Regular.ttf";
+    static constexpr const char* kHudFontPath = "data/fonts/NotoSans-Regular.ttf";
 
 public:
     FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& bodyFontPath)
@@ -252,7 +252,7 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string bodyFontPath = "data/GreatVibes-Regular.ttf";
+    std::string bodyFontPath = "data/fonts/GreatVibes-Regular.ttf";
 
     std::vector<const char*> enabledLayers;
 

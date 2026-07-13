@@ -1,0 +1,180 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(rgba16f, set = 0, binding = 0) uniform image2D uTarget;
+
+layout(push_constant) uniform Push
+{
+    float time;
+    float _pad0;
+    vec2 resolution;
+    vec4 mouse;
+} push;
+
+#define iTime push.time
+#define iResolution vec3(push.resolution, 1.0)
+#define iMouse push.mouse
+
+// 宏定义：最大步进次数、最大步进距离、表面容差
+#define MAX_STEPS 150
+#define MAX_DIST 30.0
+#define SURF_DIST 0.001
+
+// 基础 2D 旋转矩阵，用于相机和空间变换
+mat2 rot(float a) {
+    float s = sin(a), c = cos(a);
+    return mat2(c, -s, s, c);
+}
+
+// 核心：Mandelbulb 符号距离场 (SDF) 估计
+// 返回 vec2(距离, 轨道陷阱值用于材质着色)
+vec2 map(vec3 p) {
+    vec3 z = p;
+    float dr = 1.0;
+    float r = 0.0;
+    // 动态变化的阶数，让分形随时间"呼吸"
+    float power = 8.0 + sin(iTime * 0.3) * 2.0; 
+    float trap = 1.0; // 记录迭代中最小的长度，用于生成纹理
+    
+    for (int i = 0; i < 12; i++) { // 12次迭代保证细节
+        r = length(z);
+        if (r > 2.0) break;
+        
+        // 转换为球极坐标
+        float theta = acos(z.z / r);
+        float phi = atan(z.y, z.x);
+        
+        // 计算导数，用于距离估计
+        dr = pow(r, power - 1.0) * power * dr + 1.0;
+        
+        // 极坐标缩放和旋转
+        float zr = pow(r, power);
+        theta = theta * power;
+        phi = phi * power;
+        
+        // 转回直角坐标系
+        z = zr * vec3(sin(theta) * cos(phi), sin(phi) * sin(theta), cos(theta));
+        z += p;
+        
+        // 更新轨道陷阱
+        trap = min(trap, length(z)); 
+    }
+    return vec2(0.5 * log(r) * r / dr, trap);
+}
+
+// 利用有限差分法计算表面法线
+vec3 calcNormal(vec3 p) {
+    vec2 e = vec2(0.001, 0.0);
+    return normalize(vec3(
+        map(p + e.xyy).x - map(p - e.xyy).x,
+        map(p + e.yxy).x - map(p - e.yxy).x,
+        map(p + e.yyx).x - map(p - e.yyx).x
+    ));
+}
+
+// 计算环境光遮蔽 (Ambient Occlusion) - 增强几何体的立体感
+float calcAO(vec3 p, vec3 n) {
+    float occ = 0.0;
+    float sca = 1.0;
+    for (int i = 0; i < 5; i++) {
+        float h = 0.01 + 0.15 * float(i) / 4.0;
+        float d = map(p + h * n).x;
+        occ += (h - d) * sca;
+        sca *= 0.95;
+    }
+    return clamp(1.0 - 3.0 * occ, 0.0, 1.0);
+}
+
+// 计算软阴影 (Soft Shadow) - Inigo Quilez 算法
+float softShadow(vec3 ro, vec3 rd, float mint, float maxt, float k) {
+    float res = 1.0;
+    float t = mint;
+    for (int i = 0; i < 32; i++) {
+        float h = map(ro + rd * t).x;
+        res = min(res, k * h / t);
+        t += clamp(h, 0.02, 0.20);
+        if (h < 0.001 || t > maxt) break;
+    }
+    return clamp(res, 0.0, 1.0);
+}
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord ) {
+    vec2 uv = (fragCoord - 0.5 * iResolution.xy) / iResolution.y;
+    
+    // 1. 设置相机系统
+    float t_cam = iTime * 0.2;
+    vec3 ro = vec3(2.5 * sin(t_cam), 1.5 * cos(t_cam * 0.7), 2.5 * cos(t_cam)); 
+    vec3 lookat = vec3(0.0);
+    float zoom = 1.2;
+    
+    // 构建相机的正交基 (Forward, Right, Up)
+    vec3 f = normalize(lookat - ro);
+    vec3 r = normalize(cross(vec3(0.0, 1.0, 0.0), f));
+    vec3 u = cross(f, r);
+    vec3 rd = normalize(uv.x * r + uv.y * u + f * zoom);
+    
+    // 2. 光线步进 (Raymarching)
+    float dO = 0.0;
+    vec2 dS;
+    vec3 p;
+    for(int i = 0; i < MAX_STEPS; i++) {
+        p = ro + rd * dO;
+        dS = map(p);
+        dO += dS.x;
+        if(dO > MAX_DIST || abs(dS.x) < SURF_DIST) break;
+    }
+    
+    // 3. 渲染管线
+    vec3 col = vec3(0.05, 0.08, 0.12); // 背景色与深空氛围
+    
+    if (dO < MAX_DIST) {
+        vec3 n = calcNormal(p);
+        vec3 lightDir = normalize(vec3(1.0, 2.0, -1.0)); // 主光源方向
+        vec3 viewDir = normalize(ro - p);
+        
+        // 材质基色：利用计算出的轨道陷阱(dS.y)映射到调色板
+        vec3 albedo = 0.5 + 0.5 * cos(3.0 + dS.y * 15.0 + vec3(0.0, 0.6, 1.2));
+        
+        // PBR 光照分量
+        float diff = max(dot(n, lightDir), 0.0);
+        vec3 halfDir = normalize(lightDir + viewDir);
+        float spec = pow(max(dot(n, halfDir), 0.0), 64.0); // 高光系数
+        
+        // 阴影与 AO 采样
+        float shadow = softShadow(p, lightDir, 0.05, 10.0, 16.0);
+        float ao = calcAO(p, n);
+        
+        // 菲涅尔效应 (边缘泛光)
+        float fresnel = pow(1.0 - max(dot(n, viewDir), 0.0), 5.0);
+        
+        // 光照合成
+        vec3 ambient = vec3(0.1, 0.15, 0.2) * ao;
+        col = albedo * (diff * shadow * vec3(1.0, 0.9, 0.8) + ambient);
+        col += spec * shadow * vec3(1.0) * ao;       // 高光应用阴影和AO
+        col += fresnel * vec3(0.4, 0.7, 1.0) * ao;   // 菲涅尔反光
+    }
+    
+    // 4. 后处理：基于深度的雾化 (Fog)
+    col = mix(col, vec3(0.05, 0.08, 0.12), 1.0 - exp(-0.05 * dO * dO));
+    
+    // 5. 电影级 Gamma 校正
+    col = pow(col, vec3(0.4545));
+    
+    fragColor = vec4(col, 1.0);
+}
+void main()
+{
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(uTarget);
+    if (pixel.x >= size.x || pixel.y >= size.y)
+    {
+        return;
+    }
+
+    vec4 fragColor;
+    // Shadertoy fragCoord is bottom-left origin; Vulkan image coords are top-left.
+    vec2 fragCoord = vec2(float(pixel.x), float(size.y - pixel.y - 1)) + 0.5;
+    mainImage(fragColor, fragCoord);
+    imageStore(uTarget, pixel, vec4(fragColor.rgb, 1.0));
+}

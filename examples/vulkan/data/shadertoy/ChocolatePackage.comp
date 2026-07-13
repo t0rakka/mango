@@ -1,0 +1,115 @@
+#version 450
+
+layout(local_size_x = 16, local_size_y = 16, local_size_z = 1) in;
+
+layout(rgba16f, set = 0, binding = 0) uniform image2D uTarget;
+
+layout(push_constant) uniform Push
+{
+    float time;
+    float _pad0;
+    vec2 resolution;
+    vec4 mouse;
+} push;
+
+#define iTime push.time
+#define iResolution vec3(push.resolution, 1.0)
+#define iMouse push.mouse
+
+#define rot(a) mat2(cos(a),sin(a),-sin(a),cos(a))
+
+float lpNorm(vec3 p, float n)
+{
+	p = pow(abs(p), vec3(n));
+	return pow(p.x+p.y+p.z, 1.0/n);
+}
+
+//Fractal Parameters
+#define SCALE -2.8
+#define MR2 0.3
+#define S_VEC  vec4(SCALE,SCALE,SCALE,abs(SCALE))/MR2
+
+float map(vec3 p){
+    p.xy *= rot(iTime*0.2);
+    p.yz *= rot(iTime*0.1);
+    vec4 q = vec4(p,1), q0 = q; 
+    for (int i=0; i<10; i++) {
+        q.xyz = clamp(q.xyz, -1.0, 1.0) * 2.0 - q.xyz;
+        float r2 = pow(lpNorm(q.xyz,16.0),2.0);
+        q *= S_VEC*clamp(max(MR2/r2, MR2), 0.0, 0.9);
+        q += q0*0.5;
+    }
+    return 0.8*length(q.xyz)/q.w - 0.005;
+}
+
+
+vec3 calcNormal(vec3 pos){
+  vec2 e = vec2(1,-1) * 0.002;
+  return normalize(
+    e.xyy*map(pos+e.xyy)+e.yyx*map(pos+e.yyx)+ 
+    e.yxy*map(pos+e.yxy)+e.xxx*map(pos+e.xxx)
+  );
+}
+
+float march(vec3 ro, vec3 rd, float near, float far)
+{
+    float t=near,d;
+    for(int i=0;i<50;i++)
+    {
+        t+=d=map(ro+rd*t);
+        if (d<0.001) return t;
+        if (t>=far) return far;
+    }
+    return far;
+}
+
+float calcShadow( vec3 light, vec3 ld, float len ) {
+	float depth = march( light, ld, 0.0, len );	
+	return step( len - depth, 0.01 );
+}
+
+
+void mainImage( out vec4 fragColor, in vec2 fragCoord )
+{
+    vec2 uv = (fragCoord* 2.0 - iResolution.xy) / iResolution.y;
+    vec3 ro = vec3(0,0,4.5);
+    vec3 rd = normalize(vec3(uv,-2.0));
+    vec3 col = vec3(0);
+	const float maxd = 10.0;
+    float t = march(ro,rd,0.0,maxd);
+    if(t<maxd)
+    {
+        vec3 p=ro+rd*t;
+        col=vec3(0.9,0.3,0.2)+cos(p*0.5)*0.5+0.5;
+        vec3 n = calcNormal(p);      
+		vec3 lightPos=vec3(3);
+    	vec3 li = lightPos - p;
+		float len = length( li );
+		li /= len;
+		float dif = clamp(dot(n, li), 0.0, 1.0);
+        float sha = calcShadow( lightPos, -li, len );
+        col *= max(sha*dif, 0.2);
+        float rimd = pow(clamp(1.0 - dot(reflect(-li, n), -rd), 0.0, 1.0), 2.5);
+		float frn = rimd+2.2*(1.0-rimd);
+    	col *= frn*0.8;
+        col *= max(0.5+0.5*n.y, 0.0);
+        col *= exp2(-2.*pow(max(0.0, 1.0-map(p+n*0.3)/0.3),2.0));
+        col += vec3(0.1,0.4,0.9)*pow(clamp(dot(reflect(rd, n), li), 0.0, 1.0), 20.0);
+    }
+    fragColor.xyz = col;
+}
+void main()
+{
+    ivec2 pixel = ivec2(gl_GlobalInvocationID.xy);
+    ivec2 size = imageSize(uTarget);
+    if (pixel.x >= size.x || pixel.y >= size.y)
+    {
+        return;
+    }
+
+    vec4 fragColor;
+    // Shadertoy fragCoord is bottom-left origin; Vulkan image coords are top-left.
+    vec2 fragCoord = vec2(float(pixel.x), float(size.y - pixel.y - 1)) + 0.5;
+    mainImage(fragColor, fragCoord);
+    imageStore(uTarget, pixel, vec4(fragColor.rgb, 1.0));
+}
