@@ -99,8 +99,8 @@ namespace mango::vulkan
         void uploadTexture();
         void uploadIndexTexture();
         void uploadPalette();
-        void recordResolve(VkCommandBuffer cmd);
-        void recordPresent(VkCommandBuffer cmd, u32 imageIndex, Filter filter);
+        void recordResolve(VkCommandBuffer commandBuffer);
+        void recordPresent(VkCommandBuffer commandBuffer, u32 imageIndex, Filter filter);
 
     protected:
         void onDeviceReady() override;

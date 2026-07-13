@@ -56,7 +56,7 @@ namespace mango::vulkan
         std::string log;
         std::vector<ShaderVariable> variables;
 
-        bool valid() const;
+        operator bool () const noexcept;
         void print() const;
     };
 

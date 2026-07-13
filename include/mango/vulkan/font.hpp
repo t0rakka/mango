@@ -13,7 +13,7 @@
         renderer.drawLine(cursor, font, "Hello", style);
         // Application owns its render target: clear it, encode text into it,
         // then resolve/present to the swapchain separately.
-        renderer.encode(cmd, { .imageView = targetView, .extent = extent });
+        renderer.encode(commandBuffer, { .imageView = targetView, .extent = extent });
 */
 #pragma once
 
@@ -167,7 +167,7 @@ namespace mango::vulkan
         // Target must be in VK_IMAGE_LAYOUT_GENERAL with storage usage. Any
         // storage-compatible image view format is supported (8-bit UNORM/sRGB,
         // fp16, etc.) when the logical device has shaderStorageImage*WithoutFormat.
-        void encode(VkCommandBuffer cmd, const EncodeTarget& target);
+        void encode(VkCommandBuffer commandBuffer, const EncodeTarget& target);
 
     private:
         struct Impl;

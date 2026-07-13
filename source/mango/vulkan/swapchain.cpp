@@ -362,7 +362,7 @@ namespace mango::vulkan
         return m_imageViews[imageIndex];
     }
 
-    void Swapchain::cmdTransitionImageToColorAttachment(VkCommandBuffer commandBuffer, u32 imageIndex) const
+    void Swapchain::transitionImageToColorAttachment(VkCommandBuffer commandBuffer, u32 imageIndex) const
     {
         VkImageMemoryBarrier barrier =
         {
@@ -390,7 +390,7 @@ namespace mango::vulkan
             0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
-    void Swapchain::cmdTransitionImageToGeneral(VkCommandBuffer commandBuffer, u32 imageIndex) const
+    void Swapchain::transitionImageToGeneral(VkCommandBuffer commandBuffer, u32 imageIndex) const
     {
         VkImageMemoryBarrier barrier =
         {
@@ -418,7 +418,7 @@ namespace mango::vulkan
             0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
-    void Swapchain::cmdTransitionImageToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const
+    void Swapchain::transitionImageToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const
     {
         VkImageMemoryBarrier barrier =
         {
@@ -446,7 +446,7 @@ namespace mango::vulkan
             0, 0, nullptr, 0, nullptr, 1, &barrier);
     }
 
-    void Swapchain::cmdTransitionImageFromGeneralToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const
+    void Swapchain::transitionImageFromGeneralToPresent(VkCommandBuffer commandBuffer, u32 imageIndex) const
     {
         VkImageMemoryBarrier barrier =
         {

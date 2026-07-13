@@ -528,7 +528,7 @@ namespace mango::vulkan
     // Shader
     // ------------------------------------------------------------------------------
 
-    bool Shader::valid() const
+    Shader::operator bool () const noexcept
     {
         return !spirv.empty();
     }
@@ -673,7 +673,7 @@ namespace mango::vulkan
 
     VkShaderModule Compiler::createShaderModule(VkDevice device, const Shader& shader)
     {
-        if (!shader.valid())
+        if (!shader)
         {
             return VK_NULL_HANDLE;
         }

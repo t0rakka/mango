@@ -880,7 +880,7 @@ namespace mango::vulkan
             Compiler compiler;
             Shader compute = compiler.compile(font_shaders::computeShader(), ShaderStage::Compute);
 
-            if (!compute.valid())
+            if (!compute)
             {
                 printLine(Print::Error, "Font shader compilation failed.");
                 if (!compute.log.empty()) printLine(Print::Error, "{}", compute.log);

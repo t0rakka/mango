@@ -247,7 +247,7 @@ protected:
         vertexShader.print();
         fragmentShader.print();
 
-        if (!vertexShader.valid() || !fragmentShader.valid())
+        if (!vertexShader || !fragmentShader)
         {
             printLine(Print::Error, "Shader compilation failed.");
             if (!vertexShader.log.empty())
@@ -565,7 +565,7 @@ protected:
 
         vkBeginCommandBuffer(commandBuffer, &beginInfo);
 
-        swapchain().cmdTransitionImageToColorAttachment(commandBuffer, imageIndex);
+        swapchain().transitionImageToColorAttachment(commandBuffer, imageIndex);
 
         VkImageMemoryBarrier depthBarrier =
         {
@@ -653,7 +653,7 @@ protected:
 
         vkCmdEndRendering(commandBuffer);
 
-        swapchain().cmdTransitionImageToPresent(commandBuffer, imageIndex);
+        swapchain().transitionImageToPresent(commandBuffer, imageIndex);
 
         vkEndCommandBuffer(commandBuffer);
     }

@@ -624,7 +624,7 @@ namespace mango::vulkan
         Shader vs = compiler.compile(g_vertex_shader, ShaderStage::Vertex);
         Shader fs = compiler.compile(m_is_float ? g_fragment_shader_float : g_fragment_shader, ShaderStage::Fragment);
 
-        if (!vs.valid() || !fs.valid())
+        if (!vs || !fs)
         {
             MANGO_EXCEPTION("[VulkanFramebuffer] shader compilation failed.");
         }
@@ -861,7 +861,7 @@ namespace mango::vulkan
         Compiler compiler;
         Shader fs = compiler.compile(g_resolve_fragment_shader, ShaderStage::Fragment);
 
-        if (!fs.valid())
+        if (!fs)
         {
             MANGO_EXCEPTION("[VulkanFramebuffer] resolve shader compilation failed.");
         }
@@ -1455,7 +1455,7 @@ namespace mango::vulkan
 
     void VulkanFramebuffer::recordPresent(VkCommandBuffer cmd, u32 imageIndex, Filter filter)
     {
-        swapchain().cmdTransitionImageToColorAttachment(cmd, imageIndex);
+        swapchain().transitionImageToColorAttachment(cmd, imageIndex);
 
         VkExtent2D extent = swapchainExtent();
         u32 width = std::max(1u, extent.width);
@@ -1561,7 +1561,7 @@ namespace mango::vulkan
 
         vkCmdEndRendering(cmd);
 
-        swapchain().cmdTransitionImageToPresent(cmd, imageIndex);
+        swapchain().transitionImageToPresent(cmd, imageIndex);
     }
 
     void VulkanFramebuffer::present(Filter filter)
