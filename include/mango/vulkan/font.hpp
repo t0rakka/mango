@@ -12,7 +12,7 @@
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
         // Application clears/renders its framebuffer first, then:
-        renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent, .frameSlot = swapchainFrameSlot });
+        renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent });
 */
 #pragma once
 
@@ -104,8 +104,6 @@ namespace mango::vulkan
         VkImage image = VK_NULL_HANDLE;
         VkImageView imageView = VK_NULL_HANDLE;
         VkExtent2D extent {};
-        // Swapchain frame slot (0..N-1) for frames-in-flight buffer indexing.
-        u32 frameSlot = 0;
     };
 
     class FontRenderer : public NonCopyable
@@ -118,6 +116,8 @@ namespace mango::vulkan
             u32 queueFamily = 0;
             Allocator* allocator = nullptr;
             VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
+            // Ring of GPU batch buffers; must be >= concurrent in-flight encode() calls.
+            u32 maxFramesInFlight = 3;
         };
 
         explicit FontRenderer(const CreateInfo& info);

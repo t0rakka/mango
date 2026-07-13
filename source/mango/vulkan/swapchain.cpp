@@ -312,11 +312,6 @@ namespace mango::vulkan
         return u32(m_images.size());
     }
 
-    u32 Swapchain::currentFrameIndex() const
-    {
-        return m_currentFrame;
-    }
-
     VkSurfaceFormatKHR Swapchain::getSurfaceFormat() const
     {
         return m_surfaceFormat;

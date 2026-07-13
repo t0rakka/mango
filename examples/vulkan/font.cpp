@@ -191,7 +191,6 @@ public:
             .image = swapchain().getImage(imageIndex),
             .imageView = swapchain().getImageView(imageIndex),
             .extent = extent,
-            .frameSlot = swapchain().currentFrameIndex(),
         });
         m_encodeTimeMs = float(Time::us() - encode_begin) / 1000.0f;
 
