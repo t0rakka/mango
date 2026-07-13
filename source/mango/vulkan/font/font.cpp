@@ -178,10 +178,8 @@ namespace mango::vulkan
 
         VkDescriptorPool targetDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorPool batchDescriptorPool = VK_NULL_HANDLE;
+        std::unordered_map<VkImageView, VkDescriptorSet> targetDescriptors;
         VkDescriptorSet batchDescriptorSets[kMaxFramesInFlight] = {};
-
-        std::vector<VkDescriptorSet> targetDescriptorSets;
-        std::vector<VkImageView> targetDescriptorViews;
 
         BufferAllocation atlasContours;
         BufferAllocation atlasCurves;
@@ -199,7 +197,8 @@ namespace mango::vulkan
         VkDeviceSize instanceBufferCapacity[kMaxFramesInFlight] = {};
         VkDeviceSize tileBufferCapacity[kMaxFramesInFlight] = {};
         VkDeviceSize tileGlyphBufferCapacity[kMaxFramesInFlight] = {};
-        u32 framesInFlight = 2;
+        static constexpr u32 kFramesInFlight = 2;
+        u32 framesInFlight = kFramesInFlight;
         u32 batchSlot = 0;
 
         std::deque<FaceSlot> faces;
@@ -213,13 +212,13 @@ namespace mango::vulkan
         std::vector<u32> batchTileFill;
         std::vector<GlyphTileRange> glyphTileRanges;
 
-        Impl(VkDevice dev, VkQueue q, u32 family, Allocator& alloc, VkFormat format, u32 max_frames_in_flight)
+        Impl(VkDevice dev, VkQueue q, u32 family, Allocator& alloc, VkFormat format)
             : device(dev)
             , queue(q)
             , queueFamily(family)
             , allocator(&alloc)
             , targetFormat(format)
-            , framesInFlight(std::clamp(max_frames_in_flight, 1u, kMaxFramesInFlight))
+            , framesInFlight(kFramesInFlight)
         {
             createDescriptorSetLayouts();
             createPipelines();
@@ -531,13 +530,13 @@ namespace mango::vulkan
             }
 
             extent = newExtent;
+            batchSlot = 0;
             resetTargetDescriptors();
         }
 
         void resetTargetDescriptors()
         {
-            targetDescriptorSets.clear();
-            targetDescriptorViews.clear();
+            targetDescriptors.clear();
             if (targetDescriptorPool)
             {
                 vkResetDescriptorPool(device, targetDescriptorPool, 0);
@@ -587,41 +586,27 @@ namespace mango::vulkan
             vkUpdateDescriptorSets(device, 1, &write, 0, nullptr);
         }
 
-        VkDescriptorSet getOrCreateTargetDescriptorSet(u32 imageIndex, VkImageView imageView)
+        VkDescriptorSet getTargetDescriptorSet(VkImageView imageView)
         {
             if (!imageView)
             {
                 return VK_NULL_HANDLE;
             }
 
-            if (imageIndex >= targetDescriptorSets.size())
+            const auto found = targetDescriptors.find(imageView);
+            if (found != targetDescriptors.end())
             {
-                targetDescriptorSets.resize(imageIndex + 1);
-                targetDescriptorViews.resize(imageIndex + 1);
+                return found->second;
             }
 
-            VkDescriptorSet& descriptorSet = targetDescriptorSets[imageIndex];
-            VkImageView& boundView = targetDescriptorViews[imageIndex];
-
-            if (descriptorSet != VK_NULL_HANDLE)
-            {
-                if (boundView != imageView)
-                {
-                    writeTargetDescriptor(descriptorSet, imageView);
-                    boundView = imageView;
-                }
-                return descriptorSet;
-            }
-
-            const VkDescriptorSet newSet = allocateTargetDescriptorSet();
-            if (!newSet)
+            const VkDescriptorSet descriptorSet = allocateTargetDescriptorSet();
+            if (!descriptorSet)
             {
                 return VK_NULL_HANDLE;
             }
 
-            writeTargetDescriptor(newSet, imageView);
-            descriptorSet = newSet;
-            boundView = imageView;
+            writeTargetDescriptor(descriptorSet, imageView);
+            targetDescriptors.emplace(imageView, descriptorSet);
             return descriptorSet;
         }
 
@@ -845,11 +830,11 @@ namespace mango::vulkan
 
             vkCreateDescriptorSetLayout(device, &batchLayoutInfo, nullptr, &batchDescriptorSetLayout);
 
-            VkDescriptorPoolSize targetPoolSize = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 16 };
+            VkDescriptorPoolSize targetPoolSize = { VK_DESCRIPTOR_TYPE_STORAGE_IMAGE, 8 };
             VkDescriptorPoolCreateInfo targetPoolInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
-                .maxSets = 16,
+                .maxSets = 8,
                 .poolSizeCount = 1,
                 .pPoolSizes = &targetPoolSize,
             };
@@ -1154,7 +1139,7 @@ namespace mango::vulkan
         }
 
         m_impl = std::make_unique<Impl>(info.device, info.queue, info.queueFamily,
-            *info.allocator, info.targetFormat, info.maxFramesInFlight);
+            *info.allocator, info.targetFormat);
     }
 
     FontRenderer::~FontRenderer()
@@ -1352,9 +1337,8 @@ namespace mango::vulkan
         m_impl->resize(extent);
     }
 
-    void FontRenderer::beginFrame(u32 swapchainFrameIndex)
+    void FontRenderer::beginFrame()
     {
-        m_impl->batchSlot = swapchainFrameIndex % m_impl->framesInFlight;
         m_impl->pendingInstances.clear();
         m_impl->pendingRects.clear();
     }
@@ -1475,12 +1459,15 @@ namespace mango::vulkan
             return;
         }
 
-        const VkDescriptorSet targetSet = m_impl->getOrCreateTargetDescriptorSet(target.imageIndex, target.imageView);
+        const VkDescriptorSet targetSet = m_impl->getTargetDescriptorSet(target.imageView);
         if (!targetSet)
         {
             return;
         }
-        m_impl->flushTextBatch(cmd, bounds, targetSet, m_impl->batchSlot);
+
+        const u32 batchSlot = m_impl->batchSlot;
+        m_impl->flushTextBatch(cmd, bounds, targetSet, batchSlot);
+        m_impl->batchSlot = (batchSlot + 1) % m_impl->framesInFlight;
         m_impl->pendingInstances.clear();
         m_impl->pendingRects.clear();
     }

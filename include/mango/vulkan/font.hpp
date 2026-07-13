@@ -8,12 +8,11 @@
     FontRenderer is not thread-safe.
 
     Typical frame:
-        auto frame = swapchain.beginFrame();
-        renderer.beginFrame(swapchain.frameIndex());
+        renderer.beginFrame();
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
         // Application clears/renders its framebuffer first, then:
-        renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent, .imageIndex = imageIndex });
+        renderer.encode(cmd, { .imageView = targetView, .extent = extent });
         frame.submitAndPresent(graphicsQueue, cmd);
 */
 #pragma once
@@ -104,10 +103,8 @@ namespace mango::vulkan
 
     struct EncodeTarget
     {
-        VkImage image = VK_NULL_HANDLE;
         VkImageView imageView = VK_NULL_HANDLE;
         VkExtent2D extent {};
-        u32 imageIndex = 0;
     };
 
     class FontRenderer : public NonCopyable
@@ -120,8 +117,6 @@ namespace mango::vulkan
             u32 queueFamily = 0;
             Allocator* allocator = nullptr;
             VkFormat targetFormat = VK_FORMAT_B8G8R8A8_UNORM;
-            // Ring of GPU batch buffers; must be >= concurrent in-flight encode() calls.
-            u32 maxFramesInFlight = 2;
         };
 
         explicit FontRenderer(const CreateInfo& info);
@@ -151,8 +146,7 @@ namespace mango::vulkan
         void resize(VkExtent2D extent);
 
         // Phase A: queue text for this frame (CPU only, no VkCommandBuffer).
-        // Pass swapchain.frameIndex() from the matching beginFrame() acquire.
-        void beginFrame(u32 swapchainFrameIndex = 0);
+        void beginFrame();
 
         TextCursor cursor(Font font, float x, float baseline_y) const;
         TextCursor cursorTopLeft(Font font, float x, float top, const TextStyle& style = {}) const;
