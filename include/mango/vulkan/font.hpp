@@ -11,9 +11,9 @@
         renderer.beginFrame();
         auto cursor = renderer.cursorTopLeft(font, 8, 32, style);
         renderer.drawLine(cursor, font, "Hello", style);
-        // Application clears/renders its framebuffer first, then:
+        // Application owns its render target: clear it, encode text into it,
+        // then resolve/present to the swapchain separately.
         renderer.encode(cmd, { .imageView = targetView, .extent = extent });
-        frame.submitAndPresent(graphicsQueue, cmd);
 */
 #pragma once
 

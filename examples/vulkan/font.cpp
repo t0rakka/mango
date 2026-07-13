@@ -15,15 +15,88 @@
 #include <mango/math/math.hpp>
 #include <mango/vulkan/vulkan.hpp>
 #include <mango/vulkan/allocator.hpp>
+#include <mango/vulkan/compiler.hpp>
 #include <mango/vulkan/font.hpp>
 
 using namespace mango;
 using namespace mango::math;
 using namespace mango::vulkan;
 
+namespace
+{
+
+    const char* g_resolve_vertex_shader = R"(#version 450
+layout(location = 0) out vec2 vTexcoord;
+
+vec2 positions[3] = vec2[](
+    vec2(-1.0, -1.0),
+    vec2( 3.0, -1.0),
+    vec2(-1.0,  3.0)
+);
+
+vec2 texcoords[3] = vec2[](
+    vec2(0.0, 0.0),
+    vec2(2.0, 0.0),
+    vec2(0.0, 2.0)
+);
+
+void main()
+{
+    gl_Position = vec4(positions[gl_VertexIndex], 0.0, 1.0);
+    vTexcoord = texcoords[gl_VertexIndex];
+}
+)";
+
+    const char* g_resolve_fragment_shader = R"(#version 450
+layout(location = 0) in vec2 vTexcoord;
+layout(location = 0) out vec4 outColor;
+
+layout(set = 0, binding = 0) uniform sampler2D uTexture;
+
+void main()
+{
+    outColor = texture(uTexture, vTexcoord);
+}
+)";
+
+    void cmdImageBarrier(VkCommandBuffer cmd, VkImage image, VkImageLayout& trackedLayout,
+                         VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess,
+                         VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
+    {
+        if (trackedLayout == newLayout && srcAccess == 0 && dstAccess == 0)
+        {
+            return;
+        }
+
+        VkImageMemoryBarrier barrier =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_MEMORY_BARRIER,
+            .srcAccessMask = srcAccess,
+            .dstAccessMask = dstAccess,
+            .oldLayout = trackedLayout,
+            .newLayout = newLayout,
+            .image = image,
+            .subresourceRange =
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            },
+        };
+
+        vkCmdPipelineBarrier(cmd, srcStage, dstStage, 0, 0, nullptr, 0, nullptr, 1, &barrier);
+        trackedLayout = newLayout;
+    }
+
+} // namespace
+
 class FontWindow : public VulkanWindow
 {
 protected:
+    static constexpr VkFormat kRenderTargetFormat = VK_FORMAT_R8G8B8A8_UNORM;
+
     std::unique_ptr<Allocator> m_allocator;
     std::unique_ptr<FontRenderer> m_renderer;
     Font m_body;
@@ -58,6 +131,21 @@ protected:
     std::string m_bodyFontPath;
 
     static constexpr const char* kHudFontPath = "data/NotoSans-Regular.ttf";
+
+    ImageAllocation m_renderTarget;
+    VkImageView m_renderTargetView = VK_NULL_HANDLE;
+    VkExtent2D m_renderExtent {};
+    VkImageLayout m_renderTargetLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+    VkShaderModule m_resolveVertexShader = VK_NULL_HANDLE;
+    VkShaderModule m_resolveFragmentShader = VK_NULL_HANDLE;
+    VkDescriptorSetLayout m_resolveDescriptorLayout = VK_NULL_HANDLE;
+    VkPipelineLayout m_resolvePipelineLayout = VK_NULL_HANDLE;
+    VkPipeline m_resolvePipeline = VK_NULL_HANDLE;
+    VkDescriptorPool m_resolveDescriptorPool = VK_NULL_HANDLE;
+    VkDescriptorSet m_resolveDescriptorSet = VK_NULL_HANDLE;
+    VkSampler m_resolveSampler = VK_NULL_HANDLE;
+    VkFormat m_swapchainFormat = VK_FORMAT_UNDEFINED;
 
 public:
     FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& bodyFontPath)
@@ -97,14 +185,16 @@ public:
             m_renderer->setSize(m_body, m_fontPixelHeight);
         }
 
-        m_renderer->resize(swapchainExtent());
+        m_swapchainFormat = swapchain().getFormat();
+        recreateRenderResources(swapchainExtent());
     }
 
     void onSwapchainResize(VkExtent2D extent) override
     {
-        if (m_renderer && extent.width > 0 && extent.height > 0)
+        if (extent.width > 0 && extent.height > 0)
         {
-            m_renderer->resize(extent);
+            m_swapchainFormat = swapchain().getFormat();
+            recreateRenderResources(extent);
         }
     }
 
@@ -113,9 +203,329 @@ public:
         if (m_device != VK_NULL_HANDLE)
         {
             vkDeviceWaitIdle(m_device);
+            destroyResolvePass();
+            destroyRenderTarget();
             m_renderer.reset();
             m_allocator.reset();
         }
+    }
+
+    void recreateRenderResources(VkExtent2D extent)
+    {
+        if (!m_allocator || extent.width == 0 || extent.height == 0)
+        {
+            return;
+        }
+
+        vkDeviceWaitIdle(m_device);
+
+        destroyResolvePass();
+        destroyRenderTarget();
+
+        m_renderExtent = extent;
+        m_swapchainFormat = swapchain().getFormat();
+        createRenderTarget(extent);
+        createResolvePass();
+
+        if (m_renderer)
+        {
+            m_renderer->resize(extent);
+        }
+    }
+
+    void createRenderTarget(VkExtent2D extent)
+    {
+        VkImageCreateInfo imageInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = kRenderTargetFormat,
+            .extent = { extent.width, extent.height, 1 },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_STORAGE_BIT | VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+        };
+
+        m_renderTarget = m_allocator->createImage(imageInfo, MemoryUsage::GpuOnly);
+
+        VkImageViewCreateInfo viewInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_VIEW_CREATE_INFO,
+            .image = m_renderTarget.image,
+            .viewType = VK_IMAGE_VIEW_TYPE_2D,
+            .format = kRenderTargetFormat,
+            .subresourceRange =
+            {
+                .aspectMask = VK_IMAGE_ASPECT_COLOR_BIT,
+                .baseMipLevel = 0,
+                .levelCount = 1,
+                .baseArrayLayer = 0,
+                .layerCount = 1,
+            },
+        };
+
+        vkCreateImageView(m_device, &viewInfo, nullptr, &m_renderTargetView);
+        m_renderTargetLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+
+        VkCommandPoolCreateInfo poolInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
+        };
+
+        VkCommandPool pool = VK_NULL_HANDLE;
+        vkCreateCommandPool(m_device, &poolInfo, nullptr, &pool);
+
+        VkCommandBufferAllocateInfo allocInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_ALLOCATE_INFO,
+            .commandPool = pool,
+            .level = VK_COMMAND_BUFFER_LEVEL_PRIMARY,
+            .commandBufferCount = 1,
+        };
+
+        VkCommandBuffer cmd = VK_NULL_HANDLE;
+        vkAllocateCommandBuffers(m_device, &allocInfo, &cmd);
+
+        VkCommandBufferBeginInfo beginInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_BUFFER_BEGIN_INFO,
+            .flags = VK_COMMAND_BUFFER_USAGE_ONE_TIME_SUBMIT_BIT,
+        };
+
+        vkBeginCommandBuffer(cmd, &beginInfo);
+        cmdImageBarrier(cmd, m_renderTarget.image, m_renderTargetLayout,
+            VK_IMAGE_LAYOUT_GENERAL, 0, VK_ACCESS_SHADER_WRITE_BIT,
+            VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+        vkEndCommandBuffer(cmd);
+
+        VkFenceCreateInfo fenceInfo = { .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO };
+        VkFence fence = VK_NULL_HANDLE;
+        vkCreateFence(m_device, &fenceInfo, nullptr, &fence);
+
+        VkSubmitInfo submitInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+            .commandBufferCount = 1,
+            .pCommandBuffers = &cmd,
+        };
+
+        vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, fence);
+        vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX);
+
+        vkDestroyFence(m_device, fence, nullptr);
+        vkFreeCommandBuffers(m_device, pool, 1, &cmd);
+        vkDestroyCommandPool(m_device, pool, nullptr);
+    }
+
+    void destroyRenderTarget()
+    {
+        if (m_renderTargetView)
+        {
+            vkDestroyImageView(m_device, m_renderTargetView, nullptr);
+            m_renderTargetView = VK_NULL_HANDLE;
+        }
+
+        if (m_renderTarget)
+        {
+            m_allocator->destroyImage(m_renderTarget);
+            m_renderTarget = {};
+        }
+
+        m_renderExtent = {};
+        m_renderTargetLayout = VK_IMAGE_LAYOUT_UNDEFINED;
+    }
+
+    void createResolvePass()
+    {
+        if (m_swapchainFormat == VK_FORMAT_UNDEFINED)
+        {
+            printLine(Print::Error, "Font example: swapchain format not available for resolve pass.");
+            return;
+        }
+
+        Compiler compiler;
+        Shader vs = compiler.compile(g_resolve_vertex_shader, ShaderStage::Vertex);
+        Shader fs = compiler.compile(g_resolve_fragment_shader, ShaderStage::Fragment);
+
+        if (!vs.valid() || !fs.valid())
+        {
+            printLine(Print::Error, "Font example resolve shader compilation failed.");
+            return;
+        }
+
+        m_resolveVertexShader = Compiler::createShaderModule(m_device, vs);
+        m_resolveFragmentShader = Compiler::createShaderModule(m_device, fs);
+
+        VkDescriptorSetLayoutBinding binding =
+        {
+            .binding = 0,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .descriptorCount = 1,
+            .stageFlags = VK_SHADER_STAGE_FRAGMENT_BIT,
+        };
+
+        VkDescriptorSetLayoutCreateInfo layoutInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_LAYOUT_CREATE_INFO,
+            .bindingCount = 1,
+            .pBindings = &binding,
+        };
+
+        vkCreateDescriptorSetLayout(m_device, &layoutInfo, nullptr, &m_resolveDescriptorLayout);
+
+        VkPipelineLayoutCreateInfo pipelineLayoutInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_LAYOUT_CREATE_INFO,
+            .setLayoutCount = 1,
+            .pSetLayouts = &m_resolveDescriptorLayout,
+        };
+
+        vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_resolvePipelineLayout);
+
+        VkDescriptorPoolSize poolSize = { VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER, 1 };
+        VkDescriptorPoolCreateInfo poolInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
+            .maxSets = 1,
+            .poolSizeCount = 1,
+            .pPoolSizes = &poolSize,
+        };
+
+        vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_resolveDescriptorPool);
+
+        VkDescriptorSetAllocateInfo allocInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
+            .descriptorPool = m_resolveDescriptorPool,
+            .descriptorSetCount = 1,
+            .pSetLayouts = &m_resolveDescriptorLayout,
+        };
+
+        vkAllocateDescriptorSets(m_device, &allocInfo, &m_resolveDescriptorSet);
+
+        VkSamplerCreateInfo samplerInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
+            .magFilter = VK_FILTER_NEAREST,
+            .minFilter = VK_FILTER_NEAREST,
+            .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+            .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
+        };
+
+        vkCreateSampler(m_device, &samplerInfo, nullptr, &m_resolveSampler);
+
+        VkDescriptorImageInfo imageInfo =
+        {
+            .sampler = m_resolveSampler,
+            .imageView = m_renderTargetView,
+            .imageLayout = VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+        };
+
+        VkWriteDescriptorSet write =
+        {
+            .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
+            .dstSet = m_resolveDescriptorSet,
+            .dstBinding = 0,
+            .descriptorCount = 1,
+            .descriptorType = VK_DESCRIPTOR_TYPE_COMBINED_IMAGE_SAMPLER,
+            .pImageInfo = &imageInfo,
+        };
+
+        vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+
+        VkPipelineShaderStageCreateInfo stages[] =
+        {
+            { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, .stage = VK_SHADER_STAGE_VERTEX_BIT, .module = m_resolveVertexShader, .pName = "main" },
+            { .sType = VK_STRUCTURE_TYPE_PIPELINE_SHADER_STAGE_CREATE_INFO, .stage = VK_SHADER_STAGE_FRAGMENT_BIT, .module = m_resolveFragmentShader, .pName = "main" },
+        };
+
+        VkPipelineVertexInputStateCreateInfo vertexInputInfo = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VERTEX_INPUT_STATE_CREATE_INFO };
+        VkPipelineInputAssemblyStateCreateInfo inputAssembly = { .sType = VK_STRUCTURE_TYPE_PIPELINE_INPUT_ASSEMBLY_STATE_CREATE_INFO, .topology = VK_PRIMITIVE_TOPOLOGY_TRIANGLE_LIST };
+        VkPipelineViewportStateCreateInfo viewportState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_VIEWPORT_STATE_CREATE_INFO, .viewportCount = 1, .scissorCount = 1 };
+        VkDynamicState dynamicStates[] = { VK_DYNAMIC_STATE_VIEWPORT, VK_DYNAMIC_STATE_SCISSOR };
+        VkPipelineDynamicStateCreateInfo dynamicState = { .sType = VK_STRUCTURE_TYPE_PIPELINE_DYNAMIC_STATE_CREATE_INFO, .dynamicStateCount = 2, .pDynamicStates = dynamicStates };
+        VkPipelineRasterizationStateCreateInfo rasterizer = { .sType = VK_STRUCTURE_TYPE_PIPELINE_RASTERIZATION_STATE_CREATE_INFO, .polygonMode = VK_POLYGON_MODE_FILL, .cullMode = VK_CULL_MODE_NONE, .lineWidth = 1.0f };
+        VkPipelineMultisampleStateCreateInfo multisampling = { .sType = VK_STRUCTURE_TYPE_PIPELINE_MULTISAMPLE_STATE_CREATE_INFO, .rasterizationSamples = VK_SAMPLE_COUNT_1_BIT };
+        VkPipelineColorBlendAttachmentState blendAttachment { .colorWriteMask = 0xF };
+        VkPipelineColorBlendStateCreateInfo blending = { .sType = VK_STRUCTURE_TYPE_PIPELINE_COLOR_BLEND_STATE_CREATE_INFO, .attachmentCount = 1, .pAttachments = &blendAttachment };
+
+        VkFormat colorFormat = m_swapchainFormat;
+        VkPipelineRenderingCreateInfo renderingCreateInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_PIPELINE_RENDERING_CREATE_INFO,
+            .colorAttachmentCount = 1,
+            .pColorAttachmentFormats = &colorFormat,
+        };
+
+        VkGraphicsPipelineCreateInfo pipelineInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_GRAPHICS_PIPELINE_CREATE_INFO,
+            .pNext = &renderingCreateInfo,
+            .stageCount = 2,
+            .pStages = stages,
+            .pVertexInputState = &vertexInputInfo,
+            .pInputAssemblyState = &inputAssembly,
+            .pViewportState = &viewportState,
+            .pRasterizationState = &rasterizer,
+            .pMultisampleState = &multisampling,
+            .pColorBlendState = &blending,
+            .pDynamicState = &dynamicState,
+            .layout = m_resolvePipelineLayout,
+        };
+
+        vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_resolvePipeline);
+    }
+
+    void destroyResolvePass()
+    {
+        if (m_resolvePipeline)
+        {
+            vkDestroyPipeline(m_device, m_resolvePipeline, nullptr);
+            m_resolvePipeline = VK_NULL_HANDLE;
+        }
+
+        if (m_resolvePipelineLayout)
+        {
+            vkDestroyPipelineLayout(m_device, m_resolvePipelineLayout, nullptr);
+            m_resolvePipelineLayout = VK_NULL_HANDLE;
+        }
+
+        if (m_resolveDescriptorPool)
+        {
+            vkDestroyDescriptorPool(m_device, m_resolveDescriptorPool, nullptr);
+            m_resolveDescriptorPool = VK_NULL_HANDLE;
+        }
+
+        if (m_resolveDescriptorLayout)
+        {
+            vkDestroyDescriptorSetLayout(m_device, m_resolveDescriptorLayout, nullptr);
+            m_resolveDescriptorLayout = VK_NULL_HANDLE;
+        }
+
+        if (m_resolveSampler)
+        {
+            vkDestroySampler(m_device, m_resolveSampler, nullptr);
+            m_resolveSampler = VK_NULL_HANDLE;
+        }
+
+        if (m_resolveVertexShader)
+        {
+            vkDestroyShaderModule(m_device, m_resolveVertexShader, nullptr);
+            m_resolveVertexShader = VK_NULL_HANDLE;
+        }
+
+        if (m_resolveFragmentShader)
+        {
+            vkDestroyShaderModule(m_device, m_resolveFragmentShader, nullptr);
+            m_resolveFragmentShader = VK_NULL_HANDLE;
+        }
+
+        m_resolveDescriptorSet = VK_NULL_HANDLE;
     }
 
     void buildText()
@@ -135,9 +545,12 @@ public:
         }
     }
 
-    void clearSwapchain(VkCommandBuffer cmd, u32 imageIndex)
+    void clearRenderTarget(VkCommandBuffer cmd)
     {
-        VkImage image = swapchain().getImage(imageIndex);
+        if (!m_renderTarget)
+        {
+            return;
+        }
 
         VkClearColorValue clearValue {};
         clearValue.float32[0] = 0.1f;
@@ -154,7 +567,7 @@ public:
             .layerCount = 1,
         };
 
-        vkCmdClearColorImage(cmd, image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &range);
+        vkCmdClearColorImage(cmd, m_renderTarget.image, VK_IMAGE_LAYOUT_GENERAL, &clearValue, 1, &range);
 
         VkImageMemoryBarrier barrier =
         {
@@ -163,7 +576,7 @@ public:
             .dstAccessMask = VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
             .oldLayout = VK_IMAGE_LAYOUT_GENERAL,
             .newLayout = VK_IMAGE_LAYOUT_GENERAL,
-            .image = image,
+            .image = m_renderTarget.image,
             .subresourceRange = range,
         };
 
@@ -171,6 +584,67 @@ public:
             VK_PIPELINE_STAGE_TRANSFER_BIT,
             VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT,
             0, 0, nullptr, 0, nullptr, 1, &barrier);
+    }
+
+    void resolveToSwapchain(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
+    {
+        if (!m_renderTarget || !m_resolvePipeline)
+        {
+            return;
+        }
+
+        cmdImageBarrier(cmd, m_renderTarget.image, m_renderTargetLayout,
+            VK_IMAGE_LAYOUT_SHADER_READ_ONLY_OPTIMAL,
+            VK_ACCESS_SHADER_WRITE_BIT, VK_ACCESS_SHADER_READ_BIT,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+
+        swapchain().cmdTransitionImageToColorAttachment(cmd, imageIndex);
+
+        VkRenderingAttachmentInfo colorAttachment =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_ATTACHMENT_INFO,
+            .imageView = swapchain().getImageView(imageIndex),
+            .imageLayout = VK_IMAGE_LAYOUT_COLOR_ATTACHMENT_OPTIMAL,
+            .loadOp = VK_ATTACHMENT_LOAD_OP_DONT_CARE,
+            .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
+        };
+
+        VkRect2D renderArea = { .extent = extent };
+
+        VkRenderingInfo renderingInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_RENDERING_INFO,
+            .renderArea = renderArea,
+            .layerCount = 1,
+            .colorAttachmentCount = 1,
+            .pColorAttachments = &colorAttachment,
+        };
+
+        vkCmdBeginRendering(cmd, &renderingInfo);
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_resolvePipeline);
+
+        VkViewport viewport =
+        {
+            .x = 0.0f,
+            .y = 0.0f,
+            .width = float(extent.width),
+            .height = float(extent.height),
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+
+        vkCmdSetViewport(cmd, 0, 1, &viewport);
+        vkCmdSetScissor(cmd, 0, 1, &renderArea);
+        vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_resolvePipelineLayout, 0, 1, &m_resolveDescriptorSet, 0, nullptr);
+        vkCmdDraw(cmd, 3, 1, 0, 0);
+        vkCmdEndRendering(cmd);
+
+        swapchain().cmdTransitionImageToPresent(cmd, imageIndex);
+
+        cmdImageBarrier(cmd, m_renderTarget.image, m_renderTargetLayout,
+            VK_IMAGE_LAYOUT_GENERAL,
+            VK_ACCESS_SHADER_READ_BIT, VK_ACCESS_SHADER_WRITE_BIT,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
     }
 
     void recordCommandBuffer(VkCommandBuffer cmd, u32 imageIndex, VkExtent2D extent)
@@ -191,18 +665,17 @@ public:
 
         m_queueTimeMs = float(Time::us() - queue_begin) / 1000.0f;
 
-        swapchain().cmdTransitionImageToGeneral(cmd, imageIndex);
-        clearSwapchain(cmd, imageIndex);
+        clearRenderTarget(cmd);
 
         const u64 encode_begin = Time::us();
         m_renderer->encode(cmd,
         {
-            .imageView = swapchain().getImageView(imageIndex),
+            .imageView = m_renderTargetView,
             .extent = extent,
         });
         m_encodeTimeMs = float(Time::us() - encode_begin) / 1000.0f;
 
-        swapchain().cmdTransitionImageFromGeneralToPresent(cmd, imageIndex);
+        resolveToSwapchain(cmd, imageIndex, extent);
 
         vkEndCommandBuffer(cmd);
     }
@@ -210,7 +683,7 @@ public:
     void render()
     {
         auto frame = beginDraw();
-        if (!frame)
+        if (!frame || !m_renderTarget)
         {
             return;
         }
