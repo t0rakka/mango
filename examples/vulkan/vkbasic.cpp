@@ -829,17 +829,27 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    MANGO_UNREFERENCED(commands);
+    std::vector<const char*> enabledLayers;
 
-    //printEnable(Print::Info, true);
-    //Window::setWindowSystem(WindowSystem::Xcb);
+    for (size_t i = 1; i < commands.size(); ++i)
+    {
+        std::string arg = std::string(commands[i]);
+        if (arg == "--info")
+        {
+            printEnable(Print::Info, true);
+        }
+        else if (arg == "--validate")
+        {
+            enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+        }
+    }
+
 
     InstanceExtensionProperties instanceExtensionProperties;
 
     printLine(Print::Info, "InstanceExtensionProperties:");
     instanceExtensionProperties.print();
 
-    std::vector<const char*> enabledLayers;// = { "VK_LAYER_KHRONOS_validation" };
     std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
 
     if (instanceExtensionProperties.contains(VK_EXT_SWAPCHAIN_COLOR_SPACE_EXTENSION_NAME))

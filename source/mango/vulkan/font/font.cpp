@@ -14,6 +14,7 @@
 #include <mango/vulkan/font.hpp>
 #include <mango/vulkan/allocator.hpp>
 #include <mango/vulkan/compiler.hpp>
+#include <mango/vulkan/vulkan.hpp>
 #include <mango/core/print.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/string.hpp>
@@ -93,25 +94,6 @@ namespace mango::vulkan
             u32 ty1 = 0;
         };
 
-        struct LineInkMetrics
-        {
-            float screen_y = 0.0f;
-            float em_window_y0 = 0.0f;
-            u32 pixel_height = 1;
-        };
-
-        static LineInkMetrics computeLineInkMetrics(const font::Face& face, float baseline_y)
-        {
-            const float pixel_scale = face.pixelScale();
-            const float em_per_pixel = face.emPerPixel();
-
-            LineInkMetrics metrics;
-            metrics.screen_y = std::floor(baseline_y - float(face.ascent) * pixel_scale);
-            metrics.em_window_y0 = (baseline_y - (metrics.screen_y + 1.0f)) * em_per_pixel;
-            metrics.pixel_height = std::max(1u, u32(std::ceil(float(face.ascent - face.descent) * pixel_scale)));
-            return metrics;
-        }
-
         struct TextBounds
         {
             u32 x0 = 0;
@@ -147,6 +129,32 @@ namespace mango::vulkan
         static float effectivePixelHeight(const FaceSlot& slot, float stylePixelHeight)
         {
             return stylePixelHeight > 0.0f ? stylePixelHeight : slot.pixelHeight;
+        }
+
+        static GlyphDrawParams makeGlyphDrawParams(float origin_x, float baseline_y,
+                                                   const CachedGlyph& cached,
+                                                   float pixel_scale, float em_per_pixel,
+                                                   float32x4 color, float stemDarkening)
+        {
+            const float float_left = origin_x + cached.cpu.bounds_min.x * pixel_scale;
+            const float float_right = origin_x + cached.cpu.bounds_max.x * pixel_scale;
+            const float float_top = baseline_y - cached.cpu.bounds_max.y * pixel_scale;
+            const float float_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
+
+            const float screen_x = std::floor(float_left);
+            const float screen_y = std::floor(float_top);
+
+            GlyphDrawParams params;
+            params.screen_x = screen_x;
+            params.screen_y = screen_y;
+            params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
+            params.em_window_y0 = (baseline_y - (screen_y + 1.0f)) * em_per_pixel;
+            params.em_per_pixel = em_per_pixel;
+            params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
+            params.pixel_height = std::max(1u, u32(std::ceil(float_bottom - screen_y)));
+            params.color = color;
+            params.stem_darkening = stemDarkening;
+            return params;
         }
 
     } // namespace
@@ -192,6 +200,8 @@ namespace mango::vulkan
         VkDeviceSize tileGlyphBufferCapacity[kMaxFramesInFlight] = {};
         u32 framesInFlight = 3;
         u32 batchFrameSlot = 0;
+        u32 lastEncodedSlot = 0;
+        VkFence batchSlotFences[kMaxFramesInFlight] = {};
 
         std::deque<FaceSlot> faces;
         std::unordered_map<u64, CachedGlyph> glyphCache;
@@ -213,6 +223,7 @@ namespace mango::vulkan
             , framesInFlight(std::clamp(max_frames_in_flight, 1u, kMaxFramesInFlight))
         {
             createDescriptorSetLayouts();
+            createBatchFences();
             createPipelines();
         }
 
@@ -262,6 +273,8 @@ namespace mango::vulkan
             {
                 vkDestroyShaderModule(device, computeShader, nullptr);
             }
+
+            destroyBatchFences();
         }
 
         FaceSlot* validateHandle(Font font)
@@ -420,7 +433,6 @@ namespace mango::vulkan
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
-                const LineInkMetrics line = computeLineInkMetrics(face, baseline_y);
 
                 for (size_t i = 0; i < codepoints.size(); ++i)
                 {
@@ -438,25 +450,8 @@ namespace mango::vulkan
                         continue;
                     }
 
-                    const float ink_right_em = std::min(cached.cpu.bounds_max.x,
-                        cached.cpu.bounds_min.x + cached.cpu.advance);
-                    const float float_left = pen_x + cached.cpu.bounds_min.x * pixel_scale;
-                    const float float_right = pen_x + ink_right_em * pixel_scale;
-
-                    const float screen_x = std::floor(float_left);
-
-                    GlyphDrawParams params;
-                    params.screen_x = screen_x;
-                    params.screen_y = line.screen_y;
-                    params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
-                    params.em_window_y0 = line.em_window_y0;
-                    params.em_per_pixel = em_per_pixel;
-                    params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
-                    params.pixel_height = line.pixel_height;
-                    params.color = color;
-                    params.stem_darkening = stemDarkening;
-
-                    queueGlyph(cached.atlas, params);
+                    queueGlyph(cached.atlas,
+                        makeGlyphDrawParams(pen_x, baseline_y, cached, pixel_scale, em_per_pixel, color, stemDarkening));
 
                     pen_x += cached.cpu.advance * pixel_scale;
                     if (next)
@@ -516,8 +511,6 @@ namespace mango::vulkan
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
-                const float baseline_y = line.glyphs[0].y;
-                const LineInkMetrics line_metrics = computeLineInkMetrics(face, baseline_y);
 
                 for (const font::PositionedGlyph& pg : line.glyphs)
                 {
@@ -528,25 +521,8 @@ namespace mango::vulkan
                         continue;
                     }
 
-                    const float ink_right_em = std::min(cached.cpu.bounds_max.x,
-                        cached.cpu.bounds_min.x + cached.cpu.advance);
-                    const float float_left = pg.x + cached.cpu.bounds_min.x * pixel_scale;
-                    const float float_right = pg.x + ink_right_em * pixel_scale;
-
-                    const float screen_x = std::floor(float_left);
-
-                    GlyphDrawParams params;
-                    params.screen_x = screen_x;
-                    params.screen_y = line_metrics.screen_y;
-                    params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
-                    params.em_window_y0 = line_metrics.em_window_y0;
-                    params.em_per_pixel = em_per_pixel;
-                    params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
-                    params.pixel_height = line_metrics.pixel_height;
-                    params.color = color;
-                    params.stem_darkening = stemDarkening;
-
-                    queueGlyph(cached.atlas, params);
+                    queueGlyph(cached.atlas,
+                        makeGlyphDrawParams(pg.x, pg.y, cached, pixel_scale, em_per_pixel, color, stemDarkening));
                 }
             });
         }
@@ -714,6 +690,16 @@ namespace mango::vulkan
             BufferAllocation& instanceBuffer = instanceBuffers[slot];
             BufferAllocation& tileBuffer = tileBuffers[slot];
             BufferAllocation& tileGlyphBuffer = tileGlyphBuffers[slot];
+
+            VkFence slot_fence = batchSlotFences[slot];
+            VkResult wait_result = vkWaitForFences(device, 1, &slot_fence, VK_TRUE, UINT64_MAX);
+            if (wait_result != VK_SUCCESS)
+            {
+                printLine(Print::Error, "FontRenderer: vkWaitForFences failed: {}", getString(wait_result));
+                return;
+            }
+
+            vkResetFences(device, 1, &slot_fence);
 
             ensureBatchBuffer(slot, instanceBuffer, instanceBufferCapacity[slot], instance_bytes);
             ensureBatchBuffer(slot, tileBuffer, tileBufferCapacity[slot], tile_bytes);
@@ -926,6 +912,32 @@ namespace mango::vulkan
                 tileGlyphBuffers[i] = allocator->createBuffer(tileGlyphBufferCapacity[i],
                     VK_BUFFER_USAGE_STORAGE_BUFFER_BIT, MemoryUsage::Upload, true);
                 updateBatchDescriptors(i);
+            }
+        }
+
+        void createBatchFences()
+        {
+            VkFenceCreateInfo fenceInfo =
+            {
+                .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
+                .flags = VK_FENCE_CREATE_SIGNALED_BIT,
+            };
+
+            for (u32 i = 0; i < framesInFlight; ++i)
+            {
+                vkCreateFence(device, &fenceInfo, nullptr, &batchSlotFences[i]);
+            }
+        }
+
+        void destroyBatchFences()
+        {
+            for (u32 i = 0; i < framesInFlight; ++i)
+            {
+                if (batchSlotFences[i])
+                {
+                    vkDestroyFence(device, batchSlotFences[i], nullptr);
+                    batchSlotFences[i] = VK_NULL_HANDLE;
+                }
             }
         }
 
@@ -1422,9 +1434,15 @@ namespace mango::vulkan
 
         const VkDescriptorSet targetSet = m_impl->getOrCreateTargetDescriptorSet(target.imageView);
         m_impl->flushTextBatch(cmd, bounds, targetSet, m_impl->batchFrameSlot);
+        m_impl->lastEncodedSlot = m_impl->batchFrameSlot;
         m_impl->batchFrameSlot = (m_impl->batchFrameSlot + 1) % m_impl->framesInFlight;
         m_impl->pendingInstances.clear();
         m_impl->pendingRects.clear();
+    }
+
+    VkFence FontRenderer::frameFence() const
+    {
+        return m_impl->batchSlotFences[m_impl->lastEncodedSlot];
     }
 
 } // namespace mango::vulkan

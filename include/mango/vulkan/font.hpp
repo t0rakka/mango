@@ -13,6 +13,7 @@
         renderer.drawLine(cursor, font, "Hello", style);
         // Application clears/renders its framebuffer first, then:
         renderer.encode(cmd, { .image = targetImage, .imageView = targetView, .extent = extent });
+        frame.submit(graphicsQueue, cmd, renderer.frameFence());
 */
 #pragma once
 
@@ -164,7 +165,9 @@ namespace mango::vulkan
 
         // Phase B: composite queued text into target.
         // Target image must be in VK_IMAGE_LAYOUT_GENERAL with storage access.
+        // Pass the returned fence to vkQueueSubmit (e.g. swapchain Frame::submit).
         void encode(VkCommandBuffer cmd, const EncodeTarget& target);
+        VkFence frameFence() const;
 
     private:
         struct Impl;

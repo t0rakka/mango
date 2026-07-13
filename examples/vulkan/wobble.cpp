@@ -348,9 +348,21 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    MANGO_UNREFERENCED(commands);
-
     std::vector<const char*> enabledLayers;
+
+    for (size_t i = 1; i < commands.size(); ++i)
+    {
+        std::string arg = std::string(commands[i]);
+        if (arg == "--info")
+        {
+            printEnable(Print::Info, true);
+        }
+        else if (arg == "--validate")
+        {
+            enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+        }
+    }
+
     std::vector<const char*> enabledExtensions = requiredSurfaceExtensions();
 
     InstanceExtensionProperties instanceExtensionProperties;

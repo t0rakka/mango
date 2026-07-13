@@ -40,7 +40,7 @@ namespace mango::vulkan
 
             VkResult submitAndPresent(VkQueue graphicsQueue, VkCommandBuffer commandBuffer);
 
-            VkResult submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer);
+            VkResult submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer, VkFence signalFence = VK_NULL_HANDLE);
 
             // Same as submit(), but the queue submit additionally signals a caller-owned
             // timeline semaphore at signalValue, and optionally waits on a timeline value
@@ -48,7 +48,8 @@ namespace mango::vulkan
             VkResult submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
                             VkSemaphore signalTimeline, u64 signalValue,
                             VkSemaphore waitTimeline = VK_NULL_HANDLE, u64 waitValue = 0,
-                            VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT);
+                            VkPipelineStageFlags waitStage = VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT,
+                            VkFence signalFence = VK_NULL_HANDLE);
 
             VkResult present();
 
@@ -97,6 +98,7 @@ namespace mango::vulkan
         std::vector<VkSemaphore> m_imageAvailableSemaphores;
         std::vector<VkSemaphore> m_renderFinishedSemaphores;
         std::vector<VkFence> m_fences;
+        std::vector<VkFence> m_submitFences;
         std::vector<VkFence> m_imagesInFlight;
         u32 m_currentFrame = 0;
         bool m_recreateRequired = false;

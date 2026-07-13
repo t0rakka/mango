@@ -27,6 +27,7 @@ protected:
     std::unique_ptr<Allocator> m_allocator;
     std::unique_ptr<FontRenderer> m_renderer;
     Font m_body;
+    Font m_hud;
 
     float m_fontPixelHeight = 32.0f;
 
@@ -54,12 +55,14 @@ protected:
         "Ahti, ruler of the waters, lord of every lake and island.",
     };
 
-    std::string m_fontPath;
+    std::string m_bodyFontPath;
+
+    static constexpr const char* kHudFontPath = "data/NotoSans-Regular.ttf";
 
 public:
-    FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& fontPath)
+    FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& bodyFontPath)
         : VulkanWindow(instance, width, height, flags)
-        , m_fontPath(fontPath)
+        , m_bodyFontPath(bodyFontPath)
     {
     }
 
@@ -78,10 +81,16 @@ public:
 
         m_renderer = std::make_unique<FontRenderer>(fontInfo);
 
-        m_body = m_renderer->load(m_fontPath);
+        m_hud = m_renderer->load(kHudFontPath);
+        if (!m_hud)
+        {
+            printLine(Print::Error, "Failed to load HUD font: {}", kHudFontPath);
+        }
+
+        m_body = m_renderer->load(m_bodyFontPath);
         if (!m_body)
         {
-            printLine(Print::Error, "Failed to load font: {}", m_fontPath);
+            printLine(Print::Error, "Failed to load body font: {}", m_bodyFontPath);
         }
         else
         {
@@ -114,8 +123,8 @@ public:
         m_renderer->beginFrame();
 
         TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 32.0f };
-        TextCursor hud = m_renderer->cursorTopLeft(m_body, 8.0f, 32.0f, hudStyle);
-        m_renderer->draw(hud, m_body, m_hudLine, hudStyle);
+        TextCursor hud = m_renderer->cursorTopLeft(m_hud, 8.0f, 32.0f, hudStyle);
+        m_renderer->draw(hud, m_hud, m_hudLine, hudStyle);
 
         TextStyle bodyStyle { .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f), .pixelHeight = m_fontPixelHeight };
         TextCursor body = m_renderer->cursorTopLeft(m_body, 40.0f, 132.0f, bodyStyle);
@@ -209,15 +218,15 @@ public:
 
         VkCommandBuffer cmd = commandBuffer(frame.imageIndex());
         recordCommandBuffer(cmd, frame.imageIndex(), swapchainExtent());
-        frame.submit(m_graphicsQueue, cmd);
+        frame.submit(m_graphicsQueue, cmd, m_renderer->frameFence());
         frame.present();
     }
 
     void onFrame(const FrameInfo& info) override
     {
         constexpr float min_size = 8.0f;
-        constexpr float max_size = 82.0f;
-        constexpr float cycle_seconds = 20.0f;
+        constexpr float max_size = 120.0f;
+        constexpr float cycle_seconds = 18.0f;
 
         const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
         const float t = 0.5f + 0.5f * std::sin(phase * float(2.0 * 3.14159265358979323846) - float(3.14159265358979323846) * 0.5f);
@@ -260,7 +269,7 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string fontPath = "data/NotoSans-Regular.ttf";
+    std::string bodyFontPath = "data/GreatVibes-Regular.ttf";
 
     std::vector<const char*> enabledLayers;
 
@@ -269,7 +278,7 @@ int mangoMain(const mango::CommandLine& commands)
         std::string arg = std::string(commands[i]);
         if (arg[0] != '-')
         {
-            fontPath = arg;
+            bodyFontPath = arg;
         }
         else if (arg == "--info")
         {
@@ -301,7 +310,7 @@ int mangoMain(const mango::CommandLine& commands)
 
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
 
-    FontWindow window(instance, 1280, 720, 0, fontPath);
+    FontWindow window(instance, 1280, 720, 0, bodyFontPath);
     window.setTitle("Scanline Sweeper Font (Vulkan)");
 
     EventLoopConfig config;

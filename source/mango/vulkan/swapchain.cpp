@@ -62,6 +62,7 @@ namespace mango::vulkan
         }
 
         m_fences.clear();
+        m_submitFences.clear();
         m_imageAvailableSemaphores.clear();
         m_renderFinishedSemaphores.clear();
         m_imagesInFlight.clear();
@@ -263,6 +264,7 @@ namespace mango::vulkan
 
         m_imageAvailableSemaphores.resize(m_maxImagesInFlight);
         m_fences.resize(m_maxImagesInFlight);
+        m_submitFences.resize(m_maxImagesInFlight);
         m_renderFinishedSemaphores.resize(imageCount);
         m_imagesInFlight.assign(imageCount, VK_NULL_HANDLE);
 
@@ -294,6 +296,8 @@ namespace mango::vulkan
                 printLine(Print::Error, "vkCreateFence: {}", getString(result));
                 return;
             }
+
+            m_submitFences[i] = m_fences[i];
         }
 
         for (u32 i = 0; i < imageCount; ++i)
@@ -491,9 +495,10 @@ namespace mango::vulkan
         return submitAndPresent(graphicsQueue, commandBuffer, VK_NULL_HANDLE, 0);
     }
 
-    VkResult Swapchain::Frame::submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer)
+    VkResult Swapchain::Frame::submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer, VkFence signalFence)
     {
-        return submit(graphicsQueue, commandBuffer, VK_NULL_HANDLE, 0);
+        return submit(graphicsQueue, commandBuffer, VK_NULL_HANDLE, 0, VK_NULL_HANDLE, 0,
+            VK_PIPELINE_STAGE_FRAGMENT_SHADER_BIT, signalFence);
     }
 
     VkResult Swapchain::Frame::present()
@@ -509,16 +514,19 @@ namespace mango::vulkan
     VkResult Swapchain::Frame::submit(VkQueue graphicsQueue, VkCommandBuffer commandBuffer,
                                       VkSemaphore signalTimeline, u64 signalValue,
                                       VkSemaphore waitTimeline, u64 waitValue,
-                                      VkPipelineStageFlags waitStage)
+                                      VkPipelineStageFlags waitStage,
+                                      VkFence signalFence)
     {
         if (!m_swapchain)
         {
             return VK_ERROR_INITIALIZATION_FAILED;
         }
 
-        VkSemaphore imageAvailableSemaphore = m_swapchain->m_imageAvailableSemaphores[m_swapchain->m_currentFrame];
+        const u32 frame_index = m_swapchain->m_currentFrame;
+
+        VkSemaphore imageAvailableSemaphore = m_swapchain->m_imageAvailableSemaphores[frame_index];
         VkSemaphore renderFinishedSemaphore = m_swapchain->m_renderFinishedSemaphores[m_imageIndex];
-        VkFence fence = m_swapchain->m_fences[m_swapchain->m_currentFrame];
+        VkFence fence = signalFence != VK_NULL_HANDLE ? signalFence : m_swapchain->m_fences[frame_index];
 
         // The binary image-available semaphore is always waited; an optional caller
         // timeline wait (e.g. a transfer-queue upload) is appended. Likewise the binary
@@ -564,7 +572,11 @@ namespace mango::vulkan
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkQueueSubmit failed: {}", getString(result));
+            return result;
         }
+
+        m_swapchain->m_submitFences[frame_index] = fence;
+        m_swapchain->m_imagesInFlight[m_imageIndex] = fence;
 
         return result;
     }
@@ -706,7 +718,7 @@ namespace mango::vulkan
 
     VkResult Swapchain::acquireNextImage(u32& imageIndex)
     {
-        VkFence fence = m_fences[m_currentFrame];
+        VkFence fence = m_submitFences[m_currentFrame];
 
         VkResult waitResult = vkWaitForFences(m_device, 1, &fence, VK_TRUE, UINT64_MAX);
         if (waitResult != VK_SUCCESS)
