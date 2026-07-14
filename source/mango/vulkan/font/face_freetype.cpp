@@ -2,11 +2,12 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <algorithm>
+#include <cmath>
 #include <mutex>
 
 #include <ft2build.h>
 #include FT_FREETYPE_H
-#include FT_ADVANCES_H
 
 #include <mango/filesystem/filesystem.hpp>
 
@@ -38,11 +39,22 @@ namespace mango::font
             return height > 0.0f ? height : float(face->units_per_EM);
         }
 
+        // With FT_LOAD_NO_SCALE, outline points and horizontal advances are in
+        // integer font units (not 26.6). Kerning vectors use 26.6 font units.
+        constexpr FT_Int32 kOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_NO_HINTING;
+        constexpr FT_Int32 kAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_ADVANCE_ONLY;
+
+        float kerningFontUnits(float delta_x_26_6)
+        {
+            return delta_x_26_6 / 64.0f;
+        }
+
     } // namespace
 
     struct Face::FontInfo
     {
         FT_Face face = nullptr;
+        float pixel_height = 32.0f;
     };
 
     Face::Face() = default;
@@ -82,7 +94,9 @@ namespace mango::font
         ascent = m_info->face->ascender;
         descent = m_info->face->descender;
         line_gap = m_info->face->height - (ascent - descent);
-        scale = 32.0f / lineScale(m_info->face);
+
+        m_info->pixel_height = 32.0f;
+        scale = m_info->pixel_height / lineScale(m_info->face);
         return true;
     }
 
@@ -120,7 +134,8 @@ namespace mango::font
             return;
         }
 
-        scale = pixel_height / lineScale(m_info->face);
+        m_info->pixel_height = std::max(1.0f, pixel_height);
+        scale = m_info->pixel_height / lineScale(m_info->face);
     }
 
     float Face::pixelScale() const
@@ -133,11 +148,11 @@ namespace mango::font
         return scale > 0.0f ? 1.0f / scale : 1.0f;
     }
 
-    int Face::kerning(u32 codepoint1, u32 codepoint2) const
+    float Face::kerning(u32 codepoint1, u32 codepoint2) const
     {
         if (!m_info || !m_info->face)
         {
-            return 0;
+            return 0.0f;
         }
 
         const FT_UInt index1 = FT_Get_Char_Index(m_info->face, codepoint1);
@@ -145,10 +160,10 @@ namespace mango::font
         FT_Vector delta {};
         if (FT_Get_Kerning(m_info->face, index1, index2, FT_KERNING_UNSCALED, &delta) != 0)
         {
-            return 0;
+            return 0.0f;
         }
 
-        return int(delta.x);
+        return kerningFontUnits(float(delta.x));
     }
 
     float Face::advanceWidth(u32 codepoint) const
@@ -159,13 +174,37 @@ namespace mango::font
         }
 
         const FT_UInt glyph_index = FT_Get_Char_Index(m_info->face, codepoint);
-        FT_Fixed advance = 0;
-        if (FT_Get_Advance(m_info->face, glyph_index, FT_LOAD_NO_SCALE, &advance) != 0)
+        if (FT_Load_Glyph(m_info->face, glyph_index, kAdvanceLoadFlags) != 0)
         {
             return 0.0f;
         }
 
-        return float(advance) / 64.0f;
+        return float(m_info->face->glyph->metrics.horiAdvance);
+    }
+
+    float Face::ascenderPixels() const
+    {
+        return float(ascent) * scale;
+    }
+
+    float Face::descenderPixels() const
+    {
+        return float(descent) * scale;
+    }
+
+    float Face::lineHeightPixels() const
+    {
+        return float(ascent - descent + line_gap) * scale;
+    }
+
+    float Face::advancePixels(u32 codepoint) const
+    {
+        return advanceWidth(codepoint) * pixelScale();
+    }
+
+    float Face::kerningPixels(u32 codepoint1, u32 codepoint2) const
+    {
+        return kerning(codepoint1, codepoint2) * pixelScale();
     }
 
     GlyphOutline Face::loadOutline(u32 codepoint) const
@@ -178,7 +217,7 @@ namespace mango::font
         }
 
         const FT_UInt glyph_index = FT_Get_Char_Index(m_info->face, codepoint);
-        if (FT_Load_Glyph(m_info->face, glyph_index, FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE) != 0)
+        if (FT_Load_Glyph(m_info->face, glyph_index, kOutlineLoadFlags) != 0)
         {
             return outline;
         }
@@ -187,7 +226,7 @@ namespace mango::font
 
         if (m_info->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
         {
-            processFreeTypeOutline(m_info->face->glyph->outline, outline);
+            processFreeTypeOutline(m_info->face->glyph->outline, outline, 1.0f);
         }
 
         return outline;

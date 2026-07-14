@@ -91,14 +91,14 @@ namespace mango::font
         return scale > 0.0f ? 1.0f / scale : 1.0f;
     }
 
-    int Face::kerning(u32 codepoint1, u32 codepoint2) const
+    float Face::kerning(u32 codepoint1, u32 codepoint2) const
     {
         if (!m_info)
         {
-            return 0;
+            return 0.0f;
         }
 
-        return stbtt_GetCodepointKernAdvance(&m_info->info, int(codepoint1), int(codepoint2));
+        return float(stbtt_GetCodepointKernAdvance(&m_info->info, int(codepoint1), int(codepoint2)));
     }
 
     float Face::advanceWidth(u32 codepoint) const
@@ -111,6 +111,31 @@ namespace mango::font
         int advance = 0;
         stbtt_GetCodepointHMetrics(&m_info->info, int(codepoint), &advance, nullptr);
         return float(advance);
+    }
+
+    float Face::ascenderPixels() const
+    {
+        return float(ascent) * scale;
+    }
+
+    float Face::descenderPixels() const
+    {
+        return float(descent) * scale;
+    }
+
+    float Face::lineHeightPixels() const
+    {
+        return float(ascent - descent + line_gap) * scale;
+    }
+
+    float Face::advancePixels(u32 codepoint) const
+    {
+        return advanceWidth(codepoint) * pixelScale();
+    }
+
+    float Face::kerningPixels(u32 codepoint1, u32 codepoint2) const
+    {
+        return kerning(codepoint1, codepoint2) * pixelScale();
     }
 
     GlyphOutline Face::loadOutline(u32 codepoint) const

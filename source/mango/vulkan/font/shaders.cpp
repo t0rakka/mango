@@ -221,7 +221,8 @@ float compute_glyph_alpha(GlyphInstance inst, ivec2 pixel)
 {
     vec2 pixel_size = inst.params1.zw;
     vec2 gid = vec2(pixel) - inst.params1.xy;
-    if (gid.x < 0.0 || gid.y < 0.0 || gid.x >= pixel_size.x || gid.y >= pixel_size.y)
+    // params1.xy is a fractional origin; the top/left partial pixel rows use gid in (-1, 0].
+    if (gid.x < -1.0 || gid.y < -1.0 || gid.x >= pixel_size.x || gid.y >= pixel_size.y)
     {
         return 0.0;
     }

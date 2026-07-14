@@ -88,9 +88,16 @@ namespace mango::font
 
         float advanceWidth(u32 codepoint) const;
 
+        // Font-table metrics scaled to the current pixel height (smooth zoom).
+        float ascenderPixels() const;
+        float descenderPixels() const;
+        float lineHeightPixels() const;
+        float advancePixels(u32 codepoint) const;
+        float kerningPixels(u32 codepoint1, u32 codepoint2) const;
+
         GlyphOutline loadOutline(u32 codepoint) const;
         GlyphGpuData loadGpuGlyph(u32 codepoint) const;
-        int kerning(u32 codepoint1, u32 codepoint2) const;
+        float kerning(u32 codepoint1, u32 codepoint2) const;
 
         explicit operator bool () const;
 
@@ -112,7 +119,7 @@ namespace mango::font
     void processStbShape(const StbVertex* vertices, int count, GlyphOutline& outline);
 
 #ifdef MANGO_ENABLE_FREETYPE
-    void processFreeTypeOutline(const FT_Outline_& outline, GlyphOutline& result);
+    void processFreeTypeOutline(const FT_Outline_& outline, GlyphOutline& result, float coord_scale = 1.0f);
 #endif
 
 } // namespace mango::font

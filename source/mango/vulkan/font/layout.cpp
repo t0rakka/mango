@@ -24,12 +24,12 @@ namespace mango::font
 
         float glyphAdvance(const Face& face, u32 codepoint, u32 next_codepoint)
         {
-            float advance = face.advanceWidth(codepoint);
+            float advance = face.advancePixels(codepoint);
             if (next_codepoint)
             {
-                advance += float(face.kerning(codepoint, next_codepoint));
+                advance += face.kerningPixels(codepoint, next_codepoint);
             }
-            return advance * face.pixelScale();
+            return advance;
         }
 
         std::vector<std::u32string> breakLines(const Face& face, const std::u32string& codepoints,
@@ -121,17 +121,16 @@ namespace mango::font
     float measureTextWidth(const Face& face, const std::u32string& codepoints)
     {
         float width = 0.0f;
-        const float scale = face.pixelScale();
 
         for (size_t i = 0; i < codepoints.size(); ++i)
         {
             u32 cp = u32(codepoints[i]);
             u32 next = (i + 1 < codepoints.size()) ? u32(codepoints[i + 1]) : 0;
 
-            width += face.advanceWidth(cp) * scale;
+            width += face.advancePixels(cp);
             if (next)
             {
-                width += float(face.kerning(cp, next)) * scale;
+                width += face.kerningPixels(cp, next);
             }
         }
 
@@ -144,13 +143,12 @@ namespace mango::font
     {
         LayoutResult result;
 
-        const float scale = face.pixelScale();
-        const float line_height = float(face.ascent - face.descent + face.line_gap) * scale * style.lineSpacing;
+        const float line_height = face.lineHeightPixels() * style.lineSpacing;
 
         auto lines = breakLines(face, codepoints, bounds.size.x, style.wordWrap);
 
         float max_width = 0.0f;
-        float y = bounds.position.y + float(face.ascent) * scale;
+        float y = bounds.position.y + face.ascenderPixels();
 
         for (const std::u32string& line_cps : lines)
         {
@@ -188,10 +186,10 @@ namespace mango::font
                 pg.y = y;
                 line.glyphs.push_back(pg);
 
-                pen_x += face.advanceWidth(cp) * scale;
+                pen_x += face.advancePixels(cp);
                 if (next)
                 {
-                    pen_x += float(face.kerning(cp, next)) * scale;
+                    pen_x += face.kerningPixels(cp, next);
                 }
             }
 
@@ -202,7 +200,7 @@ namespace mango::font
 
         result.metrics.width = max_width;
         result.metrics.lineCount = u32(result.lines.size());
-        result.metrics.height = result.lines.empty() ? 0.0f : (y - bounds.position.y - float(face.ascent) * scale + line_height);
+        result.metrics.height = result.lines.empty() ? 0.0f : (y - bounds.position.y - face.ascenderPixels() + line_height);
         return result;
     }
 
