@@ -3,7 +3,6 @@ list(APPEND EXAMPLES
     vkbasic
     wobble
     font
-    shadertoy
 )
 
 foreach(example IN LISTS EXAMPLES)
