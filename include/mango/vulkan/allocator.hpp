@@ -4,9 +4,9 @@
 */
 #pragma once
 
-#include <vulkan/vulkan.h>
 #include <mango/core/configure.hpp>
 #include <mango/core/memory.hpp>
+#include <vulkan/vulkan.h>
 
 // Forward declarations of the VMA opaque handles, identical to the ones in
 // <vk_mem_alloc.h>. Declaring them here lets this header expose the underlying

@@ -5,7 +5,6 @@
 #pragma once
 
 #include <memory>
-#include <vulkan/vulkan.h>
 
 #include <mango/core/configure.hpp>
 #include <mango/math/vector.hpp>

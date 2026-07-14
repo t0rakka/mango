@@ -7,8 +7,8 @@
 #include <string>
 #include <string_view>
 #include <vector>
-#include <vulkan/vulkan.h>
 #include <mango/core/configure.hpp>
+#include <vulkan/vulkan.h>
 
 namespace mango::vulkan
 {

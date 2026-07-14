@@ -12,6 +12,7 @@
 
 #include <mango/core/configure.hpp>
 #include <mango/window/window.hpp>
+#include <mango/vulkan/allocator.hpp>
 #include <mango/vulkan/colorspace.hpp>
 #include <mango/vulkan/swapchain.hpp>
 #include <mango/vulkan/compiler.hpp>
@@ -293,3 +294,7 @@ namespace mango::vulkan
     std::string_view getString(VkColorSpaceKHR colorSpace);
 
 } // namespace mango::vulkan
+
+#include <mango/vulkan/render_target.hpp>
+#include <mango/vulkan/framebuffer.hpp>
+#include <mango/vulkan/font.hpp>

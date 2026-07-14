@@ -21,14 +21,12 @@
 #include <string>
 #include <string_view>
 
-#include <vulkan/vulkan.h>
-
 #include <mango/core/configure.hpp>
 #include <mango/core/memory.hpp>
-#include <mango/math/math.hpp>
 #include <mango/filesystem/file.hpp>
 #include <mango/filesystem/path.hpp>
 #include <mango/math/geometry.hpp>
+#include <mango/math/math.hpp>
 #include <mango/math/vector.hpp>
 #include <mango/vulkan/allocator.hpp>
 
