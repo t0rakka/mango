@@ -35,6 +35,17 @@ protected:
 
     static constexpr size_t kFrameTimeHistory = 60;
 
+    static constexpr std::array<float, 5> kUIScales { 1.0f, 1.5f, 2.0f, 2.5f, 3.0f };
+    size_t m_uiScaleIndex = 1;
+
+    float uiScale() const { return kUIScales[m_uiScaleIndex]; }
+    float ui(float v) const { return v * uiScale(); }
+
+    void cycleUiScale()
+    {
+        m_uiScaleIndex = (m_uiScaleIndex + 1) % kUIScales.size();
+    }
+
     float m_frameTimeMs = 0.0f;
     float m_queueTimeMs = 0.0f;
     float m_encodeTimeMs = 0.0f;
@@ -122,7 +133,7 @@ public:
         }
         else
         {
-            m_renderer->setSize(m_body, m_fontPixelHeight);
+            m_renderer->setSize(m_body, ui(m_fontPixelHeight));
         }
 
         recreateRenderTarget(swapchainExtent());
@@ -173,7 +184,7 @@ public:
         return TextStyle
         {
             .color = float32x4(0.55f, 0.65f, 0.78f, 1.0f),
-            .pixelHeight = 11.0f,
+            .pixelHeight = ui(11.0f),
             .hinting = hinting,
         };
     }
@@ -183,7 +194,7 @@ public:
         return TextStyle
         {
             .color = float32x4(0.92f, 0.94f, 0.98f, 1.0f),
-            .pixelHeight = pixelHeight,
+            .pixelHeight = ui(pixelHeight),
             .hinting = hinting,
         };
     }
@@ -202,7 +213,7 @@ public:
 
         const TextStyle tagStyle = labelStyle(hinting);
         const TextStyle textStyle = sampleStyle(pixelHeight, hinting);
-        const std::string tag = fmt::format("{:2.0f} px: ", pixelHeight);
+        const std::string tag = fmt::format("{:2.0f} px: ", ui(pixelHeight));
 
         drawAtBaseline(m_hud, cursor.x, cursor.y, tag, tagStyle);
         const float sample_x = cursor.x + m_renderer->textWidth(m_hud, tag, tagStyle);
@@ -225,7 +236,7 @@ public:
         const float sample_x = cursor.x + m_renderer->textWidth(m_hud, label, tagStyle);
         drawAtBaseline(m_hud, sample_x, cursor.y, kSampleText, textStyle);
 
-        const TextStyle spacingStyle { .pixelHeight = kCompareSize };
+        const TextStyle spacingStyle { .pixelHeight = ui(kCompareSize) };
         m_renderer->newline(cursor, m_hud, spacingStyle);
     }
 
@@ -239,7 +250,7 @@ public:
         TextStyle headerStyle = sampleStyle(16.0f, FontHinting::None);
         headerStyle.color = float32x4(0.7f, 0.82f, 0.95f, 1.0f);
 
-        TextCursor test = m_renderer->cursorTopLeft(m_hud, kTestLeft, kTestTop, headerStyle);
+        TextCursor test = m_renderer->cursorTopLeft(m_hud, ui(kTestLeft), ui(kTestTop), headerStyle);
         m_renderer->drawLine(test, m_hud, "Hinting test font: NotoSans-Regular.ttf", headerStyle);
 
         for (float size : kTestSizes)
@@ -265,7 +276,7 @@ public:
         TextStyle headerStyle = sampleStyle(14.0f, FontHinting::None);
         headerStyle.color = float32x4(0.7f, 0.82f, 0.95f, 1.0f);
 
-        TextCursor test = m_renderer->cursorTopLeft(m_hud, kLigatureLeft, kTestTop, headerStyle);
+        TextCursor test = m_renderer->cursorTopLeft(m_hud, ui(kLigatureLeft), ui(kTestTop), headerStyle);
         m_renderer->drawLine(test, m_hud, "Ligatures: NotoSans-Regular.ttf", headerStyle);
 
         const TextStyle textStyle = sampleStyle(18.0f, FontHinting::None);
@@ -276,8 +287,8 @@ public:
     {
         m_renderer->beginFrame();
 
-        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 16.0f };
-        TextCursor hud = m_renderer->cursorTopLeft(m_hud, 8.0f, kHudTop, hudStyle);
+        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = ui(16.0f) };
+        TextCursor hud = m_renderer->cursorTopLeft(m_hud, ui(8.0f), ui(kHudTop), hudStyle);
         m_renderer->draw(hud, m_hud, m_hudLine, hudStyle);
 
         buildHintingTests();
@@ -289,7 +300,7 @@ public:
             .pixelHeight = m_fontPixelHeight,
             .hinting = FontHinting::None, // smooth fractional scale, do not use hinting
         };
-        TextCursor body = m_renderer->cursorTopLeft(m_body, 40.0f, kBodyTop, bodyStyle);
+        TextCursor body = m_renderer->cursorTopLeft(m_body, ui(40.0f), ui(kBodyTop), bodyStyle);
 
         for (const std::string& line : m_lines)
         {
@@ -354,7 +365,7 @@ public:
 
         const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
         const float t = 0.5f + 0.5f * std::sin(phase * float(2.0 * 3.14159265358979323846) - float(3.14159265358979323846) * 0.5f);
-        m_fontPixelHeight = body_min_size + t * (body_max_size - body_min_size);
+        m_fontPixelHeight = ui(body_min_size) + t * ui(body_max_size - body_min_size);
         m_renderer->setSize(m_body, m_fontPixelHeight);
 
         const float frame_ms = float(info.dt * 1000.0);
@@ -370,8 +381,8 @@ public:
         m_frameTimeMs = frame_sum / float(m_frameTimeCount);
 
         const float fps = 1000.0f / std::max(m_frameTimeMs, 0.001f);
-        m_hudLine = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  queue: {:5.3f} ms  encode: {:5.3f} ms",
-            m_frameTimeMs, fps, m_queueTimeMs, m_encodeTimeMs);
+        m_hudLine = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  queue: {:5.3f} ms  encode: {:5.3f} ms  scale: {:.1f}",
+            m_frameTimeMs, fps, m_queueTimeMs, m_encodeTimeMs, uiScale());
 
         render();
     }
@@ -387,6 +398,10 @@ public:
         else if (code == KEYCODE_F)
         {
             toggleFullscreen();
+        }
+        else if (code == KEYCODE_S)
+        {
+            cycleUiScale();
         }
     }
 };
