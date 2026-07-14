@@ -16,6 +16,10 @@
 #include <mango/filesystem/path.hpp>
 #include <mango/math/math.hpp>
 
+#ifdef MANGO_ENABLE_FREETYPE
+struct FT_Outline_;
+#endif
+
 namespace mango::font
 {
 
@@ -106,5 +110,9 @@ namespace mango::font
     };
 
     void processStbShape(const StbVertex* vertices, int count, GlyphOutline& outline);
+
+#ifdef MANGO_ENABLE_FREETYPE
+    void processFreeTypeOutline(const FT_Outline_& outline, GlyphOutline& result);
+#endif
 
 } // namespace mango::font

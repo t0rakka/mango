@@ -695,6 +695,12 @@ SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 mango_probe_image_format_dependencies()
 mango_probe_font_dependencies()
 
+if (MANGO_HAS_FREETYPE)
+    list(REMOVE_ITEM VULKAN_SOURCES "${MANGO_SOURCE_DIR}/vulkan/font/face_stb.cpp")
+else ()
+    list(REMOVE_ITEM VULKAN_SOURCES "${MANGO_SOURCE_DIR}/vulkan/font/face_freetype.cpp")
+endif ()
+
 if (NOT IMAGE_FORMAT_RETRO)
     list(REMOVE_ITEM IMAGE_SOURCES
         "${MANGO_SOURCE_DIR}/image/image_atari.cpp"

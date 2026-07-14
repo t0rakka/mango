@@ -7,6 +7,11 @@
 
 #include "font_internal.hpp"
 
+#ifdef MANGO_ENABLE_FREETYPE
+#include <ft2build.h>
+#include FT_OUTLINE_H
+#endif
+
 namespace mango::font
 {
 
@@ -256,5 +261,129 @@ namespace mango::font
 
         flush_contour();
     }
+
+#ifdef MANGO_ENABLE_FREETYPE
+
+    float32x2 ftPoint(const FT_Vector& v)
+    {
+        // FT_LOAD_NO_SCALE: outline coordinates are integer font units.
+        return float32x2(float(v.x), float(v.y));
+    }
+
+    struct FtDecomposeContext
+    {
+        GlyphOutline* outline = nullptr;
+        Contour contour {};
+        float32x2 current { 0.0f, 0.0f };
+        bool has_current = false;
+        bool bounds_initialized = false;
+
+        void flush_contour()
+        {
+            if (!contour.curves.empty())
+            {
+                outline->contours.push_back(std::move(contour));
+                contour = Contour {};
+            }
+        }
+    };
+
+    int ftMoveTo(const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        ctx->flush_contour();
+        ctx->current = ftPoint(*to);
+        ctx->has_current = true;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        return 0;
+    }
+
+    int ftLineTo(const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        if (!ctx->has_current)
+        {
+            return 0;
+        }
+
+        float32x2 next = ftPoint(*to);
+        if (!isHorizontalLine(ctx->current, next))
+        {
+            appendCurve(ctx->contour, lineToQuadratic(ctx->current, next));
+        }
+
+        ctx->current = next;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        return 0;
+    }
+
+    int ftConicTo(const FT_Vector* control, const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        if (!ctx->has_current)
+        {
+            return 0;
+        }
+
+        float32x2 c = ftPoint(*control);
+        float32x2 next = ftPoint(*to);
+        appendCurve(ctx->contour, { ctx->current, c, next });
+
+        ctx->current = next;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        updateBounds(*ctx->outline, c, ctx->bounds_initialized);
+        return 0;
+    }
+
+    int ftCubicTo(const FT_Vector* c1, const FT_Vector* c2, const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        if (!ctx->has_current)
+        {
+            return 0;
+        }
+
+        float32x2 p1 = ftPoint(*c1);
+        float32x2 p2 = ftPoint(*c2);
+        float32x2 next = ftPoint(*to);
+
+        std::vector<QuadraticCurve> quadratics;
+        cubicToQuadratics(ctx->current, p1, p2, next, quadratics);
+        for (const QuadraticCurve& q : quadratics)
+        {
+            appendCurve(ctx->contour, q);
+        }
+
+        ctx->current = next;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        updateBounds(*ctx->outline, p1, ctx->bounds_initialized);
+        updateBounds(*ctx->outline, p2, ctx->bounds_initialized);
+        return 0;
+    }
+
+    void processFreeTypeOutlineImpl(const FT_Outline& ft_outline, GlyphOutline& outline)
+    {
+        FT_Outline_Funcs funcs {};
+        funcs.move_to = ftMoveTo;
+        funcs.line_to = ftLineTo;
+        funcs.conic_to = ftConicTo;
+        funcs.cubic_to = ftCubicTo;
+        funcs.shift = 0;
+        funcs.delta = 0;
+
+        FtDecomposeContext ctx;
+        ctx.outline = &outline;
+        FT_Outline_Decompose(const_cast<FT_Outline*>(&ft_outline), &funcs, &ctx);
+        ctx.flush_contour();
+    }
+
+#endif // MANGO_ENABLE_FREETYPE
+
+#ifdef MANGO_ENABLE_FREETYPE
+    void processFreeTypeOutline(const FT_Outline& ft_outline, GlyphOutline& outline)
+    {
+        processFreeTypeOutlineImpl(ft_outline, outline);
+    }
+#endif
 
 } // namespace mango::font
