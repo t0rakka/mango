@@ -81,6 +81,15 @@ namespace mango::font
         scale = stbtt_ScaleForPixelHeight(&m_info->info, pixel_height);
     }
 
+    void Face::setHinting(Hinting)
+    {
+    }
+
+    Hinting Face::hinting() const
+    {
+        return Hinting::None;
+    }
+
     float Face::pixelScale() const
     {
         return scale;

@@ -39,15 +39,58 @@ namespace mango::font
             return height > 0.0f ? height : float(face->units_per_EM);
         }
 
-        // With FT_LOAD_NO_SCALE, outline points and horizontal advances are in
-        // integer font units (not 26.6). Kerning vectors use 26.6 font units.
-        constexpr FT_Int32 kOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_NO_HINTING;
-        constexpr FT_Int32 kAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_ADVANCE_ONLY;
+        float smoothPixelScale(FT_Face face, float pixel_height)
+        {
+            const float denom = lineScale(face);
+            return denom > 0.0f ? pixel_height / denom : pixel_height;
+        }
+
+        float pixelScaleFromSize(FT_Face face)
+        {
+            if (!face || !face->size)
+            {
+                return 0.0f;
+            }
+
+            // Match FreeType's font-unit → pixel mapping for the active size.
+            return float(face->size->metrics.y_scale) / 65536.0f / 64.0f;
+        }
+
+        void requestPixelHeight(FT_Face face, float pixel_height)
+        {
+            FT_Size_RequestRec req {};
+            req.type = FT_SIZE_REQUEST_TYPE_NOMINAL;
+            req.width = 0;
+            req.height = (FT_Long)(std::max(1.0f, pixel_height) * 64.0f);
+            req.horiResolution = 0;
+            req.vertResolution = 0;
+            FT_Request_Size(face, &req);
+        }
+
+        void updatePixelScale(FT_Face face, float pixel_height, float& scale_out)
+        {
+            requestPixelHeight(face, pixel_height);
+            scale_out = pixelScaleFromSize(face);
+            if (scale_out <= 0.0f)
+            {
+                scale_out = smoothPixelScale(face, pixel_height);
+            }
+        }
+
+        float toFontUnits(float value_26_6, float scale)
+        {
+            return scale > 0.0f ? value_26_6 / (64.0f * scale) : value_26_6 / 64.0f;
+        }
 
         float kerningFontUnits(float delta_x_26_6)
         {
             return delta_x_26_6 / 64.0f;
         }
+
+        constexpr FT_Int32 kNoneOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_NO_HINTING;
+        constexpr FT_Int32 kNoneAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_ADVANCE_ONLY;
+        constexpr FT_Int32 kLightOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT;
+        constexpr FT_Int32 kLightAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT | FT_LOAD_ADVANCE_ONLY;
 
     } // namespace
 
@@ -55,6 +98,7 @@ namespace mango::font
     {
         FT_Face face = nullptr;
         float pixel_height = 32.0f;
+        Hinting hinting = Hinting::None;
     };
 
     Face::Face() = default;
@@ -96,7 +140,7 @@ namespace mango::font
         line_gap = m_info->face->height - (ascent - descent);
 
         m_info->pixel_height = 32.0f;
-        scale = m_info->pixel_height / lineScale(m_info->face);
+        updatePixelScale(m_info->face, m_info->pixel_height, scale);
         return true;
     }
 
@@ -127,6 +171,22 @@ namespace mango::font
         return m_info && m_info->face;
     }
 
+    void Face::setHinting(Hinting hinting)
+    {
+        if (!m_info)
+        {
+            return;
+        }
+
+        m_info->hinting = hinting;
+        setPixelHeight(m_info->pixel_height);
+    }
+
+    Hinting Face::hinting() const
+    {
+        return m_info ? m_info->hinting : Hinting::None;
+    }
+
     void Face::setPixelHeight(float pixel_height)
     {
         if (!m_info || !m_info->face)
@@ -135,7 +195,7 @@ namespace mango::font
         }
 
         m_info->pixel_height = std::max(1.0f, pixel_height);
-        scale = m_info->pixel_height / lineScale(m_info->face);
+        updatePixelScale(m_info->face, m_info->pixel_height, scale);
     }
 
     float Face::pixelScale() const
@@ -158,9 +218,15 @@ namespace mango::font
         const FT_UInt index1 = FT_Get_Char_Index(m_info->face, codepoint1);
         const FT_UInt index2 = FT_Get_Char_Index(m_info->face, codepoint2);
         FT_Vector delta {};
-        if (FT_Get_Kerning(m_info->face, index1, index2, FT_KERNING_UNSCALED, &delta) != 0)
+        const FT_UInt mode = m_info->hinting == Hinting::Light ? FT_KERNING_DEFAULT : FT_KERNING_UNSCALED;
+        if (FT_Get_Kerning(m_info->face, index1, index2, mode, &delta) != 0)
         {
             return 0.0f;
+        }
+
+        if (m_info->hinting == Hinting::Light)
+        {
+            return toFontUnits(float(delta.x), scale);
         }
 
         return kerningFontUnits(float(delta.x));
@@ -174,26 +240,48 @@ namespace mango::font
         }
 
         const FT_UInt glyph_index = FT_Get_Char_Index(m_info->face, codepoint);
-        if (FT_Load_Glyph(m_info->face, glyph_index, kAdvanceLoadFlags) != 0)
+        const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightAdvanceLoadFlags : kNoneAdvanceLoadFlags;
+        if (FT_Load_Glyph(m_info->face, glyph_index, flags) != 0)
         {
             return 0.0f;
         }
 
-        return float(m_info->face->glyph->metrics.horiAdvance);
+        const float advance = float(m_info->face->glyph->metrics.horiAdvance);
+        if (m_info->hinting == Hinting::Light)
+        {
+            return toFontUnits(advance, scale);
+        }
+
+        return advance;
     }
 
     float Face::ascenderPixels() const
     {
+        if (m_info && m_info->hinting == Hinting::Light && m_info->face && m_info->face->size)
+        {
+            return float(m_info->face->size->metrics.ascender) / 64.0f;
+        }
+
         return float(ascent) * scale;
     }
 
     float Face::descenderPixels() const
     {
+        if (m_info && m_info->hinting == Hinting::Light && m_info->face && m_info->face->size)
+        {
+            return float(m_info->face->size->metrics.descender) / 64.0f;
+        }
+
         return float(descent) * scale;
     }
 
     float Face::lineHeightPixels() const
     {
+        if (m_info && m_info->hinting == Hinting::Light && m_info->face && m_info->face->size)
+        {
+            return float(m_info->face->size->metrics.height) / 64.0f;
+        }
+
         return float(ascent - descent + line_gap) * scale;
     }
 
@@ -217,16 +305,30 @@ namespace mango::font
         }
 
         const FT_UInt glyph_index = FT_Get_Char_Index(m_info->face, codepoint);
-        if (FT_Load_Glyph(m_info->face, glyph_index, kOutlineLoadFlags) != 0)
+        const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightOutlineLoadFlags : kNoneOutlineLoadFlags;
+        if (FT_Load_Glyph(m_info->face, glyph_index, flags) != 0)
         {
             return outline;
         }
 
-        outline.advance = float(m_info->face->glyph->metrics.horiAdvance);
-
-        if (m_info->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
+        const float advance = float(m_info->face->glyph->metrics.horiAdvance);
+        if (m_info->hinting == Hinting::Light)
         {
-            processFreeTypeOutline(m_info->face->glyph->outline, outline, 1.0f);
+            outline.advance = toFontUnits(advance, scale);
+
+            if (m_info->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
+            {
+                processFreeTypeOutline(m_info->face->glyph->outline, outline, 1.0f / (64.0f * scale));
+            }
+        }
+        else
+        {
+            outline.advance = advance;
+
+            if (m_info->face->glyph->format == FT_GLYPH_FORMAT_OUTLINE)
+            {
+                processFreeTypeOutline(m_info->face->glyph->outline, outline, 1.0f);
+            }
         }
 
         return outline;

@@ -60,6 +60,28 @@ protected:
     std::string m_bodyFontPath;
 
     static constexpr const char* kHudFontPath = "data/fonts/NotoSans-Regular.ttf";
+    static constexpr const char* kSampleText = "The quick brown fox jumps over the lazy dog.";
+
+    static constexpr float kHudTop = 4.0f;
+    static constexpr float kTestLeft = 8.0f;
+    static constexpr float kTestTop = 22.0f;
+    static constexpr float kBodyTop = 180.0f;
+    static constexpr float kCompareSize = 11.0f;
+
+    static constexpr std::array<float, 5> kTestSizes { 8.0f, 10.0f, 12.0f, 14.0f, 16.0f };
+
+    struct HintingCompareRow
+    {
+        FontHinting hinting;
+        const char* label;
+    };
+
+    // Add rows here when new FontHinting modes are implemented.
+    static constexpr std::array<HintingCompareRow, 2> kHintingCompareRows
+    {{
+        { FontHinting::None, "No hinting: " },
+        { FontHinting::Light, "Hinting (light): " },
+    }};
 
 public:
     FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& bodyFontPath)
@@ -142,16 +164,109 @@ public:
         }
     }
 
+    TextStyle labelStyle(FontHinting hinting = FontHinting::None) const
+    {
+        return TextStyle
+        {
+            .color = float32x4(0.55f, 0.65f, 0.78f, 1.0f),
+            .pixelHeight = 11.0f,
+            .hinting = hinting,
+        };
+    }
+
+    TextStyle sampleStyle(float pixelHeight, FontHinting hinting = FontHinting::None) const
+    {
+        return TextStyle
+        {
+            .color = float32x4(0.92f, 0.94f, 0.98f, 1.0f),
+            .pixelHeight = pixelHeight,
+            .hinting = hinting,
+        };
+    }
+
+    void drawAtBaseline(Font font, float x, float baseline_y, std::string_view utf8, const TextStyle& style)
+    {
+        m_renderer->draw(font, x, baseline_y, utf8, style);
+    }
+
+    void drawSizedSampleLine(TextCursor& cursor, float pixelHeight, FontHinting hinting)
+    {
+        if (!m_hud)
+        {
+            return;
+        }
+
+        const TextStyle tagStyle = labelStyle(hinting);
+        const TextStyle textStyle = sampleStyle(pixelHeight, hinting);
+        const std::string tag = fmt::format("{:2.0f} px: ", pixelHeight);
+
+        drawAtBaseline(m_hud, cursor.x, cursor.y, tag, tagStyle);
+        const float sample_x = cursor.x + m_renderer->textWidth(m_hud, tag, tagStyle);
+        drawAtBaseline(m_hud, sample_x, cursor.y, kSampleText, textStyle);
+        m_renderer->newline(cursor, m_hud, textStyle);
+    }
+
+    void drawHintingCompareLine(TextCursor& cursor, FontHinting hinting, std::string_view label)
+    {
+        if (!m_hud)
+        {
+            return;
+        }
+
+        // Labels use a fixed style; sample text uses the same pixel height for every mode.
+        const TextStyle tagStyle = labelStyle(FontHinting::None);
+        const TextStyle textStyle = sampleStyle(kCompareSize, hinting);
+
+        drawAtBaseline(m_hud, cursor.x, cursor.y, label, tagStyle);
+        const float sample_x = cursor.x + m_renderer->textWidth(m_hud, label, tagStyle);
+        drawAtBaseline(m_hud, sample_x, cursor.y, kSampleText, textStyle);
+
+        const TextStyle spacingStyle { .pixelHeight = kCompareSize };
+        m_renderer->newline(cursor, m_hud, spacingStyle);
+    }
+
+    void buildHintingTests()
+    {
+        if (!m_hud)
+        {
+            return;
+        }
+
+        TextStyle headerStyle = sampleStyle(16.0f, FontHinting::None);
+        headerStyle.color = float32x4(0.7f, 0.82f, 0.95f, 1.0f);
+
+        TextCursor test = m_renderer->cursorTopLeft(m_hud, kTestLeft, kTestTop, headerStyle);
+        m_renderer->drawLine(test, m_hud, "Hinting test font: NotoSans-Regular.ttf", headerStyle);
+
+        for (float size : kTestSizes)
+        {
+            drawSizedSampleLine(test, size, FontHinting::None);
+        }
+
+        for (const HintingCompareRow& row : kHintingCompareRows)
+        {
+            drawHintingCompareLine(test, row.hinting, row.label);
+        }
+    }
+
     void buildText()
     {
         m_renderer->beginFrame();
 
-        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 32.0f };
-        TextCursor hud = m_renderer->cursorTopLeft(m_hud, 8.0f, 32.0f, hudStyle);
+        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = 16.0f };
+        TextCursor hud = m_renderer->cursorTopLeft(m_hud, 8.0f, kHudTop, hudStyle);
         m_renderer->draw(hud, m_hud, m_hudLine, hudStyle);
 
-        TextStyle bodyStyle { .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f), .pixelHeight = m_fontPixelHeight };
-        TextCursor body = m_renderer->cursorTopLeft(m_body, 40.0f, 132.0f, bodyStyle);
+        buildHintingTests();
+
+        // Animated body: smooth fractional scale (hinted modes snap to integer ppem).
+        TextStyle bodyStyle
+        {
+            .color = float32x4(1.0f, 1.0f, 1.0f, 1.0f),
+            .pixelHeight = m_fontPixelHeight,
+            .hinting = FontHinting::None, // smooth fractional scale, do not use hinting
+        };
+        TextCursor body = m_renderer->cursorTopLeft(m_body, 40.0f, kBodyTop, bodyStyle);
 
         for (const std::string& line : m_lines)
         {
@@ -210,13 +325,13 @@ public:
 
     void onFrame(const FrameInfo& info) override
     {
-        constexpr float min_size = 16.0f;
-        constexpr float max_size = 128.0f;
+        constexpr float body_min_size = 16.0f;
+        constexpr float body_max_size = 128.0f;
         constexpr float cycle_seconds = 18.0f;
 
         const float phase = float(std::fmod(info.time, double(cycle_seconds))) / cycle_seconds;
         const float t = 0.5f + 0.5f * std::sin(phase * float(2.0 * 3.14159265358979323846) - float(3.14159265358979323846) * 0.5f);
-        m_fontPixelHeight = min_size + t * (max_size - min_size);
+        m_fontPixelHeight = body_min_size + t * (body_max_size - body_min_size);
         m_renderer->setSize(m_body, m_fontPixelHeight);
 
         const float frame_ms = float(info.dt * 1000.0);

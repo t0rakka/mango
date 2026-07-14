@@ -23,6 +23,12 @@ struct FT_Outline_;
 namespace mango::font
 {
 
+    enum class Hinting : u8
+    {
+        None,
+        Light,
+    };
+
     using math::float32x2;
 
     struct QuadraticCurve
@@ -83,6 +89,8 @@ namespace mango::font
         bool load(const filesystem::Path& path, const std::string& filename);
 
         void setPixelHeight(float pixel_height);
+        void setHinting(Hinting hinting);
+        Hinting hinting() const;
         float pixelScale() const;
         float emPerPixel() const;
 
