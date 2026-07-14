@@ -119,6 +119,20 @@ queue.enqueue([]
 ```
 
 
+## Vulkan text rendering
+
+`mango::vulkan::FontRenderer` is a real-time GPU vector font rasterizer. 
+
+- **Realtime scale** — fractional pixel heights with smooth, unhinted outlines (`FontHinting::None`); ideal for animated UI and zooming body text.
+- **Hinting** — optional Light, Medium, and Mono modes grid-fit stems at integer ppem for crisp static labels.
+- **Ligatures** — OpenType `liga` / `clig` / `dlig` features are enabled when the font provides them (e.g. `ff`, `fi`, `fl`, `ffi`, `ffl`).
+
+<p>
+<img src="docs/vulkan-font-1.png" alt="Font hinting comparison" width="384"/>
+<img src="docs/vulkan-font-2.png" alt="Ligatures and scaled body text" width="384"/>
+</p>
+
+
 ## Filesystem Abstraction
 <h1><img src="docs/filesystem.jpg"  width="384"/></h1>
 
