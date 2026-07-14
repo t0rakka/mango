@@ -22,6 +22,7 @@
 
 #include "font_internal.hpp"
 #include "layout.hpp"
+#include "shape.hpp"
 #include "shaders.hpp"
 
 namespace mango::vulkan
@@ -136,15 +137,25 @@ namespace mango::vulkan
             return u32(key >> 32);
         }
 
-        static u64 glyphCacheKey(u32 faceIndex, u32 codepoint, font::Hinting hinting, float pixelHeight)
+        static u64 glyphCacheKey(u32 faceIndex, u32 id, font::Hinting hinting, float pixelHeight, bool by_glyph_index)
         {
+            u64 key;
             if (hinting == font::Hinting::Light)
             {
                 const u64 ppem = u64(std::min(65535.0f, std::round(std::max(1.0f, pixelHeight))));
-                return (1ull << 63) | (u64(faceIndex) << 48) | (ppem << 32) | u64(codepoint);
+                key = (1ull << 63) | (u64(faceIndex) << 48) | (ppem << 32) | u64(id);
+            }
+            else
+            {
+                key = (u64(faceIndex) << 32) | u64(id);
             }
 
-            return (u64(faceIndex) << 32) | u64(codepoint);
+            if (by_glyph_index)
+            {
+                key |= (1ull << 62);
+            }
+
+            return key;
         }
 
         static float effectivePixelHeight(const FaceSlot& slot, float stylePixelHeight)
@@ -369,9 +380,9 @@ namespace mango::vulkan
             slot.face.setPixelHeight(saved);
         }
 
-        void cacheGlyph(u32 faceIndex, u32 codepoint, float pixelHeight, font::Hinting hinting)
+        void cacheGlyph(u32 faceIndex, u32 id, float pixelHeight, font::Hinting hinting, bool by_glyph_index)
         {
-            const u64 key = glyphCacheKey(faceIndex, codepoint, hinting, pixelHeight);
+            const u64 key = glyphCacheKey(faceIndex, id, hinting, pixelHeight, by_glyph_index);
             if (glyphCache.find(key) != glyphCache.end())
             {
                 return;
@@ -385,7 +396,9 @@ namespace mango::vulkan
             slot.face.setPixelHeight(height);
 
             CachedGlyph cached;
-            cached.cpu = slot.face.loadGpuGlyph(codepoint);
+            cached.cpu = by_glyph_index
+                ? slot.face.loadGpuGlyphByIndex(id)
+                : slot.face.loadGpuGlyph(id);
 
             slot.face.setHinting(savedHinting);
             slot.face.setPixelHeight(savedHeight);
@@ -398,13 +411,13 @@ namespace mango::vulkan
             glyphCache.emplace(key, std::move(cached));
         }
 
-        const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 codepoint, float pixelHeight, font::Hinting hinting)
+        const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 id, float pixelHeight, font::Hinting hinting, bool by_glyph_index)
         {
-            const u64 key = glyphCacheKey(faceIndex, codepoint, hinting, pixelHeight);
+            const u64 key = glyphCacheKey(faceIndex, id, hinting, pixelHeight, by_glyph_index);
             auto it = glyphCache.find(key);
             if (it == glyphCache.end())
             {
-                cacheGlyph(faceIndex, codepoint, pixelHeight, hinting);
+                cacheGlyph(faceIndex, id, pixelHeight, hinting, by_glyph_index);
                 it = glyphCache.find(key);
             }
             return it->second;
@@ -464,31 +477,24 @@ namespace mango::vulkan
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
+                const font::ShapedRun shaped = font::shapeText(face, codepoints);
+                const bool by_glyph_index = font::textShapingEnabled();
 
-                for (size_t i = 0; i < codepoints.size(); ++i)
+                float cursor_x = pen_x;
+                for (const font::ShapedGlyph& glyph : shaped.glyphs)
                 {
-                    const u32 cp = u32(codepoints[i]);
-                    const u32 next = (i + 1 < codepoints.size()) ? u32(codepoints[i + 1]) : 0;
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cp, height, fontHinting);
+                    const u32 cache_id = by_glyph_index ? glyph.glyph_index : glyph.cluster < codepoints.size()
+                        ? u32(codepoints[glyph.cluster]) : glyph.glyph_index;
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cache_id, height, fontHinting, by_glyph_index);
 
-                    if (cached.cpu.curve_bytes.empty())
+                    if (!cached.cpu.curve_bytes.empty())
                     {
-                        pen_x += face.advancePixels(cp);
-                        if (next)
-                        {
-                            pen_x += face.kerningPixels(cp, next);
-                        }
-                        continue;
+                        queueGlyph(cached.atlas,
+                            makeGlyphDrawParams(cursor_x + glyph.x_offset, baseline_y + glyph.y_offset,
+                                cached, pixel_scale, em_per_pixel, color, stemDarkening));
                     }
 
-                    queueGlyph(cached.atlas,
-                        makeGlyphDrawParams(pen_x, baseline_y, cached, pixel_scale, em_per_pixel, color, stemDarkening));
-
-                    pen_x += face.advancePixels(cp);
-                    if (next)
-                    {
-                        pen_x += face.kerningPixels(cp, next);
-                    }
+                    cursor_x += glyph.x_advance;
                 }
             });
         }
@@ -546,7 +552,9 @@ namespace mango::vulkan
 
                 for (const font::PositionedGlyph& pg : line.glyphs)
                 {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint, height, fontHinting);
+                    const bool by_glyph_index = font::textShapingEnabled();
+                    const u32 cache_id = by_glyph_index ? pg.glyph_index : pg.codepoint;
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cache_id, height, fontHinting, by_glyph_index);
 
                     if (cached.cpu.curve_bytes.empty())
                     {
@@ -1333,10 +1341,17 @@ namespace mango::vulkan
         }
 
         const std::u32string codepoints = utf32_from_utf8(utf8);
-        for (char32_t cp : codepoints)
+        m_impl->withFaceAtHeight(font.index, slot->pixelHeight, font::Hinting::None, [&](font::Face& face, float height)
         {
-            m_impl->cacheGlyph(font.index, u32(cp), slot->pixelHeight, font::Hinting::None);
-        }
+            const font::ShapedRun shaped = font::shapeText(face, codepoints);
+            const bool by_glyph_index = font::textShapingEnabled();
+            for (const font::ShapedGlyph& glyph : shaped.glyphs)
+            {
+                const u32 cache_id = by_glyph_index ? glyph.glyph_index
+                    : (glyph.cluster < codepoints.size() ? u32(codepoints[glyph.cluster]) : glyph.glyph_index);
+                m_impl->cacheGlyph(font.index, cache_id, height, font::Hinting::None, by_glyph_index);
+            }
+        });
     }
 
     TextMetrics FontRenderer::measure(Font font, std::string_view utf8, const TextStyle& style) const

@@ -246,6 +246,13 @@ if (BUILD_VULKAN)
         target_link_libraries(mango-vulkan PUBLIC vulkan)
     endif ()
 
+    if (MANGO_HAS_FREETYPE)
+        target_compile_definitions(mango-vulkan PRIVATE MANGO_HAS_FREETYPE=1)
+    endif ()
+    if (MANGO_HAS_HARFBUZZ)
+        target_compile_definitions(mango-vulkan PRIVATE MANGO_HAS_HARFBUZZ=1)
+    endif ()
+
 endif ()
 
 # ------------------------------------------------------------------------------

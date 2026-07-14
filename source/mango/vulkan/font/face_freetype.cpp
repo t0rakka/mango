@@ -9,6 +9,11 @@
 #include <ft2build.h>
 #include FT_FREETYPE_H
 
+#ifdef MANGO_HAS_HARFBUZZ
+#include <hb.h>
+#include <hb-ft.h>
+#endif
+
 #include <mango/filesystem/filesystem.hpp>
 
 #include "font_internal.hpp"
@@ -89,8 +94,10 @@ namespace mango::font
 
         constexpr FT_Int32 kNoneOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_NO_HINTING;
         constexpr FT_Int32 kNoneAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_ADVANCE_ONLY;
+        constexpr FT_Int32 kNoneShapeLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_HINTING;
         constexpr FT_Int32 kLightOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT;
         constexpr FT_Int32 kLightAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT | FT_LOAD_ADVANCE_ONLY;
+        constexpr FT_Int32 kLightShapeLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT;
 
     } // namespace
 
@@ -99,16 +106,29 @@ namespace mango::font
         FT_Face face = nullptr;
         float pixel_height = 32.0f;
         Hinting hinting = Hinting::None;
+#ifdef MANGO_HAS_HARFBUZZ
+        hb_font_t* hb_font = nullptr;
+#endif
     };
 
     Face::Face() = default;
 
     Face::~Face()
     {
-        if (m_info && m_info->face)
+        if (m_info)
         {
-            FT_Done_Face(m_info->face);
-            m_info->face = nullptr;
+#ifdef MANGO_HAS_HARFBUZZ
+            if (m_info->hb_font)
+            {
+                hb_font_destroy(m_info->hb_font);
+                m_info->hb_font = nullptr;
+            }
+#endif
+            if (m_info->face)
+            {
+                FT_Done_Face(m_info->face);
+                m_info->face = nullptr;
+            }
         }
     }
 
@@ -295,7 +315,49 @@ namespace mango::font
         return kerning(codepoint1, codepoint2) * pixelScale();
     }
 
-    GlyphOutline Face::loadOutline(u32 codepoint) const
+    u32 Face::glyphIndex(u32 codepoint) const
+    {
+        if (!m_info || !m_info->face)
+        {
+            return 0;
+        }
+
+        return u32(FT_Get_Char_Index(m_info->face, codepoint));
+    }
+
+#ifdef MANGO_HAS_HARFBUZZ
+
+    hb_font_t* Face::harfbuzzFont()
+    {
+        if (!m_info || !m_info->face)
+        {
+            return nullptr;
+        }
+
+        if (!m_info->hb_font)
+        {
+            m_info->hb_font = hb_ft_font_create_referenced(m_info->face);
+        }
+
+        return m_info->hb_font;
+    }
+
+    void Face::syncHarfbuzzFont()
+    {
+        hb_font_t* font = harfbuzzFont();
+        if (!font)
+        {
+            return;
+        }
+
+        const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightShapeLoadFlags : kNoneShapeLoadFlags;
+        hb_ft_font_set_load_flags(font, flags);
+        hb_ft_font_changed(font);
+    }
+
+#endif
+
+    GlyphOutline Face::loadOutlineByIndex(u32 glyph_index) const
     {
         GlyphOutline outline;
 
@@ -304,9 +366,8 @@ namespace mango::font
             return outline;
         }
 
-        const FT_UInt glyph_index = FT_Get_Char_Index(m_info->face, codepoint);
         const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightOutlineLoadFlags : kNoneOutlineLoadFlags;
-        if (FT_Load_Glyph(m_info->face, glyph_index, flags) != 0)
+        if (FT_Load_Glyph(m_info->face, FT_UInt(glyph_index), flags) != 0)
         {
             return outline;
         }
@@ -334,12 +395,22 @@ namespace mango::font
         return outline;
     }
 
-    GlyphGpuData Face::loadGpuGlyph(u32 codepoint) const
+    GlyphOutline Face::loadOutline(u32 codepoint) const
     {
-        GlyphOutline outline = loadOutline(codepoint);
+        return loadOutlineByIndex(glyphIndex(codepoint));
+    }
+
+    GlyphGpuData Face::loadGpuGlyphByIndex(u32 glyph_index) const
+    {
+        GlyphOutline outline = loadOutlineByIndex(glyph_index);
         GlyphGpuData gpu;
         packForGpu(outline, gpu);
         return gpu;
+    }
+
+    GlyphGpuData Face::loadGpuGlyph(u32 codepoint) const
+    {
+        return loadGpuGlyphByIndex(glyphIndex(codepoint));
     }
 
 } // namespace mango::font

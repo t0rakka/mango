@@ -61,9 +61,11 @@ protected:
 
     static constexpr const char* kHudFontPath = "data/fonts/NotoSans-Regular.ttf";
     static constexpr const char* kSampleText = "The quick brown fox jumps over the lazy dog.";
+    static constexpr const char* kLigatureText = "ff fi fl ffi ffl office affine";
 
     static constexpr float kHudTop = 4.0f;
     static constexpr float kTestLeft = 8.0f;
+    static constexpr float kLigatureLeft = 640.0f;
     static constexpr float kTestTop = 22.0f;
     static constexpr float kBodyTop = 180.0f;
     static constexpr float kCompareSize = 11.0f;
@@ -247,6 +249,25 @@ public:
         {
             drawHintingCompareLine(test, row.hinting, row.label);
         }
+
+        buildLigatureTests();
+    }
+
+    void buildLigatureTests()
+    {
+        if (!m_hud)
+        {
+            return;
+        }
+
+        TextStyle headerStyle = sampleStyle(14.0f, FontHinting::None);
+        headerStyle.color = float32x4(0.7f, 0.82f, 0.95f, 1.0f);
+
+        TextCursor test = m_renderer->cursorTopLeft(m_hud, kLigatureLeft, kTestTop, headerStyle);
+        m_renderer->drawLine(test, m_hud, "Ligatures: NotoSans-Regular.ttf", headerStyle);
+
+        const TextStyle textStyle = sampleStyle(18.0f, FontHinting::None);
+        drawAtBaseline(m_hud, test.x, test.y, kLigatureText, textStyle);
     }
 
     void buildText()

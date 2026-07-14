@@ -52,9 +52,9 @@ OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
 OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
 
-# Vulkan FontRenderer: FreeType (+ optional HarfBuzz later) for deluxe text; stb_truetype fallback.
-OPTION(LIBRARY_FREETYPE     "Enable FreeType for Vulkan FontRenderer"   ON)
-OPTION(LIBRARY_HARFBUZZ     "Enable HarfBuzz text shaping (needs FreeType)" ON)
+# Vulkan FontRenderer: FreeType (+ HarfBuzz) for deluxe text; stb_truetype fallback when OFF.
+OPTION(LIBRARY_FREETYPE     "Use FreeType for Vulkan FontRenderer (OFF = stb_truetype even if installed)" ON)
+CMAKE_DEPENDENT_OPTION(LIBRARY_HARFBUZZ "Use HarfBuzz text shaping (OFF even if installed; requires FreeType)" ON "LIBRARY_FREETYPE" OFF)
 
 OPTION(IMAGE_FORMAT_JXR     "Enable JPEG XR image format support"       ON)
 OPTION(IMAGE_FORMAT_JXL     "Enable JPEG-XL image format support"       ON)
@@ -813,6 +813,10 @@ if (BUILD_VULKAN)
     endif ()
     if (MANGO_HAS_HARFBUZZ)
         message("    Text shaping:    HarfBuzz")
+    elseif (LIBRARY_HARFBUZZ AND MANGO_HAS_FREETYPE)
+        message("    Text shaping:    disabled (not found)")
+    elseif (LIBRARY_FREETYPE AND MANGO_HAS_FREETYPE)
+        message("    Text shaping:    disabled (LIBRARY_HARFBUZZ=OFF)")
     endif ()
 endif ()
 

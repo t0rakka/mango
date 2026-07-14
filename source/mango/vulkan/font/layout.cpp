@@ -6,6 +6,7 @@
 #include <cmath>
 
 #include "layout.hpp"
+#include "shape.hpp"
 
 namespace mango::font
 {
@@ -22,14 +23,14 @@ namespace mango::font
             return isWhitespace(cp) || cp >= 0x3000;
         }
 
-        float glyphAdvance(const Face& face, u32 codepoint, u32 next_codepoint)
+        float measureShapedWidth(const ShapedRun& run)
         {
-            float advance = face.advancePixels(codepoint);
-            if (next_codepoint)
-            {
-                advance += face.kerningPixels(codepoint, next_codepoint);
-            }
-            return advance;
+            return run.width;
+        }
+
+        ShapedRun shapeLine(const Face& face, const std::u32string& text)
+        {
+            return shapeText(face, text);
         }
 
         std::vector<std::u32string> breakLines(const Face& face, const std::u32string& codepoints,
@@ -69,7 +70,7 @@ namespace mango::font
                 std::u32string trial = current_line;
                 trial.push_back(cp);
 
-                float width = measureTextWidth(face, trial);
+                float width = measureShapedWidth(shapeLine(face, trial));
                 if (width <= max_width || trial.size() <= 1)
                 {
                     current_line = std::move(trial);
@@ -120,21 +121,7 @@ namespace mango::font
 
     float measureTextWidth(const Face& face, const std::u32string& codepoints)
     {
-        float width = 0.0f;
-
-        for (size_t i = 0; i < codepoints.size(); ++i)
-        {
-            u32 cp = u32(codepoints[i]);
-            u32 next = (i + 1 < codepoints.size()) ? u32(codepoints[i + 1]) : 0;
-
-            width += face.advancePixels(cp);
-            if (next)
-            {
-                width += face.kerningPixels(cp, next);
-            }
-        }
-
-        return width;
+        return measureShapedWidth(shapeText(face, codepoints));
     }
 
     LayoutResult layoutParagraph(const Face& face, const math::Rectangle& bounds,
@@ -160,7 +147,8 @@ namespace mango::font
 
             LayoutLine line;
             float pen_x = bounds.position.x;
-            line.width = measureTextWidth(face, line_cps);
+            const ShapedRun shaped = shapeLine(face, line_cps);
+            line.width = shaped.width;
 
             switch (style.align)
             {
@@ -175,22 +163,17 @@ namespace mango::font
                     break;
             }
 
-            for (size_t i = 0; i < line_cps.size(); ++i)
+            float cursor_x = pen_x;
+            for (const ShapedGlyph& glyph : shaped.glyphs)
             {
-                u32 cp = u32(line_cps[i]);
-                u32 next = (i + 1 < line_cps.size()) ? u32(line_cps[i + 1]) : 0;
-
                 PositionedGlyph pg;
-                pg.codepoint = cp;
-                pg.x = pen_x;
-                pg.y = y;
+                pg.glyph_index = glyph.glyph_index;
+                pg.codepoint = glyph.cluster < line_cps.size() ? u32(line_cps[glyph.cluster]) : 0;
+                pg.x = cursor_x + glyph.x_offset;
+                pg.y = y + glyph.y_offset;
                 line.glyphs.push_back(pg);
 
-                pen_x += face.advancePixels(cp);
-                if (next)
-                {
-                    pen_x += face.kerningPixels(cp, next);
-                }
+                cursor_x += glyph.x_advance;
             }
 
             max_width = std::max(max_width, line.width);

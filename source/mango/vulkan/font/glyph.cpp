@@ -7,7 +7,7 @@
 
 #include "font_internal.hpp"
 
-#ifdef MANGO_ENABLE_FREETYPE
+#ifdef MANGO_HAS_FREETYPE
 #include <ft2build.h>
 #include FT_OUTLINE_H
 #endif
@@ -262,7 +262,7 @@ namespace mango::font
         flush_contour();
     }
 
-#ifdef MANGO_ENABLE_FREETYPE
+#ifdef MANGO_HAS_FREETYPE
 
     struct FtDecomposeContext
     {
@@ -378,9 +378,9 @@ namespace mango::font
         ctx.flush_contour();
     }
 
-#endif // MANGO_ENABLE_FREETYPE
+#endif // MANGO_HAS_FREETYPE
 
-#ifdef MANGO_ENABLE_FREETYPE
+#ifdef MANGO_HAS_FREETYPE
     void processFreeTypeOutline(const FT_Outline& ft_outline, GlyphOutline& outline, float coord_scale)
     {
         processFreeTypeOutlineImpl(ft_outline, outline, coord_scale);
