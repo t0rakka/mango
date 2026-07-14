@@ -25,6 +25,8 @@ endif ()
 # options
 # ------------------------------------------------------------------------------
 
+include(CMakeDependentOption)
+
 OPTION(BUILD_SHARED_LIBS    "Build shared libraries"                     ON)
 
 OPTION(BUILD_OPENGL         "Build OpenGL support"                      OFF)
@@ -54,7 +56,7 @@ OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
 
 # Vulkan FontRenderer: FreeType (+ HarfBuzz) for deluxe text; stb_truetype fallback when OFF.
 OPTION(LIBRARY_FREETYPE     "Use FreeType for Vulkan FontRenderer (OFF = stb_truetype even if installed)" ON)
-CMAKE_DEPENDENT_OPTION(LIBRARY_HARFBUZZ "Use HarfBuzz text shaping (OFF even if installed; requires FreeType)" ON "LIBRARY_FREETYPE" OFF)
+cmake_dependent_option(LIBRARY_HARFBUZZ "Use HarfBuzz text shaping (OFF even if installed; requires FreeType)" ON "LIBRARY_FREETYPE" OFF)
 
 OPTION(IMAGE_FORMAT_JXR     "Enable JPEG XR image format support"       ON)
 OPTION(IMAGE_FORMAT_JXL     "Enable JPEG-XL image format support"       ON)
