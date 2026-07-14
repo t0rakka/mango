@@ -13,7 +13,8 @@
         {
             "name": "ninja",
             "description": "Ninja configuration for cross-platform builds",
-            "generator": "Ninja"
+            "generator": "Ninja",
+            "binaryDir": "${sourceDir}/build"
         },
         {
             "name": "vcpkg",
@@ -25,12 +26,15 @@
         {
             "name": "windows",
             "description": "Windows build using Visual Studio and vcpkg toolchain",
-            "inherits": ["options", "vcpkg"]
+            "inherits": ["options", "vcpkg"],
+            "generator": "Visual Studio 17 2022",
+            "binaryDir": "${sourceDir}/build"
         },
         {
             "name": "windows-ninja-release",
             "description": "Windows Ninja Release build with vcpkg toolchain",
             "inherits": ["options", "ninja", "vcpkg"],
+            "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }
@@ -39,6 +43,7 @@
             "name": "windows-ninja-debug",
             "description": "Windows Ninja Debug build with vcpkg toolchain",
             "inherits": ["options", "ninja", "vcpkg"],
+            "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Debug"
             }
@@ -62,6 +67,7 @@
             "name": "default",
             "description": "Cross-platform Release build using Ninja",
             "inherits": ["options", "ninja"],
+            "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
                 "CMAKE_BUILD_TYPE": "Release"
             }

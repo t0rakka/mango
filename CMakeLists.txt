@@ -4,6 +4,23 @@ project(mango
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
+if (CMAKE_GENERATOR MATCHES "Visual Studio")
+    if (EXISTS "${CMAKE_BINARY_DIR}/build.ninja"
+        OR EXISTS "${CMAKE_BINARY_DIR}/.ninja_log"
+        OR EXISTS "${CMAKE_BINARY_DIR}/.ninja_deps")
+        message(WARNING
+            "Ninja build artifacts found in a Visual Studio build directory.\n"
+            "    Use build-ninja/ for Ninja (cmake --preset windows-ninja-release) and build/ for VS.\n"
+            "    Remove build.ninja, .ninja_log, and .ninja_deps from this folder, or wipe CMakeCache.txt.")
+    endif ()
+elseif (CMAKE_GENERATOR MATCHES "Ninja")
+    if (EXISTS "${CMAKE_BINARY_DIR}/mango.sln")
+        message(WARNING
+            "Visual Studio build artifacts found in a Ninja build directory.\n"
+            "    Use build-ninja/ for Ninja and build/ for Visual Studio to avoid reconfigure loops.")
+    endif ()
+endif ()
+
 # ------------------------------------------------------------------------------
 # options
 # ------------------------------------------------------------------------------
@@ -34,6 +51,10 @@ OPTION(LIBRARY_LZFSE        "Enable LZFSE compression support"          ON)
 OPTION(LIBRARY_ISAL         "Enable Intel ISA-L compression support"    ON)
 
 OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
+
+# Vulkan FontRenderer: FreeType (+ optional HarfBuzz later) for deluxe text; stb_truetype fallback.
+OPTION(LIBRARY_FREETYPE     "Enable FreeType for Vulkan FontRenderer"   ON)
+OPTION(LIBRARY_HARFBUZZ     "Enable HarfBuzz text shaping (needs FreeType)" ON)
 
 OPTION(IMAGE_FORMAT_JXR     "Enable JPEG XR image format support"       ON)
 OPTION(IMAGE_FORMAT_JXL     "Enable JPEG-XL image format support"       ON)
@@ -81,6 +102,8 @@ if (LIBRARY_DISABLE)
     set(LIBRARY_LZMA        OFF)
     set(LIBRARY_LZFSE       OFF)
     set(LIBRARY_ISAL        OFF)
+    set(LIBRARY_FREETYPE    OFF)
+    set(LIBRARY_HARFBUZZ    OFF)
 endif ()
 
 # Option to build everything
@@ -173,6 +196,8 @@ set(CMAKE_CXX_EXTENSIONS OFF)
 if (MSVC)
     # Microsoft compiler does not generate __cplusplus automatically
     add_compile_options(/Zc:__cplusplus)
+    # VS generator sets /EHsc by default; Ninja + MSVC does not.
+    add_compile_options("$<$<COMPILE_LANGUAGE:CXX>:/EHsc>")
 endif ()
 
 if (NOT CMAKE_BUILD_TYPE)
@@ -668,6 +693,7 @@ endif ()
 SOURCE_GROUP("external/import3d"    FILES ${EXTERNAL_IMPORT3D})
 
 mango_probe_image_format_dependencies()
+mango_probe_font_dependencies()
 
 if (NOT IMAGE_FORMAT_RETRO)
     list(REMOVE_ITEM IMAGE_SOURCES
@@ -766,6 +792,24 @@ message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
 message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
 message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
 
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+# ------------------------------------------------------------------------------
+# details
+# ------------------------------------------------------------------------------
+
+if (BUILD_VULKAN)
+    message("[Vulkan]")
+    if (MANGO_HAS_FREETYPE)
+        message("    FontRenderer:    FreeType")
+    else ()
+        message("    FontRenderer:    stb_truetype")
+    endif ()
+    if (MANGO_HAS_HARFBUZZ)
+        message("    Text shaping:    HarfBuzz")
+    endif ()
+endif ()
+
 # ------------------------------------------------------------------------------
 # install
 # ------------------------------------------------------------------------------
@@ -828,8 +872,6 @@ install(
 # ------------------------------------------------------------------------------
 # examples
 # ------------------------------------------------------------------------------
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
 
 if (BUILD_EXAMPLES)
 
