@@ -95,9 +95,48 @@ namespace mango::font
         constexpr FT_Int32 kNoneOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_NO_HINTING;
         constexpr FT_Int32 kNoneAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_SCALE | FT_LOAD_ADVANCE_ONLY;
         constexpr FT_Int32 kNoneShapeLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_NO_HINTING;
-        constexpr FT_Int32 kLightOutlineLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT;
-        constexpr FT_Int32 kLightAdvanceLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT | FT_LOAD_ADVANCE_ONLY;
-        constexpr FT_Int32 kLightShapeLoadFlags = FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT;
+
+        struct HintLoadFlags
+        {
+            FT_Int32 outline = kNoneOutlineLoadFlags;
+            FT_Int32 advance = kNoneAdvanceLoadFlags;
+            FT_Int32 shape = kNoneShapeLoadFlags;
+        };
+
+        bool isHinted(Hinting hinting)
+        {
+            return hinting != Hinting::None;
+        }
+
+        HintLoadFlags loadFlagsFor(Hinting hinting)
+        {
+            switch (hinting)
+            {
+                case Hinting::Light:
+                    return
+                    {
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT,
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT | FT_LOAD_ADVANCE_ONLY,
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_LIGHT,
+                    };
+                case Hinting::Medium:
+                    return
+                    {
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_NORMAL,
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_NORMAL | FT_LOAD_ADVANCE_ONLY,
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_NORMAL,
+                    };
+                case Hinting::Mono:
+                    return
+                    {
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_MONO,
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_MONO | FT_LOAD_ADVANCE_ONLY,
+                        FT_LOAD_NO_BITMAP | FT_LOAD_TARGET_MONO,
+                    };
+                default:
+                    return {};
+            }
+        }
 
     } // namespace
 
@@ -238,13 +277,13 @@ namespace mango::font
         const FT_UInt index1 = FT_Get_Char_Index(m_info->face, codepoint1);
         const FT_UInt index2 = FT_Get_Char_Index(m_info->face, codepoint2);
         FT_Vector delta {};
-        const FT_UInt mode = m_info->hinting == Hinting::Light ? FT_KERNING_DEFAULT : FT_KERNING_UNSCALED;
+        const FT_UInt mode = isHinted(m_info->hinting) ? FT_KERNING_DEFAULT : FT_KERNING_UNSCALED;
         if (FT_Get_Kerning(m_info->face, index1, index2, mode, &delta) != 0)
         {
             return 0.0f;
         }
 
-        if (m_info->hinting == Hinting::Light)
+        if (isHinted(m_info->hinting))
         {
             return toFontUnits(float(delta.x), scale);
         }
@@ -260,14 +299,14 @@ namespace mango::font
         }
 
         const FT_UInt glyph_index = FT_Get_Char_Index(m_info->face, codepoint);
-        const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightAdvanceLoadFlags : kNoneAdvanceLoadFlags;
-        if (FT_Load_Glyph(m_info->face, glyph_index, flags) != 0)
+        const HintLoadFlags flags = loadFlagsFor(m_info->hinting);
+        if (FT_Load_Glyph(m_info->face, glyph_index, flags.advance) != 0)
         {
             return 0.0f;
         }
 
         const float advance = float(m_info->face->glyph->metrics.horiAdvance);
-        if (m_info->hinting == Hinting::Light)
+        if (isHinted(m_info->hinting))
         {
             return toFontUnits(advance, scale);
         }
@@ -277,7 +316,7 @@ namespace mango::font
 
     float Face::ascenderPixels() const
     {
-        if (m_info && m_info->hinting == Hinting::Light && m_info->face && m_info->face->size)
+        if (m_info && isHinted(m_info->hinting) && m_info->face && m_info->face->size)
         {
             return float(m_info->face->size->metrics.ascender) / 64.0f;
         }
@@ -287,7 +326,7 @@ namespace mango::font
 
     float Face::descenderPixels() const
     {
-        if (m_info && m_info->hinting == Hinting::Light && m_info->face && m_info->face->size)
+        if (m_info && isHinted(m_info->hinting) && m_info->face && m_info->face->size)
         {
             return float(m_info->face->size->metrics.descender) / 64.0f;
         }
@@ -297,7 +336,7 @@ namespace mango::font
 
     float Face::lineHeightPixels() const
     {
-        if (m_info && m_info->hinting == Hinting::Light && m_info->face && m_info->face->size)
+        if (m_info && isHinted(m_info->hinting) && m_info->face && m_info->face->size)
         {
             return float(m_info->face->size->metrics.height) / 64.0f;
         }
@@ -350,8 +389,8 @@ namespace mango::font
             return;
         }
 
-        const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightShapeLoadFlags : kNoneShapeLoadFlags;
-        hb_ft_font_set_load_flags(font, flags);
+        const HintLoadFlags flags = loadFlagsFor(m_info->hinting);
+        hb_ft_font_set_load_flags(font, flags.shape);
         hb_ft_font_changed(font);
     }
 
@@ -366,14 +405,14 @@ namespace mango::font
             return outline;
         }
 
-        const FT_Int32 flags = m_info->hinting == Hinting::Light ? kLightOutlineLoadFlags : kNoneOutlineLoadFlags;
-        if (FT_Load_Glyph(m_info->face, FT_UInt(glyph_index), flags) != 0)
+        const HintLoadFlags flags = loadFlagsFor(m_info->hinting);
+        if (FT_Load_Glyph(m_info->face, FT_UInt(glyph_index), flags.outline) != 0)
         {
             return outline;
         }
 
         const float advance = float(m_info->face->glyph->metrics.horiAdvance);
-        if (m_info->hinting == Hinting::Light)
+        if (isHinted(m_info->hinting))
         {
             outline.advance = toFontUnits(advance, scale);
 

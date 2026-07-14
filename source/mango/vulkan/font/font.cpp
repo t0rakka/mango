@@ -124,7 +124,13 @@ namespace mango::vulkan
 
         static font::Hinting toFontHinting(FontHinting hinting)
         {
-            return hinting == FontHinting::Light ? font::Hinting::Light : font::Hinting::None;
+            switch (hinting)
+            {
+                case FontHinting::Light:  return font::Hinting::Light;
+                case FontHinting::Medium: return font::Hinting::Medium;
+                case FontHinting::Mono:   return font::Hinting::Mono;
+                default:                  return font::Hinting::None;
+            }
         }
 
         static u32 cacheKeyFaceIndex(u64 key)
@@ -140,10 +146,11 @@ namespace mango::vulkan
         static u64 glyphCacheKey(u32 faceIndex, u32 id, font::Hinting hinting, float pixelHeight, bool by_glyph_index)
         {
             u64 key;
-            if (hinting == font::Hinting::Light)
+            if (hinting != font::Hinting::None)
             {
                 const u64 ppem = u64(std::min(65535.0f, std::round(std::max(1.0f, pixelHeight))));
-                key = (1ull << 63) | (u64(faceIndex) << 48) | (ppem << 32) | u64(id);
+                const u64 tier = (u64(hinting) << 16) | ppem;
+                key = (1ull << 63) | (u64(faceIndex) << 48) | (tier << 32) | u64(id);
             }
             else
             {

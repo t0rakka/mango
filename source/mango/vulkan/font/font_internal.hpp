@@ -28,6 +28,8 @@ namespace mango::font
     {
         None,
         Light,
+        Medium,
+        Mono,
     };
 
     using math::float32x2;

@@ -67,7 +67,7 @@ protected:
     static constexpr float kTestLeft = 8.0f;
     static constexpr float kLigatureLeft = 640.0f;
     static constexpr float kTestTop = 22.0f;
-    static constexpr float kBodyTop = 180.0f;
+    static constexpr float kBodyTop = 200.0f;
     static constexpr float kCompareSize = 11.0f;
 
     static constexpr std::array<float, 5> kTestSizes { 8.0f, 10.0f, 12.0f, 14.0f, 16.0f };
@@ -79,10 +79,12 @@ protected:
     };
 
     // Add rows here when new FontHinting modes are implemented.
-    static constexpr std::array<HintingCompareRow, 2> kHintingCompareRows
+    static constexpr std::array<HintingCompareRow, 4> kHintingCompareRows
     {{
         { FontHinting::None, "No hinting: " },
         { FontHinting::Light, "Hinting (light): " },
+        { FontHinting::Medium, "Hinting (medium): " },
+        { FontHinting::Mono, "Hinting (mono): " },
     }};
 
 public:
