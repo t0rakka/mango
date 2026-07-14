@@ -17,6 +17,13 @@ file(COPY icc/DisplayP3-v2-micro.icc DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 file(COPY blitter/conquer.jpg DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
 
 # ----------------------------------------------------------------------
+# benchmark dependencies (shared)
+# ----------------------------------------------------------------------
+
+add_library(mango_example_blend2d INTERFACE)
+find_module(mango_example_blend2d BLEND2D INTERFACE OPTIONAL "" blend2d blend2d::blend2d 0)
+
+# ----------------------------------------------------------------------
 # png_benchmark
 # ----------------------------------------------------------------------
 
@@ -51,7 +58,7 @@ if (NOT EMSCRIPTEN)
     find_module(png_benchmark PNG PRIVATE REQUIRED libpng PNG PNG::PNG 0)
 endif ()
 
-find_module(png_benchmark BLEND2D PRIVATE OPTIONAL "" blend2d blend2d::blend2d 0)
+target_link_libraries(png_benchmark PRIVATE mango_example_blend2d)
 find_module(png_benchmark ZLIB PRIVATE REQUIRED zlib ZLIB ZLIB::ZLIB 0)
 
 target_compile_definitions(png_benchmark PRIVATE "SPNG_STATIC")
@@ -76,5 +83,5 @@ if (MSVC)
 
 endif ()
 
-find_module(jpeg_benchmark BLEND2D PRIVATE OPTIONAL "" blend2d blend2d::blend2d 0)
+target_link_libraries(jpeg_benchmark PRIVATE mango_example_blend2d)
 find_module(jpeg_benchmark JPEG PRIVATE REQUIRED libjpeg JPEG JPEG::JPEG 0)
