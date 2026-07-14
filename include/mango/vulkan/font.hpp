@@ -54,6 +54,17 @@ namespace mango::vulkan
         }
     };
 
+    // None: unhinted outlines, font-table layout metrics (smooth fractional zoom).
+    // Light / Medium / Mono: grid-fitted outlines at integer ppem; FT layout metrics; not for animation.
+    // Maps to FreeType FT_LOAD_TARGET_* (see face_freetype.cpp).
+    enum class FontHinting
+    {
+        None,    // Smooth fractional scaling (default)
+        Light,   // FT_LOAD_TARGET_LIGHT — softer, less grid snap
+        Medium,  // FT_LOAD_TARGET_NORMAL — standard hinting
+        Mono,    // FT_LOAD_TARGET_MONO — strong grid-fit (crispest stems)
+    };
+
     struct TextStyle
     {
         // RGB: glyph color. A: coverage scale (0..1) for fading text in/out.
@@ -63,6 +74,8 @@ namespace mango::vulkan
         float pixelHeight = 0.0f;
         // Boost sub-pixel stem coverage at small sizes. 0 = off, 1 = default.
         float stemDarkening = 1.0f;
+        // None = smooth scale; hinted modes snap to integer ppem (not for animation).
+        FontHinting hinting = FontHinting::None;
     };
 
     enum class TextAlign

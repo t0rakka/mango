@@ -16,6 +16,7 @@ namespace mango::font
 
     struct PositionedGlyph
     {
+        u32 glyph_index = 0;
         u32 codepoint = 0;
         float x = 0.0f;
         float y = 0.0f; // baseline

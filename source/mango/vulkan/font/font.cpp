@@ -22,6 +22,7 @@
 
 #include "font_internal.hpp"
 #include "layout.hpp"
+#include "shape.hpp"
 #include "shaders.hpp"
 
 namespace mango::vulkan
@@ -121,9 +122,47 @@ namespace mango::vulkan
             GlyphAtlasSlot atlas;
         };
 
-        static u64 glyphCacheKey(u32 faceIndex, u32 codepoint)
+        static font::Hinting toFontHinting(FontHinting hinting)
         {
-            return (u64(faceIndex) << 32) | u64(codepoint);
+            switch (hinting)
+            {
+                case FontHinting::Light:  return font::Hinting::Light;
+                case FontHinting::Medium: return font::Hinting::Medium;
+                case FontHinting::Mono:   return font::Hinting::Mono;
+                default:                  return font::Hinting::None;
+            }
+        }
+
+        static u32 cacheKeyFaceIndex(u64 key)
+        {
+            if (key & (1ull << 63))
+            {
+                return u32((key >> 48) & 0xffff);
+            }
+
+            return u32(key >> 32);
+        }
+
+        static u64 glyphCacheKey(u32 faceIndex, u32 id, font::Hinting hinting, float pixelHeight, bool by_glyph_index)
+        {
+            u64 key;
+            if (hinting != font::Hinting::None)
+            {
+                const u64 ppem = u64(std::min(65535.0f, std::round(std::max(1.0f, pixelHeight))));
+                const u64 tier = (u64(hinting) << 16) | ppem;
+                key = (1ull << 63) | (u64(faceIndex) << 48) | (tier << 32) | u64(id);
+            }
+            else
+            {
+                key = (u64(faceIndex) << 32) | u64(id);
+            }
+
+            if (by_glyph_index)
+            {
+                key |= (1ull << 62);
+            }
+
+            return key;
         }
 
         static float effectivePixelHeight(const FaceSlot& slot, float stylePixelHeight)
@@ -141,17 +180,22 @@ namespace mango::vulkan
             const float float_top = baseline_y - cached.cpu.bounds_max.y * pixel_scale;
             const float float_bottom = baseline_y - cached.cpu.bounds_min.y * pixel_scale;
 
-            const float screen_x = std::floor(float_left);
-            const float screen_y = std::floor(float_top);
+            // Keep float screen origins for subpixel pen alignment, but size the
+            // raster window to the enclosing integer pixel rect so partial rows at
+            // the top/left edges are not rejected by gid < 0 in the shader.
+            const float bbox_left = std::floor(float_left);
+            const float bbox_top = std::floor(float_top);
+            const float bbox_right = std::ceil(float_right);
+            const float bbox_bottom = std::ceil(float_bottom);
 
             GlyphDrawParams params;
-            params.screen_x = screen_x;
-            params.screen_y = screen_y;
-            params.em_window_x0 = cached.cpu.bounds_min.x + (screen_x - float_left) * em_per_pixel;
-            params.em_window_y0 = (baseline_y - (screen_y + 1.0f)) * em_per_pixel;
+            params.screen_x = float_left;
+            params.screen_y = float_top;
+            params.em_window_x0 = cached.cpu.bounds_min.x;
+            params.em_window_y0 = (baseline_y - float_top - 1.0f) * em_per_pixel;
             params.em_per_pixel = em_per_pixel;
-            params.pixel_width = std::max(1u, u32(std::ceil(float_right - screen_x)));
-            params.pixel_height = std::max(1u, u32(std::ceil(float_bottom - screen_y)));
+            params.pixel_width = std::max(1u, u32(bbox_right - bbox_left));
+            params.pixel_height = std::max(1u, u32(bbox_bottom - bbox_top));
             params.color = color;
             params.stem_darkening = stemDarkening;
             return params;
@@ -319,7 +363,7 @@ namespace mango::vulkan
         {
             for (auto it = glyphCache.begin(); it != glyphCache.end(); )
             {
-                if (u32(it->first >> 32) == faceIndex)
+                if (cacheKeyFaceIndex(it->first) == faceIndex)
                 {
                     it = glyphCache.erase(it);
                 }
@@ -330,26 +374,41 @@ namespace mango::vulkan
             }
         }
 
-        void withFaceAtHeight(u32 faceIndex, float pixelHeight, auto&& fn)
+        void withFaceAtHeight(u32 faceIndex, float pixelHeight, font::Hinting hinting, auto&& fn)
         {
             FaceSlot& slot = faces[faceIndex];
             const float height = effectivePixelHeight(slot, pixelHeight);
+            const font::Hinting savedHinting = slot.face.hinting();
             const float saved = slot.pixelHeight;
+            slot.face.setHinting(hinting);
             slot.face.setPixelHeight(height);
             fn(slot.face, height);
+            slot.face.setHinting(savedHinting);
             slot.face.setPixelHeight(saved);
         }
 
-        void cacheGlyph(u32 faceIndex, u32 codepoint)
+        void cacheGlyph(u32 faceIndex, u32 id, float pixelHeight, font::Hinting hinting, bool by_glyph_index)
         {
-            const u64 key = glyphCacheKey(faceIndex, codepoint);
+            const u64 key = glyphCacheKey(faceIndex, id, hinting, pixelHeight, by_glyph_index);
             if (glyphCache.find(key) != glyphCache.end())
             {
                 return;
             }
 
+            FaceSlot& slot = faces[faceIndex];
+            const float height = effectivePixelHeight(slot, pixelHeight);
+            const font::Hinting savedHinting = slot.face.hinting();
+            const float savedHeight = slot.pixelHeight;
+            slot.face.setHinting(hinting);
+            slot.face.setPixelHeight(height);
+
             CachedGlyph cached;
-            cached.cpu = faces[faceIndex].face.loadGpuGlyph(codepoint);
+            cached.cpu = by_glyph_index
+                ? slot.face.loadGpuGlyphByIndex(id)
+                : slot.face.loadGpuGlyph(id);
+
+            slot.face.setHinting(savedHinting);
+            slot.face.setPixelHeight(savedHeight);
 
             if (!cached.cpu.curve_bytes.empty())
             {
@@ -359,13 +418,13 @@ namespace mango::vulkan
             glyphCache.emplace(key, std::move(cached));
         }
 
-        const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 codepoint)
+        const CachedGlyph& getCachedGlyph(u32 faceIndex, u32 id, float pixelHeight, font::Hinting hinting, bool by_glyph_index)
         {
-            const u64 key = glyphCacheKey(faceIndex, codepoint);
+            const u64 key = glyphCacheKey(faceIndex, id, hinting, pixelHeight, by_glyph_index);
             auto it = glyphCache.find(key);
             if (it == glyphCache.end())
             {
-                cacheGlyph(faceIndex, codepoint);
+                cacheGlyph(faceIndex, id, pixelHeight, hinting, by_glyph_index);
                 it = glyphCache.find(key);
             }
             return it->second;
@@ -413,42 +472,36 @@ namespace mango::vulkan
 
         void queueGlyphsForLine(u32 faceIndex, float pen_x, float baseline_y,
                                 const std::u32string& codepoints, float32x4 color, float pixelHeight,
-                                float stemDarkening)
+                                float stemDarkening, FontHinting hinting)
         {
             if (codepoints.empty())
             {
                 return;
             }
 
-            withFaceAtHeight(faceIndex, pixelHeight, [&](font::Face& face, float)
+            const font::Hinting fontHinting = toFontHinting(hinting);
+            withFaceAtHeight(faceIndex, pixelHeight, fontHinting, [&](font::Face& face, float height)
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
+                const font::ShapedRun shaped = font::shapeText(face, codepoints);
+                const bool by_glyph_index = font::textShapingEnabled();
 
-                for (size_t i = 0; i < codepoints.size(); ++i)
+                float cursor_x = pen_x;
+                for (const font::ShapedGlyph& glyph : shaped.glyphs)
                 {
-                    const u32 cp = u32(codepoints[i]);
-                    const u32 next = (i + 1 < codepoints.size()) ? u32(codepoints[i + 1]) : 0;
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cp);
+                    const u32 cache_id = by_glyph_index ? glyph.glyph_index : glyph.cluster < codepoints.size()
+                        ? u32(codepoints[glyph.cluster]) : glyph.glyph_index;
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cache_id, height, fontHinting, by_glyph_index);
 
-                    if (cached.cpu.curve_bytes.empty())
+                    if (!cached.cpu.curve_bytes.empty())
                     {
-                        pen_x += cached.cpu.advance * pixel_scale;
-                        if (next)
-                        {
-                            pen_x += float(face.kerning(cp, next)) * pixel_scale;
-                        }
-                        continue;
+                        queueGlyph(cached.atlas,
+                            makeGlyphDrawParams(cursor_x + glyph.x_offset, baseline_y + glyph.y_offset,
+                                cached, pixel_scale, em_per_pixel, color, stemDarkening));
                     }
 
-                    queueGlyph(cached.atlas,
-                        makeGlyphDrawParams(pen_x, baseline_y, cached, pixel_scale, em_per_pixel, color, stemDarkening));
-
-                    pen_x += cached.cpu.advance * pixel_scale;
-                    if (next)
-                    {
-                        pen_x += float(face.kerning(cp, next)) * pixel_scale;
-                    }
+                    cursor_x += glyph.x_advance;
                 }
             });
         }
@@ -483,29 +536,32 @@ namespace mango::vulkan
             pendingInstances.push_back(gpu);
             pendingRects.push_back(
             {
-                params.screen_x,
-                params.screen_y,
-                params.screen_x + float(pixel_width),
-                params.screen_y + float(pixel_height),
+                std::floor(params.screen_x),
+                std::floor(params.screen_y),
+                std::floor(params.screen_x) + float(pixel_width),
+                std::floor(params.screen_y) + float(pixel_height),
             });
         }
 
         void queueGlyphsForLayoutLine(u32 faceIndex, const font::LayoutLine& line, float32x4 color,
-                                      float pixelHeight, float stemDarkening)
+                                      float pixelHeight, float stemDarkening, FontHinting hinting)
         {
             if (line.glyphs.empty())
             {
                 return;
             }
 
-            withFaceAtHeight(faceIndex, pixelHeight, [&](font::Face& face, float)
+            const font::Hinting fontHinting = toFontHinting(hinting);
+            withFaceAtHeight(faceIndex, pixelHeight, fontHinting, [&](font::Face& face, float height)
             {
                 const float pixel_scale = face.pixelScale();
                 const float em_per_pixel = face.emPerPixel();
 
                 for (const font::PositionedGlyph& pg : line.glyphs)
                 {
-                    const CachedGlyph& cached = getCachedGlyph(faceIndex, pg.codepoint);
+                    const bool by_glyph_index = font::textShapingEnabled();
+                    const u32 cache_id = by_glyph_index ? pg.glyph_index : pg.codepoint;
+                    const CachedGlyph& cached = getCachedGlyph(faceIndex, cache_id, height, fontHinting, by_glyph_index);
 
                     if (cached.cpu.curve_bytes.empty())
                     {
@@ -1213,14 +1269,14 @@ namespace mango::vulkan
             return;
         }
 
-        const float rounded = std::max(1.0f, std::round(pixelHeight));
-        if (rounded == std::max(1.0f, std::round(slot->pixelHeight)))
+        const float h = std::max(1.0f, pixelHeight);
+        if (std::abs(slot->pixelHeight - h) < 1e-4f)
         {
             return;
         }
 
-        slot->pixelHeight = pixelHeight;
-        slot->face.setPixelHeight(rounded);
+        slot->pixelHeight = h;
+        slot->face.setPixelHeight(h);
     }
 
     float FontRenderer::size(Font font) const
@@ -1238,10 +1294,11 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
         float height = 0.0f;
-        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, [&](font::Face& face, float)
+        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float)
         {
-            height = float(face.ascent - face.descent + face.line_gap) * face.pixelScale() * style.lineSpacing;
+            height = face.lineHeightPixels() * style.lineSpacing;
         });
         return height;
     }
@@ -1255,10 +1312,11 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
         float asc = 0.0f;
-        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, [&](font::Face& face, float)
+        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float)
         {
-            asc = float(face.ascent) * face.pixelScale();
+            asc = face.ascenderPixels();
         });
         return asc;
     }
@@ -1272,10 +1330,11 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
         float desc = 0.0f;
-        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, [&](font::Face& face, float)
+        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float)
         {
-            desc = float(face.descent) * face.pixelScale();
+            desc = face.descenderPixels();
         });
         return desc;
     }
@@ -1289,10 +1348,17 @@ namespace mango::vulkan
         }
 
         const std::u32string codepoints = utf32_from_utf8(utf8);
-        for (char32_t cp : codepoints)
+        m_impl->withFaceAtHeight(font.index, slot->pixelHeight, font::Hinting::None, [&](font::Face& face, float height)
         {
-            m_impl->cacheGlyph(font.index, u32(cp));
-        }
+            const font::ShapedRun shaped = font::shapeText(face, codepoints);
+            const bool by_glyph_index = font::textShapingEnabled();
+            for (const font::ShapedGlyph& glyph : shaped.glyphs)
+            {
+                const u32 cache_id = by_glyph_index ? glyph.glyph_index
+                    : (glyph.cluster < codepoints.size() ? u32(codepoints[glyph.cluster]) : glyph.glyph_index);
+                m_impl->cacheGlyph(font.index, cache_id, height, font::Hinting::None, by_glyph_index);
+            }
+        });
     }
 
     TextMetrics FontRenderer::measure(Font font, std::string_view utf8, const TextStyle& style) const
@@ -1305,8 +1371,9 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
         const std::u32string codepoints = utf32_from_utf8(utf8);
-        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, [&](font::Face& face, float)
+        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float)
         {
             metrics.width = font::measureTextWidth(face, codepoints);
         });
@@ -1325,9 +1392,10 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
         const std::u32string codepoints = utf32_from_utf8(utf8);
         TextMetrics metrics;
-        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, [&](font::Face& face, float)
+        const_cast<Impl*>(m_impl.get())->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float)
         {
             metrics = font::layoutParagraph(face, bounds, codepoints, style).metrics;
         });
@@ -1375,7 +1443,8 @@ namespace mango::vulkan
         }
 
         m_impl->utf32Scratch = utf32_from_utf8(utf8);
-        m_impl->queueGlyphsForLine(font.index, x, y, m_impl->utf32Scratch, style.color, style.pixelHeight, style.stemDarkening);
+        m_impl->queueGlyphsForLine(font.index, x, y, m_impl->utf32Scratch, style.color, style.pixelHeight,
+            style.stemDarkening, style.hinting);
     }
 
     void FontRenderer::draw(TextCursor& cursor, Font font, std::string_view utf8, const TextStyle& style)
@@ -1405,12 +1474,13 @@ namespace mango::vulkan
 
         m_impl->utf32Scratch = utf32_from_utf8(utf8);
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
-        m_impl->withFaceAtHeight(font.index, h, [&](font::Face& face, float height)
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
+        m_impl->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float height)
         {
             const font::LayoutResult layout = font::layoutParagraph(face, bounds, m_impl->utf32Scratch, style);
             for (const font::LayoutLine& line : layout.lines)
             {
-                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, height, style.stemDarkening);
+                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, height, style.stemDarkening, style.hinting);
             }
         });
     }
@@ -1430,13 +1500,14 @@ namespace mango::vulkan
         }
 
         const float h = effectivePixelHeight(*slot, style.pixelHeight);
+        const font::Hinting fontHinting = toFontHinting(style.hinting);
         m_impl->utf32Scratch = utf32_from_utf8(utf8);
-        m_impl->withFaceAtHeight(font.index, h, [&](font::Face& face, float pixelHeight)
+        m_impl->withFaceAtHeight(font.index, h, fontHinting, [&](font::Face& face, float pixelHeight)
         {
             const font::LayoutResult layout = font::layoutParagraph(face, bounds, m_impl->utf32Scratch, style);
             for (const font::LayoutLine& line : layout.lines)
             {
-                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, pixelHeight, style.stemDarkening);
+                m_impl->queueGlyphsForLayoutLine(font.index, line, style.color, pixelHeight, style.stemDarkening, style.hinting);
             }
 
             if (!layout.lines.empty())

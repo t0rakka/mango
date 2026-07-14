@@ -16,8 +16,21 @@
 #include <mango/filesystem/path.hpp>
 #include <mango/math/math.hpp>
 
+#ifdef MANGO_HAS_FREETYPE
+struct FT_Outline_;
+struct hb_font_t;
+#endif
+
 namespace mango::font
 {
+
+    enum class Hinting : u8
+    {
+        None,
+        Light,
+        Medium,
+        Mono,
+    };
 
     using math::float32x2;
 
@@ -79,16 +92,34 @@ namespace mango::font
         bool load(const filesystem::Path& path, const std::string& filename);
 
         void setPixelHeight(float pixel_height);
+        void setHinting(Hinting hinting);
+        Hinting hinting() const;
         float pixelScale() const;
         float emPerPixel() const;
 
         float advanceWidth(u32 codepoint) const;
 
+        // Font-table metrics scaled to the current pixel height (smooth zoom).
+        float ascenderPixels() const;
+        float descenderPixels() const;
+        float lineHeightPixels() const;
+        float advancePixels(u32 codepoint) const;
+        float kerningPixels(u32 codepoint1, u32 codepoint2) const;
+
+        u32 glyphIndex(u32 codepoint) const;
+
         GlyphOutline loadOutline(u32 codepoint) const;
+        GlyphOutline loadOutlineByIndex(u32 glyph_index) const;
         GlyphGpuData loadGpuGlyph(u32 codepoint) const;
-        int kerning(u32 codepoint1, u32 codepoint2) const;
+        GlyphGpuData loadGpuGlyphByIndex(u32 glyph_index) const;
+        float kerning(u32 codepoint1, u32 codepoint2) const;
 
         explicit operator bool () const;
+
+#ifdef MANGO_HAS_HARFBUZZ
+        hb_font_t* harfbuzzFont();
+        void syncHarfbuzzFont();
+#endif
 
     private:
         Buffer m_data;
@@ -106,5 +137,9 @@ namespace mango::font
     };
 
     void processStbShape(const StbVertex* vertices, int count, GlyphOutline& outline);
+
+#ifdef MANGO_HAS_FREETYPE
+    void processFreeTypeOutline(const FT_Outline_& outline, GlyphOutline& result, float coord_scale = 1.0f);
+#endif
 
 } // namespace mango::font

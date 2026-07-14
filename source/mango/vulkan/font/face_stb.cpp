@@ -81,6 +81,15 @@ namespace mango::font
         scale = stbtt_ScaleForPixelHeight(&m_info->info, pixel_height);
     }
 
+    void Face::setHinting(Hinting)
+    {
+    }
+
+    Hinting Face::hinting() const
+    {
+        return Hinting::None;
+    }
+
     float Face::pixelScale() const
     {
         return scale;
@@ -91,14 +100,14 @@ namespace mango::font
         return scale > 0.0f ? 1.0f / scale : 1.0f;
     }
 
-    int Face::kerning(u32 codepoint1, u32 codepoint2) const
+    float Face::kerning(u32 codepoint1, u32 codepoint2) const
     {
         if (!m_info)
         {
-            return 0;
+            return 0.0f;
         }
 
-        return stbtt_GetCodepointKernAdvance(&m_info->info, int(codepoint1), int(codepoint2));
+        return float(stbtt_GetCodepointKernAdvance(&m_info->info, int(codepoint1), int(codepoint2)));
     }
 
     float Face::advanceWidth(u32 codepoint) const
@@ -113,7 +122,42 @@ namespace mango::font
         return float(advance);
     }
 
-    GlyphOutline Face::loadOutline(u32 codepoint) const
+    float Face::ascenderPixels() const
+    {
+        return float(ascent) * scale;
+    }
+
+    float Face::descenderPixels() const
+    {
+        return float(descent) * scale;
+    }
+
+    float Face::lineHeightPixels() const
+    {
+        return float(ascent - descent + line_gap) * scale;
+    }
+
+    float Face::advancePixels(u32 codepoint) const
+    {
+        return advanceWidth(codepoint) * pixelScale();
+    }
+
+    float Face::kerningPixels(u32 codepoint1, u32 codepoint2) const
+    {
+        return kerning(codepoint1, codepoint2) * pixelScale();
+    }
+
+    u32 Face::glyphIndex(u32 codepoint) const
+    {
+        if (!m_info)
+        {
+            return 0;
+        }
+
+        return u32(stbtt_FindGlyphIndex(&m_info->info, int(codepoint)));
+    }
+
+    GlyphOutline Face::loadOutlineByIndex(u32 glyph_index) const
     {
         GlyphOutline outline;
 
@@ -123,11 +167,11 @@ namespace mango::font
         }
 
         int advance = 0;
-        stbtt_GetCodepointHMetrics(&m_info->info, int(codepoint), &advance, nullptr);
+        stbtt_GetGlyphHMetrics(&m_info->info, int(glyph_index), &advance, nullptr);
         outline.advance = float(advance);
 
         stbtt_vertex* vertices = nullptr;
-        int count = stbtt_GetCodepointShape(&m_info->info, int(codepoint), &vertices);
+        int count = stbtt_GetGlyphShape(&m_info->info, int(glyph_index), &vertices);
         if (count > 0 && vertices)
         {
             processStbShape(reinterpret_cast<const StbVertex*>(vertices), count, outline);
@@ -137,12 +181,22 @@ namespace mango::font
         return outline;
     }
 
-    GlyphGpuData Face::loadGpuGlyph(u32 codepoint) const
+    GlyphOutline Face::loadOutline(u32 codepoint) const
     {
-        GlyphOutline outline = loadOutline(codepoint);
+        return loadOutlineByIndex(glyphIndex(codepoint));
+    }
+
+    GlyphGpuData Face::loadGpuGlyphByIndex(u32 glyph_index) const
+    {
+        GlyphOutline outline = loadOutlineByIndex(glyph_index);
         GlyphGpuData gpu;
         packForGpu(outline, gpu);
         return gpu;
+    }
+
+    GlyphGpuData Face::loadGpuGlyph(u32 codepoint) const
+    {
+        return loadGpuGlyphByIndex(glyphIndex(codepoint));
     }
 
 } // namespace mango::font

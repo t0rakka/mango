@@ -7,6 +7,11 @@
 
 #include "font_internal.hpp"
 
+#ifdef MANGO_HAS_FREETYPE
+#include <ft2build.h>
+#include FT_OUTLINE_H
+#endif
+
 namespace mango::font
 {
 
@@ -256,5 +261,130 @@ namespace mango::font
 
         flush_contour();
     }
+
+#ifdef MANGO_HAS_FREETYPE
+
+    struct FtDecomposeContext
+    {
+        GlyphOutline* outline = nullptr;
+        Contour contour {};
+        float32x2 current { 0.0f, 0.0f };
+        bool has_current = false;
+        bool bounds_initialized = false;
+        float coord_scale = 1.0f;
+
+        void flush_contour()
+        {
+            if (!contour.curves.empty())
+            {
+                outline->contours.push_back(std::move(contour));
+                contour = Contour {};
+            }
+        }
+
+        float32x2 mapPoint(const FT_Vector& v) const
+        {
+            return float32x2(float(v.x) * coord_scale, float(v.y) * coord_scale);
+        }
+    };
+
+    int ftMoveTo(const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        ctx->flush_contour();
+        ctx->current = ctx->mapPoint(*to);
+        ctx->has_current = true;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        return 0;
+    }
+
+    int ftLineTo(const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        if (!ctx->has_current)
+        {
+            return 0;
+        }
+
+        float32x2 next = ctx->mapPoint(*to);
+        if (!isHorizontalLine(ctx->current, next))
+        {
+            appendCurve(ctx->contour, lineToQuadratic(ctx->current, next));
+        }
+
+        ctx->current = next;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        return 0;
+    }
+
+    int ftConicTo(const FT_Vector* control, const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        if (!ctx->has_current)
+        {
+            return 0;
+        }
+
+        float32x2 c = ctx->mapPoint(*control);
+        float32x2 next = ctx->mapPoint(*to);
+        appendCurve(ctx->contour, { ctx->current, c, next });
+
+        ctx->current = next;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        updateBounds(*ctx->outline, c, ctx->bounds_initialized);
+        return 0;
+    }
+
+    int ftCubicTo(const FT_Vector* c1, const FT_Vector* c2, const FT_Vector* to, void* user)
+    {
+        auto* ctx = static_cast<FtDecomposeContext*>(user);
+        if (!ctx->has_current)
+        {
+            return 0;
+        }
+
+        float32x2 p1 = ctx->mapPoint(*c1);
+        float32x2 p2 = ctx->mapPoint(*c2);
+        float32x2 next = ctx->mapPoint(*to);
+
+        std::vector<QuadraticCurve> quadratics;
+        cubicToQuadratics(ctx->current, p1, p2, next, quadratics);
+        for (const QuadraticCurve& q : quadratics)
+        {
+            appendCurve(ctx->contour, q);
+        }
+
+        ctx->current = next;
+        updateBounds(*ctx->outline, ctx->current, ctx->bounds_initialized);
+        updateBounds(*ctx->outline, p1, ctx->bounds_initialized);
+        updateBounds(*ctx->outline, p2, ctx->bounds_initialized);
+        return 0;
+    }
+
+    void processFreeTypeOutlineImpl(const FT_Outline& ft_outline, GlyphOutline& outline, float coord_scale)
+    {
+        FT_Outline_Funcs funcs {};
+        funcs.move_to = ftMoveTo;
+        funcs.line_to = ftLineTo;
+        funcs.conic_to = ftConicTo;
+        funcs.cubic_to = ftCubicTo;
+        funcs.shift = 0;
+        funcs.delta = 0;
+
+        FtDecomposeContext ctx;
+        ctx.outline = &outline;
+        ctx.coord_scale = coord_scale;
+        FT_Outline_Decompose(const_cast<FT_Outline*>(&ft_outline), &funcs, &ctx);
+        ctx.flush_contour();
+    }
+
+#endif // MANGO_HAS_FREETYPE
+
+#ifdef MANGO_HAS_FREETYPE
+    void processFreeTypeOutline(const FT_Outline& ft_outline, GlyphOutline& outline, float coord_scale)
+    {
+        processFreeTypeOutlineImpl(ft_outline, outline, coord_scale);
+    }
+#endif
 
 } // namespace mango::font
