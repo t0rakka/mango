@@ -591,7 +591,8 @@ namespace mango::vulkan
         glslang::FinalizeProcess();
     }
 
-    Shader Compiler::compile(std::string_view source, ShaderStage stage)
+    Shader Compiler::compile(std::string_view source, ShaderStage stage,
+                             const std::string& preamble)
     {
         Shader shader;
         shader.stage = toVkShaderStage(stage);
@@ -601,6 +602,10 @@ namespace mango::vulkan
         std::string sourceStorage(source);
         const char* sourceCString = sourceStorage.c_str();
         glslShader.setStrings(&sourceCString, 1);
+        if (!preamble.empty())
+        {
+            glslShader.setPreamble(preamble.c_str());
+        }
         glslShader.setEntryPoint("main");
         glslShader.setEnvInput(glslang::EShSourceGlsl, eshStage, glslang::EShClientVulkan, 110);
         glslShader.setEnvClient(glslang::EShClientVulkan, glslang::EShTargetVulkan_1_2);

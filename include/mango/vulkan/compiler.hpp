@@ -69,7 +69,7 @@ namespace mango::vulkan
         Compiler(const Compiler&) = delete;
         Compiler& operator=(const Compiler&) = delete;
 
-        Shader compile(std::string_view source, ShaderStage stage);
+        Shader compile(std::string_view source, ShaderStage stage, const std::string& preamble = {});
 
         static VkShaderModule createShaderModule(VkDevice device, const std::vector<u32>& spirv);
         static VkShaderModule createShaderModule(VkDevice device, const Shader& shader);
