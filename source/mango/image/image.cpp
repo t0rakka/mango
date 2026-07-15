@@ -115,8 +115,12 @@ namespace mango::image
     void registerImageCodecJPG();
     void registerImageCodecBMP();
     void registerImageCodecPCX();
+#if defined(IMAGE_FORMAT_IFF)
     void registerImageCodecIFF();
+#endif
+#if defined(IMAGE_FORMAT_TIFF)
     void registerImageCodecTIFF();
+#endif
     void registerImageCodecHDR();
     void registerImageCodecGIF();
     void registerImageCodecKTX();
@@ -134,12 +138,16 @@ namespace mango::image
     void registerImageCodecC64();
     void registerImageCodecMSX();
     void registerImageCodecRETRO();
+    void registerImageCodecPICT();
 #endif
+#if defined(IMAGE_FORMAT_EXR)
     void registerImageCodecEXR();
+#endif
     void registerImageCodecQOI();
     void registerImageCodecPIC();
-    void registerImageCodecPICT();
+#if defined(IMAGE_FORMAT_PSD)
     void registerImageCodecPSD();
+#endif
     void registerImageCodecRAW();
 #if defined(IMAGE_FORMAT_CAMERA)
     void registerImageCodecCAMERA();
@@ -182,8 +190,12 @@ namespace mango::image
             registerImageCodecJPG();
             registerImageCodecBMP();
             registerImageCodecPCX();
+#if defined(IMAGE_FORMAT_IFF)
             registerImageCodecIFF();
+#endif
+#if defined(IMAGE_FORMAT_TIFF)
             registerImageCodecTIFF();
+#endif
             registerImageCodecHDR();
             registerImageCodecGIF();
             registerImageCodecKTX();
@@ -201,12 +213,16 @@ namespace mango::image
             registerImageCodecC64();
             registerImageCodecMSX();
             registerImageCodecRETRO();
+            registerImageCodecPICT();
 #endif
+#if defined(IMAGE_FORMAT_EXR)
             registerImageCodecEXR();
+#endif
             registerImageCodecQOI();
             registerImageCodecPIC();
-            registerImageCodecPICT();
+#if defined(IMAGE_FORMAT_PSD)
             registerImageCodecPSD();
+#endif
             registerImageCodecRAW();
 #if defined(IMAGE_FORMAT_CAMERA)
             registerImageCodecCAMERA();

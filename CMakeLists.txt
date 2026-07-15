@@ -58,6 +58,10 @@ OPTION(LIBRARY_ASTC         "Enable ASTC block compression support"     ON)
 OPTION(LIBRARY_FREETYPE     "Use FreeType for Vulkan FontRenderer (OFF = stb_truetype even if installed)" ON)
 cmake_dependent_option(LIBRARY_HARFBUZZ "Use HarfBuzz text shaping (OFF even if installed; requires FreeType)" ON "LIBRARY_FREETYPE" OFF)
 
+OPTION(IMAGE_FORMAT_IFF     "Enable IFF image format support"           ON)
+OPTION(IMAGE_FORMAT_EXR     "Enable OpenEXR image format support"       ON)
+OPTION(IMAGE_FORMAT_TIFF    "Enable TIFF image format support"          ON)
+OPTION(IMAGE_FORMAT_PSD     "Enable Photoshop PSD image format support" ON)
 OPTION(IMAGE_FORMAT_JXR     "Enable JPEG XR image format support"       ON)
 OPTION(IMAGE_FORMAT_JXL     "Enable JPEG-XL image format support"       ON)
 OPTION(IMAGE_FORMAT_JP2     "Enable JPEG2000 image format support"      ON)
@@ -66,7 +70,7 @@ OPTION(IMAGE_FORMAT_WP2     "Enable WebP 2 image format support"        ON)
 OPTION(IMAGE_FORMAT_AVIF    "Enable AVIF image format support"          ON)
 OPTION(IMAGE_FORMAT_HEIF    "Enable HEIF image format support"          ON)
 OPTION(IMAGE_FORMAT_CAMERA  "Enable camera raw image format (LibRaw)"   ON)
-OPTION(IMAGE_FORMAT_RETRO   "Enable RETRO image format support"         ON)
+OPTION(IMAGE_FORMAT_RETRO   "Enable retro formats: Atari,C64,MSX, ..."  ON)
 OPTION(IMAGE_FORMAT_KTX2    "Enable KTX2 image format support"          ON)
 
 OPTION(ENABLE_NEON          "Enable ARM NEON instructions"              ON)
@@ -89,6 +93,10 @@ OPTION(ENABLE_SHA           "Enable SHA"                               OFF)
 # Option to disable every optional library
 option(LIBRARY_DISABLE,     "Disable ALL optional libraries"           OFF)
 if (LIBRARY_DISABLE)
+    set(IMAGE_FORMAT_IFF    OFF)
+    set(IMAGE_FORMAT_EXR    OFF)
+    set(IMAGE_FORMAT_TIFF   OFF)
+    set(IMAGE_FORMAT_PSD    OFF)
     set(IMAGE_FORMAT_JXR    OFF)
     set(IMAGE_FORMAT_JXL    OFF)
     set(IMAGE_FORMAT_JP2    OFF)
@@ -709,6 +717,7 @@ if (NOT IMAGE_FORMAT_RETRO)
         "${MANGO_SOURCE_DIR}/image/image_atari8.cpp"
         "${MANGO_SOURCE_DIR}/image/image_c64.cpp"
         "${MANGO_SOURCE_DIR}/image/image_msx.cpp"
+        "${MANGO_SOURCE_DIR}/image/image_pict.cpp"
         "${MANGO_SOURCE_DIR}/image/image_retro.cpp"
     )
 endif ()
@@ -723,6 +732,25 @@ if (NOT IMAGE_FORMAT_KTX2)
     list(REMOVE_ITEM IMAGE_SOURCES
         "${MANGO_SOURCE_DIR}/image/image_ktx2.cpp"
     )
+endif ()
+
+if (NOT IMAGE_FORMAT_IFF)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_iff.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_EXR)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_exr.cpp")
+endif ()
+
+if (NOT IMAGE_FORMAT_TIFF)
+    list(REMOVE_ITEM IMAGE_SOURCES
+        "${MANGO_SOURCE_DIR}/image/image_tiff.cpp"
+        "${MANGO_SOURCE_DIR}/image/ccitt_fax_decode.cpp"
+    )
+endif ()
+
+if (NOT IMAGE_FORMAT_PSD)
+    list(REMOVE_ITEM IMAGE_SOURCES "${MANGO_SOURCE_DIR}/image/image_psd.cpp")
 endif ()
 
 if (NOT IMAGE_FORMAT_JXR)
@@ -775,7 +803,7 @@ if (LIBRARY_ASTC)
     target_compile_definitions(mango-image PRIVATE "MANGO_ENABLE_ASTC")
 endif ()
 
-foreach (_image_format IN ITEMS RETRO KTX2 JXR JXL JP2 WEBP WP2 AVIF HEIF CAMERA)
+foreach (_image_format IN ITEMS IFF EXR TIFF PSD RETRO KTX2 JXR JXL JP2 WEBP WP2 AVIF HEIF CAMERA)
     if (IMAGE_FORMAT_${_image_format})
         target_compile_definitions(mango-image PRIVATE "IMAGE_FORMAT_${_image_format}")
     endif ()
