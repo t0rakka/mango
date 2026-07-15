@@ -53,7 +53,13 @@ namespace mango
         // primary atom
         xcb_atom_t atom_primary;
 
+        // drag-and-drop conversion targets
+        xcb_atom_t atom_text_uri_list { 0 };
+        xcb_atom_t atom_gnome_copied_files { 0 };
+        xcb_atom_t atom_kde_urilist { 0 };
+
         // xdnd atoms
+        xcb_atom_t atom_xdnd_Proxy;
         xcb_atom_t atom_xdnd_Aware;
         xcb_atom_t atom_xdnd_Enter;
         xcb_atom_t atom_xdnd_Position;
@@ -64,9 +70,10 @@ namespace mango
         xcb_atom_t atom_xdnd_Finished;
         xcb_atom_t atom_xdnd_Selection;
         xcb_atom_t atom_xdnd_Leave;
-        xcb_atom_t atom_xdnd_req;
+        xcb_atom_t atom_xdnd_req { 0 };
 
         xcb_window_t xdnd_source;
+        xcb_window_t xdnd_proxy_target { 0 };
         int xdnd_version { 0 };
         int size[2] = { 0, 0 };
         u64 mouse_time[6];
@@ -85,6 +92,14 @@ namespace mango
         bool resize_pending { false };
 
         xcb_key_symbols_t* key_symbols;
+
+        // GLX opens a separate Xlib Display for the same window; poll it for events too.
+        void* xlib_display { nullptr };
+
+        void processXdndClientMessage(xcb_atom_t type, const uint32_t data[5]);
+        void processXdndSelection(xcb_atom_t target, xcb_atom_t property);
+        xcb_window_t xdndReplyWindow(xcb_window_t source) const;
+        void drainEvents(bool& hadEvents);
 
         XcbBackend();
         ~XcbBackend() override;

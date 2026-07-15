@@ -9,7 +9,15 @@
 
 #include <unistd.h>
 #include <poll.h>
+#include <fcntl.h>
+#include <cstdio>
+#include <cstdlib>
+#include <cstring>
 #include <cstdint>
+
+#if defined(MANGO_HAS_XCB_WINDOW)
+#include <X11/Xlib.h>
+#endif
 
 #define explicit explicit_
 #include <xcb/xcb.h>
@@ -440,6 +448,249 @@ namespace
         return result;
     }
 
+    // -----------------------------------------------------------------------
+    // Xdnd
+    // -----------------------------------------------------------------------
+
+    xcb_atom_t pickXdndTarget(const xcb_atom_t* atoms, int count,
+        xcb_atom_t text_uri_list, xcb_atom_t gnome_copied, xcb_atom_t kde_urilist)
+    {
+        const xcb_atom_t preferred[] = { text_uri_list, gnome_copied, kde_urilist };
+        for (xcb_atom_t target : preferred)
+        {
+            if (!target)
+            {
+                continue;
+            }
+
+            for (int i = 0; i < count; ++i)
+            {
+                if (atoms[i] == target)
+                {
+                    return atoms[i];
+                }
+            }
+        }
+        return 0;
+    }
+
+    xcb_window_t xdndProxyTarget(xcb_connection_t* connection, xcb_atom_t atom_proxy, xcb_window_t source)
+    {
+        xcb_get_property_cookie_t cookie = xcb_get_property(connection, 0, source,
+            atom_proxy, XCB_ATOM_WINDOW, 0, 1);
+        xcb_get_property_reply_t* reply = xcb_get_property_reply(connection, cookie, nullptr);
+        xcb_window_t target = source;
+        if (reply && reply->type == XCB_ATOM_WINDOW && reply->format == 32)
+        {
+            const xcb_window_t* proxy = (const xcb_window_t*)xcb_get_property_value(reply);
+            if (proxy && *proxy)
+            {
+                target = *proxy;
+            }
+        }
+        free(reply);
+        return target;
+    }
+
+    void emplaceLocalPath(FileIndex& dropped, const std::string& filename)
+    {
+        int fd = ::open(filename.c_str(), O_RDONLY);
+        if (fd < 0)
+        {
+            return;
+        }
+
+        struct stat s;
+        if (::fstat(fd, &s) == 0)
+        {
+            if ((s.st_mode & S_IFDIR) == 0)
+            {
+                dropped.emplace(filename, u64(s.st_size), 0);
+            }
+            else
+            {
+                dropped.emplace(filename + "/", 0, FileInfo::Directory);
+            }
+        }
+
+        ::close(fd);
+    }
+
+    char* uri_to_local(char* uri)
+    {
+        if (std::memcmp(uri, "file:/", 6) == 0)
+        {
+            uri += 6; // local file
+        }
+        else if (std::strstr(uri, ":/") != nullptr)
+        {
+            return nullptr; // wrong scheme
+        }
+
+        bool local = uri[0] != '/' || (uri[0] != '\0' && uri[1] == '/');
+
+        // is a hostname?
+        if (!local && uri[0] == '/' && uri[2] != '/')
+        {
+            // transform network filename into local filename
+            char* hostname_end = std::strchr(uri + 1, '/');
+            if (hostname_end != nullptr)
+            {
+                char hostname[257];
+                if (::gethostname(hostname, 255) == 0)
+                {
+                    hostname[256] = '\0';
+                    if (std::memcmp(uri + 1, hostname, hostname_end - (uri + 1)) == 0)
+                    {
+                        uri = hostname_end + 1;
+                        local = true;
+                    }
+                }
+            }
+        }
+
+        char* file = nullptr;
+
+        if (local)
+        {
+            file = uri;
+            if (uri[1] == '/')
+            {
+                file++;
+            }
+            else
+            {
+                file--;
+            }
+        }
+
+        return file;
+    }
+
+    inline
+    char hex_to_char(char s)
+    {
+        char c;
+
+        if (s >= '0' && s <= '9') c = s - '0';
+        else if (s >= 'A' && s <= 'F') c = s - 'A' + 10;
+        else if (s >= 'a' && s <= 'f') c = s - 'a' + 10;
+        else c = 0;
+
+        return c;
+    }
+
+    std::string uri_decode(const std::string& s)
+    {
+        const char* p = s.c_str();
+
+        std::string result;
+
+        for (auto length = s.length(); length > 0; )
+        {
+            const char c = p[0];
+            if (c == '%' && length > 2)
+            {
+                char x = hex_to_char(p[1]) << 4;
+                x |= hex_to_char(p[2]);
+                if (x)
+                {
+                    result.push_back(x);
+                    length -= 3;
+                    p += 3;
+                    continue;
+                }
+            }
+
+            result.push_back(c);
+            --length;
+            ++p;
+        }
+
+        return result;
+    }
+
+    void emplaceUri(FileIndex& dropped, const char* uri, int length)
+    {
+        if (length <= 0)
+        {
+            return;
+        }
+
+        std::vector<char> buffer(length + 1);
+        std::memcpy(buffer.data(), uri, length);
+        buffer[length] = '\0';
+
+        char* fn = uri_to_local(buffer.data());
+        if (!fn)
+        {
+            return;
+        }
+
+        emplaceLocalPath(dropped, uri_decode(fn));
+    }
+
+    void dispatchUriList(mango::Window* window, unsigned char* data, int count, bool skip_first_line)
+    {
+        FileIndex dropped;
+
+        const char* scan = (const char*)data;
+        int remaining = count;
+        bool first_line = skip_first_line;
+
+        while (remaining > 0)
+        {
+            while (remaining > 0 && (*scan == '\r' || *scan == '\n'))
+            {
+                ++scan;
+                --remaining;
+            }
+
+            if (remaining <= 0)
+            {
+                break;
+            }
+
+            const char* line_start = scan;
+            int line_len = 0;
+            while (line_len < remaining && scan[line_len] != '\r' && scan[line_len] != '\n')
+            {
+                ++line_len;
+            }
+
+            if (first_line)
+            {
+                first_line = false;
+            }
+            else if (line_len > 0)
+            {
+                emplaceUri(dropped, line_start, line_len);
+            }
+
+            scan += line_len;
+            remaining -= line_len;
+        }
+
+        if (!dropped.empty())
+        {
+            window->onDropFiles(dropped);
+        }
+    }
+
+    void dispatchXdndData(mango::Window* window, xcb_atom_t format,
+        xcb_atom_t text_uri_list, xcb_atom_t gnome_copied, xcb_atom_t kde_urilist,
+        unsigned char* data, int count)
+    {
+        if (format == gnome_copied)
+        {
+            dispatchUriList(window, data, count, true);
+        }
+        else if (format == text_uri_list || format == kde_urilist)
+        {
+            dispatchUriList(window, data, count, false);
+        }
+    }
+
 } // namespace
 
 namespace mango
@@ -479,20 +730,24 @@ namespace mango
         xcb_intern_atom_cookie_t state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
         xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(connection, 0, 24, "_NET_WM_STATE_FULLSCREEN");
         xcb_intern_atom_cookie_t primary_cookie = xcb_intern_atom(connection, 0, 7, "PRIMARY");
+        xcb_intern_atom_cookie_t text_uri_list_cookie = xcb_intern_atom(connection, 0, 13, "text/uri-list");
+        xcb_intern_atom_cookie_t gnome_copied_cookie = xcb_intern_atom(connection, 0, 27, "x-special/gnome-copied-files");
+        xcb_intern_atom_cookie_t kde_urilist_cookie = xcb_intern_atom(connection, 0, 24, "application/x-kde4-urilist");
         xcb_intern_atom_cookie_t sync_request_cookie = xcb_intern_atom(connection, 0, 20, "_NET_WM_SYNC_REQUEST");
         xcb_intern_atom_cookie_t sync_counter_cookie = xcb_intern_atom(connection, 0, 28, "_NET_WM_SYNC_REQUEST_COUNTER");
 
         // XDnD atoms
-        xcb_intern_atom_cookie_t xdnd_aware_cookie = xcb_intern_atom(connection, 0, 8, "XdndAware");
+        xcb_intern_atom_cookie_t xdnd_aware_cookie = xcb_intern_atom(connection, 0, 9, "XdndAware");
         xcb_intern_atom_cookie_t xdnd_enter_cookie = xcb_intern_atom(connection, 0, 9, "XdndEnter");
-        xcb_intern_atom_cookie_t xdnd_position_cookie = xcb_intern_atom(connection, 0, 11, "XdndPosition");
+        xcb_intern_atom_cookie_t xdnd_position_cookie = xcb_intern_atom(connection, 0, 12, "XdndPosition");
         xcb_intern_atom_cookie_t xdnd_status_cookie = xcb_intern_atom(connection, 0, 10, "XdndStatus");
-        xcb_intern_atom_cookie_t xdnd_typelist_cookie = xcb_intern_atom(connection, 0, 10, "XdndTypeList");
-        xcb_intern_atom_cookie_t xdnd_actioncopy_cookie = xcb_intern_atom(connection, 0, 12, "XdndActionCopy");
+        xcb_intern_atom_cookie_t xdnd_typelist_cookie = xcb_intern_atom(connection, 0, 12, "XdndTypeList");
+        xcb_intern_atom_cookie_t xdnd_actioncopy_cookie = xcb_intern_atom(connection, 0, 14, "XdndActionCopy");
         xcb_intern_atom_cookie_t xdnd_drop_cookie = xcb_intern_atom(connection, 0, 8, "XdndDrop");
-        xcb_intern_atom_cookie_t xdnd_finished_cookie = xcb_intern_atom(connection, 0, 11, "XdndFinished");
-        xcb_intern_atom_cookie_t xdnd_selection_cookie = xcb_intern_atom(connection, 0, 11, "XdndSelection");
+        xcb_intern_atom_cookie_t xdnd_finished_cookie = xcb_intern_atom(connection, 0, 12, "XdndFinished");
+        xcb_intern_atom_cookie_t xdnd_selection_cookie = xcb_intern_atom(connection, 0, 13, "XdndSelection");
         xcb_intern_atom_cookie_t xdnd_leave_cookie = xcb_intern_atom(connection, 0, 9, "XdndLeave");
+        xcb_intern_atom_cookie_t xdnd_proxy_cookie = xcb_intern_atom(connection, 0, 9, "XdndProxy");
 
         // Get atom replies
         xcb_intern_atom_reply_t* protocols_reply = xcb_intern_atom_reply(connection, protocols_cookie, nullptr);
@@ -500,6 +755,9 @@ namespace mango
         xcb_intern_atom_reply_t* state_reply = xcb_intern_atom_reply(connection, state_cookie, nullptr);
         xcb_intern_atom_reply_t* fullscreen_reply = xcb_intern_atom_reply(connection, fullscreen_cookie, nullptr);
         xcb_intern_atom_reply_t* primary_reply = xcb_intern_atom_reply(connection, primary_cookie, nullptr);
+        xcb_intern_atom_reply_t* text_uri_list_reply = xcb_intern_atom_reply(connection, text_uri_list_cookie, nullptr);
+        xcb_intern_atom_reply_t* gnome_copied_reply = xcb_intern_atom_reply(connection, gnome_copied_cookie, nullptr);
+        xcb_intern_atom_reply_t* kde_urilist_reply = xcb_intern_atom_reply(connection, kde_urilist_cookie, nullptr);
         xcb_intern_atom_reply_t* sync_request_reply = xcb_intern_atom_reply(connection, sync_request_cookie, nullptr);
         xcb_intern_atom_reply_t* sync_counter_reply = xcb_intern_atom_reply(connection, sync_counter_cookie, nullptr);
 
@@ -514,6 +772,7 @@ namespace mango
         xcb_intern_atom_reply_t* xdnd_finished_reply = xcb_intern_atom_reply(connection, xdnd_finished_cookie, nullptr);
         xcb_intern_atom_reply_t* xdnd_selection_reply = xcb_intern_atom_reply(connection, xdnd_selection_cookie, nullptr);
         xcb_intern_atom_reply_t* xdnd_leave_reply = xcb_intern_atom_reply(connection, xdnd_leave_cookie, nullptr);
+        xcb_intern_atom_reply_t* xdnd_proxy_reply = xcb_intern_atom_reply(connection, xdnd_proxy_cookie, nullptr);
 
         // Store atoms
         atom_protocols = protocols_reply->atom;
@@ -521,6 +780,9 @@ namespace mango
         atom_state = state_reply->atom;
         atom_fullscreen = fullscreen_reply->atom;
         atom_primary = primary_reply->atom;
+        atom_text_uri_list = text_uri_list_reply->atom;
+        atom_gnome_copied_files = gnome_copied_reply->atom;
+        atom_kde_urilist = kde_urilist_reply->atom;
         atom_sync_request = sync_request_reply ? sync_request_reply->atom : 0;
         atom_sync_counter = sync_counter_reply ? sync_counter_reply->atom : 0;
 
@@ -535,6 +797,7 @@ namespace mango
         atom_xdnd_Finished = xdnd_finished_reply->atom;
         atom_xdnd_Selection = xdnd_selection_reply->atom;
         atom_xdnd_Leave = xdnd_leave_reply->atom;
+        atom_xdnd_Proxy = xdnd_proxy_reply->atom;
 
         // Free atom replies
         free(protocols_reply);
@@ -542,6 +805,9 @@ namespace mango
         free(state_reply);
         free(fullscreen_reply);
         free(primary_reply);
+        free(text_uri_list_reply);
+        free(gnome_copied_reply);
+        free(kde_urilist_reply);
         free(sync_request_reply);
         free(sync_counter_reply);
         free(xdnd_aware_reply);
@@ -554,6 +820,7 @@ namespace mango
         free(xdnd_finished_reply);
         free(xdnd_selection_reply);
         free(xdnd_leave_reply);
+        free(xdnd_proxy_reply);
 
         // Initialize mouse time array
         for (int i = 0; i < 6; ++i)
@@ -698,30 +965,22 @@ namespace mango
         xcb_icccm_set_wm_size_hints(connection, window, XCB_ATOM_WM_NORMAL_HINTS, &size_hints);
 
         // Set window type hint
-        xcb_intern_atom_cookie_t window_type_cookie = xcb_intern_atom(connection, 0, 16, "_NET_WM_WINDOW_TYPE");
-        xcb_intern_atom_cookie_t window_type_normal_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_WINDOW_TYPE_NORMAL");
-        xcb_intern_atom_cookie_t wm_state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
-        xcb_intern_atom_cookie_t wm_state_normal_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE_NORMAL");
+        xcb_intern_atom_cookie_t window_type_cookie = xcb_intern_atom(connection, 0, 19, "_NET_WM_WINDOW_TYPE");
+        xcb_intern_atom_cookie_t window_type_normal_cookie = xcb_intern_atom(connection, 0, 26, "_NET_WM_WINDOW_TYPE_NORMAL");
 
         xcb_intern_atom_reply_t* window_type_reply = xcb_intern_atom_reply(connection, window_type_cookie, nullptr);
         xcb_intern_atom_reply_t* window_type_normal_reply = xcb_intern_atom_reply(connection, window_type_normal_cookie, nullptr);
-        xcb_intern_atom_reply_t* wm_state_reply = xcb_intern_atom_reply(connection, wm_state_cookie, nullptr);
-        xcb_intern_atom_reply_t* wm_state_normal_reply = xcb_intern_atom_reply(connection, wm_state_normal_cookie, nullptr);
 
         if (window_type_reply && window_type_normal_reply)
         {
             xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, window_type_reply->atom, XCB_ATOM_ATOM, 32, 1, &window_type_normal_reply->atom);
         }
 
-        if (wm_state_reply && wm_state_normal_reply)
-        {
-            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, wm_state_reply->atom, XCB_ATOM_ATOM, 32, 1, &wm_state_normal_reply->atom);
-        }
+        const char wm_class[] = "mango\0Mango";
+        xcb_icccm_set_wm_class(connection, window, sizeof(wm_class), wm_class);
 
         free(window_type_reply);
         free(window_type_normal_reply);
-        free(wm_state_reply);
-        free(wm_state_normal_reply);
 
         // NOTE: the window is created un-mapped (not visible). This is required by Vulkan
         // so that nothing is shown while the application configures itself; the caller
@@ -916,6 +1175,9 @@ namespace mango
     {
         if (enable)
         {
+            uint32_t xdnd_version = 5;
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_xdnd_Aware, XCB_ATOM_ATOM, 32, 1, &xdnd_version);
+
             xcb_map_window(connection, window);
             uint32_t values[] = { XCB_STACK_MODE_ABOVE };
             xcb_configure_window(connection, window, XCB_CONFIG_WINDOW_STACK_MODE, values);
@@ -1004,6 +1266,373 @@ namespace mango
         // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
+    xcb_window_t XcbBackend::xdndReplyWindow(xcb_window_t source) const
+    {
+        return xdnd_proxy_target ? xdnd_proxy_target : source;
+    }
+
+    void XcbBackend::processXdndClientMessage(xcb_atom_t type, const uint32_t data[5])
+    {
+        if (const char* debug = std::getenv("MANGO_XCB_DND_DEBUG"))
+        {
+            if (debug[0] && debug[0] != '0')
+            {
+                std::fprintf(stderr, "[xdnd] msg=%u enter=%u pos=%u req=%u src=%#x\n",
+                    type, atom_xdnd_Enter, atom_xdnd_Position, atom_xdnd_req, data[0]);
+            }
+        }
+
+        if (type == atom_xdnd_Enter)
+        {
+            bool use_list = data[1] & 1;
+            xdnd_source = data[0];
+            xdnd_version = (data[1] >> 24);
+            xdnd_proxy_target = xdndProxyTarget(connection, atom_xdnd_Proxy, xdnd_source);
+            atom_xdnd_req = 0;
+
+            if (use_list)
+            {
+                xcb_get_property_cookie_t cookie = xcb_get_property(connection, 0,
+                    xdnd_source, atom_xdnd_TypeList, XCB_ATOM_ATOM, 0, 0x8000000L);
+                xcb_get_property_reply_t* reply = xcb_get_property_reply(connection, cookie, nullptr);
+                if (reply && reply->type == XCB_ATOM_ATOM && reply->format == 32)
+                {
+                    xcb_atom_t* atoms = (xcb_atom_t*)xcb_get_property_value(reply);
+                    int count = xcb_get_property_value_length(reply) / sizeof(xcb_atom_t);
+                    atom_xdnd_req = pickXdndTarget(atoms, count,
+                        atom_text_uri_list, atom_gnome_copied_files, atom_kde_urilist);
+                }
+                free(reply);
+            }
+            else
+            {
+                xcb_atom_t atoms[3] = { data[2], data[3], data[4] };
+                atom_xdnd_req = pickXdndTarget(atoms, 3,
+                    atom_text_uri_list, atom_gnome_copied_files, atom_kde_urilist);
+            }
+        }
+        else if (type == atom_xdnd_Position)
+        {
+            const xcb_window_t source = data[0];
+            const xcb_window_t dest = xdndReplyWindow(source);
+
+            xcb_client_message_event_t reply = { 0 };
+            reply.response_type = XCB_CLIENT_MESSAGE;
+            reply.format = 32;
+            reply.window = dest;
+            reply.type = atom_xdnd_Status;
+            reply.data.data32[0] = window;
+            // XDND: bit 0 = accept position, bit 1 = empty rectangle (whole window).
+            reply.data.data32[1] = atom_xdnd_req ? 3 : 0;
+            reply.data.data32[2] = 0;
+            reply.data.data32[3] = 0;
+            reply.data.data32[4] = atom_xdnd_ActionCopy;
+
+            xcb_send_event(connection, 0, dest, XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
+            xcb_flush(connection);
+        }
+        else if (type == atom_xdnd_Leave)
+        {
+            atom_xdnd_req = 0;
+            xdnd_source = 0;
+            xdnd_proxy_target = 0;
+        }
+        else if (type == atom_xdnd_Drop)
+        {
+            const xcb_window_t dest = xdndReplyWindow(data[0]);
+
+            if (atom_xdnd_req == 0)
+            {
+                xcb_client_message_event_t reply = { 0 };
+                reply.response_type = XCB_CLIENT_MESSAGE;
+                reply.format = 32;
+                reply.window = dest;
+                reply.type = atom_xdnd_Finished;
+                reply.data.data32[0] = window;
+                reply.data.data32[1] = 0;
+                reply.data.data32[2] = 0;
+
+                xcb_send_event(connection, 0, dest, XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
+                xcb_flush(connection);
+            }
+            else
+            {
+                xcb_delete_property(connection, window, atom_primary);
+
+                xcb_timestamp_t timestamp = xdnd_version >= 1 ? data[2] : XCB_CURRENT_TIME;
+                xcb_convert_selection(connection, window,
+                    atom_xdnd_Selection, atom_xdnd_req, atom_primary, timestamp);
+                xcb_flush(connection);
+            }
+        }
+    }
+
+    void XcbBackend::processXdndSelection(xcb_atom_t target, xcb_atom_t property)
+    {
+        if (target != atom_xdnd_req)
+        {
+            return;
+        }
+
+        bool success = false;
+
+        if (property != XCB_NONE)
+        {
+            xcb_get_property_cookie_t cookie = xcb_get_property(connection, 1,
+                window, property, XCB_ATOM_NONE, 0, 0x8000000L);
+            xcb_get_property_reply_t* reply = xcb_get_property_reply(connection, cookie, nullptr);
+            if (reply && reply->format == 8)
+            {
+                unsigned char* data = (unsigned char*)xcb_get_property_value(reply);
+                int count = xcb_get_property_value_length(reply);
+                dispatchXdndData(owner, atom_xdnd_req,
+                    atom_text_uri_list, atom_gnome_copied_files, atom_kde_urilist,
+                    data, count);
+                success = true;
+            }
+            free(reply);
+        }
+
+        const xcb_window_t dest = xdndReplyWindow(xdnd_source);
+        if (dest)
+        {
+            xcb_client_message_event_t client_message = { 0 };
+            client_message.response_type = XCB_CLIENT_MESSAGE;
+            client_message.format = 32;
+            client_message.window = dest;
+            client_message.type = atom_xdnd_Finished;
+            client_message.data.data32[0] = window;
+            client_message.data.data32[1] = success ? 1 : 0;
+            client_message.data.data32[2] = success ? atom_xdnd_ActionCopy : 0;
+
+            xcb_send_event(connection, 0, dest, XCB_EVENT_MASK_NO_EVENT, (char*)&client_message);
+            xcb_flush(connection);
+        }
+
+        atom_xdnd_req = 0;
+    }
+
+    void XcbBackend::drainEvents(bool& hadEvents)
+    {
+        for (;;)
+        {
+            xcb_generic_event_t* event = xcb_poll_for_event(connection);
+            if (!event)
+            {
+                break;
+            }
+
+            hadEvents = true;
+
+            switch (event->response_type & 0x7f)
+            {
+                case XCB_BUTTON_PRESS:
+                {
+                    xcb_button_press_event_t* button_press = (xcb_button_press_event_t*)event;
+                    MouseButton button = translateButton(button_press->detail);
+                    int count = 1;
+
+                    switch (button_press->detail)
+                    {
+                        case 0:
+                        case 1:
+                        case 2:
+                        {
+                            u32 time = mango::Time::ms();
+                            if (time - mouse_time[button] < 300)
+                            {
+                                count = 2;
+                            }
+                            mouse_time[button] = time;
+                            break;
+                        }
+
+                        case 4:
+                            count = 120;
+                            break;
+
+                        case 5:
+                            count = -120;
+                            break;
+                    }
+
+                    owner->onMouseClick(button_press->event_x, button_press->event_y, button, count);
+                    break;
+                }
+
+                case XCB_BUTTON_RELEASE:
+                {
+                    xcb_button_release_event_t* button_release = (xcb_button_release_event_t*)event;
+                    MouseButton button = translateButton(button_release->detail);
+                    owner->onMouseClick(button_release->event_x, button_release->event_y, button, 0);
+                    break;
+                }
+
+                case XCB_MOTION_NOTIFY:
+                {
+                    xcb_motion_notify_event_t* motion = (xcb_motion_notify_event_t*)event;
+                    owner->onMouseMove(motion->event_x, motion->event_y);
+                    break;
+                }
+
+                case XCB_KEY_PRESS:
+                {
+                    auto* key_press = reinterpret_cast<xcb_key_press_event_t*>(event);
+                    xcb_keysym_t keysym = xcb_key_symbols_get_keysym(key_symbols, key_press->detail, 0);
+                    if (keysym != XKB_KEY_NoSymbol)
+                    {
+                        u32 mask = translateKeyMask(key_press->state);
+                        owner->onKeyPress(translateEventToKeycode(keysym), mask);
+                    }
+                    break;
+                }
+
+                case XCB_KEY_RELEASE:
+                {
+                    auto* key_release = reinterpret_cast<xcb_key_release_event_t*>(event);
+                    xcb_keysym_t keysym = xcb_key_symbols_get_keysym(key_symbols, key_release->detail, 0);
+                    if (keysym != XKB_KEY_NoSymbol)
+                    {
+                        bool is_repeat = false;
+
+                        xcb_generic_event_t* next_event = xcb_poll_for_event(connection);
+                        if (next_event)
+                        {
+                            if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
+                            {
+                                xcb_key_press_event_t* next_key = (xcb_key_press_event_t*)next_event;
+                                if (next_key->time == key_release->time && next_key->detail == key_release->detail)
+                                {
+                                    is_repeat = true;
+                                }
+                            }
+                            free(next_event);
+                        }
+
+                        if (!is_repeat)
+                        {
+                            owner->onKeyRelease(translateEventToKeycode(keysym));
+                        }
+                    }
+                    break;
+                }
+
+                case XCB_CONFIGURE_NOTIFY:
+                {
+                    xcb_configure_notify_event_t* configure = (xcb_configure_notify_event_t*)event;
+                    if (configure->width != size[0] || configure->height != size[1])
+                    {
+                        size[0] = configure->width;
+                        size[1] = configure->height;
+                        resize_pending = true;
+                    }
+
+                    owner->syncDisplayRefreshRate();
+                    break;
+                }
+
+                case XCB_EXPOSE:
+                {
+                    if (!busy)
+                    {
+                        owner->invalidate();
+                    }
+                    break;
+                }
+
+                case XCB_CLIENT_MESSAGE:
+                {
+                    xcb_client_message_event_t* client_message = (xcb_client_message_event_t*)event;
+                    if (client_message->type == atom_protocols)
+                    {
+                        if (client_message->data.data32[0] == atom_delete)
+                        {
+                            owner->breakEventLoop();
+                        }
+                        else if (sync_supported && client_message->data.data32[0] == atom_sync_request)
+                        {
+                            sync_value.lo = client_message->data.data32[2];
+                            sync_value.hi = int32_t(client_message->data.data32[3]);
+                            sync_pending = true;
+                        }
+                    }
+                    else if (client_message->type == atom_xdnd_Enter ||
+                             client_message->type == atom_xdnd_Position ||
+                             client_message->type == atom_xdnd_Leave ||
+                             client_message->type == atom_xdnd_Drop)
+                    {
+                        processXdndClientMessage(client_message->type, client_message->data.data32);
+                    }
+                    break;
+                }
+
+                case XCB_SELECTION_NOTIFY:
+                {
+                    xcb_selection_notify_event_t* selection = (xcb_selection_notify_event_t*)event;
+                    processXdndSelection(selection->target, selection->property);
+                    break;
+                }
+            }
+
+            free(event);
+        }
+
+        if (xlib_display)
+        {
+            Display* dpy = static_cast<Display*>(xlib_display);
+            while (XPending(dpy))
+            {
+                hadEvents = true;
+                XEvent e;
+                XNextEvent(dpy, &e);
+
+                switch (e.type)
+                {
+                    case ClientMessage:
+                    {
+                        if (e.xclient.message_type == atom_protocols)
+                        {
+                            if (static_cast<xcb_atom_t>(e.xclient.data.l[0]) == atom_delete)
+                            {
+                                owner->breakEventLoop();
+                            }
+                            else if (sync_supported && static_cast<xcb_atom_t>(e.xclient.data.l[0]) == atom_sync_request)
+                            {
+                                sync_value.lo = e.xclient.data.l[2];
+                                sync_value.hi = int32_t(e.xclient.data.l[3]);
+                                sync_pending = true;
+                            }
+                        }
+                        else
+                        {
+                            uint32_t data[5] =
+                            {
+                                uint32_t(e.xclient.data.l[0]),
+                                uint32_t(e.xclient.data.l[1]),
+                                uint32_t(e.xclient.data.l[2]),
+                                uint32_t(e.xclient.data.l[3]),
+                                uint32_t(e.xclient.data.l[4]),
+                            };
+                            processXdndClientMessage(static_cast<xcb_atom_t>(e.xclient.message_type), data);
+                        }
+                        break;
+                    }
+
+                    case SelectionNotify:
+                    {
+                        processXdndSelection(
+                            static_cast<xcb_atom_t>(e.xselection.target),
+                            static_cast<xcb_atom_t>(e.xselection.property));
+                        break;
+                    }
+
+                    default:
+                        break;
+                }
+            }
+        }
+    }
+
     void XcbBackend::runEventLoop()
     {
         owner->syncDisplayRefreshRate();
@@ -1012,263 +1641,7 @@ namespace mango
         {
             bool hadEvents = false;
 
-            for (;;)
-            {
-                xcb_generic_event_t* event = xcb_poll_for_event(connection);
-                if (!event)
-                {
-                    break;
-                }
-
-                hadEvents = true;
-
-                switch (event->response_type & 0x7f)
-                {
-                    case XCB_BUTTON_PRESS:
-                    {
-                        xcb_button_press_event_t* button_press = (xcb_button_press_event_t*)event;
-                        MouseButton button = translateButton(button_press->detail);
-                        int count = 1;
-
-                        switch (button_press->detail)
-                        {
-                            case 0:
-                            case 1:
-                            case 2:
-                            {
-                                // Simulate double click
-                                u32 time = mango::Time::ms();
-                                if (time - mouse_time[button] < 300)
-                                {
-                                    count = 2;
-                                }
-                                mouse_time[button] = time;
-                                break;
-                            }
-
-                            case 4:
-                                count = 120;
-                                break;
-
-                            case 5:
-                                count = -120;
-                                break;
-                        }
-
-                        owner->onMouseClick(button_press->event_x, button_press->event_y, button, count);
-                        break;
-                    }
-
-                    case XCB_BUTTON_RELEASE:
-                    {
-                        xcb_button_release_event_t* button_release = (xcb_button_release_event_t*)event;
-                        MouseButton button = translateButton(button_release->detail);
-                        owner->onMouseClick(button_release->event_x, button_release->event_y, button, 0);
-                        break;
-                    }
-
-                    case XCB_MOTION_NOTIFY:
-                    {
-                        xcb_motion_notify_event_t* motion = (xcb_motion_notify_event_t*)event;
-                        owner->onMouseMove(motion->event_x, motion->event_y);
-                        break;
-                    }
-
-                    case XCB_KEY_PRESS:
-                    {
-                        auto* key_press = reinterpret_cast<xcb_key_press_event_t*>(event);
-                        xcb_keysym_t keysym = xcb_key_symbols_get_keysym(key_symbols, key_press->detail, 0);
-                        if (keysym != XKB_KEY_NoSymbol)
-                        {
-                            u32 mask = translateKeyMask(key_press->state);
-                            owner->onKeyPress(translateEventToKeycode(keysym), mask);
-                        }
-                        break;
-                    }
-
-                    case XCB_KEY_RELEASE:
-                    {
-                        auto* key_release = reinterpret_cast<xcb_key_release_event_t*>(event);
-                        xcb_keysym_t keysym = xcb_key_symbols_get_keysym(key_symbols, key_release->detail, 0);
-                        if (keysym != XKB_KEY_NoSymbol)
-                        {
-                            bool is_repeat = false;
-
-                            // Check for key repeat
-                            xcb_generic_event_t* next_event = xcb_poll_for_event(connection);
-                            if (next_event)
-                            {
-                                if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
-                                {
-                                    xcb_key_press_event_t* next_key = (xcb_key_press_event_t*)next_event;
-                                    if (next_key->time == key_release->time && next_key->detail == key_release->detail)
-                                    {
-                                        is_repeat = true;
-                                    }
-                                }
-                                free(next_event);
-                            }
-
-                            if (!is_repeat)
-                            {
-                                owner->onKeyRelease(translateEventToKeycode(keysym));
-                            }
-                        }
-                        break;
-                    }
-
-                    case XCB_CONFIGURE_NOTIFY:
-                    {
-                        // Coalesce: only record the new size here and flag a pending resize.
-                        // The whole event queue is drained in this loop, so the latest size
-                        // wins; onResize() + the frame are emitted once, after draining (see
-                        // below). The frame is what bumps the _NET_WM_SYNC counter, so the
-                        // compositor keeps the previous content until our resized frame lands.
-                        xcb_configure_notify_event_t* configure = (xcb_configure_notify_event_t*)event;
-                        if (configure->width != size[0] || configure->height != size[1])
-                        {
-                            size[0] = configure->width;
-                            size[1] = configure->height;
-                            resize_pending = true;
-                        }
-
-                        owner->syncDisplayRefreshRate();
-                        break;
-                    }
-
-                    case XCB_EXPOSE:
-                    {
-                        if (!busy)
-                        {
-                            owner->invalidate();
-                        }
-                        break;
-                    }
-
-                    case XCB_CLIENT_MESSAGE:
-                    {
-                        xcb_client_message_event_t* client_message = (xcb_client_message_event_t*)event;
-                        if (client_message->type == atom_protocols)
-                        {
-                            if (client_message->data.data32[0] == atom_delete)
-                            {
-                                owner->breakEventLoop();
-                            }
-                            else if (sync_supported && client_message->data.data32[0] == atom_sync_request)
-                            {
-                                // Store the value the compositor wants the counter set to once
-                                // we have drawn the frame for the upcoming resize. data32[2] is
-                                // the low word, data32[3] the high word.
-                                sync_value.lo = client_message->data.data32[2];
-                                sync_value.hi = int32_t(client_message->data.data32[3]);
-                                sync_pending = true;
-                            }
-                        }
-                        else if (client_message->type == atom_xdnd_Enter)
-                        {
-                            bool use_list = client_message->data.data32[1] & 1;
-                            xdnd_source = client_message->data.data32[0];
-                            xdnd_version = (client_message->data.data32[1] >> 24);
-                            if (use_list)
-                            {
-                                // Fetch conversion targets
-                                xcb_get_property_cookie_t cookie = xcb_get_property(connection, 0,
-                                    xdnd_source, atom_xdnd_TypeList, XCB_ATOM_ATOM, 0, 0x8000000L);
-                                xcb_get_property_reply_t* reply = xcb_get_property_reply(connection, cookie, nullptr);
-                                if (reply)
-                                {
-                                    xcb_atom_t* atoms = (xcb_atom_t*)xcb_get_property_value(reply);
-                                    int count = xcb_get_property_value_length(reply) / sizeof(xcb_atom_t);
-                                    // MANGO TODO: Implement target selection
-                                    free(reply);
-                                }
-                            }
-                            else
-                            {
-                                // Pick from list of three
-                                atom_xdnd_req = client_message->data.data32[2];
-                            }
-                        }
-                        else if (client_message->type == atom_xdnd_Position)
-                        {
-                            xcb_client_message_event_t reply = { 0 };
-                            reply.response_type = XCB_CLIENT_MESSAGE;
-                            reply.format = 32;
-                            reply.window = client_message->data.data32[0];
-                            reply.type = atom_xdnd_Status;
-                            reply.data.data32[0] = window;
-                            reply.data.data32[1] = (atom_xdnd_req != 0);
-                            reply.data.data32[2] = 0; // empty rectangle
-                            reply.data.data32[3] = 0;
-                            reply.data.data32[4] = atom_xdnd_ActionCopy;
-
-                            xcb_send_event(connection, 0, client_message->data.data32[0],
-                                XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
-                            xcb_flush(connection);
-                        }
-                        else if (client_message->type == atom_xdnd_Drop)
-                        {
-                            if (atom_xdnd_req == 0)
-                            {
-                                // Respond to empty request
-                                xcb_client_message_event_t reply = { 0 };
-                                reply.response_type = XCB_CLIENT_MESSAGE;
-                                reply.format = 32;
-                                reply.window = client_message->data.data32[0];
-                                reply.type = atom_xdnd_Finished;
-                                reply.data.data32[0] = window;
-                                reply.data.data32[1] = 0;
-                                reply.data.data32[2] = 0; // failed
-
-                                xcb_send_event(connection, 0, client_message->data.data32[0],
-                                    XCB_EVENT_MASK_NO_EVENT, (char*)&reply);
-                            }
-                            else
-                            {
-                                // Convert selection
-                                xcb_convert_selection(connection, window,
-                                    atom_xdnd_Selection, atom_xdnd_req,
-                                    atom_primary, client_message->data.data32[2]);
-                            }
-                        }
-                        break;
-                    }
-
-                    case XCB_SELECTION_NOTIFY:
-                    {
-                        xcb_selection_notify_event_t* selection = (xcb_selection_notify_event_t*)event;
-                        if (selection->target == atom_xdnd_req)
-                        {
-                            // Read data
-                            xcb_get_property_cookie_t cookie = xcb_get_property(connection, 0,
-                                window, atom_primary, XCB_ATOM_STRING, 0, 0x8000000L);
-                            xcb_get_property_reply_t* reply = xcb_get_property_reply(connection, cookie, nullptr);
-                            if (reply)
-                            {
-                                // MANGO TODO: Process dropped files
-                                free(reply);
-                            }
-
-                            // Send reply
-                            xcb_client_message_event_t client_message = { 0 };
-                            client_message.response_type = XCB_CLIENT_MESSAGE;
-                            client_message.format = 32;
-                            client_message.window = xdnd_source;
-                            client_message.type = atom_xdnd_Finished;
-                            client_message.data.data32[0] = window;
-                            client_message.data.data32[1] = 1;
-                            client_message.data.data32[2] = atom_xdnd_ActionCopy;
-
-                            xcb_send_event(connection, 0, xdnd_source,
-                                XCB_EVENT_MASK_NO_EVENT, (char*)&client_message);
-                            xcb_flush(connection);
-                        }
-                        break;
-                    }
-                }
-
-                free(event);
-            }
+            drainEvents(hadEvents);
 
             // Emit a single resize for the coalesced final size before drawing, so the
             // frame dispatched below renders at the new extent.
@@ -1282,6 +1655,10 @@ namespace mango
             if (!busy)
             {
                 owner->dispatchFrame();
+
+                // glXSwapBuffers can block for a full frame; drain again so Xdnd
+                // Position/Drop messages get timely Status/Finished replies.
+                drainEvents(hadEvents);
 
                 // The resized frame has now been submitted/presented; tell the compositor
                 // it may show the new size. Doing this after dispatchFrame() is what keeps
@@ -1305,8 +1682,20 @@ namespace mango
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
                     xcb_flush(connection);
-                    struct pollfd pfd = { xcb_get_file_descriptor(connection), POLLIN, 0 };
-                    ::poll(&pfd, 1, wait_ms);
+
+                    struct pollfd pfds[2];
+                    int nfds = 1;
+                    pfds[0].fd = xcb_get_file_descriptor(connection);
+                    pfds[0].events = POLLIN;
+
+                    if (xlib_display)
+                    {
+                        pfds[1].fd = ConnectionNumber(static_cast<Display*>(xlib_display));
+                        pfds[1].events = POLLIN;
+                        nfds = 2;
+                    }
+
+                    ::poll(pfds, nfds, wait_ms);
                 }
             }
         }
