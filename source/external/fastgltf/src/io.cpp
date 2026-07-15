@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -45,11 +45,6 @@
 
 namespace fs = std::filesystem;
 namespace fg = fastgltf;
-
-// mango hack: don't want android extensions
-#if defined(__ANDROID__)
-#undef __ANDROID__
-#endif
 
 #pragma region glTF file loading
 fg::GltfDataBuffer::GltfDataBuffer(const fs::path& path) noexcept {
@@ -204,8 +199,8 @@ fg::MappedGltfFile::MappedGltfFile(const fs::path& path) noexcept {
 #else
 fg::MappedGltfFile::MappedGltfFile(const fs::path& path) noexcept : mappedFile(MAP_FAILED) {
 	// Open the file
-	int fd = open(path.c_str(), O_RDONLY, 0);
-	if (fd == 0) {
+	const auto fd = open(path.c_str(), O_RDONLY, 0);
+	if (fd == -1) {
 		// TODO: Cover actual error messages using std::strerror(errno)?
 		error = Error::InvalidPath;
 		return;

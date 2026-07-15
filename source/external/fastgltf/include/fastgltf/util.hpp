@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -198,7 +198,7 @@ namespace fastgltf {
 	}
 
 	template<typename T, typename... A>
-	[[noreturn]] constexpr void raise(A&&... args) {
+	[[noreturn]] constexpr void raise([[maybe_unused]] A&&... args) {
 #ifdef __cpp_exceptions
 		throw T(std::forward<A>(args)...);
 #else

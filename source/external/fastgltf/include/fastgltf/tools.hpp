@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -901,7 +901,7 @@ FASTGLTF_EXPORT inline auto getLocalTransformMatrix(const Node& node) {
 			return matrix;
 		},
 		[&](const TRS& trs) {
-			return translate(rotate(scale(math::fmat4x4(), trs.scale), trs.rotation), trs.translation);
+			return scale(rotate(translate(math::fmat4x4(), trs.translation), trs.rotation), trs.scale);
 		}
 	}, node.transform);
 }

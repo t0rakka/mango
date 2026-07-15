@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -2511,7 +2511,6 @@ namespace fastgltf {
         Optional<TextureInfo> sheenRoughnessTexture;
     };
 
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
     /**
      * Specular/Glossiness information from KHR_materials_pbrSpecularGlossiness.
      */
@@ -2522,8 +2521,6 @@ namespace fastgltf {
         num glossinessFactor = 1.0f;
         Optional<TextureInfo> specularGlossinessTexture;
     };
-#endif
-
 	FASTGLTF_EXPORT struct MaterialPackedTextures {
 		Optional<TextureInfo> occlusionRoughnessMetallicTexture;
 		Optional<TextureInfo> roughnessMetallicOcclusionTexture;
@@ -2606,12 +2603,10 @@ namespace fastgltf {
          */
         std::unique_ptr<MaterialSpecular> specular;
 
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
         /**
          * Specular/Glossiness information from KHR_materials_pbrSpecularGlossiness.
          */
         std::unique_ptr<MaterialSpecularGlossiness> specularGlossiness;
-#endif
 
         /**
          * Specular information from KHR_materials_transmission.

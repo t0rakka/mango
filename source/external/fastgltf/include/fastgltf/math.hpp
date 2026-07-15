@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -45,7 +45,7 @@
  * The fastgltf::math namespace contains all math functions and types which are needed for working with glTF assets.
  */
 namespace fastgltf::math {
-	FASTGLTF_EXPORT inline constexpr long double pi = 3.1415926535897932385;
+	FASTGLTF_EXPORT inline constexpr long double pi = 3.1415926535897932385L;
 
 	/** Value clamp using std::less */
 	FASTGLTF_EXPORT template <typename T>
@@ -621,8 +621,8 @@ namespace fastgltf::math {
 	/**
 	 * A matrix stored in column major order.
 	 *
-	 * @param N Number of rows, or the length of a single column.
-	 * @param M Number of columns, or the length of a single row.
+	 * @tparam N Number of rows, or the length of a single column.
+	 * @tparam M Number of columns, or the length of a single row.
 	 */
 	template <typename T, std::size_t N, std::size_t M>
 	class mat {
