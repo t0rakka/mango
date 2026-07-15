@@ -951,6 +951,12 @@ namespace mango
         return getWindowSize();
     }
 
+    float WaylandBackend::getContentScale() const
+    {
+        const int32_t scale = buffer_scale > 0 ? buffer_scale : getPrimaryBufferScale();
+        return float(std::max(scale, 1));
+    }
+
     bool WaylandBackend::createWaylandWindow(int width, int height, const char* title)
     {
         if (!compositor || !xdg_wm_base)

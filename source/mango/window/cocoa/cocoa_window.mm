@@ -118,6 +118,29 @@ namespace mango
         return math::int32x2(int(rect.size.width), int(rect.size.height));
     }
 
+    float WindowContext::getContentScale() const
+    {
+        if (!content_view)
+        {
+            return 1.0f;
+        }
+
+        NSView* view = (__bridge NSView*)content_view;
+        NSWindow* win = [view window];
+        if (win)
+        {
+            return float([win backingScaleFactor]);
+        }
+
+        NSScreen* screen = [NSScreen mainScreen];
+        if (screen)
+        {
+            return float([screen backingScaleFactor]);
+        }
+
+        return WindowBackend::getContentScale();
+    }
+
     math::int32x2 WindowContext::getWindowSize() const
     {
         if (content_view)

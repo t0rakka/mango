@@ -35,11 +35,12 @@ protected:
 
     static constexpr size_t kFrameTimeHistory = 60;
 
-    static constexpr std::array<float, 5> kUIScales { 1.0f, 1.5f, 2.0f, 2.5f, 3.0f };
-    size_t m_uiScaleIndex = 1;
+    static constexpr std::array<float, 5> kUIScales { 1.0f, 1.25f, 1.50f, 1.75f, 2.0f };
+    size_t m_uiScaleIndex = 0;
 
-    float uiScale() const { return kUIScales[m_uiScaleIndex]; }
-    float ui(float v) const { return v * uiScale(); }
+    float previewScale() const { return kUIScales[m_uiScaleIndex]; }
+    float layout(float v) const { return v * getContentScale(); }
+    float ui(float v) const { return v * getContentScale() * previewScale(); }
 
     void cycleUiScale()
     {
@@ -77,11 +78,13 @@ protected:
     static constexpr float kHudTop = 4.0f;
     static constexpr float kTestLeft = 8.0f;
     static constexpr float kLigatureLeft = 640.0f;
-    static constexpr float kTestTop = 22.0f;
-    static constexpr float kBodyTop = 200.0f;
+    static constexpr float kTestTop = 40.0f;
+    static constexpr float kBodyTop = 220.0f;
     static constexpr float kCompareSize = 11.0f;
+    static constexpr float kRowGap = 1.0f;
+    static constexpr float kTitleGap = 1.0f;
 
-    static constexpr std::array<float, 5> kTestSizes { 8.0f, 10.0f, 12.0f, 14.0f, 16.0f };
+    static constexpr std::array<float, 5> kTestSizes { 6.0f, 8.0f, 10.0f, 12.0f, 14.0f };
 
     struct HintingCompareRow
     {
@@ -179,6 +182,16 @@ public:
         }
     }
 
+    TextStyle titleStyle(float pixelHeight) const
+    {
+        return TextStyle
+        {
+            .color = float32x4(0.7f, 0.82f, 0.95f, 1.0f),
+            .pixelHeight = layout(pixelHeight),
+            .hinting = FontHinting::None,
+        };
+    }
+
     TextStyle labelStyle(FontHinting hinting = FontHinting::None) const
     {
         return TextStyle
@@ -197,6 +210,16 @@ public:
             .pixelHeight = ui(pixelHeight),
             .hinting = hinting,
         };
+    }
+
+    float rowAdvance(Font font, const TextStyle& a, const TextStyle& b, float gap) const
+    {
+        return std::max(m_renderer->lineHeight(font, a), m_renderer->lineHeight(font, b)) + ui(gap);
+    }
+
+    void advanceRow(TextCursor& cursor, Font font, const TextStyle& a, const TextStyle& b, float gap = kRowGap) const
+    {
+        cursor.y += rowAdvance(font, a, b, gap);
     }
 
     void drawAtBaseline(Font font, float x, float baseline_y, std::string_view utf8, const TextStyle& style)
@@ -218,7 +241,7 @@ public:
         drawAtBaseline(m_hud, cursor.x, cursor.y, tag, tagStyle);
         const float sample_x = cursor.x + m_renderer->textWidth(m_hud, tag, tagStyle);
         drawAtBaseline(m_hud, sample_x, cursor.y, kSampleText, textStyle);
-        m_renderer->newline(cursor, m_hud, textStyle);
+        advanceRow(cursor, m_hud, tagStyle, textStyle);
     }
 
     void drawHintingCompareLine(TextCursor& cursor, FontHinting hinting, std::string_view label)
@@ -235,9 +258,7 @@ public:
         drawAtBaseline(m_hud, cursor.x, cursor.y, label, tagStyle);
         const float sample_x = cursor.x + m_renderer->textWidth(m_hud, label, tagStyle);
         drawAtBaseline(m_hud, sample_x, cursor.y, kSampleText, textStyle);
-
-        const TextStyle spacingStyle { .pixelHeight = ui(kCompareSize) };
-        m_renderer->newline(cursor, m_hud, spacingStyle);
+        advanceRow(cursor, m_hud, tagStyle, textStyle);
     }
 
     void buildHintingTests()
@@ -247,11 +268,11 @@ public:
             return;
         }
 
-        TextStyle headerStyle = sampleStyle(16.0f, FontHinting::None);
-        headerStyle.color = float32x4(0.7f, 0.82f, 0.95f, 1.0f);
+        TextStyle headerStyle = titleStyle(16.0f);
 
-        TextCursor test = m_renderer->cursorTopLeft(m_hud, ui(kTestLeft), ui(kTestTop), headerStyle);
-        m_renderer->drawLine(test, m_hud, "Hinting test font: NotoSans-Regular.ttf", headerStyle);
+        TextCursor test = m_renderer->cursorTopLeft(m_hud, layout(kTestLeft), layout(kTestTop), headerStyle);
+        m_renderer->draw(test, m_hud, "Hinting test font: NotoSans-Regular.ttf", headerStyle);
+        advanceRow(test, m_hud, headerStyle, labelStyle(), kTitleGap);
 
         for (float size : kTestSizes)
         {
@@ -273,13 +294,13 @@ public:
             return;
         }
 
-        TextStyle headerStyle = sampleStyle(14.0f, FontHinting::None);
-        headerStyle.color = float32x4(0.7f, 0.82f, 0.95f, 1.0f);
+        TextStyle headerStyle = titleStyle(14.0f);
 
-        TextCursor test = m_renderer->cursorTopLeft(m_hud, ui(kLigatureLeft), ui(kTestTop), headerStyle);
-        m_renderer->drawLine(test, m_hud, "Ligatures: NotoSans-Regular.ttf", headerStyle);
+        TextCursor test = m_renderer->cursorTopLeft(m_hud, layout(kLigatureLeft), layout(kTestTop), headerStyle);
+        m_renderer->draw(test, m_hud, "Ligatures: NotoSans-Regular.ttf", headerStyle);
 
         const TextStyle textStyle = sampleStyle(18.0f, FontHinting::None);
+        advanceRow(test, m_hud, headerStyle, textStyle, kTitleGap);
         drawAtBaseline(m_hud, test.x, test.y, kLigatureText, textStyle);
     }
 
@@ -287,8 +308,8 @@ public:
     {
         m_renderer->beginFrame();
 
-        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = ui(16.0f) };
-        TextCursor hud = m_renderer->cursorTopLeft(m_hud, ui(8.0f), ui(kHudTop), hudStyle);
+        TextStyle hudStyle { .color = float32x4(0.75f, 0.9f, 1.0f, 1.0f), .pixelHeight = layout(16.0f) };
+        TextCursor hud = m_renderer->cursorTopLeft(m_hud, layout(8.0f), layout(kHudTop), hudStyle);
         m_renderer->draw(hud, m_hud, m_hudLine, hudStyle);
 
         buildHintingTests();
@@ -381,8 +402,8 @@ public:
         m_frameTimeMs = frame_sum / float(m_frameTimeCount);
 
         const float fps = 1000.0f / std::max(m_frameTimeMs, 0.001f);
-        m_hudLine = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  queue: {:5.3f} ms  encode: {:5.3f} ms  scale: {:.1f}",
-            m_frameTimeMs, fps, m_queueTimeMs, m_encodeTimeMs, uiScale());
+        m_hudLine = fmt::format("frame: {:6.3f} ms ({:3.0f} fps)  queue: {:5.3f} ms  encode: {:5.3f} ms  content: {:.1f}  preview: {:.1f}",
+            m_frameTimeMs, fps, m_queueTimeMs, m_encodeTimeMs, getContentScale(), previewScale());
 
         render();
     }

@@ -46,4 +46,19 @@ namespace mango
         return nullptr;
     }
 
+    float WindowBackend::getContentScale() const
+    {
+        const math::int32x2 layout = getClientSize();
+        const math::int32x2 drawable = getWindowSize();
+
+        if (layout.x <= 0 || layout.y <= 0)
+        {
+            return 1.0f;
+        }
+
+        const float sx = float(drawable.x) / float(layout.x);
+        const float sy = float(drawable.y) / float(layout.y);
+        return (sx + sy) * 0.5f;
+    }
+
 } // namespace mango

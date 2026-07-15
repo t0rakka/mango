@@ -297,8 +297,19 @@ namespace mango
         void setTitle(const std::string& title);
         void setVisible(bool enable);
 
+        // Drawable size in backing pixels (swapchain / GL viewport extent).
+        // On macOS Retina this is 2x getClientSize(); elsewhere usually the same.
         virtual math::int32x2 getWindowSize() const;
+
+        // Layout size in window coordinates (points on macOS; client pixels elsewhere).
+        // Author UI margins and control sizes in this space, then multiply by getContentScale()
+        // when passing positions or pixel heights to the GPU.
         virtual math::int32x2 getClientSize() const;
+
+        // Ratio of drawable pixels to layout units (1.0 = "100%" UI scale, 2.0 = typical Retina).
+        // Not physical monitor DPI — this is the OS content scale for matching visual size across displays.
+        virtual float getContentScale() const;
+
         virtual math::int32x2 getCursorPosition() const;
 
         virtual double getDisplayRefreshRate() const;
