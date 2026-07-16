@@ -470,6 +470,7 @@ namespace mango::import3d
                     {
                         triangle.point[2] = vertexIndexPointer.read16();
 
+                        // LWOB stores CW outside already (unlike LWO2's CCW fan).
                         surface.triangles.push_back(triangle);
 
                         triangle.point[1] = triangle.point[2];
@@ -831,6 +832,8 @@ namespace mango::import3d
             Material material;
 
             material.name = surface.name;
+            material.metallicFactor = 0.0f;
+            material.roughnessFactor = 0.5f;
 
             if (!surface.ctex.name.empty())
             {
@@ -878,7 +881,7 @@ namespace mango::import3d
                 float32x3 p2 = reader.points[current.point[2]];
 
                 // compute triangle normal
-                float32x3 currentNormal = normalize(cross(p0 - p1, p0 - p2));
+                float32x3 currentNormal = faceNormalOutwardCW(p0, p1, p2);
 
                 // compute vertex normals
                 for (int j = 0; j < 3; ++j)
@@ -905,7 +908,7 @@ namespace mango::import3d
                         float32x3 s0 = reader.points[shared.point[0]];
                         float32x3 s1 = reader.points[shared.point[1]];
                         float32x3 s2 = reader.points[shared.point[2]];
-                        float32x3 sharedNormal = normalize(cross(s0 - s1, s0 - s2));
+                        float32x3 sharedNormal = faceNormalOutwardCW(s0, s1, s2);
 
                         float angle = dot(currentNormal, sharedNormal);
                         if (angle >= angleLimit)
@@ -1734,6 +1737,8 @@ namespace mango::import3d
         IndexedMesh& mesh = *ptr;
 
         Material material;
+        material.metallicFactor = 0.0f;
+        material.roughnessFactor = 0.5f;
         //material.baseColorTexture = createTexture(filesystem::Path("./"), "texture.jpg"); // HACK
         scene.materials.push_back(material);
 
@@ -1759,21 +1764,22 @@ namespace mango::import3d
                     float32x3 position1 = layer.points[pointIndices[i + 1]];
                     float32x3 position2 = layer.points[pointIndices[i + 2]];
 
-                    float32x3 normal = normalize(cross(position0 - position1, position0 - position2));
+                    // LWO2 fan is typically CCW → bake CW outside.
+                    float32x3 normal = faceNormalOutwardCW(position0, position2, position1);
 
                     Triangle triangle;
 
                     triangle.vertex[0].position = position0;
-                    triangle.vertex[1].position = position1;
-                    triangle.vertex[2].position = position2;
+                    triangle.vertex[1].position = position2;
+                    triangle.vertex[2].position = position1;
 
                     triangle.vertex[0].normal = normal;
                     triangle.vertex[1].normal = normal;
                     triangle.vertex[2].normal = normal;
 
                     triangle.vertex[0].texcoord = layer.texcoords[texcoordIndices[0]];
-                    triangle.vertex[1].texcoord = layer.texcoords[texcoordIndices[i + 1]];
-                    triangle.vertex[2].texcoord = layer.texcoords[texcoordIndices[i + 2]];
+                    triangle.vertex[1].texcoord = layer.texcoords[texcoordIndices[i + 2]];
+                    triangle.vertex[2].texcoord = layer.texcoords[texcoordIndices[i + 1]];
 
                     trimesh.triangles.push_back(triangle);
                 }

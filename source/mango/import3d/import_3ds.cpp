@@ -73,10 +73,11 @@ namespace
 
         float32x3 computeNormal(const Face3DS& face) const
         {
-            float32x3 p0 = positions[face.index[0]];
-            float32x3 p1 = positions[face.index[1]];
-            float32x3 p2 = positions[face.index[2]];
-            return cross(p0 - p1, p0 - p2);
+            // 3DS stores CW outside — same as faceNormalOutwardCW.
+            const float32x3& p0 = positions[face.index[0]];
+            const float32x3& p1 = positions[face.index[1]];
+            const float32x3& p2 = positions[face.index[2]];
+            return faceNormalOutwardCW(p0, p1, p2);
         }
     };
 
@@ -551,9 +552,10 @@ namespace
             for (int i = 0; i < count; ++i)
             {
                 Face3DS& face = mesh.faces[i];
-                face.index[2] = p.read16();
-                face.index[1] = p.read16();
+                // 3DS stores CW outside; keep file order (do not reverse).
                 face.index[0] = p.read16();
+                face.index[1] = p.read16();
+                face.index[2] = p.read16();
                 face.flags = p.read16();
             }
         }
@@ -1066,6 +1068,8 @@ namespace mango::import3d
 
             material.baseColorFactor = material3ds.diffuse;
             material.twosided = material3ds.twosided;
+            material.metallicFactor = 0.0f;
+            material.roughnessFactor = 0.5f;
 
             material.baseColorTexture = createTexture(path, material3ds.texture_map1.filename);
             material.emissiveTexture = createTexture(path, material3ds.texture_self_illum.filename);
@@ -1076,6 +1080,8 @@ namespace mango::import3d
         if (materials.empty())
         {
             Material material;
+            material.metallicFactor = 0.0f;
+            material.roughnessFactor = 0.5f;
             materials.push_back(material);
         }
 

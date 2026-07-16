@@ -8,6 +8,8 @@
 #include <string>
 #include <optional>
 #include <memory>
+#include <algorithm>
+#include <utility>
 #include <mango/core/buffer.hpp>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
@@ -148,6 +150,36 @@ namespace mango::import3d
         std::vector<Node> nodes;
         std::vector<u32> roots;
     };
+
+    // -----------------------------------------------------------------------
+    // Canonical mesh space (all importers + shape generators)
+    //
+    //   Axes:    +X right, +Y up, +Z toward viewer (right-handed, glTF axes)
+    //   Winding: clockwise when viewed from outside
+    //   Normals: outward
+    //
+    // Importers bake this on load; apps must not apply a post-import basis fix.
+    // -----------------------------------------------------------------------
+
+    inline void reverseTriangleWinding(Triangle& triangle)
+    {
+        std::swap(triangle.vertex[1], triangle.vertex[2]);
+    }
+
+    // Outward geometric normal for a CW-outside triangle (p0, p1, p2).
+    // RH cross of CW verts points inward; use the opposite product.
+    inline float32x3 faceNormalOutwardCW(const float32x3& p0, const float32x3& p1, const float32x3& p2)
+    {
+        return normalize(cross(p0 - p2, p0 - p1));
+    }
+
+    inline void reverseTriangleListIndices(u32* indices, size_t count)
+    {
+        for (size_t i = 0; i + 2 < count; i += 3)
+        {
+            std::swap(indices[i + 1], indices[i + 2]);
+        }
+    }
 
     // -----------------------------------------------------------------------
     // shapes

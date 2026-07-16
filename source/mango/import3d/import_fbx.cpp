@@ -496,6 +496,8 @@ namespace mango::import3d
         ReaderFBX reader(file);
 
         Material material;
+        material.metallicFactor = 0.0f;
+        material.roughnessFactor = 0.5f;
         materials.push_back(material);
 
         std::unique_ptr<IndexedMesh> ptr = std::make_unique<IndexedMesh>();
@@ -564,10 +566,16 @@ namespace mango::import3d
                         triangle.vertex[2].normal = current.normals.values[tempIndex[2]];
                     }
 
+                    // FBX polygons are typically CCW outside → bake CW.
+                    reverseTriangleWinding(triangle);
+
                     if (!hasNormals)
                     {
                         // TODO: smoothing groups (need file for testing)
-                        float32x3 normal = normalize(cross(position0 - position1, position0 - position2));
+                        float32x3 normal = faceNormalOutwardCW(
+                            triangle.vertex[0].position,
+                            triangle.vertex[1].position,
+                            triangle.vertex[2].position);
                         triangle.vertex[0].normal = normal;
                         triangle.vertex[1].normal = normal;
                         triangle.vertex[2].normal = normal;

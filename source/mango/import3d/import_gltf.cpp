@@ -5,6 +5,7 @@
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_gltf.hpp>
 
+#include <algorithm>
 #include <fastgltf/core.hpp>
 #include <fastgltf/types.hpp>
 
@@ -628,7 +629,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float x = uload32f(data + 0);
                     float y = uload32f(data + 4);
                     float z = uload32f(data + 8);
-                    float32x3 position(x, y, -z);
+                    float32x3 position(x, y, z);
 
                     data += attributePosition.stride;
 
@@ -658,7 +659,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float x = uload32f(data + 0);
                     float y = uload32f(data + 4);
                     float z = uload32f(data + 8);
-                    float32x3 normal(x, y, -z);
+                    float32x3 normal(x, y, z);
 
                     data += attributeNormal.stride;
 
@@ -682,7 +683,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float y = uload32f(data + 4);
                     float z = uload32f(data + 8);
                     float w = uload32f(data + 12);
-                    float32x4 tangent(x, y, -z, w);
+                    float32x4 tangent(x, y, z, w);
 
                     data += attributeTangent.stride;
 
@@ -840,9 +841,15 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             Triangle triangle;
 
-                            triangle.vertex[0] = vertices[indices[i - 0]];
-                            triangle.vertex[1] = vertices[indices[i - 1]];
-                            triangle.vertex[2] = vertices[indices[i - 2]];
+                            // glTF is CCW outside → bake CW outside.
+                            triangle.vertex[0] = vertices[indices[i - 2]];
+                            triangle.vertex[1] = vertices[indices[i - 0]];
+                            triangle.vertex[2] = vertices[indices[i - 1]];
+
+                            // Tangents were authored for CCW; flip handedness with winding.
+                            triangle.vertex[0].tangent.w = -triangle.vertex[0].tangent.w;
+                            triangle.vertex[1].tangent.w = -triangle.vertex[1].tangent.w;
+                            triangle.vertex[2].tangent.w = -triangle.vertex[2].tangent.w;
 
                             trimesh.triangles.push_back(triangle);
                         }
@@ -858,14 +865,28 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             Triangle triangle;
 
-                            triangle.vertex[(i + 1) & 1] = v0;
-                            triangle.vertex[(i + 0) & 1] = v1;
-                            triangle.vertex[2] = vertices[indices[i]];
+                            // Standard strip expansion yields CCW; reverse to CW.
+                            if (i & 1)
+                            {
+                                triangle.vertex[0] = v1;
+                                triangle.vertex[1] = v0;
+                            }
+                            else
+                            {
+                                triangle.vertex[0] = v0;
+                                triangle.vertex[1] = v1;
+                            }
 
+                            triangle.vertex[2] = vertices[indices[i]];
+                            Vertex newest = triangle.vertex[2];
+                            reverseTriangleWinding(triangle);
+                            triangle.vertex[0].tangent.w = -triangle.vertex[0].tangent.w;
+                            triangle.vertex[1].tangent.w = -triangle.vertex[1].tangent.w;
+                            triangle.vertex[2].tangent.w = -triangle.vertex[2].tangent.w;
                             trimesh.triangles.push_back(triangle);
 
                             v0 = v1;
-                            v1 = triangle.vertex[2];
+                            v1 = newest;
                         }
                         break;
                     }
@@ -879,10 +900,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                         for (size_t i = 2; i < indices.size(); ++i)
                         {
-                            triangle.vertex[2] = triangle.vertex[1];
-                            triangle.vertex[1] = vertices[indices[i]];
-
-                            trimesh.triangles.push_back(triangle);
+                            triangle.vertex[2] = vertices[indices[i]];
+                            Triangle cw = triangle;
+                            reverseTriangleWinding(cw);
+                            cw.vertex[0].tangent.w = -cw.vertex[0].tangent.w;
+                            cw.vertex[1].tangent.w = -cw.vertex[1].tangent.w;
+                            cw.vertex[2].tangent.w = -cw.vertex[2].tangent.w;
+                            trimesh.triangles.push_back(cw);
+                            triangle.vertex[1] = triangle.vertex[2];
                         }
                         break;
                     }
@@ -914,79 +939,57 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Primitive primitive;
 
-                // re-generate indices because coordinate system conversion
-                // reverses winding (front faces are now ccw, we want cw)
-                std::vector<u32> temp;
-
                 // TODO: support primitive restart (index: 0xffffffff)
 
                 switch (primitiveIterator->type)
                 {
                     case fastgltf::PrimitiveType::Triangles:
-                    {
                         primitive.type = Primitive::Type::TriangleList;
-
-                        for (size_t i = 0; i < indices.size(); i += 3)
-                        {
-                            temp.push_back(indices[i + 0]);
-                            temp.push_back(indices[i + 2]);
-                            temp.push_back(indices[i + 1]);
-                        }
                         break;
-                    }
 
                     case fastgltf::PrimitiveType::TriangleStrip:
-                    {
-                        primitive.type = Primitive::Type::TriangleList;
-
-                        u32 index0 = indices[0];
-                        u32 index1 = indices[1];
-
-                        for (size_t i = 2; i < indices.size(); ++i)
-                        {
-                            if (i & 1)
-                            {
-                                temp.push_back(index0);
-                                temp.push_back(index1);
-                            }
-                            else
-                            {
-                                temp.push_back(index1);
-                                temp.push_back(index0);
-                            }
-
-                            u32 index2 = indices[i];
-                            temp.push_back(index2);
-
-                            index0 = index1;
-                            index1 = index2;
-                        }
-
+                        primitive.type = Primitive::Type::TriangleStrip;
                         break;
-                    }
 
                     case fastgltf::PrimitiveType::TriangleFan:
-                    {
                         primitive.type = Primitive::Type::TriangleFan;
-
-                        temp.push_back(indices[0]);
-
-                        const size_t size = indices.size();
-
-                        for (size_t i = 1; i < size; ++i)
-                        {
-                            temp.push_back(indices[size - i]);
-                        }
                         break;
-                    }
 
                     default:
                         // unsupported primitive type
                         continue;
                 }
 
-                // use the re-generated indices
-                std::swap(indices, temp);
+                // Bake CW outside winding (glTF files are CCW).
+                switch (primitive.type)
+                {
+                    case Primitive::Type::TriangleList:
+                        reverseTriangleListIndices(indices.data(), indices.size());
+                        break;
+
+                    case Primitive::Type::TriangleStrip:
+                        if (indices.size() >= 2)
+                        {
+                            std::swap(indices[0], indices[1]);
+                        }
+                        break;
+
+                    case Primitive::Type::TriangleFan:
+                        if (indices.size() >= 3)
+                        {
+                            std::reverse(indices.begin() + 1, indices.end());
+                        }
+                        break;
+                }
+
+                // Tangents were authored for CCW; flip handedness with winding.
+                if (mesh.flags & Vertex::Tangent)
+                {
+                    for (Vertex& vertex : vertices)
+                    {
+                        vertex.tangent.w = -vertex.tangent.w;
+                    }
+                }
 
                 primitive.start = u32(mesh.indices.size());
                 primitive.count = u32(indices.size());
@@ -1028,13 +1031,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             node.transform = scale * rotation * translation;
         }
-
-        // coordinate system conversion
-        matrix4x4& m = node.transform;
-        m[0] = float32x4( m[0][0], m[0][1],-m[0][2], m[0][3]);
-        m[1] = float32x4( m[1][0], m[1][1],-m[1][2], m[1][3]);
-        m[2] = float32x4(-m[2][0],-m[2][1], m[2][2],-m[2][3]);
-        m[3] = float32x4( m[3][0], m[3][1],-m[3][2], m[3][3]);
 
         node.name = current.name;
 

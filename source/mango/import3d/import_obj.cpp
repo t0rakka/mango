@@ -656,17 +656,18 @@ namespace mango::import3d
         {
             FaceOBJ face;
 
+            // OBJ faces are typically CCW outside → bake CW for GL_CW / mesh contract.
             face.vertex[0].position = positionIndex[0];
             face.vertex[0].texcoord = texcoordIndex[0];
             face.vertex[0].normal   = normalIndex[0];
 
-            face.vertex[1].position = positionIndex[i + 1];
-            face.vertex[1].texcoord = texcoordIndex[i + 1];
-            face.vertex[1].normal   = normalIndex[i + 1];
+            face.vertex[1].position = positionIndex[i + 2];
+            face.vertex[1].texcoord = texcoordIndex[i + 2];
+            face.vertex[1].normal   = normalIndex[i + 2];
 
-            face.vertex[2].position = positionIndex[i + 2];
-            face.vertex[2].texcoord = texcoordIndex[i + 2];
-            face.vertex[2].normal   = normalIndex[i + 2];
+            face.vertex[2].position = positionIndex[i + 1];
+            face.vertex[2].texcoord = texcoordIndex[i + 1];
+            face.vertex[2].normal   = normalIndex[i + 1];
 
             faces.push_back(face);
         }
@@ -690,6 +691,9 @@ namespace mango::import3d
 
             material.baseColorFactor = float32x4(materialobj.kd, materialobj.tr);
             material.emissiveFactor = materialobj.ke;
+            // OBJ/MTL has no metal-rough workflow — force dielectric so PBR isn't black.
+            material.metallicFactor = 0.0f;
+            material.roughnessFactor = 0.5f;
 
             material.baseColorTexture = createTexture(path, materialobj.map_kd);
             material.emissiveTexture = createTexture(path, materialobj.map_ke);
@@ -707,7 +711,9 @@ namespace mango::import3d
             material.name = "default";
 
             material.baseColorFactor = float32x4(1.0f, 1.0f, 1.0f, 1.0f);
-            material.emissiveFactor = 1.0f;
+            material.emissiveFactor = 0.0f;
+            material.metallicFactor = 0.0f;
+            material.roughnessFactor = 0.5f;
 
             materials.push_back(material);
         }
@@ -779,6 +785,7 @@ namespace mango::import3d
 
                             if (normalIndex)
                             {
+                                // File vn is outward; winding remap does not flip it.
                                 vertex.normal = reader.normals[normalIndex - 1];
                             }
 
@@ -786,6 +793,50 @@ namespace mango::import3d
                         }
 
                         mesh.indices.push_back(index);
+                    }
+                }
+
+                // Fill any missing normals from CW face geometry (outward).
+                {
+                    const size_t vertexCount = mesh.vertices.size();
+                    std::vector<float32x3> accumulated(vertexCount, float32x3(0.0f));
+                    bool anyMissing = false;
+
+                    for (const Vertex& vertex : mesh.vertices)
+                    {
+                        if (square(vertex.normal) < 1.0e-12f)
+                        {
+                            anyMissing = true;
+                            break;
+                        }
+                    }
+
+                    if (anyMissing)
+                    {
+                        for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3)
+                        {
+                            const u32 i0 = mesh.indices[i + 0];
+                            const u32 i1 = mesh.indices[i + 1];
+                            const u32 i2 = mesh.indices[i + 2];
+
+                            const float32x3& p0 = mesh.vertices[i0].position;
+                            const float32x3& p1 = mesh.vertices[i1].position;
+                            const float32x3& p2 = mesh.vertices[i2].position;
+
+                            const float32x3 faceNormal = faceNormalOutwardCW(p0, p1, p2);
+                            accumulated[i0] = accumulated[i0] + faceNormal;
+                            accumulated[i1] = accumulated[i1] + faceNormal;
+                            accumulated[i2] = accumulated[i2] + faceNormal;
+                        }
+
+                        for (size_t i = 0; i < vertexCount; ++i)
+                        {
+                            if (square(mesh.vertices[i].normal) < 1.0e-12f)
+                            {
+                                const float32x3& n = accumulated[i];
+                                mesh.vertices[i].normal = square(n) > 1.0e-12f ? normalize(n) : float32x3(0.0f, 1.0f, 0.0f);
+                            }
+                        }
                     }
                 }
 

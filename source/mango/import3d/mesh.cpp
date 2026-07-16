@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <algorithm>
 #include <map>
 #include <mango/core/core.hpp>
 #include <mango/import3d/mesh.hpp>
@@ -89,15 +90,15 @@ namespace mango::import3d
         return std::memcmp(&a, &b, sizeof(Vertex)) == 0;
     }
 
-    struct VertexHash
-    {
-        std::size_t operator () (const Vertex& v) const
+        struct VertexHash
         {
-            u32 temp[3];
-            std::memcpy(temp, v.position.data(), 12);
-            return (temp[0] ^ temp[1]) | (temp[2] << 16);
-        }
-    };
+            std::size_t operator () (const Vertex& v) const
+            {
+                u32 temp[3];
+                std::memcpy(temp, v.position.data(), 12);
+                return (temp[0] ^ temp[1]) | (temp[2] << 16);
+            }
+        };
 
     // --------------------------------------------------------------------
     // texture
@@ -253,12 +254,12 @@ namespace mango::import3d
 
         const float32x4 tangents [] =
         {
-            float32x4( 0.0f, 0.0f, 1.0f, 1.0f),
-            float32x4( 0.0f, 0.0f,-1.0f, 1.0f),
-            float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
-            float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
-            float32x4(-1.0f, 0.0f, 0.0f, 1.0f),
-            float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
+            float32x4( 0.0f, 0.0f, 1.0f,-1.0f),
+            float32x4( 0.0f, 0.0f,-1.0f,-1.0f),
+            float32x4( 1.0f, 0.0f, 0.0f,-1.0f),
+            float32x4( 1.0f, 0.0f, 0.0f,-1.0f),
+            float32x4(-1.0f, 0.0f, 0.0f,-1.0f),
+            float32x4( 1.0f, 0.0f, 0.0f,-1.0f),
         };
 
         const float32x2 texcoords [] =
@@ -279,14 +280,15 @@ namespace mango::import3d
             0, 2, 3, 1,
         };
 
+        // Two CW triangles per face (0,2,1) / (0,3,2) — normals stay outward.
         const u32 indices [] =
         {
-            0,  1,  2,  0,  2,  3,
-            4,  5,  6,  4,  6,  7,
-            8,  9, 10,  8, 10, 11,
-            12, 13, 14, 12, 14, 15,
-            16, 17, 18, 16, 18, 19,
-            20, 21, 22, 20, 22, 23,
+            0,  2,  1,  0,  3,  2,
+            4,  6,  5,  4,  7,  6,
+            8, 10,  9,  8, 11, 10,
+           12, 14, 13, 12, 15, 14,
+           16, 18, 17, 16, 19, 18,
+           20, 22, 21, 20, 23, 22,
         };
 
         // create mesh
@@ -372,18 +374,23 @@ namespace mango::import3d
             float32x3 p0 = points[faces[i * 3 + 0]];
             float32x3 p1 = points[faces[i * 3 + 1]];
             float32x3 p2 = points[faces[i * 3 + 2]];
-            float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
+
+            // Convex, origin-centered: CW outside + one flat normal for the whole face.
+            float32x3 outward = normalize(p0 + p1 + p2);
+            if (dot(cross(p1 - p0, p2 - p0), outward) > 0.0f)
+            {
+                std::swap(p1, p2);
+            }
+
+            const float32x3 faceNormal = faceNormalOutwardCW(p0, p1, p2);
 
             Triangle triangle;
-
             triangle.vertex[0].position = p0;
             triangle.vertex[1].position = p1;
             triangle.vertex[2].position = p2;
-
-            triangle.vertex[0].normal = normal;
-            triangle.vertex[1].normal = normal;
-            triangle.vertex[2].normal = normal;
-
+            triangle.vertex[0].normal = faceNormal;
+            triangle.vertex[1].normal = faceNormal;
+            triangle.vertex[2].normal = faceNormal;
             mesh.triangles.push_back(triangle);
         }
 
@@ -451,31 +458,30 @@ namespace mango::import3d
             float32x3 p2 = points[faces[i * 5 + 2]] * scale;
             float32x3 p3 = points[faces[i * 5 + 3]] * scale;
             float32x3 p4 = points[faces[i * 5 + 4]] * scale;
-            float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
 
-            Triangle triangle;
+            // One normal for the whole pentagon (flat faceted face).
+            const float32x3 faceOutward = normalize(p0 + p1 + p2 + p3 + p4);
 
-            triangle.vertex[0].normal = normal;
-            triangle.vertex[1].normal = normal;
-            triangle.vertex[2].normal = normal;
+            auto pushFace = [&](float32x3 a, float32x3 b, float32x3 c)
+            {
+                if (dot(cross(b - a, c - a), faceOutward) > 0.0f)
+                {
+                    std::swap(b, c);
+                }
 
-            triangle.vertex[0].position = p0;
-            triangle.vertex[1].position = p1;
-            triangle.vertex[2].position = p2;
+                Triangle triangle;
+                triangle.vertex[0].position = a;
+                triangle.vertex[1].position = b;
+                triangle.vertex[2].position = c;
+                triangle.vertex[0].normal = faceOutward;
+                triangle.vertex[1].normal = faceOutward;
+                triangle.vertex[2].normal = faceOutward;
+                mesh.triangles.push_back(triangle);
+            };
 
-            mesh.triangles.push_back(triangle);
-
-            triangle.vertex[0].position = p0;
-            triangle.vertex[1].position = p2;
-            triangle.vertex[2].position = p3;
-
-            mesh.triangles.push_back(triangle);
-
-            triangle.vertex[0].position = p0;
-            triangle.vertex[1].position = p3;
-            triangle.vertex[2].position = p4;
-
-            mesh.triangles.push_back(triangle);
+            pushFace(p0, p1, p2);
+            pushFace(p0, p2, p3);
+            pushFace(p0, p3, p4);
         }
 
         return std::make_unique<IndexedMesh>(mesh, 0);
@@ -521,7 +527,7 @@ namespace mango::import3d
                 vertex.position = position;
                 vertex.normal   = normalize(float32x3(jcos * icos, jcos * isin, jsin));
                 vertex.texcoord = float32x2(i * uscale, j * vscale);
-                vertex.tangent  = float32x4(tangent, 1.0f);
+                vertex.tangent  = float32x4(tangent, -1.0f);
 
                 mesh.vertices.push_back(vertex);
                 mesh.boundingBox.extend(position);
@@ -540,13 +546,14 @@ namespace mango::import3d
                 int c = ci + j + 1;
                 int d = ni + j + 1;
 
+                // CW outside (was a,b,c / b,d,c).
                 mesh.indices.push_back(a);
-                mesh.indices.push_back(b);
                 mesh.indices.push_back(c);
+                mesh.indices.push_back(b);
 
                 mesh.indices.push_back(b);
-                mesh.indices.push_back(d);
                 mesh.indices.push_back(c);
+                mesh.indices.push_back(d);
             }
         }
 
@@ -625,7 +632,7 @@ namespace mango::import3d
                 vertex.position = centerpoint + normal;
                 vertex.normal   = normalize(normal);
                 vertex.texcoord = float32x2(j * uscale, i * vscale);
-                vertex.tangent  = float32x4(tangent, 1.0f);
+                vertex.tangent  = float32x4(tangent, -1.0f);
 
                 mesh.boundingBox.extend(vertex.position);
             }
@@ -650,16 +657,15 @@ namespace mango::import3d
         mesh.vertices[params.steps * (params.facets + 1) + params.facets] = mesh.vertices[0];
         mesh.vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
 
-        // generate indices
-
+        // generate indices — swap strip pair order for CW outside
         mesh.indices.resize((params.steps + 1) * params.facets * 2);
 
         for (int j = 0; j < params.facets; j++)
         {
             for (int i = 0; i < params.steps + 1; i++)
             {
-                mesh.indices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
-                mesh.indices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
+                mesh.indices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
+                mesh.indices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
             }
         }
 
