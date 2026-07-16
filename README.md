@@ -12,6 +12,8 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 ## We load images!
 <h1><img src="docs/decoding.jpg" width="384"/></h1>
 
+**<mark>NEW!</mark>** MANGO now decodes **HDR PNG** (PNG 3rd edition signalling: `cICP`, `mDCV`, `cLLI`, 16-bit linear) and **UltraHDR JPEG** (ISO 21496-1 / Adobe `hdrgm` gain-map JPEG) — scene-linear fp16 output with HDR metadata preserved.
+
 ### PNG library comparison
 ```
 CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
