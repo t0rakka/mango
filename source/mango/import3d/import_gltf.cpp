@@ -405,12 +405,40 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         material.alphaCutoff = current.alphaCutoff;
         material.twosided = current.doubleSided;
 
-        materials.push_back(material);
-
         if (current.clearcoat)
         {
-            printLine(Print::Verbose, "  Clearcoat: TODO");
+            const fastgltf::MaterialClearcoat& coat = *current.clearcoat;
+            material.clearcoatFactor = coat.clearcoatFactor;
+            material.clearcoatRoughnessFactor = coat.clearcoatRoughnessFactor;
+
+            auto resolveTexture = [&](const auto& textureInfo) -> Texture
+            {
+                fastgltf::Texture& texture = asset.textures[textureInfo.textureIndex];
+                if (texture.imageIndex.has_value())
+                {
+                    return textures[*texture.imageIndex];
+                }
+                return {};
+            };
+
+            if (coat.clearcoatTexture.has_value())
+            {
+                material.clearcoatTexture = resolveTexture(*coat.clearcoatTexture);
+            }
+            if (coat.clearcoatRoughnessTexture.has_value())
+            {
+                material.clearcoatRoughnessTexture = resolveTexture(*coat.clearcoatRoughnessTexture);
+            }
+            if (coat.clearcoatNormalTexture.has_value())
+            {
+                material.clearcoatNormalTexture = resolveTexture(*coat.clearcoatNormalTexture);
+            }
+
+            printLine(Print::Verbose, "  clearcoatFactor: {}", material.clearcoatFactor);
+            printLine(Print::Verbose, "  clearcoatRoughnessFactor: {}", material.clearcoatRoughnessFactor);
         }
+
+        materials.push_back(material);
 
         if (current.iridescence)
         {

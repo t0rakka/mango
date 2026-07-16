@@ -57,6 +57,13 @@ namespace mango::import3d
         Texture normalTexture;
         Texture occlusionTexture;
 
+        // KHR_materials_clearcoat (0 = disabled)
+        float clearcoatFactor { 0.0f };
+        float clearcoatRoughnessFactor { 0.0f };
+        Texture clearcoatTexture;
+        Texture clearcoatRoughnessTexture;
+        Texture clearcoatNormalTexture;
+
         AlphaMode alphaMode { AlphaMode::Opaque };
         float alphaCutoff { 0.5f };
         bool twosided { false };
