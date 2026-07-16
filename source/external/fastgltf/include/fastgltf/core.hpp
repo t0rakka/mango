@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -195,10 +195,8 @@ namespace fastgltf {
         // See https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Vendor/EXT_mesh_gpu_instancing/README.md
         EXT_mesh_gpu_instancing = 1 << 19,
 
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
         // See https://github.com/KhronosGroup/glTF/tree/main/extensions/2.0/Archived/KHR_materials_pbrSpecularGlossiness/README.md
         KHR_materials_pbrSpecularGlossiness = 1 << 20,
-#endif
 
 		// See https://github.com/KhronosGroup/glTF/blob/main/extensions/2.0/Vendor/MSFT_packing_normalRoughnessMetallic/README.md
 		MSFT_packing_normalRoughnessMetallic = 1 << 21,
@@ -370,10 +368,7 @@ namespace fastgltf {
 	    constexpr std::string_view MSFT_packing_normalRoughnessMetallic = "MSFT_packing_normalRoughnessMetallic";
 	    constexpr std::string_view MSFT_packing_occlusionRoughnessMetallic = "MSFT_packing_occlusionRoughnessMetallic";
         constexpr std::string_view MSFT_texture_dds = "MSFT_texture_dds";
-
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
         constexpr std::string_view KHR_materials_pbrSpecularGlossiness = "KHR_materials_pbrSpecularGlossiness";
-#endif
 
 #if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
 		constexpr std::string_view KHR_implicit_shapes = "KHR_implicit_shapes";
@@ -418,9 +413,7 @@ namespace fastgltf {
 		{ extensions::MSFT_packing_normalRoughnessMetallic,     Extensions::MSFT_packing_normalRoughnessMetallic },
 		{ extensions::MSFT_packing_occlusionRoughnessMetallic,  Extensions::MSFT_packing_occlusionRoughnessMetallic },
 		{ extensions::MSFT_texture_dds,                         Extensions::MSFT_texture_dds },
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
-		{ extensions::KHR_materials_pbrSpecularGlossiness,Extensions::KHR_materials_pbrSpecularGlossiness },
-#endif
+		{ extensions::KHR_materials_pbrSpecularGlossiness,      Extensions::KHR_materials_pbrSpecularGlossiness },
 
 #if FASTGLTF_ENABLE_KHR_IMPLICIT_SHAPES
         {extensions::KHR_implicit_shapes,						Extensions::KHR_implicit_shapes},

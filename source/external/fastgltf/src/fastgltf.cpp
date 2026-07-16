@@ -1,5 +1,5 @@
 /*
- * Copyright (C) 2022 - 2025 Sean Apeler
+ * Copyright (C) 2022 - 2026 Sean Apeler
  * This file is part of fastgltf <https://github.com/spnda/fastgltf>.
  *
  * Permission is hereby granted, free of charge, to any person
@@ -1169,10 +1169,8 @@ fg::Error fg::validate(const Asset& asset) {
 			return Error::InvalidGltf;
 		if (material.specular && !isExtensionUsed(extensions::KHR_materials_specular))
 			return Error::InvalidGltf;
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
 		if (material.specularGlossiness && !isExtensionUsed(extensions::KHR_materials_pbrSpecularGlossiness))
 			return Error::InvalidGltf;
-#endif
 		if (material.transmission && !isExtensionUsed(extensions::KHR_materials_transmission))
 			return Error::InvalidGltf;
 		if (material.volume && !isExtensionUsed(extensions::KHR_materials_volume))
@@ -3164,7 +3162,6 @@ fg::Error fg::Parser::parseMaterialExtensions(simdjson::dom::object &object, Mat
 				material.packedOcclusionRoughnessMetallicTextures = std::move(packedTextures);
 				break;
 			}
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
 			case force_consteval<crc32c(extensions::KHR_materials_pbrSpecularGlossiness)>: {
 				if (!hasBit(config.extensions, Extensions::KHR_materials_pbrSpecularGlossiness))
 					break;
@@ -3234,7 +3231,6 @@ fg::Error fg::Parser::parseMaterialExtensions(simdjson::dom::object &object, Mat
 				material.specularGlossiness = std::move(specularGlossiness);
 				break;
 			}
-#endif
 			default:
 				// Should we error on unknown extensions?
 				break;
@@ -5906,7 +5902,6 @@ void fg::Exporter::writeMaterials(const Asset& asset, std::string& json) {
 			}
 			json += '}';
 		}
-#if FASTGLTF_ENABLE_DEPRECATED_EXT
 		if (it->specularGlossiness)
 		{
 			if (json.back() == '}') json += ',';
@@ -5941,7 +5936,6 @@ void fg::Exporter::writeMaterials(const Asset& asset, std::string& json) {
 			}
 			json += '}';
 		}
-#endif
 
 		if (it->transmission) {
 			if (json.back() == '}') json += ',';

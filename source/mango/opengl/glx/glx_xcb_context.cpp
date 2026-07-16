@@ -108,6 +108,7 @@ namespace mango
             }
 
             glXMakeCurrent(display, *window, context);
+            window->xlib_display = display;
         }
 
         ~OpenGLContextGLX()
