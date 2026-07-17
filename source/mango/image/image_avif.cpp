@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
@@ -12,6 +12,35 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
+    float unsignedFraction(const avifUnsignedFraction& f) noexcept
+    {
+        return f.d ? float(f.n) / float(f.d) : 0.0f;
+    }
+
+    void fillChromaticities(ColorInfo& color, avifColorPrimaries cicp) noexcept
+    {
+        // outPrimaries: rX, rY, gX, gY, bX, bY, wX, wY
+        float xy[8] = {};
+        avifColorPrimariesGetValues(cicp, xy);
+
+        color.has_chromaticities = true;
+        color.red   = { xy[0], xy[1] };
+        color.green = { xy[2], xy[3] };
+        color.blue  = { xy[4], xy[5] };
+        color.white = { xy[6], xy[7] };
+    }
+
+    void fillContentLightLevel(ColorInfo& color, const avifContentLightLevelInformationBox& clli) noexcept
+    {
+        // (0, 0) means unknown / not present (libavif convention).
+        if (!clli.maxCLL && !clli.maxPALL)
+            return;
+
+        color.has_content_light_level = true;
+        color.content_light_level.max_cll = float(clli.maxCLL);
+        color.content_light_level.max_fall = float(clli.maxPALL);
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -19,7 +48,10 @@ namespace
     struct Interface : ImageDecodeInterface
     {
         avifDecoder* m_decoder = nullptr;
-        avifRGBImage m_rgb;
+        avifRGBImage m_rgb {};
+        bool m_has_gain_map = false;
+        float m_hdr_headroom = 0.0f;
+        avifColorPrimaries m_output_primaries = AVIF_COLOR_PRIMARIES_BT709;
 
         Interface(ConstMemory memory)
         {
@@ -32,6 +64,8 @@ namespace
 
             m_decoder->maxThreads = int(std::thread::hardware_concurrency());
             m_decoder->strictFlags = AVIF_STRICT_DISABLED;
+            // Decode gain-map pixels when present (ISO 21496-1 / UltraHDR-style AVIF).
+            m_decoder->imageContentToDecode = AVIF_IMAGE_CONTENT_ALL;
 
             avifResult result = avifDecoderSetIOMemory(m_decoder, memory.address, memory.size);
             if (result != AVIF_RESULT_OK)
@@ -46,8 +80,6 @@ namespace
                 header.setError("[ImageDecoder.AVIF] avifDecoderParse FAILED.");
                 return;
             }
-
-            std::memset(&m_rgb, 0, sizeof(m_rgb));
 
             avifImage* image = m_decoder->image;
             if (!image)
@@ -70,22 +102,37 @@ namespace
             exif = ConstMemory(image->exif.data, image->exif.size);
             //xmp = ConstMemory(image->xmp.data, image->xmp.size);
 
-            Format format = image->depth > 8 ?
-                Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16) :
-                Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-
             header.width   = image->width;
             header.height  = image->height;
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.format  = format;
             header.compression = TextureCompression::NONE;
 
+            // Prefer reconstructing the HDR alternate when a gain map is present
+            // (same client-facing contract as UltraHDR JPEG: scene-linear FLOAT16).
+            if (image->gainMap)
+            {
+                configureGainMap(image);
+            }
+            else
+            {
+                Format format = image->depth > 8 ?
+                    Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16) :
+                    Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.format = format;
+                readColorInfo(image);
+            }
+        }
+
+        void readColorInfo(const avifImage* image)
+        {
             // AVIF signals color with CICP code points (avifColorPrimaries /
             // avifTransferCharacteristics share the ITU-T H.273 values). An attached ICC
-            // profile, when present, takes precedence and is forwarded separately.
+            // profile, when present, takes precedence for the named space and is forwarded
+            // separately — matching HEIF / HDR PNG. CLLI is independent of that precedence.
             ColorInfo& color = header.color;
+
             if (image->icc.size)
             {
                 color.primaries = ColorPrimaries::Unspecified;
@@ -100,13 +147,45 @@ namespace
                 if (primaries != ColorPrimaries::Unspecified)
                 {
                     color.primaries = primaries;
+                    fillChromaticities(color, image->colorPrimaries);
                 }
                 if (transfer != TransferFunction::Unspecified)
                 {
                     color.transfer = transfer;
                 }
             }
+
+            fillContentLightLevel(color, image->clli);
             header.linear = color.isLinear();
+        }
+
+        void configureGainMap(const avifImage* image)
+        {
+            const avifGainMap* gm = image->gainMap;
+
+            // Reconstruct the full alternate (HDR) rendition, as UltraHDR JPEG does.
+            m_hdr_headroom = unsignedFraction(gm->alternateHdrHeadroom);
+            m_has_gain_map = true;
+
+            // Tone-map into the color space the gain map was authored for.
+            m_output_primaries = gm->useBaseColorSpace
+                ? image->colorPrimaries
+                : gm->altColorPrimaries;
+
+            ColorPrimaries primaries = colorPrimariesFromCICP(u8(m_output_primaries));
+            if (primaries == ColorPrimaries::Unspecified)
+                primaries = ColorPrimaries::BT709;
+
+            header.format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+            header.color = ColorInfo { primaries, TransferFunction::Linear };
+            fillChromaticities(header.color, m_output_primaries);
+
+            // Prefer the alternate image's CLLI; fall back to the base when absent.
+            fillContentLightLevel(header.color, gm->altCLLI);
+            if (!header.color.has_content_light_level)
+                fillContentLightLevel(header.color, image->clli);
+
+            header.linear = true;
         }
 
         ~Interface()
@@ -122,6 +201,82 @@ namespace
             }
         }
 
+        ImageDecodeStatus decodeGainMap(const Surface& dest)
+        {
+            ImageDecodeStatus status;
+
+            avifImage* image = m_decoder->image;
+            if (!image || !image->gainMap)
+            {
+                status.setError("[ImageDecoder.AVIF] Missing gain map.");
+                return status;
+            }
+
+            avifResult result = avifDecoderNextImage(m_decoder);
+            if (result != AVIF_RESULT_OK)
+            {
+                status.setError("[ImageDecoder.AVIF] avifDecoderNextImage FAILED.");
+                return status;
+            }
+
+            image = m_decoder->image;
+            if (!image || !image->gainMap)
+            {
+                status.setError("[ImageDecoder.AVIF] No image after decode.");
+                return status;
+            }
+
+            // Scene-linear half-float RGBA — same delivery as UltraHDR JPEG.
+            avifRGBImageSetDefaults(&m_rgb, image);
+            m_rgb.depth = 16;
+            m_rgb.isFloat = AVIF_TRUE;
+            m_rgb.format = AVIF_RGB_FORMAT_RGBA;
+            m_rgb.maxThreads = m_decoder->maxThreads;
+
+            result = avifRGBImageAllocatePixels(&m_rgb);
+            if (result != AVIF_RESULT_OK)
+            {
+                status.setError("[ImageDecoder.AVIF] avifRGBImageAllocatePixels FAILED.");
+                return status;
+            }
+
+            avifContentLightLevelInformationBox clli {};
+            result = avifImageApplyGainMap(
+                image,
+                image->gainMap,
+                m_hdr_headroom,
+                m_output_primaries,
+                AVIF_TRANSFER_CHARACTERISTICS_LINEAR,
+                &m_rgb,
+                &clli,
+                &m_decoder->diag);
+
+            if (result != AVIF_RESULT_OK)
+            {
+                avifRGBImageFreePixels(&m_rgb);
+                status.setError("[ImageDecoder.AVIF] avifImageApplyGainMap FAILED.");
+                return status;
+            }
+
+            // Refresh CLLI from the tone-mapped result when libavif reports it.
+            fillContentLightLevel(header.color, clli);
+
+            const size_t expected_row = size_t(image->width) * 4 * sizeof(u16);
+            if (!m_rgb.pixels ||
+                m_rgb.width < image->width ||
+                m_rgb.height < image->height ||
+                m_rgb.rowBytes < expected_row)
+            {
+                avifRGBImageFreePixels(&m_rgb);
+                status.setError("[ImageDecoder.AVIF] Unexpected gain-map RGB buffer geometry.");
+                return status;
+            }
+
+            Surface temp(image->width, image->height, header.format, m_rgb.rowBytes, m_rgb.pixels);
+            dest.blit(0, 0, temp);
+            return status;
+        }
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(options);
@@ -135,6 +290,17 @@ namespace
             {
                 status.setError("[ImageDecoder.AVIF] avifDecoderCreate FAILED.");
                 return status;
+            }
+
+            if (m_has_gain_map)
+            {
+                if (m_rgb.pixels)
+                {
+                    Surface temp(header.width, header.height, header.format, m_rgb.rowBytes, m_rgb.pixels);
+                    dest.blit(0, 0, temp);
+                    return status;
+                }
+                return decodeGainMap(dest);
             }
 
             avifImage* image = m_decoder->image;

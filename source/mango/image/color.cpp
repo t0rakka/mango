@@ -110,7 +110,8 @@ namespace mango::image
             return v < 0.081f ? v / 4.5f : std::pow((v + 0.099f) / 1.099f, 1.0f / 0.45f);
         }
 
-        // SMPTE ST 2084 (PQ) EOTF. Output normalized so 1.0 == 10,000 nits.
+        // SMPTE ST 2084 (PQ) EOTF. Absolute linear: 1.0 == 10,000 nits.
+        // linearize() may then scale into relative scene-linear (see LinearizeOptions).
         inline float pqToLinearF(float e)
         {
             const float m1 = 0.1593017578125f;
@@ -351,15 +352,26 @@ namespace mango::image
         if (!options.preserve_gamut)
             buildPrimariesMatrix(color, srcPrim, options.target, matrix, identity);
 
+        // PQ EOTF is absolute (1.0 == peak_nits). Scale into relative scene-linear
+        // (1.0 == sdr_white_nits) so the result matches UltraHDR / gain-map float
+        // and Vulkan SdrToHdrPQ. Other transfers are already relative.
+        float scale = 1.0f;
+        if (transfer == TransferFunction::PQ &&
+            options.sdr_white_nits > 0.0f &&
+            options.peak_nits > 0.0f)
+        {
+            scale = options.peak_nits / options.sdr_white_nits;
+        }
+
         for (int y = 0; y < work.height; ++y)
         {
             float* p = work.address<float>(0, y);
 
             for (int x = 0; x < work.width; ++x)
             {
-                float r = transferToLinear(p[0], transfer, gamma);
-                float g = transferToLinear(p[1], transfer, gamma);
-                float b = transferToLinear(p[2], transfer, gamma);
+                float r = transferToLinear(p[0], transfer, gamma) * scale;
+                float g = transferToLinear(p[1], transfer, gamma) * scale;
+                float b = transferToLinear(p[2], transfer, gamma) * scale;
 
                 if (!identity)
                 {

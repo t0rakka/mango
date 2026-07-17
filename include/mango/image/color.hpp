@@ -248,11 +248,20 @@ namespace mango::image
         the transfer function is inverted, so the output keeps the source
         primaries. Use this for wide-gamut working spaces that must not be clipped
         to 'target'.
+
+        PQ is absolute (EOTF yields 1.0 == peak_nits). Graphics pipelines and the
+        UltraHDR / gain-map float contract use relative scene-linear where
+        1.0 == sdr_white_nits (BT.2408 graphics white, matching Vulkan
+        SdrToHdrPQ). When sdr_white_nits > 0, PQ is scaled by peak_nits /
+        sdr_white_nits so SDR white lands at ~1 and HDR highlights go above 1.
+        Set sdr_white_nits to 0 to keep absolute PQ linear (1.0 == peak_nits).
     */
     struct LinearizeOptions
     {
         ColorPrimaries target = ColorPrimaries::BT709;
         bool preserve_gamut = false;
+        float sdr_white_nits = 203.0f; // BT.2408; 0 = leave PQ absolute
+        float peak_nits = 10000.0f;    // PQ peak (ST 2084)
     };
 
     /*
@@ -265,7 +274,8 @@ namespace mango::image
              (a no-op when they already match or when preserve_gamut is set).
 
         'source' may be any format: it is read as normalized float, so integer
-        samples map to [0,1] and PQ output is normalized so that 1.0 == 10,000 nits.
+        samples map to [0,1]. PQ is then scaled into relative scene-linear
+        (1.0 == options.sdr_white_nits) unless sdr_white_nits is 0.
         'dest' should be a float (FLOAT16 or FLOAT32) RGBA surface, since wide-gamut
         and HDR conversions produce unbounded and negative values; 'dest' and
         'source' must have the same dimensions. Alpha is passed through unchanged.
