@@ -35,6 +35,13 @@ namespace mango::import3d
     // material
     // -----------------------------------------------------------------------
 
+    struct UvTransform
+    {
+        float32x2 scale { 1.0f, 1.0f };
+        float32x2 offset { 0.0f, 0.0f };
+        float rotation { 0.0f }; // radians, counter-clockwise
+    };
+
     struct Material
     {
         enum class AlphaMode
@@ -57,12 +64,27 @@ namespace mango::import3d
         Texture normalTexture;
         Texture occlusionTexture;
 
+        UvTransform baseColorTransform;
+        UvTransform metallicRoughnessTransform;
+        UvTransform emissiveTransform;
+        UvTransform normalTransform;
+        UvTransform occlusionTransform;
+
         // KHR_materials_clearcoat (0 = disabled)
         float clearcoatFactor { 0.0f };
         float clearcoatRoughnessFactor { 0.0f };
         Texture clearcoatTexture;
         Texture clearcoatRoughnessTexture;
         Texture clearcoatNormalTexture;
+        UvTransform clearcoatTransform;
+        UvTransform clearcoatRoughnessTransform;
+        UvTransform clearcoatNormalTransform;
+
+        // KHR_materials_sheen (sheenColorFactor ~0 = disabled)
+        float32x3 sheenColorFactor { 0.0f, 0.0f, 0.0f };
+        float sheenRoughnessFactor { 0.0f };
+        Texture sheenColorTexture;
+        Texture sheenRoughnessTexture;
 
         AlphaMode alphaMode { AlphaMode::Opaque };
         float alphaCutoff { 0.5f };

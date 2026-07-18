@@ -332,58 +332,81 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         material.emissiveFactor[1] = emissiveFactor[1];
         material.emissiveFactor[2] = emissiveFactor[2];
 
-        if (pbr.baseColorTexture.has_value())
+        auto readUvTransform = [](const fastgltf::TextureInfo& info) -> UvTransform
         {
-            fastgltf::Texture& texture = asset.textures[pbr.baseColorTexture->textureIndex];
+            UvTransform t;
+            if (info.transform)
+            {
+                t.offset = float32x2(float(info.transform->uvOffset[0]), float(info.transform->uvOffset[1]));
+                t.scale = float32x2(float(info.transform->uvScale[0]), float(info.transform->uvScale[1]));
+                t.rotation = float(info.transform->rotation);
+            }
+            return t;
+        };
+
+        auto resolveTexture = [&](const fastgltf::TextureInfo& info) -> Texture
+        {
+            fastgltf::Texture& texture = asset.textures[info.textureIndex];
             if (texture.imageIndex.has_value())
             {
-                Texture image = textures[*texture.imageIndex];
-                material.baseColorTexture = image;
-                printLine(Print::Verbose, "  baseColorTexture: ({} x {})", image->width, image->height);
+                return textures[*texture.imageIndex];
+            }
+            return {};
+        };
+
+        if (pbr.baseColorTexture.has_value())
+        {
+            material.baseColorTexture = resolveTexture(*pbr.baseColorTexture);
+            material.baseColorTransform = readUvTransform(*pbr.baseColorTexture);
+            if (material.baseColorTexture)
+            {
+                printLine(Print::Verbose, "  baseColorTexture: ({} x {}) scale {} {}",
+                    material.baseColorTexture->width, material.baseColorTexture->height,
+                    material.baseColorTransform.scale.x, material.baseColorTransform.scale.y);
             }
         }
 
         if (pbr.metallicRoughnessTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[pbr.metallicRoughnessTexture->textureIndex];
-            if (texture.imageIndex.has_value())
+            material.metallicRoughnessTexture = resolveTexture(*pbr.metallicRoughnessTexture);
+            material.metallicRoughnessTransform = readUvTransform(*pbr.metallicRoughnessTexture);
+            if (material.metallicRoughnessTexture)
             {
-                Texture image = textures[*texture.imageIndex];
-                material.metallicRoughnessTexture = image;
-                printLine(Print::Verbose, "  metallicRoughnessTexture: ({} x {})", image->width, image->height);
+                printLine(Print::Verbose, "  metallicRoughnessTexture: ({} x {})",
+                    material.metallicRoughnessTexture->width, material.metallicRoughnessTexture->height);
             }
         }
 
         if (current.normalTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[current.normalTexture->textureIndex];
-            if (texture.imageIndex.has_value())
+            material.normalTexture = resolveTexture(*current.normalTexture);
+            material.normalTransform = readUvTransform(*current.normalTexture);
+            if (material.normalTexture)
             {
-                Texture image = textures[*texture.imageIndex];
-                material.normalTexture = image;
-                printLine(Print::Verbose, "  normalTexture: ({} x {})", image->width, image->height);
+                printLine(Print::Verbose, "  normalTexture: ({} x {})",
+                    material.normalTexture->width, material.normalTexture->height);
             }
         }
 
         if (current.occlusionTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[current.occlusionTexture->textureIndex];
-            if (texture.imageIndex.has_value())
+            material.occlusionTexture = resolveTexture(*current.occlusionTexture);
+            material.occlusionTransform = readUvTransform(*current.occlusionTexture);
+            if (material.occlusionTexture)
             {
-                Texture image = textures[*texture.imageIndex];
-                material.occlusionTexture = image;
-                printLine(Print::Verbose, "  occlusionTexture: ({} x {})", image->width, image->height);
+                printLine(Print::Verbose, "  occlusionTexture: ({} x {})",
+                    material.occlusionTexture->width, material.occlusionTexture->height);
             }
         }
 
         if (current.emissiveTexture.has_value())
         {
-            fastgltf::Texture& texture = asset.textures[current.emissiveTexture->textureIndex];
-            if (texture.imageIndex.has_value())
+            material.emissiveTexture = resolveTexture(*current.emissiveTexture);
+            material.emissiveTransform = readUvTransform(*current.emissiveTexture);
+            if (material.emissiveTexture)
             {
-                Texture image = textures[*texture.imageIndex];
-                material.emissiveTexture = image;
-                printLine(Print::Verbose, "  emissiveTexture: ({} x {})", image->width, image->height);
+                printLine(Print::Verbose, "  emissiveTexture: ({} x {})",
+                    material.emissiveTexture->width, material.emissiveTexture->height);
             }
         }
 
@@ -411,31 +434,47 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             material.clearcoatFactor = coat.clearcoatFactor;
             material.clearcoatRoughnessFactor = coat.clearcoatRoughnessFactor;
 
-            auto resolveTexture = [&](const auto& textureInfo) -> Texture
-            {
-                fastgltf::Texture& texture = asset.textures[textureInfo.textureIndex];
-                if (texture.imageIndex.has_value())
-                {
-                    return textures[*texture.imageIndex];
-                }
-                return {};
-            };
-
             if (coat.clearcoatTexture.has_value())
             {
                 material.clearcoatTexture = resolveTexture(*coat.clearcoatTexture);
+                material.clearcoatTransform = readUvTransform(*coat.clearcoatTexture);
             }
             if (coat.clearcoatRoughnessTexture.has_value())
             {
                 material.clearcoatRoughnessTexture = resolveTexture(*coat.clearcoatRoughnessTexture);
+                material.clearcoatRoughnessTransform = readUvTransform(*coat.clearcoatRoughnessTexture);
             }
             if (coat.clearcoatNormalTexture.has_value())
             {
                 material.clearcoatNormalTexture = resolveTexture(*coat.clearcoatNormalTexture);
+                material.clearcoatNormalTransform = readUvTransform(*coat.clearcoatNormalTexture);
             }
 
             printLine(Print::Verbose, "  clearcoatFactor: {}", material.clearcoatFactor);
             printLine(Print::Verbose, "  clearcoatRoughnessFactor: {}", material.clearcoatRoughnessFactor);
+        }
+
+        if (current.sheen)
+        {
+            const fastgltf::MaterialSheen& sheen = *current.sheen;
+            material.sheenColorFactor = float32x3(
+                sheen.sheenColorFactor[0],
+                sheen.sheenColorFactor[1],
+                sheen.sheenColorFactor[2]);
+            material.sheenRoughnessFactor = sheen.sheenRoughnessFactor;
+
+            if (sheen.sheenColorTexture.has_value())
+            {
+                material.sheenColorTexture = resolveTexture(*sheen.sheenColorTexture);
+            }
+            if (sheen.sheenRoughnessTexture.has_value())
+            {
+                material.sheenRoughnessTexture = resolveTexture(*sheen.sheenRoughnessTexture);
+            }
+
+            printLine(Print::Info, "  sheenColorFactor: {} {} {}  sheenRoughness: {} (shading TBD)",
+                material.sheenColorFactor.x, material.sheenColorFactor.y, material.sheenColorFactor.z,
+                material.sheenRoughnessFactor);
         }
 
         materials.push_back(material);
@@ -443,11 +482,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         if (current.iridescence)
         {
             printLine(Print::Verbose, "  Iridescence: TODO");
-        }
-
-        if (current.sheen)
-        {
-            printLine(Print::Verbose, "  Sheen: TODO");
         }
 
         if (current.specular)
