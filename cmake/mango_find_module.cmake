@@ -554,6 +554,8 @@ function (mango_probe_image_format_dependencies)
     endif ()
 
     if (IMAGE_FORMAT_AVIF)
+        # Basic AVIF decode works from 1.0; gain-map (UltraHDR) needs >= 1.4 and is
+        # compiled out in image_avif.cpp when AVIF_VERSION < 1040000.
         locate_module(AVIF libavif libavif avif 1.0.0 _found)
         if (NOT _found)
             message("    AVIF: disabling IMAGE_FORMAT_AVIF")
@@ -648,6 +650,8 @@ function (mango_link_libraries)
     endif ()
 
     if (IMAGE_FORMAT_AVIF)
+        # Basic AVIF decode works from 1.0; gain-map (UltraHDR) needs >= 1.4 and is
+        # compiled out in image_avif.cpp when AVIF_VERSION < 1040000.
         find_module(mango-image AVIF ${INTERFACE} OPTIONAL libavif libavif avif 1.0.0)
     endif ()
 

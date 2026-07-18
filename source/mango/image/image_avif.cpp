@@ -7,15 +7,26 @@
 
 #include <avif/avif.h>
 
+// Gain-map / UltraHDR reconstruction needs the stable post-1.4.0 API
+// (avifUnsignedFraction, imageContentToDecode, image->gainMap, …).
+// Distro packages such as Ubuntu/Mint 1.0.x still decode SDR/HDR AVIF without it.
+#if AVIF_VERSION >= 1040000
+    #define MANGO_AVIF_GAINMAP 1
+#else
+    #define MANGO_AVIF_GAINMAP 0
+#endif
+
 namespace
 {
     using namespace mango;
     using namespace mango::image;
 
+#if MANGO_AVIF_GAINMAP
     float unsignedFraction(const avifUnsignedFraction& f) noexcept
     {
         return f.d ? float(f.n) / float(f.d) : 0.0f;
     }
+#endif
 
     void fillChromaticities(ColorInfo& color, avifColorPrimaries cicp) noexcept
     {
@@ -49,9 +60,11 @@ namespace
     {
         avifDecoder* m_decoder = nullptr;
         avifRGBImage m_rgb {};
+#if MANGO_AVIF_GAINMAP
         bool m_has_gain_map = false;
         float m_hdr_headroom = 0.0f;
         avifColorPrimaries m_output_primaries = AVIF_COLOR_PRIMARIES_BT709;
+#endif
 
         Interface(ConstMemory memory)
         {
@@ -64,8 +77,10 @@ namespace
 
             m_decoder->maxThreads = int(std::thread::hardware_concurrency());
             m_decoder->strictFlags = AVIF_STRICT_DISABLED;
+#if MANGO_AVIF_GAINMAP
             // Decode gain-map pixels when present (ISO 21496-1 / UltraHDR-style AVIF).
             m_decoder->imageContentToDecode = AVIF_IMAGE_CONTENT_ALL;
+#endif
 
             avifResult result = avifDecoderSetIOMemory(m_decoder, memory.address, memory.size);
             if (result != AVIF_RESULT_OK)
@@ -109,6 +124,7 @@ namespace
             header.faces   = 0;
             header.compression = TextureCompression::NONE;
 
+#if MANGO_AVIF_GAINMAP
             // Prefer reconstructing the HDR alternate when a gain map is present
             // (same client-facing contract as UltraHDR JPEG: scene-linear FLOAT16).
             if (image->gainMap)
@@ -116,6 +132,7 @@ namespace
                 configureGainMap(image);
             }
             else
+#endif
             {
                 Format format = image->depth > 8 ?
                     Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16) :
@@ -159,6 +176,7 @@ namespace
             header.linear = color.isLinear();
         }
 
+#if MANGO_AVIF_GAINMAP
         void configureGainMap(const avifImage* image)
         {
             const avifGainMap* gm = image->gainMap;
@@ -186,19 +204,6 @@ namespace
                 fillContentLightLevel(header.color, image->clli);
 
             header.linear = true;
-        }
-
-        ~Interface()
-        {
-            if (m_decoder)
-            {
-                avifDecoderDestroy(m_decoder);
-            }
-
-            if (m_rgb.pixels)
-            {
-                avifRGBImageFreePixels(&m_rgb);
-            }
         }
 
         ImageDecodeStatus decodeGainMap(const Surface& dest)
@@ -276,6 +281,20 @@ namespace
             dest.blit(0, 0, temp);
             return status;
         }
+#endif // MANGO_AVIF_GAINMAP
+
+        ~Interface()
+        {
+            if (m_decoder)
+            {
+                avifDecoderDestroy(m_decoder);
+            }
+
+            if (m_rgb.pixels)
+            {
+                avifRGBImageFreePixels(&m_rgb);
+            }
+        }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
@@ -292,6 +311,7 @@ namespace
                 return status;
             }
 
+#if MANGO_AVIF_GAINMAP
             if (m_has_gain_map)
             {
                 if (m_rgb.pixels)
@@ -302,6 +322,7 @@ namespace
                 }
                 return decodeGainMap(dest);
             }
+#endif
 
             avifImage* image = m_decoder->image;
             if (!image)
