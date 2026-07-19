@@ -1185,6 +1185,28 @@ namespace mango::import3d
                         material.roughnessFactor = 1.0f;
                 }
 
+                // Concise material summary (printEnable(Print::Info, true) to see this).
+                printLine(Print::Info, "[FBX] material '{}'", material.name);
+                if (material.baseColorTexture)
+                    printLine(Print::Info, "  baseColor:  {}x{}  ('{}')",
+                        material.baseColorTexture->width, material.baseColorTexture->height, albedoDeclared);
+                else
+                    printLine(Print::Info, "  baseColor:  none  ('{}')", albedoDeclared);
+                if (material.normalTexture)
+                    printLine(Print::Info, "  normal:     {}x{}{}",
+                        material.normalTexture->width, material.normalTexture->height,
+                        sidecarNormal ? "  [sidecar]" : "");
+                else
+                    printLine(Print::Info, "  normal:     none");
+                if (material.metallicRoughnessTexture)
+                    printLine(Print::Info, "  metalRough: {}x{}{}",
+                        material.metallicRoughnessTexture->width, material.metallicRoughnessTexture->height,
+                        (sidecarMetallic || sidecarRoughness) ? "  [sidecar _M/_R packed]" : "");
+                else
+                    printLine(Print::Info, "  metalRough: none");
+                printLine(Print::Info, "  metallicFactor: {}  roughnessFactor: {}",
+                    material.metallicFactor, material.roughnessFactor);
+
                 materialIdToIndex[id] = u32(materials.size());
                 materials.push_back(std::move(material));
             }
