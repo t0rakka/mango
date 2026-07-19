@@ -335,19 +335,33 @@ namespace
             // A PRIMARIES line carries exact CIE 1931 chromaticities; expose them (and a
             // named primaries set when they match a known one). Without it, the sRGB/BT.709
             // default is kept, which matches the common interpretation of untagged Radiance.
+            //
+            // PRIMARIES=0 0 0 0 0 0 0 0 is a ubiquitous "unspecified" sentinel written by
+            // Blender, HDRShop, Photoshop, etc. — not CIE XYZ. Honouring it as exact
+            // chromaticities would make linearize() treat the image as XYZ and convert
+            // into the working space, which strongly tints otherwise correct BT.709 HDR.
             if (chromaticity.enable)
             {
-                ColorInfo& ci = header.color;
-                ci.has_chromaticities = true;
-                ci.white = { chromaticity.white.x, chromaticity.white.y };
-                ci.red   = { chromaticity.red.x,   chromaticity.red.y };
-                ci.green = { chromaticity.green.x, chromaticity.green.y };
-                ci.blue  = { chromaticity.blue.x,  chromaticity.blue.y };
+                const bool unspecified =
+                    chromaticity.red.x   == 0.0f && chromaticity.red.y   == 0.0f &&
+                    chromaticity.green.x == 0.0f && chromaticity.green.y == 0.0f &&
+                    chromaticity.blue.x  == 0.0f && chromaticity.blue.y  == 0.0f &&
+                    chromaticity.white.x == 0.0f && chromaticity.white.y == 0.0f;
 
-                ColorPrimaries named = identifyPrimaries(ci.white, ci.red, ci.green, ci.blue);
-                if (named != ColorPrimaries::Unspecified)
+                if (!unspecified)
                 {
-                    ci.primaries = named;
+                    ColorInfo& ci = header.color;
+                    ci.has_chromaticities = true;
+                    ci.white = { chromaticity.white.x, chromaticity.white.y };
+                    ci.red   = { chromaticity.red.x,   chromaticity.red.y };
+                    ci.green = { chromaticity.green.x, chromaticity.green.y };
+                    ci.blue  = { chromaticity.blue.x,  chromaticity.blue.y };
+
+                    ColorPrimaries named = identifyPrimaries(ci.white, ci.red, ci.green, ci.blue);
+                    if (named != ColorPrimaries::Unspecified)
+                    {
+                        ci.primaries = named;
+                    }
                 }
             }
 

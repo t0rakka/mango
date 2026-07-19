@@ -262,10 +262,17 @@ namespace mango::image
             {
                 if (rgbToXyz(color.white, color.red, color.green, color.blue, out))
                     return true;
-                // Degenerate chromaticities (e.g. CIE XYZ primaries): channels are
-                // already XYZ, so RGB->XYZ is identity.
-                out = Mat3 { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
-                return true;
+
+                // Degenerate chromaticities with a usable white (e.g. CIE XYZ: R=(1,0),
+                // G=(0,1), B=(0,0), W=(1/3,1/3)): channels are already XYZ, so RGB->XYZ
+                // is identity. All-zero chromaticities (Radiance PRIMARIES sentinel) have
+                // no white point — fall through to the named primaries instead of inventing
+                // an XYZ interpretation that would then be converted into the working space.
+                if (color.white.y > 1e-6f)
+                {
+                    out = Mat3 { 1, 0, 0, 0, 1, 0, 0, 0, 1 };
+                    return true;
+                }
             }
 
             ColorPoint w, r, g, b;
@@ -287,8 +294,8 @@ namespace mango::image
             out[3] = 0; out[4] = 1; out[5] = 0;
             out[6] = 0; out[7] = 0; out[8] = 1;
 
-            // Same named primaries and no exact chromaticities to honour -> no-op.
-            if (srcPrim == targetPrim && !color.has_chromaticities)
+            // Same named primaries and no usable exact chromaticities to honour -> no-op.
+            if (srcPrim == targetPrim && !(color.has_chromaticities && color.white.y > 1e-6f))
                 return;
 
             Mat3 srcToXyz;
@@ -342,9 +349,9 @@ namespace mango::image
 
         const float gamma = color.gamma;
 
-        // Resolve the source primaries (exact chromaticities take precedence).
+        // Resolve the source primaries (exact chromaticities take precedence when usable).
         ColorPrimaries srcPrim = color.primaries;
-        if (color.has_chromaticities)
+        if (color.has_chromaticities && color.white.y > 1e-6f)
             srcPrim = identifyPrimaries(color.white, color.red, color.green, color.blue);
 
         float matrix[9];
