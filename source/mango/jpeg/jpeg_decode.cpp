@@ -1031,7 +1031,7 @@ namespace mango::image::jpeg
                 primaries = ColorPrimaries::BT709;
 
             header.format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
-            header.color = ColorInfo { primaries, TransferFunction::Linear };
+            header.color = ColorInfo { .primaries = primaries, .transfer = TransferFunction::Linear };
             header.linear = true;
         }
         else
@@ -1056,7 +1056,7 @@ namespace mango::image::jpeg
             // result is scene-linear in the file's native (Display-P3) primaries;
             // any conversion is left to the client (ColorInfo carries the signalling)
             header.format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
-            header.color = ColorInfo { ColorPrimaries::DisplayP3, TransferFunction::Linear };
+            header.color = ColorInfo { .primaries = ColorPrimaries::DisplayP3, .transfer = TransferFunction::Linear };
             header.linear = true;
         }
     }

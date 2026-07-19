@@ -195,7 +195,7 @@ namespace
                 primaries = ColorPrimaries::BT709;
 
             header.format = Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
-            header.color = ColorInfo { primaries, TransferFunction::Linear };
+            header.color = ColorInfo { .primaries = primaries, .transfer = TransferFunction::Linear };
             fillChromaticities(header.color, m_output_primaries);
 
             // Prefer the alternate image's CLLI; fall back to the base when absent.

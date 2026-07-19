@@ -68,7 +68,7 @@ namespace mango::image
         // Defaults to sRGB: integer image formats are sRGB by near-universal convention,
         // so a decoder that does not override this reports sRGB. Linear/HDR/float decoders
         // set TransferFunction::Linear (and keep 'linear' consistent).
-        ColorInfo color { ColorPrimaries::BT709, TransferFunction::sRGB };
+        ColorInfo color { .primaries = ColorPrimaries::BT709, .transfer = TransferFunction::sRGB };
 
         Format  format; // preferred format (fastest available "direct" decoding is possible)
         u32     compression = TextureCompression::NONE;
