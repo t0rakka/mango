@@ -656,7 +656,7 @@ namespace mango::import3d
         {
             FaceOBJ face;
 
-            // OBJ faces are typically CCW outside → bake CW for GL_CW / mesh contract.
+            // OBJ faces are typically CCW outside → bake CW (Vulkan mesh contract).
             face.vertex[0].position = positionIndex[0];
             face.vertex[0].texcoord = texcoordIndex[0];
             face.vertex[0].normal   = normalIndex[0];
@@ -780,7 +780,8 @@ namespace mango::import3d
                             if (texcoordIndex)
                             {
                                 vertex.texcoord = reader.texcoords[texcoordIndex - 1];
-                                vertex.texcoord.y = -vertex.texcoord.y;
+                                // OBJ UVs are bottom-left origin → Vulkan/glTF top-left (V down).
+                                vertex.texcoord.y = 1.0f - vertex.texcoord.y;
                             }
 
                             if (normalIndex)

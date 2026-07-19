@@ -158,7 +158,7 @@ namespace mango::import3d
                     float s = (flags & XAxis) ? p.z / size.z + 0.5f :  p.x / size.x + 0.5f;
                     float t = (flags & YAxis) ? p.z / size.z + 0.5f :  p.y / size.y + 0.5f;
 
-                    texcoord = float32x2(s * tile.x, -t * tile.y);
+                    texcoord = float32x2(s * tile.x, (1.0f - t) * tile.y);
                     break;
                 }
 

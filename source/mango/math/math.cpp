@@ -545,7 +545,9 @@ namespace mango::math
 
     Matrix4x4 Matrix4x4::lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
     {
-        const float32x3 zaxis = normalize(target - viewer);
+        // Vulkan / OpenGL eye space: camera looks down −Z.
+        // zaxis is the view-space +Z basis (points opposite the look direction).
+        const float32x3 zaxis = normalize(viewer - target);
         const float32x3 xaxis = normalize(cross(up, zaxis));
         const float32x3 yaxis = cross(zaxis, xaxis);
 
@@ -601,35 +603,40 @@ namespace mango::math
 
     Matrix4x4 Matrix4x4::orthoVK(float left, float right, float bottom, float top, float znear, float zfar)
     {
-        float x = 2.0f / (right - left);
-        float y = 2.0f / (bottom - top);
-        float z = 1.0f / (znear - zfar);
-        float a = (right + left) / (left - right);
-        float b = (top + bottom) / (top - bottom);
-        float c = (zfar + znear) / (zfar - znear) * -0.5f;
+        // RH, Vulkan depth [0, 1], −Z view space.
+        // znear/zfar are positive distances: eye z = −znear → depth 0, −zfar → depth 1.
+        // Y uses (bottom − top) so NDC Y matches Vulkan (top-left framebuffer after viewport).
+        const float x = 2.0f / (right - left);
+        const float y = 2.0f / (bottom - top);
+        const float z = 1.0f / (znear - zfar);
+        const float a = -(right + left) / (right - left);
+        const float b = -(top + bottom) / (top - bottom);
+        const float c = znear / (znear - zfar);
 
         Matrix4x4 m;
         m[0] = float32x4(x, 0, 0, 0);
         m[1] = float32x4(0, y, 0, 0);
-        m[2] = float32x4(0, 0, z, z);
-        m[3] = float32x4(a, b, c, c + 1.0f);
+        m[2] = float32x4(0, 0, z, 0);
+        m[3] = float32x4(a, b, c, 1);
         return m;
     }
 
     Matrix4x4 Matrix4x4::frustumVK(float left, float right, float bottom, float top, float znear, float zfar)
     {
-        float a = (right + left) / (right - left);
-        float b = (top + bottom) / (bottom - top);
-        float c = (zfar + znear) / (znear - zfar) * 0.5f;
-        float d = (2.0f * znear * zfar) / (znear - zfar) * 0.5f;
-        float x = (2.0f * znear) / (right - left);
-        float y = (2.0f * znear) / (bottom - top);
+        // RH, Vulkan depth [0, 1], −Z view space (GLM frustumRH_ZO + Y flip).
+        // Eye z = −znear → depth 0, z = −zfar → depth 1.
+        const float x = (2.0f * znear) / (right - left);
+        const float y = (2.0f * znear) / (bottom - top); // Y flip for top-left framebuffer
+        const float a = (right + left) / (right - left);
+        const float b = (top + bottom) / (bottom - top);
+        const float c = zfar / (znear - zfar);
+        const float d = -(zfar * znear) / (zfar - znear);
 
         Matrix4x4 m;
         m[0] = float32x4(x, 0, 0, 0);
         m[1] = float32x4(0, y, 0, 0);
-        m[2] = float32x4(a, b, c, c - 1.0f);
-        m[3] = float32x4(0, 0, d, d);
+        m[2] = float32x4(a, b, c, -1.0f);
+        m[3] = float32x4(0, 0, d, 0);
         return m;
     }
 

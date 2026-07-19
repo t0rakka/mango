@@ -978,7 +978,7 @@ namespace
                             // of the image (same as how Bitmap stores rows). Flip V so UVs and
                             // loaded textures co-align without a viewer-side fix.
                             float x = vec[i + 0];
-                            float y = 1.0f - vec[i + 1];
+                            float y = 1.0f - vec[i + 1]; // Maya bottom-left → Vulkan/glTF top-left
                             float32x2 texcoord(x, y);
                             mesh.texcoords.values.push_back(texcoord);
                         }
