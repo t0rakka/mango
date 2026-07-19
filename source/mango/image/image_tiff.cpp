@@ -470,8 +470,8 @@ namespace
 #define TIFF_CASE_UNSIGNED(name, value) \
     case Tag::name: \
         context.value = getUnsigned(p, type); \
-        printLine(Print::Info, "    [" #name "]"); \
-        printLine(Print::Info, "      value: {}", context.value); \
+        printLine(Print::Debug, "    [" #name "]"); \
+        printLine(Print::Debug, "      value: {}", context.value); \
         break
 
     template <typename Pointer>
@@ -495,7 +495,7 @@ namespace
                 std::vector<u64> values = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 context.bits_per_sample = values;
                 context.bpp = std::accumulate(values.begin(), values.end(), 0);
-                printLine(Print::Info, "    [BitsPerSample]");
+                printLine(Print::Debug, "    [BitsPerSample]");
 
                 std::string channels_str;
                 for (size_t i = 0; i < values.size(); ++i)
@@ -503,7 +503,7 @@ namespace
                     if (i > 0) channels_str += ", ";
                     channels_str += std::to_string(values[i]);
                 }
-                printLine(Print::Info, "      values: [{}] -> {} bits", channels_str, context.bpp);
+                printLine(Print::Debug, "      values: [{}] -> {} bits", channels_str, context.bpp);
                 break;
             }
 
@@ -512,8 +512,8 @@ namespace
             case Tag::PhotometricInterpretation:
                 context.photometric = u16(getUnsigned(p, type));
                 context.photometric_specified = true;
-                printLine(Print::Info, "    [PhotometricInterpretation]");
-                printLine(Print::Info, "      value: {}", context.photometric);
+                printLine(Print::Debug, "    [PhotometricInterpretation]");
+                printLine(Print::Debug, "      value: {}", context.photometric);
                 break;
 
             case Tag::GraphicsMagickPhotometricInterpretation:
@@ -529,8 +529,8 @@ namespace
                         v == u32(PhotometricInterpretation::LINEAR_RAW))
                     {
                         context.photometric = u16(v);
-                        printLine(Print::Info, "    [PhotometricInterpretation] (tag 65535)");
-                        printLine(Print::Info, "      value: {}", context.photometric);
+                        printLine(Print::Debug, "    [PhotometricInterpretation] (tag 65535)");
+                        printLine(Print::Debug, "      value: {}", context.photometric);
                     }
                 }
                 break;
@@ -559,7 +559,7 @@ namespace
 
             case Tag::TileOffsets:
             {
-                printLine(Print::Info, "    [TileOffsets]");
+                printLine(Print::Debug, "    [TileOffsets]");
                 context.tile_offsets = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 suppress_info = false;
                 break;
@@ -567,7 +567,7 @@ namespace
 
             case Tag::TileByteCounts:
             {
-                printLine(Print::Info, "    [TileByteCounts]");
+                printLine(Print::Debug, "    [TileByteCounts]");
                 context.tile_byte_counts = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 suppress_info = false;
                 break;
@@ -575,7 +575,7 @@ namespace
 
             case Tag::StripOffsets:
             {
-                printLine(Print::Info, "    [StripOffsets]");
+                printLine(Print::Debug, "    [StripOffsets]");
                 context.strip_offsets = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 suppress_info = false;
                 break;
@@ -583,7 +583,7 @@ namespace
 
             case Tag::StripByteCounts:
             {
-                printLine(Print::Info, "    [StripByteCounts]");
+                printLine(Print::Debug, "    [StripByteCounts]");
                 context.strip_byte_counts = getUnsignedArray(p, memory, type, count, is_big_tiff);
                 suppress_info = false;
                 break;
@@ -594,26 +594,26 @@ namespace
 
             case Tag::XPosition:
                 context.x_position = getRational(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [XPosition]");
-                printLine(Print::Info, "      value: {}", context.x_position);
+                printLine(Print::Debug, "    [XPosition]");
+                printLine(Print::Debug, "      value: {}", context.x_position);
                 break;
 
             case Tag::YPosition:
                 context.y_position = getRational(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [YPosition]");
-                printLine(Print::Info, "      value: {}", context.y_position);
+                printLine(Print::Debug, "    [YPosition]");
+                printLine(Print::Debug, "      value: {}", context.y_position);
                 break;
 
             case Tag::XResolution:
                 context.x_resolution = getRational(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [XResolution]");
-                printLine(Print::Info, "      value: {}", context.x_resolution);
+                printLine(Print::Debug, "    [XResolution]");
+                printLine(Print::Debug, "      value: {}", context.x_resolution);
                 break;
 
             case Tag::YResolution:
                 context.y_resolution = getRational(p, memory, type, is_big_tiff);
-                printLine(Print::Info, "    [YResolution]");
-                printLine(Print::Info, "      value: {}", context.y_resolution);
+                printLine(Print::Debug, "    [YResolution]");
+                printLine(Print::Debug, "      value: {}", context.y_resolution);
                 break;
 
             TIFF_CASE_UNSIGNED(Group3Options, group3_options);
@@ -654,7 +654,7 @@ namespace
 
             case Tag::ColorMap:
             {
-                printLine(Print::Info, "    [ColorMap]");
+                printLine(Print::Debug, "    [ColorMap]");
 
                 if (context.bits_per_sample.empty())
                 {
@@ -745,7 +745,7 @@ namespace
                     context.palette.size = 0;
                 }
 
-                printLine(Print::Info, "      palette entries used: {}", context.colormap_entry_count);
+                printLine(Print::Debug, "      palette entries used: {}", context.colormap_entry_count);
                 break;
             }
 
@@ -760,13 +760,13 @@ namespace
             case Tag::ExtraSamples:
             {
                 context.extra_samples = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [ExtraSamples]");
-                print(Print::Info, "      values: ");
+                printLine(Print::Debug, "    [ExtraSamples]");
+                print(Print::Debug, "      values: ");
                 for (auto value : context.extra_samples)
                 {
-                    print(Print::Info, "{} ", value);
+                    print(Print::Debug, "{} ", value);
                 }
-                printLine(Print::Info, "");
+                printLine(Print::Debug, "");
 
                 for (size_t i = 0; i < context.extra_samples.size(); ++i)
                 {
@@ -786,39 +786,39 @@ namespace
             case Tag::SampleFormat:
             {
                 context.sample_format = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [SampleFormat]");
-                print(Print::Info, "      values: ");
+                printLine(Print::Debug, "    [SampleFormat]");
+                print(Print::Debug, "      values: ");
                 for (auto value : context.sample_format)
                 {
-                    print(Print::Info, "{} ", value);
+                    print(Print::Debug, "{} ", value);
                 }
-                printLine(Print::Info, "");
+                printLine(Print::Debug, "");
                 break;
             }
 
             case Tag::SMinSampleValue:
             {
                 context.s_min_sample_value = getFloatArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [SMinSampleValue]");
-                print(Print::Info, "      values: ");
+                printLine(Print::Debug, "    [SMinSampleValue]");
+                print(Print::Debug, "      values: ");
                 for (auto value : context.s_min_sample_value)
                 {
-                    print(Print::Info, "{} ", value);
+                    print(Print::Debug, "{} ", value);
                 }
-                printLine(Print::Info, "");
+                printLine(Print::Debug, "");
                 break;
             }
 
             case Tag::SMaxSampleValue:
             {
                 context.s_max_sample_value = getFloatArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [SMaxSampleValue]");
-                print(Print::Info, "      values: ");
+                printLine(Print::Debug, "    [SMaxSampleValue]");
+                print(Print::Debug, "      values: ");
                 for (auto value : context.s_max_sample_value)
                 {
-                    print(Print::Info, "{} ", value);
+                    print(Print::Debug, "{} ", value);
                 }
-                printLine(Print::Info, "");
+                printLine(Print::Debug, "");
                 break;
             }
 
@@ -826,8 +826,8 @@ namespace
             {
                 std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
                 context.white_point = float32x2(values[0], values[1]);
-                printLine(Print::Info, "    [WhitePoint]");
-                printLine(Print::Info, "      white point: {}, {}", float(context.white_point.x), float(context.white_point.y));
+                printLine(Print::Debug, "    [WhitePoint]");
+                printLine(Print::Debug, "      white point: {}, {}", float(context.white_point.x), float(context.white_point.y));
                 break;
             }
 
@@ -837,10 +837,10 @@ namespace
                 context.red_primary = float32x2(values[0], values[1]);
                 context.green_primary = float32x2(values[2], values[3]);
                 context.blue_primary = float32x2(values[4], values[5]);
-                printLine(Print::Info, "    [PrimaryChromaticities]");
-                printLine(Print::Info, "      red primary: {}, {}", float(context.red_primary.x), float(context.red_primary.y));
-                printLine(Print::Info, "      green primary: {}, {}", float(context.green_primary.x), float(context.green_primary.y));
-                printLine(Print::Info, "      blue primary: {}, {}", float(context.blue_primary.x), float(context.blue_primary.y));
+                printLine(Print::Debug, "    [PrimaryChromaticities]");
+                printLine(Print::Debug, "      red primary: {}, {}", float(context.red_primary.x), float(context.red_primary.y));
+                printLine(Print::Debug, "      green primary: {}, {}", float(context.green_primary.x), float(context.green_primary.y));
+                printLine(Print::Debug, "      blue primary: {}, {}", float(context.blue_primary.x), float(context.blue_primary.y));
                 break;
             }
 
@@ -854,28 +854,28 @@ namespace
             case Tag::JPEGQTables:
             {
                 context.jpeg_qt_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [JPEGQTables]\n      {} tables", context.jpeg_qt_tables.size());
+                printLine(Print::Debug, "    [JPEGQTables]\n      {} tables", context.jpeg_qt_tables.size());
                 break;
             }
 
             case Tag::JPEGDCTables:
             {
                 context.jpeg_dc_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [JPEGDCTables]\n      {} tables", context.jpeg_dc_tables.size());
+                printLine(Print::Debug, "    [JPEGDCTables]\n      {} tables", context.jpeg_dc_tables.size());
                 break;
             }
 
             case Tag::JPEGACTables:
             {
                 context.jpeg_ac_tables = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [JPEGACTables]\n      {} tables", context.jpeg_ac_tables.size());
+                printLine(Print::Debug, "    [JPEGACTables]\n      {} tables", context.jpeg_ac_tables.size());
                 break;
             }
 
             case Tag::YCbCrSubSampling:
             {
                 context.y_cb_cr_sub_sampling = getUnsignedArray(p, memory, type, count, is_big_tiff);
-                printLine(Print::Info, "    [YCbCrSubSampling]");
+                printLine(Print::Debug, "    [YCbCrSubSampling]");
 
                 // Print individual channel values
                 std::string channels_str;
@@ -884,16 +884,16 @@ namespace
                     if (i > 0) channels_str += ", ";
                     channels_str += std::to_string(context.y_cb_cr_sub_sampling[i]);
                 }
-                printLine(Print::Info, "      values: [{}]", channels_str);
+                printLine(Print::Debug, "      values: [{}]", channels_str);
                 break;
             }
 
             case Tag::JPEGTables:
             {
-                printLine(Print::Info, "    [JPEGTables]");
+                printLine(Print::Debug, "    [JPEGTables]");
                 u64 offset = getOffset(p, is_big_tiff);
                 context.jpeg_tables = ConstMemory(memory.address + offset, count);
-                printLine(Print::Info, "      offset: {}, length: {} bytes", offset, count);
+                printLine(Print::Debug, "      offset: {}, length: {} bytes", offset, count);
                 break;
             }
 
@@ -920,8 +920,8 @@ namespace
             {
                 u64 offset = getOffset(p, is_big_tiff);
                 //context.xmp = ConstMemory(memory.address + offset, count);
-                printLine(Print::Info, "    [XMP]");
-                printLine(Print::Info, "      length: {} bytes", offset, count);
+                printLine(Print::Debug, "    [XMP]");
+                printLine(Print::Debug, "      length: {} bytes", offset, count);
                 break;
             }
 
@@ -929,8 +929,8 @@ namespace
             {
                 u64 offset = getOffset(p, is_big_tiff);
                 //context.exif = ConstMemory(memory.address + offset, count);
-                printLine(Print::Info, "    [EXIF]");
-                printLine(Print::Info, "      length: {} bytes", offset, count);
+                printLine(Print::Debug, "    [EXIF]");
+                printLine(Print::Debug, "      length: {} bytes", offset, count);
                 break;
             }
 
@@ -938,8 +938,8 @@ namespace
             {
                 u64 offset = getOffset(p, is_big_tiff);
                 //context.photoshop_image_resources = ConstMemory(memory.address + offset, count);
-                printLine(Print::Info, "    [PhotoshopImageResources]");
-                printLine(Print::Info, "      length: {} bytes", offset, count);
+                printLine(Print::Debug, "    [PhotoshopImageResources]");
+                printLine(Print::Debug, "      length: {} bytes", offset, count);
                 break;
             }
 
@@ -947,20 +947,20 @@ namespace
             {
                 u64 offset = getOffset(p, is_big_tiff);
                 context.icc_profile = ConstMemory(memory.address + offset, count);
-                printLine(Print::Info, "    [ICCProfile]");
-                printLine(Print::Info, "      length: {} bytes", count);
+                printLine(Print::Debug, "    [ICCProfile]");
+                printLine(Print::Debug, "      length: {} bytes", count);
                 break;
             }
 
             default:
-                printLine(Print::Info, "    [UNKNOWN: {}]", int(tag));
+                printLine(Print::Debug, "    [UNKNOWN: {}]", int(tag));
                 suppress_info = false;
                 break;
         }
 
         if (!suppress_info)
         {
-            printLine(Print::Info, "      type: {}, count: {}", int(type), count);
+            printLine(Print::Debug, "      type: {}, count: {}", int(type), count);
         }
     }
 
@@ -1329,10 +1329,10 @@ namespace
                 }
             }
 
-            printLine(Print::Info, "[TIFF]");
-            printLine(Print::Info, "  Byte Order:    {}", is_little_endian ? "LittleEndian" : "BigEndian");
-            printLine(Print::Info, "  Version:       {}", version);
-            printLine(Print::Info, "  First IFD:     {}", first_ifd_offset);
+            printLine(Print::Debug, "[TIFF]");
+            printLine(Print::Debug, "  Byte Order:    {}", is_little_endian ? "LittleEndian" : "BigEndian");
+            printLine(Print::Debug, "  Version:       {}", version);
+            printLine(Print::Debug, "  First IFD:     {}", first_ifd_offset);
 
             return true;
         }
@@ -1980,7 +1980,7 @@ namespace
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
-            //printEnable(Print::Info, true); // enable for debugging
+            //printEnable(Print::Debug, true); // enable for debugging
             if (m_header.parse(memory))
             {
                 m_is_little_endian = m_header.is_little_endian;
@@ -2089,7 +2089,7 @@ namespace
             }
             p += m_header.is_big_tiff ? 8 : 2;
 
-            printLine(Print::Info, "  IFD entries: {}", ifd_count);
+            printLine(Print::Debug, "  IFD entries: {}", ifd_count);
 
             size_t ifd_entry_size = m_header.is_big_tiff ? 20 : 12;
 
@@ -2226,9 +2226,9 @@ namespace
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 
-            printLine(Print::Info, "  Image: {} x {} ({} bpp, {} channels)", 
+            printLine(Print::Debug, "  Image: {} x {} ({} bpp, {} channels)", 
                      m_context.width, m_context.height, header.format.bits, m_context.samples_per_pixel);
-            printLine(Print::Info, "  Data: {} bytes", data_size);
+            printLine(Print::Debug, "  Data: {} bytes", data_size);
         }
 
         Format getImageFormat()
@@ -2418,24 +2418,24 @@ namespace
             }
 
             // xxx
-            printLine(Print::Info, "    [decode]");
-            printLine(Print::Info, "      image: {} x {}", header.width, header.height);
-            printLine(Print::Info, "      compression: {}", m_context.compression);
-            printLine(Print::Info, "      planar_configuration: {} ({})", m_context.planar_configuration,
+            printLine(Print::Debug, "    [decode]");
+            printLine(Print::Debug, "      image: {} x {}", header.width, header.height);
+            printLine(Print::Debug, "      compression: {}", m_context.compression);
+            printLine(Print::Debug, "      planar_configuration: {} ({})", m_context.planar_configuration,
                 m_context.planar_configuration == 1 ? "chunky" : "planar");
-            printLine(Print::Info, "      predictor: {} ({})", m_context.predictor,
+            printLine(Print::Debug, "      predictor: {} ({})", m_context.predictor,
                 m_context.predictor == 1 ? "no prediction" :
                 m_context.predictor == 2 ? "horizontal differencing" :
                 m_context.predictor == 3 ? "float differencing" : "unknown");
-            printLine(Print::Info, "      tile: {} x {}", m_context.tile_width, m_context.tile_length);
-            printLine(Print::Info, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
-            printLine(Print::Info, "      strip: {} x {}", m_context.width, m_context.rows_per_strip);
-            printLine(Print::Info, "      strip_offsets: {}, strip_byte_counts: {}", m_context.strip_offsets.size(), m_context.strip_byte_counts.size());
+            printLine(Print::Debug, "      tile: {} x {}", m_context.tile_width, m_context.tile_length);
+            printLine(Print::Debug, "      tile_offsets: {}, tile_byte_counts: {}", m_context.tile_offsets.size(), m_context.tile_byte_counts.size());
+            printLine(Print::Debug, "      strip: {} x {}", m_context.width, m_context.rows_per_strip);
+            printLine(Print::Debug, "      strip_offsets: {}, strip_byte_counts: {}", m_context.strip_offsets.size(), m_context.strip_byte_counts.size());
 
             /*
             for (auto byte_count : m_context.strip_byte_counts)
             {
-                printLine(Print::Info, "        strip: {} bytes", byte_count);
+                printLine(Print::Debug, "        strip: {} bytes", byte_count);
             }
             */
 
@@ -2540,8 +2540,8 @@ namespace
                         u32 x = (u32(i) % xtiles) * tile_width;
                         u32 y = (u32(i) / xtiles) * tile_length;
     
-                        printLine(Print::Info, "    [Tile] {}, {}", x, y);
-                        printLine(Print::Info, "      offset: {}, length: {} bytes", tile_data_offset(i), tile_data_bytes(i));
+                        printLine(Print::Debug, "    [Tile] {}, {}", x, y);
+                        printLine(Print::Debug, "      offset: {}, length: {} bytes", tile_data_offset(i), tile_data_bytes(i));
     
                         Surface tile(target, x, y, tile_width, tile_length);
                         decodeRect(status, tile, memory, tile_width, tile_length);
@@ -3355,7 +3355,7 @@ namespace
                 ? (m_context.tile_offsets.empty() ? m_context.strip_offsets.size() : m_context.tile_offsets.size())
                 : m_context.strip_offsets.size();
 
-            printLine(Print::Info, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
+            printLine(Print::Debug, "  Processing {} {}", num_data_blocks, use_tiles ? "tiles" : "strips");
 
             if (use_tiles)
             {
@@ -3363,7 +3363,7 @@ namespace
                 u32 tiles_across = (header.width + m_context.tile_width - 1) / m_context.tile_width;
                 u32 tiles_down = (header.height + m_context.tile_length - 1) / m_context.tile_length;
 
-                printLine(Print::Info, "  Tile grid: {}x{} ({}x{} pixels per tile)", tiles_across, tiles_down, m_context.tile_width, m_context.tile_length);
+                printLine(Print::Debug, "  Tile grid: {}x{} ({}x{} pixels per tile)", tiles_across, tiles_down, m_context.tile_width, m_context.tile_length);
 
                 for (size_t i = 0; i < num_data_blocks; ++i)
                 {
@@ -3376,7 +3376,7 @@ namespace
                     const u8* tile_data = m_memory.address + tile_data_offset(i);
                     u32 tile_bytes = u32(tile_data_bytes(i));
 
-                    printLine(Print::Info, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
+                    printLine(Print::Debug, "    Tile {}: {}x{} at ({},{}) - {} bytes", i, tile_w, tile_h, tile_x, tile_y, tile_bytes);
 
                     Surface surface(target, tile_x, tile_y, tile_w, tile_h);
 
@@ -3523,7 +3523,7 @@ namespace
         void expandPixels(Memory dest, ConstMemory src, int width, int height, int source_bits, int target_bits)
         {
             assert(target_bits == 8 || target_bits == 16);
-            //printLine(Print::Info, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
+            //printLine(Print::Debug, "  expandPixels()\n    source_bits: {}, target_bits: {}", source_bits, target_bits);
 
             if (source_bits > target_bits)
             {
@@ -3547,8 +3547,8 @@ namespace
             // Precompute destination stride
             u32 dest_stride = width * channels * (target_bits / 8);
 
-            //printLine(Print::Info, "    input stride: {}", bytes_per_scanline);
-            //printLine(Print::Info, "    output stride: {}", dest_stride);
+            //printLine(Print::Debug, "    input stride: {}", bytes_per_scanline);
+            //printLine(Print::Debug, "    output stride: {}", dest_stride);
 
             // MANGO TODO: optimize
             // - we reverse bits so that extraction loop is more efficient
@@ -3766,7 +3766,7 @@ namespace
                 expanded_sample_bits = std::min(expanded_sample_bits, 16u); // max 16 bits per channel
             }
 
-            //printLine(Print::Info, "  sample_bits: {}, expanded_sample_bits: {}", sample_bits, expanded_sample_bits);
+            //printLine(Print::Debug, "  sample_bits: {}, expanded_sample_bits: {}", sample_bits, expanded_sample_bits);
 
             u32 bytes_per_row = 0;
             u32 expanded_bytes_per_row = 0;
@@ -3808,9 +3808,9 @@ namespace
             u32 expanded_bytes = height * expanded_bytes_per_row;
 
             /*
-            printLine(Print::Info, "  bytes_per_row: {}, uncompressed_bytes: {}",
+            printLine(Print::Debug, "  bytes_per_row: {}, uncompressed_bytes: {}",
                 bytes_per_row, uncompressed_bytes);
-            printLine(Print::Info, "  expanded_bytes_per_row: {}, expanded_bytes: {}",
+            printLine(Print::Debug, "  expanded_bytes_per_row: {}, expanded_bytes: {}",
                 expanded_bytes_per_row, expanded_bytes);
             */
 
@@ -3992,7 +3992,7 @@ namespace
                     return;
 
                 case Compression::DEFLATE:
-                    printLine(Print::Info, "    Unsupported compression: {}", m_context.compression);
+                    printLine(Print::Debug, "    Unsupported compression: {}", m_context.compression);
                     return;
 
                 case Compression::WEBP:
@@ -4002,7 +4002,7 @@ namespace
                 }
 
                 default:
-                    printLine(Print::Info, "    Unknown compression: {}", m_context.compression);
+                    printLine(Print::Debug, "    Unknown compression: {}", m_context.compression);
                     //status.setError("Unknown compression.");
                     //return status;
                     return;

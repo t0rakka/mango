@@ -54,7 +54,7 @@ int main(int argc, char *argv[])
     }
 
     std::string container = argv[1];
-    //mango::printEnable(mango::Print::Info, true);
+    //mango::printEnable(Print::Info, true);
 
     try
     {

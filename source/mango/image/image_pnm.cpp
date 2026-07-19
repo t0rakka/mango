@@ -143,7 +143,7 @@ namespace
                 return;
             }
 
-            printLine(Print::Info, "[Header: {:c}{:c}]", p[0], p[1]);
+            printLine(Print::Debug, "[Header: {:c}{:c}]", p[0], p[1]);
 
             if (!std::strncmp(p, "Pf\n", 3))
             {
@@ -317,8 +317,8 @@ namespace
                 }
             }
 
-            printLine(Print::Info, "  image: {} x {}, channels: {}", width, height, channels);
-            printLine(Print::Info, "  maxvalue: {}", maxvalue);
+            printLine(Print::Debug, "  image: {} x {}, channels: {}", width, height, channels);
+            printLine(Print::Debug, "  maxvalue: {}", maxvalue);
 
             // 0x100000 (1M) per dimension is far beyond any sane PNM and keeps width *
             // channels and the byte totals safely inside int / size_t range below.

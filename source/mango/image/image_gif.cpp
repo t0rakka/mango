@@ -688,7 +688,7 @@ namespace
         state.delay = x.read16(); // delay between frames in 1/100th of seconds (50 = .5 seconds, 100 = 1.0 seconds, etc)
         state.transparent_color = state.transparent_color_flag ? *x : 0;
 
-        printLine(Print::Info, "      delay: {}, dispose: {}, transparent: {} ({})",
+        printLine(Print::Debug, "      delay: {}, dispose: {}, transparent: {} ({})",
             state.delay,
             state.disposal_method,
             state.transparent_color_flag ? "YES" : "NO",
@@ -710,7 +710,7 @@ namespace
 
         u8 label = *p++;
         u8 size = *p++;
-        printLine(Print::Info, "    label: {:#x}, size: {}", int(label), int(size));
+        printLine(Print::Debug, "    label: {:#x}, size: {}", int(label), int(size));
 
         // Only dispatch when the first sub-block is fully present; the handlers read a
         // fixed number of bytes from it.
@@ -780,7 +780,7 @@ namespace
         while (data < end)
         {
             u8 chunkID = *data++;
-            printLine(Print::Info, "  chunkID: {:#x}", int(chunkID));
+            printLine(Print::Debug, "  chunkID: {:#x}", int(chunkID));
             switch (chunkID)
             {
                 case GIF_EXTENSION:

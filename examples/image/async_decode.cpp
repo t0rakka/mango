@@ -67,7 +67,7 @@ int main(int argc, const char* argv[])
         cancel_ms = std::atoi(argv[2]);
     }
 
-    //printEnable(Print::Info, true);
+    //printEnable(Print::Debug, true);
 
     test(filename, cancel_ms);
 }

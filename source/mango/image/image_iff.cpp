@@ -804,9 +804,9 @@ namespace
             xscreen = p.read16();
             yscreen = p.read16();
 
-            printLine(Print::Info, "  size: {} x {}", xsize, ysize);
-            printLine(Print::Info, "  nplanes: {}", nplanes);
-            printLine(Print::Info, "  compression: {}", compression);
+            printLine(Print::Debug, "  size: {} x {}", xsize, ysize);
+            printLine(Print::Debug, "  nplanes: {}", nplanes);
+            printLine(Print::Debug, "  compression: {}", compression);
         }
     };
 
@@ -1366,7 +1366,7 @@ namespace
                 u32 size = p.read32();
 
                 const char* c = reinterpret_cast<const char*>(p - 8);
-                printLine(Print::Info, "[{}{}{}{}] {} bytes", c[0], c[1], c[2], c[3], size);
+                printLine(Print::Debug, "[{}{}{}{}] {} bytes", c[0], c[1], c[2], c[3], size);
 
                 // Clamp the declared payload to what is actually present so a corrupt or
                 // oversized chunk size cannot drive any handler past the end of the buffer.
@@ -1398,8 +1398,8 @@ namespace
                             m_camg = v;
                             m_ham = (v & 0x0800) != 0;
                             m_ehb = (v & 0x0080) != 0;
-                            printLine(Print::Info, "  ham: {}", m_ham);
-                            printLine(Print::Info, "  ehb: {}", m_ehb);
+                            printLine(Print::Debug, "  ham: {}", m_ham);
+                            printLine(Print::Debug, "  ehb: {}", m_ehb);
                         }
                         break;
                     }
@@ -1420,7 +1420,7 @@ namespace
                             p += 3;
                         }
 
-                        printLine(Print::Info, "  palette: {} colors", m_palette.size);
+                        printLine(Print::Debug, "  palette: {} colors", m_palette.size);
                         break;
                     }
 
@@ -1453,7 +1453,7 @@ namespace
                             m_sham = true;
                             m_ham = true; // SHAM is always HAM
 
-                            printLine(Print::Info, "  sham: {} palettes", count);
+                            printLine(Print::Debug, "  sham: {} palettes", count);
                         }
                         break;
                     }
@@ -1462,7 +1462,7 @@ namespace
                     {
                         m_pchg = ConstMemory(p, payload);
                         m_pchg_present = true;
-                        printLine(Print::Info, "  pchg: {} bytes", payload);
+                        printLine(Print::Debug, "  pchg: {} bytes", payload);
                         break;
                     }
 

@@ -1945,11 +1945,11 @@ namespace
             dispose = p.read8();
             blend = p.read8();
 
-            printLine(Print::Info, "  Sequence: {}", sequence_number);
-            printLine(Print::Info, "  Frame: {} x {} ({}, {})", width, height, xoffset, yoffset);
-            printLine(Print::Info, "  Time: {} / {}", delay_num, delay_den);
-            printLine(Print::Info, "  Dispose: {}", dispose);
-            printLine(Print::Info, "  Blend: {}", blend);
+            printLine(Print::Debug, "  Sequence: {}", sequence_number);
+            printLine(Print::Debug, "  Frame: {} x {} ({}, {})", width, height, xoffset, yoffset);
+            printLine(Print::Debug, "  Time: {} / {}", delay_num, delay_den);
+            printLine(Print::Debug, "  Dispose: {}", dispose);
+            printLine(Print::Debug, "  Blend: {}", blend);
         }
     };
 
@@ -2245,7 +2245,7 @@ namespace
 
             if (id == u32_mask_rev('C', 'g', 'B', 'I'))
             {
-                printLine(Print::Info, "CgBI: reading PNG as iphone optimized");
+                printLine(Print::Debug, "CgBI: reading PNG as iphone optimized");
 
                 m_iphoneOptimized = true;
                 p += size; // skip chunk data
@@ -2402,7 +2402,7 @@ namespace
 
     void ParserPNG::read_IHDR(BigEndianConstPointer p, u32 size)
     {
-        printLine(Print::Info, "[\"IHDR\"] {} bytes", size);
+        printLine(Print::Debug, "[\"IHDR\"] {} bytes", size);
 
         if (size != 13)
         {
@@ -2496,11 +2496,11 @@ namespace
             m_scale_bits[i] = m_color_state.bits;
         }
 
-        printLine(Print::Info, "  Image: ({} x {}), {} bits", m_width, m_height, m_color_state.bits);
-        printLine(Print::Info, "  Color:       {}", get_string(ColorType(m_color_type)));
-        printLine(Print::Info, "  Compression: {}", m_compression);
-        printLine(Print::Info, "  Filter:      {}", m_filter);
-        printLine(Print::Info, "  Interlace:   {}", m_interlace);
+        printLine(Print::Debug, "  Image: ({} x {}), {} bits", m_width, m_height, m_color_state.bits);
+        printLine(Print::Debug, "  Color:       {}", get_string(ColorType(m_color_type)));
+        printLine(Print::Debug, "  Compression: {}", m_compression);
+        printLine(Print::Debug, "  Filter:      {}", m_filter);
+        printLine(Print::Debug, "  Interlace:   {}", m_interlace);
     }
 
     void ParserPNG::read_IDAT(BigEndianConstPointer p, u32 size)
@@ -2667,10 +2667,10 @@ namespace
         m_cicp_full_range  = p[3];
         m_has_cicp = true;
 
-        printLine(Print::Info, "  primaries: {}", m_cicp_primaries);
-        printLine(Print::Info, "  transfer:  {}", m_cicp_transfer);
-        printLine(Print::Info, "  matrix:    {}", m_cicp_matrix);
-        printLine(Print::Info, "  range:     {}", m_cicp_full_range);
+        printLine(Print::Debug, "  primaries: {}", m_cicp_primaries);
+        printLine(Print::Debug, "  transfer:  {}", m_cicp_transfer);
+        printLine(Print::Debug, "  matrix:    {}", m_cicp_matrix);
+        printLine(Print::Debug, "  range:     {}", m_cicp_full_range);
     }
 
     void ParserPNG::read_mDCV(BigEndianConstPointer p, u32 size)
@@ -2698,8 +2698,8 @@ namespace
         m_mdcv.min_luminance = p.read32() * lum_scale;
         m_has_mdcv = true;
 
-        printLine(Print::Info, "  mastering max: {} cd/m2", m_mdcv.max_luminance);
-        printLine(Print::Info, "  mastering min: {} cd/m2", m_mdcv.min_luminance);
+        printLine(Print::Debug, "  mastering max: {} cd/m2", m_mdcv.max_luminance);
+        printLine(Print::Debug, "  mastering min: {} cd/m2", m_mdcv.min_luminance);
     }
 
     void ParserPNG::read_cLLI(BigEndianConstPointer p, u32 size)
@@ -2717,8 +2717,8 @@ namespace
         m_clli.max_fall = p.read32() * lum_scale;
         m_has_clli = true;
 
-        printLine(Print::Info, "  MaxCLL:  {} cd/m2", m_clli.max_cll);
-        printLine(Print::Info, "  MaxFALL: {} cd/m2", m_clli.max_fall);
+        printLine(Print::Debug, "  MaxCLL:  {} cd/m2", m_clli.max_cll);
+        printLine(Print::Debug, "  MaxFALL: {} cd/m2", m_clli.max_fall);
     }
 
     void ParserPNG::read_acTL(BigEndianConstPointer p, u32 size)
@@ -2732,8 +2732,8 @@ namespace
         m_number_of_frames = p.read32();
         m_repeat_count = p.read32();
 
-        printLine(Print::Info, "  Frames: {}", m_number_of_frames);
-        printLine(Print::Info, "  Repeat: {} {}", m_repeat_count, m_repeat_count ? "" : "(infinite)");
+        printLine(Print::Debug, "  Frames: {}", m_number_of_frames);
+        printLine(Print::Debug, "  Repeat: {} {}", m_repeat_count, m_repeat_count ? "" : "(infinite)");
     }
 
     void ParserPNG::read_fcTL(BigEndianConstPointer p, u32 size)
@@ -2757,7 +2757,7 @@ namespace
         u32 sequence_number = p.read32();
         size -= 4;
 
-        printLine(Print::Info, "  Sequence: {}", sequence_number);
+        printLine(Print::Debug, "  Sequence: {}", sequence_number);
         MANGO_UNREFERENCED(sequence_number);
 
         // we can simply treat fdat like idat
@@ -2783,18 +2783,18 @@ namespace
         size_t name_len = stringLength(name, size);
         if (name_len == size)
         {
-            printLine(Print::Info, "iCCP: profile name not terminated");
+            printLine(Print::Debug, "iCCP: profile name not terminated");
             return;
         }
 
-        printLine(Print::Info, "  profile name '{}'", name);
+        printLine(Print::Debug, "  profile name '{}'", name);
 
         const u8* profile = p + name_len + 2;
         const size_t icc_bytes = size - name_len - 2;
 
         m_icc.reset();
 
-        printLine(Print::Info, "  decompressing icc profile {} bytes", icc_bytes);
+        printLine(Print::Debug, "  decompressing icc profile {} bytes", icc_bytes);
 
         constexpr size_t max_profile_size = 1024 * 1024 * 2;
         Buffer buffer(max_profile_size);
@@ -2802,11 +2802,11 @@ namespace
         CompressionStatus status = deflate_zlib::decompress(buffer, ConstMemory(profile, icc_bytes));
         if (status)
         {
-            printLine(Print::Info, "  unpacked icc profile {} bytes", status.size);
+            printLine(Print::Debug, "  unpacked icc profile {} bytes", status.size);
             m_icc.append(buffer, status.size);
         }
 
-        printLine(Print::Info, "  icc profile {} bytes", m_icc.size());
+        printLine(Print::Debug, "  icc profile {} bytes", m_icc.size());
     }
 
     void ParserPNG::read_iDOT(BigEndianConstPointer p, u32 size)
@@ -2841,9 +2841,9 @@ namespace
         {
             m_idot_address = x;
 
-            printLine(Print::Info, "  First:  {}", m_first_half_height);
-            printLine(Print::Info, "  Second: {}", m_second_half_height);
-            printLine(Print::Info, "  Offset: {}", idat_offset);
+            printLine(Print::Debug, "  First:  {}", m_first_half_height);
+            printLine(Print::Debug, "  Second: {}", m_second_half_height);
+            printLine(Print::Debug, "  Offset: {}", idat_offset);
         }
 
         MANGO_UNREFERENCED(divided_height);
@@ -2860,8 +2860,8 @@ namespace
         m_parallel_height = p.read32();
         m_parallel_flags = p.read8();
 
-        printLine(Print::Info, "  Segment height: {}", m_parallel_height);
-        printLine(Print::Info, "  Flags: {:#x}", m_parallel_flags);
+        printLine(Print::Debug, "  Segment height: {}", m_parallel_height);
+        printLine(Print::Debug, "  Flags: {:#x}", m_parallel_flags);
     }
 
     void ParserPNG::parse()
@@ -2876,7 +2876,7 @@ namespace
             const u8* ptr_next_chunk = p + size;
             ptr_next_chunk += 4; // skip crc
 
-            printLine(Print::Info, "[\"{:c}{:c}{:c}{:c}\"] {} bytes", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+            printLine(Print::Debug, "[\"{:c}{:c}{:c}{:c}\"] {} bytes", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
 
             // check that we won't read past end of file
             if (p + size + 4 > m_end)
@@ -2985,7 +2985,7 @@ namespace
                     break;
 
                 default:
-                    printLine(Print::Info, "  # UNKNOWN: [\"{:c}{:c}{:c}{:c}\"] {} bytes", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
+                    printLine(Print::Debug, "  # UNKNOWN: [\"{:c}{:c}{:c}{:c}\"] {} bytes", (id >> 24), (id >> 16), (id >> 8), (id >> 0), size);
                     break;
             }
 
@@ -3138,7 +3138,7 @@ namespace
             for (int pass = 0; pass < 7; ++pass)
             {
                 AdamInterleave adam(pass, width, height);
-                printLine(Print::Info, "  pass: {} ({} x {})", pass, adam.w, adam.h);
+                printLine(Print::Debug, "  pass: {} ({} x {})", pass, adam.w, adam.h);
 
                 const int bw = PNG_FILTER_BYTE + ((adam.w + mask) >> shift);
                 filter(buffer, bw, adam.h);
@@ -3174,7 +3174,7 @@ namespace
             for (int pass = 0; pass < 7; ++pass)
             {
                 AdamInterleave adam(pass, width, height);
-                printLine(Print::Info, "  pass: {} ({} x {})", pass, adam.w, adam.h);
+                printLine(Print::Debug, "  pass: {} ({} x {})", pass, adam.w, adam.h);
 
                 const int bw = PNG_FILTER_BYTE + adam.w * components;
                 filter(buffer, bw, adam.h);
@@ -3445,7 +3445,7 @@ namespace
             buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(target.width)) * target.height;
         }
 
-        printLine(Print::Info, "  buffer bytes: {}", buffer_size);
+        printLine(Print::Debug, "  buffer bytes: {}", buffer_size);
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
@@ -3505,8 +3505,8 @@ namespace
         size_t bytes_out_top = result.size;
         size_t bytes_out_bottom = future.get();
 
-        printLine(Print::Info, "  output top bytes:     {}", bytes_out_top);
-        printLine(Print::Info, "  output bottom bytes:  {}", bytes_out_bottom);
+        printLine(Print::Debug, "  output top bytes:     {}", bytes_out_top);
+        printLine(Print::Debug, "  output bottom bytes:  {}", bytes_out_bottom);
         MANGO_UNREFERENCED(bytes_out_top);
         MANGO_UNREFERENCED(bytes_out_bottom);
 
@@ -3537,7 +3537,7 @@ namespace
             buffer_size = (PNG_FILTER_BYTE + getBytesPerLine(target.width)) * target.height;
         }
 
-        printLine(Print::Info, "  buffer bytes: {}", buffer_size);
+        printLine(Print::Debug, "  buffer bytes: {}", buffer_size);
 
         // allocate output buffer
         Buffer temp(bytes_per_line + buffer_size + PNG_SIMD_PADDING);
@@ -3644,7 +3644,7 @@ namespace
             }
 
 
-            printLine(Print::Info, "  output bytes: {}", state.total_out);
+            printLine(Print::Debug, "  output bytes: {}", state.total_out);
 
             if (m_interface->cancelled)
             {
@@ -3735,7 +3735,7 @@ namespace
                 return false;
             }
 
-            printLine(Print::Info, "  output bytes: {}", stream.total_out);
+            printLine(Print::Debug, "  output bytes: {}", stream.total_out);
 
             if (m_interface->cancelled)
             {
@@ -3779,12 +3779,12 @@ namespace
             CompressionStatus result = decompress(buffer, memory);
             if (!result)
             {
-                //printLine(Print::Info, "  {}", result.info);
+                //printLine(Print::Debug, "  {}", result.info);
                 status.setError(result.info);
                 return false;
             }
 
-            printLine(Print::Info, "  output bytes: {}", result.size);
+            printLine(Print::Debug, "  output bytes: {}", result.size);
 
             if (m_interface->cancelled)
             {
@@ -3878,8 +3878,8 @@ namespace
         }
 
         // These are not wall times; it is cumulative time from all concurrent tasks
-        printLine(Print::Info, "  filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
-        printLine(Print::Info, "  color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
+        printLine(Print::Debug, "  filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
+        printLine(Print::Debug, "  color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
 
         if (m_interface->cancelled)
         {
@@ -4460,13 +4460,13 @@ namespace
             if (N > 1)
             {
                 height = int(surface.height / N);
-                printLine(Print::Info, "[image]");
-                printLine(Print::Info, "    {} x {}", surface.width, surface.height);
-                printLine(Print::Info, "    size: {} KB", image_bytes / 1024);
-                printLine(Print::Info, "[segment]");
-                printLine(Print::Info, "    N:     {}", int(N));
-                printLine(Print::Info, "    height: {}", height);
-                printLine(Print::Info, "    size:   {} KB", block_size / 1024);
+                printLine(Print::Debug, "[image]");
+                printLine(Print::Debug, "    {} x {}", surface.width, surface.height);
+                printLine(Print::Debug, "    size: {} KB", image_bytes / 1024);
+                printLine(Print::Debug, "[segment]");
+                printLine(Print::Debug, "    N:     {}", int(N));
+                printLine(Print::Debug, "    height: {}", height);
+                printLine(Print::Debug, "    size:   {} KB", block_size / 1024);
             }
         }
 

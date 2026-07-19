@@ -80,14 +80,14 @@ namespace
             pixel_size       = p.read8();
             descriptor       = p.read8();
 
-            printLine(Print::Info, "  dimensions:    {} x {}", width, height);
-            printLine(Print::Info, "  image_type:    {}", image_type);
-            printLine(Print::Info, "  pixel_size:    {}", pixel_size);
-            printLine(Print::Info, "  colormap_type: {}", colormap_type);
-            printLine(Print::Info, "  colormap_bits: {}", colormap_bits);
-            printLine(Print::Info, "  colormap:      [{}, {}]", colormap_origin, colormap_origin + colormap_length);
-            printLine(Print::Info, "  descriptor:    {:#x}", descriptor);
-            printLine(Print::Info, "  id_length:     {}", id_length);
+            printLine(Print::Debug, "  dimensions:    {} x {}", width, height);
+            printLine(Print::Debug, "  image_type:    {}", image_type);
+            printLine(Print::Debug, "  pixel_size:    {}", pixel_size);
+            printLine(Print::Debug, "  colormap_type: {}", colormap_type);
+            printLine(Print::Debug, "  colormap_bits: {}", colormap_bits);
+            printLine(Print::Debug, "  colormap:      [{}, {}]", colormap_origin, colormap_origin + colormap_length);
+            printLine(Print::Debug, "  descriptor:    {:#x}", descriptor);
+            printLine(Print::Debug, "  id_length:     {}", id_length);
 
             switch (image_type)
             {

@@ -139,7 +139,7 @@ int main(int argc, const char* argv[])
         else if (std::string_view(argv[index]) == "--info")
         {
             ++index;
-            printEnable(Print::Info, true);
+            printEnable(Print::Debug, true); // image decoder/encoder format dumps
         }
         else
         {

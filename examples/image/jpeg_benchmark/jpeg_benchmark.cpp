@@ -414,7 +414,7 @@ int main(int argc, const char* argv[])
         }
         else if (!strcmp(argv[i], "--debug"))
         {
-            printEnable(Print::Info, true);
+            printEnable(Print::Debug, true);
         }
         else if (!strcmp(argv[i], "--trace"))
         {

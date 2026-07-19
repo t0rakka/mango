@@ -90,7 +90,7 @@ int mangoMain(const mango::CommandLine& commands)
         filename = commands[1];
     }
 
-    printEnable(Print::Info, true);
+    printEnable(Print::Debug, true); // image decoder format dumps
 
     u64 time0 = mango::Time::us();
 

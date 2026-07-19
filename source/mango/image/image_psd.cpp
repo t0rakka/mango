@@ -553,12 +553,12 @@ namespace
 
             m_memory = ConstMemory(p, end - p);
 
-            printLine(Print::Info, "[psd]\n");
-            printLine(Print::Info, "  Version:     {}", m_version);
-            printLine(Print::Info, "  Image:       {} x {}", width, height);
-            printLine(Print::Info, "  Channels:    {} ({} bits)", m_channels, m_bits);
-            printLine(Print::Info, "  ColorMode:   {}", int(m_color_mode));
-            printLine(Print::Info, "  Compression: {}", int(m_compression));
+            printLine(Print::Debug, "[psd]\n");
+            printLine(Print::Debug, "  Version:     {}", m_version);
+            printLine(Print::Debug, "  Image:       {} x {}", width, height);
+            printLine(Print::Debug, "  Channels:    {} ({} bits)", m_channels, m_bits);
+            printLine(Print::Debug, "  ColorMode:   {}", int(m_color_mode));
+            printLine(Print::Debug, "  Compression: {}", int(m_compression));
 
             parse_resources(image_resource_data);
 
@@ -612,7 +612,7 @@ namespace
             BigEndianConstPointer p = resources.address;
             const u8* end = resources.end();
 
-            printLine(Print::Info, "  [ImageResourceBlocks]");
+            printLine(Print::Debug, "  [ImageResourceBlocks]");
 
             // Each block is: 4-byte signature, 2-byte id, padded pascal string, 4-byte
             // length, then 'length' bytes. Every read is bounded against the block end.
@@ -643,25 +643,25 @@ namespace
 
                 if (id == 1005)
                 {
-                    printLine(Print::Info, "    Resolution Info");
+                    printLine(Print::Debug, "    Resolution Info");
                 }
                 else if (id == 1039)
                 {
-                    printLine(Print::Info, "    ICC Profile");
+                    printLine(Print::Debug, "    ICC Profile");
                     m_icc_profile = ConstMemory(p, length);
                 }
                 else if (id == 1047)
                 {
-                    printLine(Print::Info, "    TransparencyIndex");
+                    printLine(Print::Debug, "    TransparencyIndex");
                     // MANGO TODO: need psd file that uses this feature
                 }
                 else if (id == 1058 || id == 1059)
                 {
-                    printLine(Print::Info, "    EXIF");
+                    printLine(Print::Debug, "    EXIF");
                 }
                 else if (id == 1060)
                 {
-                    printLine(Print::Info, "    XMP");
+                    printLine(Print::Debug, "    XMP");
                 }
                 else
                 {
@@ -672,7 +672,7 @@ namespace
 
                 if (supported)
                 {
-                    printLine(Print::Info, "      {} bytes", length);
+                    printLine(Print::Debug, "      {} bytes", length);
                 }
             }
         }
@@ -877,7 +877,7 @@ namespace
                 }
             }
 
-            printLine(Print::Info, "  Composited {} layer(s).", layers.size());
+            printLine(Print::Debug, "  Composited {} layer(s).", layers.size());
             return true;
         }
 
@@ -901,8 +901,8 @@ namespace
             const size_t bytes_per_scan = div_ceil(width * m_bits, 8);
             const size_t bytes_per_channel = size_t(height) * bytes_per_scan;
 
-            //printLine(Print::Info, "  available: {} bytes", m_memory.size);
-            //printLine(Print::Info, "  request:   {} bytes", channels * bytes_per_channel);
+            //printLine(Print::Debug, "  available: {} bytes", m_memory.size);
+            //printLine(Print::Debug, "  request:   {} bytes", channels * bytes_per_channel);
 
             Bitmap temp(width, height, header.format);
             Buffer buffer(channels * bytes_per_scan);

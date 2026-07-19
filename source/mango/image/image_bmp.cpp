@@ -126,7 +126,7 @@ namespace
 
         void WinBitmapHeader1(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[WinBitmapHeader1]");
+            printLine(Print::Debug, "[WinBitmapHeader1]");
 
             width = p.read32();
             height = p.read32();
@@ -228,37 +228,37 @@ namespace
                 }
             }
 
-            printLine(Print::Info, "  image: {} x {}, planes: {}, bits: {}", width, height, numPlanes, bitsPerPixel);
-            printLine(Print::Info, "  compression: {}, imageDataSize: {}", compression, imageDataSize);
-            printLine(Print::Info, "  resolution: {} x {}", xResolution, yResolution);
-            printLine(Print::Info, "  palette: {}, importantColorCount: {}", paletteSize, importantColorCount);
+            printLine(Print::Debug, "  image: {} x {}, planes: {}, bits: {}", width, height, numPlanes, bitsPerPixel);
+            printLine(Print::Debug, "  compression: {}, imageDataSize: {}", compression, imageDataSize);
+            printLine(Print::Debug, "  resolution: {} x {}", xResolution, yResolution);
+            printLine(Print::Debug, "  palette: {}, importantColorCount: {}", paletteSize, importantColorCount);
         }
 
         void WinBitmapHeader2(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[WinBitmapHeader2]");
+            printLine(Print::Debug, "[WinBitmapHeader2]");
 
             redMask = p.read32();
             greenMask = p.read32();
             blueMask = p.read32();
 
-            printLine(Print::Info, "  redMask:   {:#010x}", redMask);
-            printLine(Print::Info, "  greenMask: {:#010x}", greenMask);
-            printLine(Print::Info, "  blueMask:  {:#010x}", blueMask);
+            printLine(Print::Debug, "  redMask:   {:#010x}", redMask);
+            printLine(Print::Debug, "  greenMask: {:#010x}", greenMask);
+            printLine(Print::Debug, "  blueMask:  {:#010x}", blueMask);
         }
 
         void WinBitmapHeader3(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[WinBitmapHeader3]");
+            printLine(Print::Debug, "[WinBitmapHeader3]");
 
             alphaMask = p.read32();
 
-            printLine(Print::Info, "  alphaMask: {:#010x}", alphaMask);
+            printLine(Print::Debug, "  alphaMask: {:#010x}", alphaMask);
         }
 
         void WinBitmapHeader4(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[WinBitmapHeader4]");
+            printLine(Print::Debug, "[WinBitmapHeader4]");
 
             csType = p.read32();
             for (int i = 0; i < 9; ++i)
@@ -269,25 +269,25 @@ namespace
             gammaGreen = p.read32();
             gammaBlue = p.read32();
 
-            printLine(Print::Info, "  gamma: {} {} {}", gammaRed, gammaGreen, gammaBlue);
+            printLine(Print::Debug, "  gamma: {} {} {}", gammaRed, gammaGreen, gammaBlue);
         }
 
         void WinBitmapHeader5(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[WinBitmapHeader5]");
+            printLine(Print::Debug, "[WinBitmapHeader5]");
 
             intent = p.read32();
             profileData = p.read32();
             profileSize = p.read32();
             reserved3 = p.read32();
 
-            printLine(Print::Info, "  intent: {}", intent);
-            printLine(Print::Info, "  profile data: {}, size: {}", profileData, profileSize);
+            printLine(Print::Debug, "  intent: {}", intent);
+            printLine(Print::Debug, "  profile data: {}, size: {}", profileData, profileSize);
         }
 
         void OS2BitmapHeader1(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[OS2BitmapHeader1]");
+            printLine(Print::Debug, "[OS2BitmapHeader1]");
 
             if (headerSize == 16)
             {
@@ -303,12 +303,12 @@ namespace
             numPlanes    = p.read16();
             bitsPerPixel = p.read16();
 
-            printLine(Print::Info, "  image: {} x {}, planes: {}, bits: {}", width, height, numPlanes, bitsPerPixel);
+            printLine(Print::Debug, "  image: {} x {}, planes: {}, bits: {}", width, height, numPlanes, bitsPerPixel);
         }
 
         void OS2BitmapHeader2(LittleEndianConstPointer& p)
         {
-            printLine(Print::Info, "[OS2BitmapHeader2]");
+            printLine(Print::Debug, "[OS2BitmapHeader2]");
 
             units         = p.read16();
             reserved      = p.read16();
@@ -344,7 +344,7 @@ namespace
 
             parseHeaderSize(p);
 
-            printLine(Print::Info, "  HeaderSize: {}", headerSize);
+            printLine(Print::Debug, "  HeaderSize: {}", headerSize);
 
             // every header variant reads exactly headerSize bytes; make sure they exist
             if (memory.size < headerSize)
@@ -458,7 +458,7 @@ namespace
             {
                 int bytesPerScan = div_ceil(width * bitsPerPixel, 32) * 4;
                 imageDataSize = height * bytesPerScan;
-                printLine(Print::Info, "  computed imageDataSize: {}", imageDataSize);
+                printLine(Print::Debug, "  computed imageDataSize: {}", imageDataSize);
             }
 
             if (bitsPerPixel <= 8)
@@ -1185,9 +1185,9 @@ namespace
 
         if (header.palette)
         {
-            printLine(Print::Info, "[Palette]");
-            printLine(Print::Info, "  size: {}", header.importantColorCount);
-            printLine(Print::Info, "  components: {}", header.paletteComponents);
+            printLine(Print::Debug, "[Palette]");
+            printLine(Print::Debug, "  size: {}", header.importantColorCount);
+            printLine(Print::Debug, "  components: {}", header.paletteComponents);
 
             int components = header.paletteComponents;
             if (!components)
@@ -1563,7 +1563,7 @@ namespace
             : m_memory(memory)
             , m_file_header(memory)
         {
-            printLine(Print::Info, "magic: {:#x}", m_file_header.magic);
+            printLine(Print::Debug, "magic: {:#x}", m_file_header.magic);
 
             if (m_memory.size < 14)
             {
@@ -1596,23 +1596,23 @@ namespace
                     header.format  = bmp_header.format;
                     header.compression = TextureCompression::NONE;
 
-                    printLine(Print::Info, "[Header]");
-                    printLine(Print::Info, "  image: {} x {}, bits: {}",
+                    printLine(Print::Debug, "[Header]");
+                    printLine(Print::Debug, "  image: {} x {}, bits: {}",
                         header.width,
                         header.height,
                         header.format.bits);
-                    printLine(Print::Info, "[Format]");
-                    printLine(Print::Info, "  bits: {}, bytes: {}, type: {:#x}, flags: {:#x}",
+                    printLine(Print::Debug, "[Format]");
+                    printLine(Print::Debug, "  bits: {}, bytes: {}, type: {:#x}, flags: {:#x}",
                         header.format.bits,
                         header.format.bytes(),
                         u16(header.format.type),
                         header.format.flags);
-                    printLine(Print::Info, "  size: {} {} {} {}",
+                    printLine(Print::Debug, "  size: {} {} {} {}",
                         header.format.size.r,
                         header.format.size.g,
                         header.format.size.b,
                         header.format.size.a);
-                    printLine(Print::Info, "  offset: {} {} {} {}",
+                    printLine(Print::Debug, "  offset: {} {} {} {}",
                         header.format.offset.r,
                         header.format.offset.g,
                         header.format.offset.b,

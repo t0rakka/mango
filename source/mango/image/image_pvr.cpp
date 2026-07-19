@@ -241,8 +241,8 @@ namespace
             0x00008000  Alpha channel data is present (PVRTC only)
             */
 
-            printLine(Print::Info, "flags: {:#x}", flags);
-            printLine(Print::Info, "format: {:#x}", fmt);
+            printLine(Print::Debug, "flags: {:#x}", flags);
+            printLine(Print::Debug, "format: {:#x}", fmt);
 
             // compressed block default values
             TextureCompression compression = TextureCompression::NONE;
@@ -485,7 +485,7 @@ namespace
             if (pvr.pixelformat & 0xffffffff00000000)
             {
                 m_info.format = eightcc_to_format(pvr.pixelformat);
-                printLine(Print::Info, "eightcc format: {} ({},{},{},{})", m_info.format.bits,
+                printLine(Print::Debug, "eightcc format: {} ({},{},{},{})", m_info.format.bits,
                     m_info.format.size[0],
                     m_info.format.size[1],
                     m_info.format.size[2],
@@ -497,7 +497,7 @@ namespace
 
                 if (formatIndex < int(std::size(formatTable)))
                 {
-                    printLine(Print::Info, "pvr.pixelformat: {}", formatIndex);
+                    printLine(Print::Debug, "pvr.pixelformat: {}", formatIndex);
 
                     TextureCompression compression = formatTable[formatIndex];
                     TextureCompression info(compression);

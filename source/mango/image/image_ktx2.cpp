@@ -897,14 +897,14 @@ namespace
             tablesByteLength = p.read32();
             extendedByteLength = p.read32();
 
-            printLine(Print::Info, "");
-            printLine(Print::Info, "[BasisLZ]");
-            printLine(Print::Info, "  endpointCount: {}", endpointCount);
-            printLine(Print::Info, "  selectorCount: {}", selectorCount);
-            printLine(Print::Info, "  endpointsByteLength: {}", endpointsByteLength);
-            printLine(Print::Info, "  selectorsByteLength: {}", selectorsByteLength);
-            printLine(Print::Info, "  tablesByteLength:    {}", tablesByteLength);
-            printLine(Print::Info, "  extendedByteLength:  {}", extendedByteLength);
+            printLine(Print::Debug, "");
+            printLine(Print::Debug, "[BasisLZ]");
+            printLine(Print::Debug, "  endpointCount: {}", endpointCount);
+            printLine(Print::Debug, "  selectorCount: {}", selectorCount);
+            printLine(Print::Debug, "  endpointsByteLength: {}", endpointsByteLength);
+            printLine(Print::Debug, "  selectorsByteLength: {}", selectorsByteLength);
+            printLine(Print::Debug, "  tablesByteLength:    {}", tablesByteLength);
+            printLine(Print::Debug, "  extendedByteLength:  {}", extendedByteLength);
 
             const u64 image_desc_bytes = u64(imageCount) * 20;
             const u64 payload_bytes = image_desc_bytes +
@@ -961,10 +961,10 @@ namespace
             desc.alphaSliceByteOffset = ptr.read32();
             desc.alphaSliceByteLength = ptr.read32();
 
-            printLine(Print::Info, "");
-            printLine(Print::Info, "[BasisImageDesc]");
-            printLine(Print::Info, "  rgb offset: {}, length: {}", desc.rgbSliceByteOffset, desc.rgbSliceByteLength);
-            printLine(Print::Info, "  alpha offset: {}, length: {}", desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
+            printLine(Print::Debug, "");
+            printLine(Print::Debug, "[BasisImageDesc]");
+            printLine(Print::Debug, "  rgb offset: {}, length: {}", desc.rgbSliceByteOffset, desc.rgbSliceByteLength);
+            printLine(Print::Debug, "  alpha offset: {}, length: {}", desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
 
             return true;
         }
@@ -1081,11 +1081,11 @@ namespace
                 header.linear = info.isLinear();
             }
 
-            printLine(Print::Info, "");
-            printLine(Print::Info, "[HeaderKTX2]");
-            printLine(Print::Info, "  vkFormat: {} \"{}\"", ktx2_header.vkFormat, desc.name);
-            printLine(Print::Info, "  typeSize: {}", ktx2_header.typeSize);
-            printLine(Print::Info, "  supercompressionScheme: {}", ktx2_header.supercompressionScheme);
+            printLine(Print::Debug, "");
+            printLine(Print::Debug, "[HeaderKTX2]");
+            printLine(Print::Debug, "  vkFormat: {} \"{}\"", ktx2_header.vkFormat, desc.name);
+            printLine(Print::Debug, "  typeSize: {}", ktx2_header.typeSize);
+            printLine(Print::Debug, "  supercompressionScheme: {}", ktx2_header.supercompressionScheme);
 
             m_supercompression = ktx2_header.supercompressionScheme;
 
@@ -1117,9 +1117,9 @@ namespace
             u64 sgdByteOffset = p.read64();
             u64 sgdByteLength = p.read64();
 
-            printLine(Print::Info, "  dfdByteOffset: {}, dfdByteLength: {}", dfdByteOffset, dfdByteLength);
-            printLine(Print::Info, "  kvdByteOffset: {}, kvdByteLength: {}", kvdByteOffset, kvdByteLength);
-            printLine(Print::Info, "  sgdByteOffset: {}, sgdByteLength: {}", sgdByteOffset, sgdByteLength);
+            printLine(Print::Debug, "  dfdByteOffset: {}, dfdByteLength: {}", dfdByteOffset, dfdByteLength);
+            printLine(Print::Debug, "  kvdByteOffset: {}, kvdByteLength: {}", kvdByteOffset, kvdByteLength);
+            printLine(Print::Debug, "  sgdByteOffset: {}, sgdByteLength: {}", sgdByteOffset, sgdByteLength);
 
             if (dfdByteLength && !containsRegion(memory.size, dfdByteOffset, dfdByteLength))
             {
@@ -1146,8 +1146,8 @@ namespace
             }
 
             const int levels = int(level_index_count);
-            printLine(Print::Info, "");
-            printLine(Print::Info, "[levels: {}]", levels);
+            printLine(Print::Debug, "");
+            printLine(Print::Debug, "[levels: {}]", levels);
 
             m_levels.reserve(levels);
 
@@ -1174,7 +1174,7 @@ namespace
                 level.memory = ConstMemory(m_memory.address + level.offset, level.length);
 
                 m_levels.push_back(level);
-                printLine(Print::Info, "  offset: {}, length: {}, uncompressed: {}", level.offset, level.length, level.uncompressed_length);
+                printLine(Print::Debug, "  offset: {}, length: {}, uncompressed: {}", level.offset, level.length, level.uncompressed_length);
             }
 
             // Data Format Descriptor
@@ -1216,10 +1216,10 @@ namespace
                         return;
                     }
 
-                    printLine(Print::Info, "");
-                    printLine(Print::Info, "[DataFormatDescriptor]");
-                    printLine(Print::Info, "  vendor: {}, version: {}", vendor_id, version_number);
-                    printLine(Print::Info, "  type: {}, size: {}", descriptor_type, descriptor_block_size);
+                    printLine(Print::Debug, "");
+                    printLine(Print::Debug, "[DataFormatDescriptor]");
+                    printLine(Print::Debug, "  vendor: {}, version: {}", vendor_id, version_number);
+                    printLine(Print::Debug, "  type: {}, size: {}", descriptor_type, descriptor_block_size);
 
                     if (p + 16 > block + descriptor_block_size)
                     {
@@ -1272,11 +1272,11 @@ namespace
                                                               : TransferFunction::sRGB;
                     }
 
-                    printLine(Print::Info, "  colorModel: {}", colorModel);
-                    printLine(Print::Info, "  colorPrimaries: {}", colorPrimaries);
-                    printLine(Print::Info, "  transferFunction: {}", transferFunction);
-                    printLine(Print::Info, "  flags: {}", flags);
-                    printLine(Print::Info, "  dimensions: {} {} {} {}",
+                    printLine(Print::Debug, "  colorModel: {}", colorModel);
+                    printLine(Print::Debug, "  colorPrimaries: {}", colorPrimaries);
+                    printLine(Print::Debug, "  transferFunction: {}", transferFunction);
+                    printLine(Print::Debug, "  flags: {}", flags);
+                    printLine(Print::Debug, "  dimensions: {} {} {} {}",
                         texelBlockDimension0, texelBlockDimension1,
                         texelBlockDimension2, texelBlockDimension3);
 
@@ -1296,7 +1296,7 @@ namespace
                     u8 bytesPlane7 = p[7];
                     p += 8;
 
-                    printLine(Print::Info, "  planes: {} {} {} {} {} {} {} {}",
+                    printLine(Print::Debug, "  planes: {} {} {} {} {} {} {} {}",
                         bytesPlane0, bytesPlane1, bytesPlane2, bytesPlane3,
                         bytesPlane4, bytesPlane5, bytesPlane6, bytesPlane7);
 
@@ -1319,8 +1319,8 @@ namespace
                 p = memory.address + kvdByteOffset;
                 const u8* kvd_end = p + kvdByteLength;
 
-                printLine(Print::Info, "");
-                printLine(Print::Info, "[Key/Value Data]");
+                printLine(Print::Debug, "");
+                printLine(Print::Debug, "[Key/Value Data]");
 
                 while (p < kvd_end)
                 {
@@ -1372,7 +1372,7 @@ namespace
                         // MANGO TODO: this modifies header.format
                     }
 
-                    printLine(Print::Info, "  {}", key);
+                    printLine(Print::Debug, "  {}", key);
 
                     p = entry_end;
                     const u32 padding = (0 - length) & 3;
@@ -1482,7 +1482,7 @@ namespace
                 ConstMemory memory = this->memory(level, depth, 0);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
-                //printLine(Print::Info, "memory: {} bytes", memory.size);
+                //printLine(Print::Debug, "memory: {} bytes", memory.size);
 
                 initialize_basisu_only_once();
                 basist::basisu_lowlevel_etc1s_transcoder transcoder;
@@ -1555,8 +1555,8 @@ namespace
                 }
                 else
                 {
-                    printLine(Print::Info, "surface: {} x {} ({} bits)", width, height, format.bits);
-                    printLine(Print::Info, "memory: {} bytes", memory.size);
+                    printLine(Print::Debug, "surface: {} x {} ({} bits)", width, height, format.bits);
+                    printLine(Print::Debug, "memory: {} bytes", memory.size);
 
                     // The image data is uncompressed in the file
                     Surface temp(width, height, format, width * format.bytes(), memory.address);
@@ -1589,7 +1589,7 @@ namespace
                         uncompressed_size += level.uncompressed_length;
                         if (uncompressed_size < level.uncompressed_length)
                         {
-                            printLine(Print::Info, "* decompress status: uncompressed size overflow");
+                            printLine(Print::Debug, "* decompress status: uncompressed size overflow");
                             return;
                         }
                     }
@@ -1623,11 +1623,11 @@ namespace
 
                         if (status)
                         {
-                            printLine(Print::Info, "* decompressed: {} bytes", status.size);
+                            printLine(Print::Debug, "* decompressed: {} bytes", status.size);
                         }
                         else
                         {
-                            printLine(Print::Info, "* decompress status: {}", status.info);
+                            printLine(Print::Debug, "* decompress status: {}", status.info);
                         }
 
                         level.memory = dest;

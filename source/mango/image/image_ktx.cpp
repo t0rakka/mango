@@ -623,19 +623,19 @@ namespace
                 return;
             }
 
-            printLine(Print::Info, "endianness: {:#x}", endianness);
-            printLine(Print::Info, "glType: {:#x}", glType);
-            printLine(Print::Info, "glTypeSize: {:#x}", glTypeSize);
-            printLine(Print::Info, "glFormat: {:#x}", glFormat);
-            printLine(Print::Info, "glInternalFormat: {:#x}", glInternalFormat);
-            printLine(Print::Info, "glBaseInternalFormat: {:#x}", glBaseInternalFormat);
-            printLine(Print::Info, "pixelWidth: {}", pixelWidth);
-            printLine(Print::Info, "pixelHeight: {}", pixelHeight);
-            printLine(Print::Info, "pixelDepth: {}", pixelDepth);
-            printLine(Print::Info, "numberOfArrayElements: {}", numberOfArrayElements);
-            printLine(Print::Info, "numberOfFaces: {}", numberOfFaces);
-            printLine(Print::Info, "numberOfMipmapLevels: {}", numberOfMipmapLevels);
-            printLine(Print::Info, "bytesOfKeyValueData: {}", bytesOfKeyValueData);
+            printLine(Print::Debug, "endianness: {:#x}", endianness);
+            printLine(Print::Debug, "glType: {:#x}", glType);
+            printLine(Print::Debug, "glTypeSize: {:#x}", glTypeSize);
+            printLine(Print::Debug, "glFormat: {:#x}", glFormat);
+            printLine(Print::Debug, "glInternalFormat: {:#x}", glInternalFormat);
+            printLine(Print::Debug, "glBaseInternalFormat: {:#x}", glBaseInternalFormat);
+            printLine(Print::Debug, "pixelWidth: {}", pixelWidth);
+            printLine(Print::Debug, "pixelHeight: {}", pixelHeight);
+            printLine(Print::Debug, "pixelDepth: {}", pixelDepth);
+            printLine(Print::Debug, "numberOfArrayElements: {}", numberOfArrayElements);
+            printLine(Print::Debug, "numberOfFaces: {}", numberOfFaces);
+            printLine(Print::Debug, "numberOfMipmapLevels: {}", numberOfMipmapLevels);
+            printLine(Print::Debug, "bytesOfKeyValueData: {}", bytesOfKeyValueData);
 
             // This is the raw metadata storage if find ktx file that uses it
             ConstMemory metadata(ptr, bytesOfKeyValueData);

@@ -230,7 +230,7 @@ namespace
             return nullptr;
         }
 
-        printLine(Print::Info, "[header]");
+        printLine(Print::Debug, "[header]");
         std::string ms = "  magic: | ";
         for (int i = 0; i < 12; ++i)
         {
@@ -241,19 +241,19 @@ namespace
 
             }
         }
-        printLine(Print::Info, ms);
+        printLine(Print::Debug, ms);
 
         opj_codec_t* codec = nullptr;
 
         if (!std::memcmp(memory.address, JP2_RFC3745_MAGIC, 12) ||
             !std::memcmp(memory.address, JP2_RFC3745_MAGIC + 8, 4))
         {
-            printLine(Print::Info, "  codec: JP2");
+            printLine(Print::Debug, "  codec: JP2");
             codec = opj_create_decompress(OPJ_CODEC_JP2);
         }
         else if (!std::memcmp(memory.address, J2K_CODESTREAM_MAGIC, 4))
         {
-            printLine(Print::Info, "  codec: J2K");
+            printLine(Print::Debug, "  codec: J2K");
             codec = opj_create_decompress(OPJ_CODEC_J2K);
         }
 
@@ -768,11 +768,11 @@ namespace
             u32 height = m_image->y1 - m_image->y0;
             u32 components = m_image->numcomps;
 
-            printLine(Print::Info, "[image]");
-            printLine(Print::Info, "  dimensions: {} x {}", width, height);
-            printLine(Print::Info, "  color space: {}", int(m_image->color_space));
+            printLine(Print::Debug, "[image]");
+            printLine(Print::Debug, "  dimensions: {} x {}", width, height);
+            printLine(Print::Debug, "  color space: {}", int(m_image->color_space));
 
-            printLine(Print::Info, "[components]");
+            printLine(Print::Debug, "[components]");
 
             bool is_signed = false;
             bool is_subsampled = false;
@@ -783,7 +783,7 @@ namespace
             {
                 const opj_image_comp_t& comp = m_image->comps[i];
 
-                printLine(Print::Info, "  #{}: {} x {}, bits: {}, alpha: {}, sgnd: {}, dx: {}, dy: {}", 
+                printLine(Print::Debug, "  #{}: {} x {}, bits: {}, alpha: {}, sgnd: {}, dx: {}, dy: {}", 
                     i, comp.w, comp.h, comp.prec, comp.alpha, comp.sgnd, comp.dx, comp.dy);
 
                 if (comp.alpha)
@@ -1123,7 +1123,7 @@ namespace
         opj_image_destroy(image);
         opj_destroy_codec(codec);
 
-        printLine(Print::Info, "Encoded: {} bytes", writer.output.size());
+        printLine(Print::Debug, "Encoded: {} bytes", writer.output.size());
 
         return status;
     }

@@ -1407,7 +1407,7 @@ namespace
                         icc = m_decoder->icc();
                         exif = m_decoder->exif();
 
-                        printLine(Print::Info, "[ImageDecoder.PICT] forwarding {} bytes at offset {} as {}",
+                        printLine(Print::Debug, "[ImageDecoder.PICT] forwarding {} bytes at offset {} as {}",
                             payload.size, payload.address - memory.address, extension);
                         return;
                     }
@@ -1435,7 +1435,7 @@ namespace
             header.format = m_bitmap->format;
             header.compression = TextureCompression::NONE;
 
-            printLine(Print::Info, "[ImageDecoder.PICT] native decode {} x {}",
+            printLine(Print::Debug, "[ImageDecoder.PICT] native decode {} x {}",
                 header.width, header.height);
         }
 

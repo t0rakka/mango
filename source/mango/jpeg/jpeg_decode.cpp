@@ -39,7 +39,7 @@ namespace mango::image::jpeg
     static
     void jpegPrintMemory(const u8* ptr)
     {
-        if (isEnable(Print::Info))
+        if (isEnable(Print::Debug))
         {
             printf("  Memory: ");
 
@@ -1269,7 +1269,7 @@ namespace mango::image::jpeg
             p += 2;
         }
 
-        printLine(Print::Info, "  Seek: {} bytes", p - start);
+        printLine(Print::Debug, "  Seek: {} bytes", p - start);
 
         // found nothing
         return end + 1;
@@ -1277,30 +1277,30 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processSOI()
     {
-        printLine(Print::Info, "[ SOI ]");
+        printLine(Print::Debug, "[ SOI ]");
         restartInterval = 0;
     }
 
     void StreamDecoder::processEOI()
     {
-        printLine(Print::Info, "[ EOI ]");
+        printLine(Print::Debug, "[ EOI ]");
     }
 
     void StreamDecoder::processCOM(const u8* p)
     {
-        printLine(Print::Info, "[ COM ]");
+        printLine(Print::Debug, "[ COM ]");
         MANGO_UNREFERENCED(p);
     }
 
     void StreamDecoder::processTEM(const u8* p)
     {
-        printLine(Print::Info, "[ TEM ]");
+        printLine(Print::Debug, "[ TEM ]");
         MANGO_UNREFERENCED(p);
     }
 
     void StreamDecoder::processRES(const u8* p)
     {
-        printLine(Print::Info, "[ RES ]");
+        printLine(Print::Debug, "[ RES ]");
 
         // Reserved for jpeg extensions
         MANGO_UNREFERENCED(p);
@@ -1308,7 +1308,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processJPG(const u8* p)
     {
-        printLine(Print::Info, "[ JPG ]");
+        printLine(Print::Debug, "[ JPG ]");
 
         // Reserved for jpeg extensions
         MANGO_UNREFERENCED(p);
@@ -1316,7 +1316,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processJPG(const u8* p, u16 marker)
     {
-        printLine(Print::Info, "[ JPG{} ]", marker - MARKER_JPG0);
+        printLine(Print::Debug, "[ JPG{} ]", marker - MARKER_JPG0);
 
         // Reserved for jpeg extensions
         MANGO_UNREFERENCED(p);
@@ -1325,7 +1325,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processAPP(const u8* p, u16 marker)
     {
-        printLine(Print::Info, "[ APP{} ]", marker - MARKER_APP0);
+        printLine(Print::Debug, "[ APP{} ]", marker - MARKER_APP0);
 
         int size = bigEndian::uload16(p) - 2;
         p += 2;
@@ -1345,7 +1345,7 @@ namespace mango::image::jpeg
                     p += magicJFIF_length;
                     size -= magicJFIF_length;
 
-                    printLine(Print::Info, "  JFIF: {} bytes", size);
+                    printLine(Print::Debug, "  JFIF: {} bytes", size);
 
                     int version = p[0] * 100 + p[1];
                     int units = p[2]; // 0 - no units, 1 - dots per inch, 2 - dots per cm
@@ -1362,9 +1362,9 @@ namespace mango::image::jpeg
                         case 2: unit_str = "cpi"; break;
                     }
 
-                    printLine(Print::Info, "    version: {}", version);
-                    printLine(Print::Info, "    density: {} x {} {}", Xdensity, Ydensity, unit_str);
-                    printLine(Print::Info, "    thumbnail: {} x {}", Xthumbnail, Ythumbnail);
+                    printLine(Print::Debug, "    version: {}", version);
+                    printLine(Print::Debug, "    density: {} x {} {}", Xdensity, Ydensity, unit_str);
+                    printLine(Print::Debug, "    thumbnail: {} x {}", Xthumbnail, Ythumbnail);
 
                     // NOTE: This marker is parsed but JFIF is not supported
                     MANGO_UNREFERENCED(version);
@@ -1395,14 +1395,14 @@ namespace mango::image::jpeg
                     size -= magicExif_length;
 
                     exif_memory = ConstMemory(p, size);
-                    printLine(Print::Info, "  EXIF: {} bytes", size);
+                    printLine(Print::Debug, "  EXIF: {} bytes", size);
                 }
                 else if (size >= xmp_id_length && !std::memcmp(p, xmp_id, xmp_id_length))
                 {
                     // Skip the identifier
                     p += xmp_id_length;
                     size -= int(xmp_id_length);
-                    printLine(Print::Info, "  XMP: {} bytes", size);
+                    printLine(Print::Debug, "  XMP: {} bytes", size);
                     // NOTE: We don't support XMP but this is where it would be processed
                 }
 
@@ -1425,7 +1425,7 @@ namespace mango::image::jpeg
                     p += 2;
                     size -= 2;
 
-                    printLine(Print::Info, "  ICC: {} / {} ({} bytes)", sequence_number, sequence_total, size);
+                    printLine(Print::Debug, "  ICC: {} / {} ({} bytes)", sequence_number, sequence_total, size);
                     MANGO_UNREFERENCED(sequence_number);
                     MANGO_UNREFERENCED(sequence_total);
 
@@ -1446,7 +1446,7 @@ namespace mango::image::jpeg
                     p += 6;
                     size -= 6;
                     exif_memory = ConstMemory(p, size);
-                    printLine(Print::Info, "  EXIF: {} bytes", size);
+                    printLine(Print::Debug, "  EXIF: {} bytes", size);
                 }
 
                 break;
@@ -1467,8 +1467,8 @@ namespace mango::image::jpeg
                     {
                         processState.colorspace = ColorSpace(color_transform);
                     }
-                    printLine(Print::Info, "  Version: {}", version);
-                    printLine(Print::Info, "  ColorTransform: {}", color_transform);
+                    printLine(Print::Debug, "  Version: {}", version);
+                    printLine(Print::Debug, "  ColorTransform: {}", color_transform);
                     MANGO_UNREFERENCED(version);
                     MANGO_UNREFERENCED(color_transform);
                 }
@@ -1492,7 +1492,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processSOF(const u8* p, u16 marker)
     {
-        printLine(Print::Info, "[ SOF{} ]", marker - MARKER_SOF0);
+        printLine(Print::Debug, "[ SOF{} ]", marker - MARKER_SOF0);
 
         is_baseline = (marker == MARKER_SOF0);
         is_progressive = false;
@@ -1508,7 +1508,7 @@ namespace mango::image::jpeg
         m_components = p[7];
         p += 8;
 
-        printLine(Print::Info, "  Image: {} x {} x {}", m_width, m_height, m_precision);
+        printLine(Print::Debug, "  Image: {} x {} x {}", m_width, m_height, m_precision);
 
         u16 correct_length = 8 + 3 * m_components;
         if (length != correct_length)
@@ -1555,8 +1555,8 @@ namespace mango::image::jpeg
             case MARKER_SOF15: m_encoding = "Differential lossless"; break;
         }
 
-        printLine(Print::Info, "  Encoding: {}", m_encoding);
-        printLine(Print::Info, "  Compression: {}", m_compression);
+        printLine(Print::Debug, "  Encoding: {}", m_encoding);
+        printLine(Print::Debug, "  Compression: {}", m_compression);
 
         switch (marker)
         {
@@ -1690,7 +1690,7 @@ namespace mango::image::jpeg
                 }
             }
 
-            printLine(Print::Info, "  Frame: {}, compid: {}, Hsf: {}, Vsf: {}, Tq: {}, offset: {}",
+            printLine(Print::Debug, "  Frame: {}, compid: {}, Hsf: {}, Vsf: {}, Tq: {}, offset: {}",
                 i, frame.compid, frame.hsf, frame.vsf, frame.tq, frame.offset);
 
             frames.push_back(frame);
@@ -1707,8 +1707,8 @@ namespace mango::image::jpeg
             return;
         }
 
-        printLine(Print::Info, "  Blocks in MCU: {}", blocks_in_mcu);
-        printLine(Print::Info, "  MCU: {} x {}", xblock, yblock);
+        printLine(Print::Debug, "  Blocks in MCU: {}", blocks_in_mcu);
+        printLine(Print::Debug, "  MCU: {} x {}", xblock, yblock);
 
         // Align to next MCU boundary
         int xmask = xblock - 1;
@@ -1721,8 +1721,8 @@ namespace mango::image::jpeg
         ymcu = m_aligned_height / yblock;
         mcus = xmcu * ymcu;
 
-        printLine(Print::Info, "  {} MCUs ({} x {}) -> ({} x {})", mcus, xmcu, ymcu, xmcu * xblock, ymcu * yblock);
-        printLine(Print::Info, "  Image: {} x {}", m_width, m_height);
+        printLine(Print::Debug, "  {} MCUs ({} x {}) -> ({} x {})", mcus, xmcu, ymcu, xmcu * xblock, ymcu * yblock);
+        printLine(Print::Debug, "  Image: {} x {}", m_width, m_height);
 
         // configure header (matches decode() storage: 8-bit L8 or RGBA)
         header.width  = m_width;
@@ -1736,7 +1736,7 @@ namespace mango::image::jpeg
 
     const u8* StreamDecoder::processSOS(const u8* p, const u8* end)
     {
-        printLine(Print::Info, "[ SOS ]");
+        printLine(Print::Debug, "[ SOS ]");
 
         u16 length = bigEndian::uload16(p);
         u8 components = p[2]; // Ns
@@ -1766,7 +1766,7 @@ namespace mango::image::jpeg
 
         decodeState.comps_in_scan = components;
 
-        printLine(Print::Info, "  components: {}{}", components, is_multiscan ? " (MultiScan)" : "");
+        printLine(Print::Debug, "  components: {}{}", components, is_multiscan ? " (MultiScan)" : "");
         MANGO_UNREFERENCED(length);
 
         decodeState.blocks = 0;
@@ -1829,7 +1829,7 @@ namespace mango::image::jpeg
                 cs_name = fmt::format(" ({:c})", cs);
             }
 
-            printLine(Print::Info, "  Component: {}{}, DC: {}, AC: {}, offset: {}, size: {}",
+            printLine(Print::Debug, "  Component: {}{}, DC: {}, AC: {}, offset: {}, size: {}",
                 cs, cs_name, dc, ac, frame->offset, size);
 
             for (int j = 0; j < size; ++j)
@@ -1847,7 +1847,7 @@ namespace mango::image::jpeg
                 block.dc = dc;
                 block.ac = ac;
 
-                printLine(Print::Info, "      - offset: {}, pred: {},", offset * 64, pred);
+                printLine(Print::Debug, "      - offset: {}, pred: {},", offset * 64, pred);
                 ++offset;
                 ++decodeState.blocks;
             }
@@ -1866,7 +1866,7 @@ namespace mango::image::jpeg
         decodeState.successive_low = Al;
         decodeState.successive_high = Ah;
 
-        printLine(Print::Info, "  Spectral range: ({}, {})", Ss, Se);
+        printLine(Print::Debug, "  Spectral range: ({}, {})", Ss, Se);
 
         // default limits
         int min_ss = 0;
@@ -1935,12 +1935,12 @@ namespace mango::image::jpeg
                 {
                     if (!refine_scan)
                     {
-                        printLine(Print::Info, "  * decode_dc_first()");
+                        printLine(Print::Debug, "  * decode_dc_first()");
                         decodeState.decode = arith_decode_dc_first;
                     }
                     else
                     {
-                        printLine(Print::Info, "  * decode_dc_refine()");
+                        printLine(Print::Debug, "  * decode_dc_refine()");
                         decodeState.decode = arith_decode_dc_refine;
                     }
                 }
@@ -1948,12 +1948,12 @@ namespace mango::image::jpeg
                 {
                     if (!refine_scan)
                     {
-                        printLine(Print::Info, "  * decode_ac_first()");
+                        printLine(Print::Debug, "  * decode_ac_first()");
                         decodeState.decode = arith_decode_ac_first;
                     }
                     else
                     {
-                        printLine(Print::Info, "  * decode_ac_refine()");
+                        printLine(Print::Debug, "  * decode_ac_refine()");
                         decodeState.decode = arith_decode_ac_refine;
                     }
                 }
@@ -1994,12 +1994,12 @@ namespace mango::image::jpeg
                 {
                     if (!refine_scan)
                     {
-                        printLine(Print::Info, "  * decode_dc_first()");
+                        printLine(Print::Debug, "  * decode_dc_first()");
                         decodeState.decode = huff_decode_dc_first;
                     }
                     else
                     {
-                        printLine(Print::Info, "  * decode_dc_refine()");
+                        printLine(Print::Debug, "  * decode_dc_refine()");
                         decodeState.decode = huff_decode_dc_refine;
                     }
                 }
@@ -2007,12 +2007,12 @@ namespace mango::image::jpeg
                 {
                     if (!refine_scan)
                     {
-                        printLine(Print::Info, "  * decode_ac_first()");
+                        printLine(Print::Debug, "  * decode_ac_first()");
                         decodeState.decode = huff_decode_ac_first;
                     }
                     else
                     {
-                        printLine(Print::Info, "  * decode_ac_refine()");
+                        printLine(Print::Debug, "  * decode_ac_refine()");
                         decodeState.decode = huff_decode_ac_refine;
                     }
                 }
@@ -2035,7 +2035,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processDQT(const u8* p)
     {
-        printLine(Print::Info, "[ DQT ]");
+        printLine(Print::Debug, "[ DQT ]");
 
         u16 Lq = bigEndian::uload16(p); // Quantization table definition length
         p += 2;
@@ -2048,7 +2048,7 @@ namespace mango::image::jpeg
             u8 Tq = (x >> 0) & 0xf; // Quantization table destination identifier (0..3)
 
             const int bits = (Pq + 1) * 8;
-            printLine(Print::Info, "  Quantization table #{} element precision: {} bits", Tq, bits);
+            printLine(Print::Debug, "  Quantization table #{} element precision: {} bits", Tq, bits);
 
             if (!is_lossless)
             {
@@ -2098,7 +2098,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processDHT(const u8* p, const u8* end)
     {
-        printLine(Print::Info, "[ DHT ]");
+        printLine(Print::Debug, "[ DHT ]");
 
         int Lh = bigEndian::uload16(p); // Huffman table definition length
         p += 2;
@@ -2131,7 +2131,7 @@ namespace mango::image::jpeg
             decodeState.huffman.maxTc = std::max(decodeState.huffman.maxTc, int(Tc));
             decodeState.huffman.maxTh = std::max(decodeState.huffman.maxTh, int(Th));
 
-            printLine(Print::Info, "  Huffman table #{} table class: {}", Th, Tc);
+            printLine(Print::Debug, "  Huffman table #{} table class: {}", Th, Tc);
 
             if (p >= end - 17)
             {
@@ -2151,7 +2151,7 @@ namespace mango::image::jpeg
                 ms += fmt::format("{} ", L);
             }
 
-            printLine(Print::Info, ms);
+            printLine(Print::Debug, ms);
 
             p += 17;
             Lh -= 17;
@@ -2200,7 +2200,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processDAC(const u8* p)
     {
-        printLine(Print::Info, "[ DAC ]");
+        printLine(Print::Debug, "[ DAC ]");
 
         u16 La = bigEndian::uload16(p); // Arithmetic coding conditioning definition length
         p += 2;
@@ -2213,7 +2213,7 @@ namespace mango::image::jpeg
 
         int n = (La - 2) / 2;
 
-        printLine(Print::Info, "  n: {}", n);
+        printLine(Print::Debug, "  n: {}", n);
 
         if (n > 32)
         {
@@ -2264,13 +2264,13 @@ namespace mango::image::jpeg
                     return;
             }
 
-            printLine(Print::Info, "  Tc: {}, Tb: {}, Cs: {}", Tc, Tb, Cs);
+            printLine(Print::Debug, "  Tc: {}, Tb: {}, Cs: {}", Tc, Tb, Cs);
         }
     }
 
     void StreamDecoder::processDNL(const u8* p)
     {
-        printLine(Print::Info, "[ DNL ]");
+        printLine(Print::Debug, "[ DNL ]");
 
         u16 Ld = bigEndian::uload16(p + 0); // Define number of lines segment length
         u16 NL = bigEndian::uload16(p + 2); // Number of lines
@@ -2282,7 +2282,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::processDRI(const u8* p)
     {
-        printLine(Print::Info, "[ DRI ]");
+        printLine(Print::Debug, "[ DRI ]");
 
         int Lh = bigEndian::uload16(p + 0); // length
         if (Lh != 4)
@@ -2291,12 +2291,12 @@ namespace mango::image::jpeg
         }
 
         restartInterval = bigEndian::uload16(p + 2); // number of MCU in restart interval
-        printLine(Print::Info, "  Restart interval: {}", restartInterval);
+        printLine(Print::Debug, "  Restart interval: {}", restartInterval);
     }
 
     void StreamDecoder::processDHP(const u8* p)
     {
-        printLine(Print::Info, "[ DHP ]");
+        printLine(Print::Debug, "[ DHP ]");
 
         // NOTE: This marker is parsed but not used
 
@@ -2310,8 +2310,8 @@ namespace mango::image::jpeg
         // Number of components in the frame
         const int ncomponents = *p++;
 
-        printLine(Print::Info, "  Precision: {}", precision);
-        printLine(Print::Info, "  Components: {}", ncomponents);
+        printLine(Print::Debug, "  Precision: {}", precision);
+        printLine(Print::Debug, "  Components: {}", ncomponents);
 
         // Parse component specifications
         for (int i = 0; i < ncomponents; ++i)
@@ -2322,16 +2322,16 @@ namespace mango::image::jpeg
             const int v_sampling = sampling & 0x0F;         // vertical sampling factor
             const int quant_table_selector = *p++;
 
-            printLine(Print::Info, "  Component[{}]:", i);
-            printLine(Print::Info, "    ID: {}", id);
-            printLine(Print::Info, "    Sampling: {}x{}", h_sampling, v_sampling);
-            printLine(Print::Info, "    Quant Table: {}", quant_table_selector);
+            printLine(Print::Debug, "  Component[{}]:", i);
+            printLine(Print::Debug, "    ID: {}", id);
+            printLine(Print::Debug, "    Sampling: {}x{}", h_sampling, v_sampling);
+            printLine(Print::Debug, "    Quant Table: {}", quant_table_selector);
         }
     }
 
     void StreamDecoder::processEXP(const u8* p)
     {
-        printLine(Print::Info, "[ EXP ]");
+        printLine(Print::Debug, "[ EXP ]");
 
         u16 Le = bigEndian::uload16(p); // Expand reference components segment length
         u8 x = p[2];
@@ -2520,15 +2520,15 @@ namespace mango::image::jpeg
                     break;
 
                 default:
-                    printLine(Print::Info, "[ {:#x} ]", marker);
+                    printLine(Print::Debug, "[ {:#x} ]", marker);
                     header.setError("Incorrect JPEG data.");
                     p = end; // terminate parsing
                     break;
             }
 
             u64 time1 = Time::us();
-            printLine(Print::Info, "  Time: {} us", time1 - time0);
-            printLine(Print::Info, "");
+            printLine(Print::Debug, "  Time: {} us", time1 - time0);
+            printLine(Print::Debug, "");
 
             MANGO_UNREFERENCED(time0);
             MANGO_UNREFERENCED(time1);
@@ -2880,9 +2880,9 @@ namespace mango::image::jpeg
 
         m_ycbcr_name = id;
 
-        printLine(Print::Info, "[ConfigureCPU]");
-        printLine(Print::Info, "  Decoder: {}", id);
-        printLine(Print::Info, "");
+        printLine(Print::Debug, "[ConfigureCPU]");
+        printLine(Print::Debug, "  Decoder: {}", id);
+        printLine(Print::Debug, "");
     }
 
     ImageDecodeStatus StreamDecoder::decode(const Surface& target, const ImageDecodeOptions& options)
@@ -3605,7 +3605,7 @@ namespace mango::image::jpeg
                 const int y0 = y;
                 const int y1 = std::min(y + N, ymcu);
                 const int count = (y1 - y0) * xmcu;
-                printLine(Print::Info, "  Process: [{}, {}] --> ThreadPool.", y0, y1 - 1);
+                printLine(Print::Debug, "  Process: [{}, {}] --> ThreadPool.", y0, y1 - 1);
 
                 void* aligned_ptr = aligned_malloc(count * mcu_data_size * sizeof(s16), 64);
                 s16* data = reinterpret_cast<s16*>(aligned_ptr);
@@ -3756,14 +3756,14 @@ namespace mango::image::jpeg
             const int hsize = (Hmax / hsf) * 8;
             const int vsize = (Vmax / vsf) * 8;
 
-            printLine(Print::Info, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
+            printLine(Print::Debug, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
 
             const int scan_offset = scanFrame->offset;
             const int xs = div_ceil(m_width, hsize);
             const int ys = div_ceil(m_height, vsize);
             const int cnt = xs * ys;
 
-            printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
+            printLine(Print::Debug, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
 
             MANGO_UNREFERENCED(xs);
             MANGO_UNREFERENCED(ys);
@@ -3829,13 +3829,13 @@ namespace mango::image::jpeg
             const int hsize = (Hmax / hsf) * 8;
             const int vsize = (Vmax / vsf) * 8;
 
-            printLine(Print::Info, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
+            printLine(Print::Debug, "    hsf: {}, vsf: {}, blocks: {}", hsf, vsf, decodeState.blocks);
 
             const int scan_offset = scanFrame->offset;
             const int xs = div_ceil(m_width, hsize);
             const int ys = div_ceil(m_height, vsize);
 
-            printLine(Print::Info, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
+            printLine(Print::Debug, "    blocks: {} x {} ({} x {})", xs, ys, xs * hsize, ys * vsize);
 
             for (int y = 0; y < ys; ++y)
             {
@@ -3881,7 +3881,7 @@ namespace mango::image::jpeg
 
                 s16* data = blockVector + y0 * mcu_stride;
 
-                printLine(Print::Info, "  Process: [{}, {}] --> ThreadPool.", y0, y1 - 1);
+                printLine(Print::Debug, "  Process: [{}, {}] --> ThreadPool.", y0, y1 - 1);
 
                 // enqueue task
                 queue.enqueue([=, this]
