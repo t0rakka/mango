@@ -273,7 +273,8 @@ namespace mango::filesystem
         if (!m_current_mapper)
             return 0;
 
-        return m_current_mapper->getSize(filename);
+        // Match map(): FileMapper stores an empty root; logical files are under m_basepath.
+        return m_current_mapper->getSize(m_basepath + filename);
     }
 
     bool Mapper::isFile(const std::string& filename) const
@@ -281,7 +282,7 @@ namespace mango::filesystem
         if (!m_current_mapper)
             return false;
 
-        return m_current_mapper->isFile(filename);
+        return m_current_mapper->isFile(m_basepath + filename);
     }
 
     void Mapper::getIndex(FileIndex& index, const std::string& pathname)

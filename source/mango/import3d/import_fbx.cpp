@@ -256,12 +256,16 @@ namespace
         return {};
     }
 
-    Texture tryLoadInDirectoryPath(const std::string& dirPathname,
-                                   const std::string& basename, const std::string& stem)
+    Texture tryLoadUnder(const filesystem::Path& root, const std::string& relativeDir,
+                         const std::string& basename, const std::string& stem)
     {
+        if (relativeDir.empty())
+            return {};
+
         try
         {
-            filesystem::Path dir(dirPathname);
+            // Same nesting model as glTF: Path(assetDir, "texture/") + basename.
+            filesystem::Path dir(root, relativeDir);
             return tryLoadInDirectory(dir, basename, stem);
         }
         catch (...)
@@ -271,25 +275,28 @@ namespace
     }
 
     // Resolve an FBX RelativeFilename / FileName against the mesh directory.
-    // Matching is case-insensitive and ignores extension — Windows exports are sloppy.
+    // Same Path nesting as ImportGLTF / createTexture(path, "textures/foo.png").
     Texture resolveTexturePath(const filesystem::Path& meshPath, const std::string& declared)
     {
         if (declared.empty())
             return {};
 
         const std::string normalized = normalizePathSeparators(declared);
-        const std::string subdir = filesystem::getPath(normalized); // "Textures/" or ""
+        const std::string subdir = filesystem::getPath(normalized); // "texture/" or ""
         const std::string basename = filesystem::removePath(normalized);
         const std::string stem = filesystem::removeExtension(basename);
-        const std::string meshDir = meshPath.pathname();
 
-        // 1. Declared subdirectory next to the .fbx (Textures\Cerberus_A.tga).
+        // 0. Exact declared relative path (glTF-style), including subdirs.
+        if (Texture t = tryCreateTexture(meshPath, normalized))
+            return t;
+
+        // 1. Declared subdirectory next to the .fbx (Textures\Cerberus_A.tga), case-insensitive.
         if (!subdir.empty())
         {
             const std::string resolved = findSubdirectoryIgnoreCase(meshPath, subdir);
             if (!resolved.empty())
             {
-                if (Texture t = tryLoadInDirectoryPath(meshDir + resolved, basename, stem))
+                if (Texture t = tryLoadUnder(meshPath, resolved, basename, stem))
                     return t;
             }
         }
@@ -303,20 +310,27 @@ namespace
             const char* folders[] = { "textures/", "Textures/", "texture/", "Texture/" };
             for (const char* folder : folders)
             {
-                if (Texture t = tryLoadInDirectoryPath(meshDir + folder, basename, stem))
+                if (Texture t = tryLoadUnder(meshPath, folder, basename, stem))
                     return t;
             }
         }
 
-        // 4. Parent-level textures/ (unorthodox Cerberus sample: meshes/ + ../textures/).
-        const std::string parent = parentPathname(meshDir);
+        // 4. Parent-level textures/ (Cerberus-style: meshes/ + ../textures/).
+        const std::string parent = parentPathname(meshPath.pathname());
         if (!parent.empty())
         {
-            const char* folders[] = { "textures/", "Textures/", "texture/", "Texture/" };
-            for (const char* folder : folders)
+            try
             {
-                if (Texture t = tryLoadInDirectoryPath(parent + folder, basename, stem))
-                    return t;
+                filesystem::Path parentPath(parent);
+                const char* folders[] = { "textures/", "Textures/", "texture/", "Texture/" };
+                for (const char* folder : folders)
+                {
+                    if (Texture t = tryLoadUnder(parentPath, folder, basename, stem))
+                        return t;
+                }
+            }
+            catch (...)
+            {
             }
         }
 
@@ -1006,17 +1020,18 @@ namespace
         }
 
         // Prefer RelativeFilename; fall back to basename of absolute FileName.
+        // Always normalize separators so Path nesting matches glTF ("texture/foo.png").
         static std::string bestTexturePath(const TextureFBX& texture, const VideoFBX* video)
         {
             if (video)
             {
                 if (!video->relativeFilename.empty())
-                    return video->relativeFilename;
+                    return normalizePathSeparators(video->relativeFilename);
                 if (!video->filename.empty())
                     return filesystem::removePath(normalizePathSeparators(video->filename));
             }
             if (!texture.relativeFilename.empty())
-                return texture.relativeFilename;
+                return normalizePathSeparators(texture.relativeFilename);
             if (!texture.filename.empty())
                 return filesystem::removePath(normalizePathSeparators(texture.filename));
             return {};
