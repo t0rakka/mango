@@ -183,9 +183,10 @@ namespace mango::import3d
     // -----------------------------------------------------------------------
     // Canonical mesh space (all importers + shape generators)
     //
-    //   Axes:    +X right, +Y up, +Z toward viewer (right-handed, glTF axes)
-    //   Winding: clockwise when viewed from outside
-    //   Normals: outward
+    //   Axes:      +X right, +Y up, +Z toward viewer (right-handed, glTF axes)
+    //   Winding:   clockwise when viewed from outside
+    //   Normals:   outward
+    //   Texcoords: (0,0) = top-left of the image (glTF); V increases downward
     //
     // Importers bake this on load; apps must not apply a post-import basis fix.
     // -----------------------------------------------------------------------
