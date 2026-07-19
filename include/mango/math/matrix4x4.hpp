@@ -217,12 +217,17 @@ namespace mango::math
         static Matrix4x4 rotateY(float angle);
         static Matrix4x4 rotateZ(float angle);
         static Matrix4x4 rotateXYZ(float x, float y, float z);
+
+        // View matrix: camera at `viewer` looking at `target` (Vulkan/OpenGL −Z forward).
         static Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
 
         static Matrix4x4 orthoGL(float left, float right, float bottom, float top, float znear, float zfar);
         static Matrix4x4 frustumGL(float left, float right, float bottom, float top, float znear, float zfar);
         static Matrix4x4 perspectiveGL(float xfov, float yfov, float znear, float zfar);
 
+        // Vulkan projections: depth [0,1], −Z view, Y flipped for top-left framebuffer.
+        // orthoVK / frustumVK: znear/zfar are positive eye distances
+        //   (eye z=−znear → depth 0, z=−zfar → depth 1).
         static Matrix4x4 orthoVK(float left, float right, float bottom, float top, float znear, float zfar);
         static Matrix4x4 frustumVK(float left, float right, float bottom, float top, float znear, float zfar);
         static Matrix4x4 perspectiveVK(float xfov, float yfov, float znear, float zfar);

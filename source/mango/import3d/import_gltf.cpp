@@ -768,7 +768,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     // TODO: u8, u16
                     float32x2 texcoord = float32x2::uload(data);
                     data += attributeTexcoord.stride;
-
+                    // glTF UVs are already top-left / V-down (Vulkan-compatible).
                     vertices[i].texcoord = texcoord;
                 }
             }

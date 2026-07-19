@@ -594,7 +594,8 @@ namespace
             for (int i = 0; i < count; ++i)
             {
                 float32x2 v = read_vec2(p);
-                mesh.mappings[i] =  float32x2(v.x, -v.y);
+                // 3DS UVs are bottom-left origin → Vulkan/glTF top-left (V down).
+                mesh.mappings[i] = float32x2(v.x, 1.0f - v.y);
             }
         }
 

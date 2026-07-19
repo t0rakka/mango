@@ -183,12 +183,18 @@ namespace mango::import3d
     // -----------------------------------------------------------------------
     // Canonical mesh space (all importers + shape generators)
     //
-    //   Axes:      +X right, +Y up, +Z toward viewer (right-handed, glTF axes)
-    //   Winding:   clockwise when viewed from outside
-    //   Normals:   outward
-    //   Texcoords: (0,0) = top-left of the image (glTF); V increases downward
+    //   Handedness: right-handed
+    //   Axes:       +X right, +Y up, +Z toward viewer (glTF / Vulkan world)
+    //   Winding:    clockwise when viewed from outside
+    //               (use VK_FRONT_FACE_CLOCKWISE)
+    //   Normals:    outward
+    //   Tangents:   .xyz = tangent, .w = bitangent sign for TBN
+    //   Texcoords:  (0,0) = top-left of the image; V increases downward
+    //               (glTF / Vulkan sampling; mango Bitmap row 0 = top)
     //
-    // Importers bake this on load; apps must not apply a post-import basis fix.
+    // Importers bake this on load. Do not apply a post-import basis or UV fix.
+    // Camera helpers look down −Z (Vulkan/OpenGL eye space) so perspectiveVK /
+    // orthoVK match these meshes.
     // -----------------------------------------------------------------------
 
     inline void reverseTriangleWinding(Triangle& triangle)
