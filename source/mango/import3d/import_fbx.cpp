@@ -1283,7 +1283,9 @@ namespace mango::import3d
 
                 if (hasNormals && current.normals.mappingType == ByPolygonVertex)
                 {
-                    triangle.vertex[count].normal = current.normals.values[i];
+                    // Transform once at read — fan reuses these across triangles.
+                    const float32x3 n = current.normals.values[i];
+                    triangle.vertex[count].normal = float32x3(-n.x, n.y, -n.z);
                 }
 
                 if (hasTexcoords)
@@ -1316,11 +1318,7 @@ namespace mango::import3d
                         triangle.vertex[1].normal = toOurs(current.normals.values[tempIndex[1]]);
                         triangle.vertex[2].normal = toOurs(current.normals.values[tempIndex[2]]);
                     }
-                    else if (hasNormals && current.normals.mappingType == ByPolygonVertex)
-                    {
-                        for (int vi = 0; vi < 3; ++vi)
-                            triangle.vertex[vi].normal = toOurs(triangle.vertex[vi].normal);
-                    }
+                    // ByPolygonVertex: already remapped when the corner was read.
 
                     // Bake CW outside.
                     std::swap(triangle.vertex[1], triangle.vertex[2]);
@@ -1340,9 +1338,11 @@ namespace mango::import3d
 
                     trimesh.triangles.push_back(triangle);
 
-                    // next vertex
+                    // Fan: reuse vertex[0], advance the shared edge to former vertex[2].
+                    // CW swap already put that corner (pos/normal/uv) into vertex[1] —
+                    // do not copy vertex[2]→vertex[1] after the swap (that restores the
+                    // wrong ByPolygonVertex normal and mosaics quads/ngons).
                     tempIndex[1] = tempIndex[2];
-                    triangle.vertex[1].normal = triangle.vertex[2].normal;
                     --count;
                 }
 
