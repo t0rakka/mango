@@ -17,6 +17,22 @@
 
 namespace mango::import3d
 {
+
+    // -----------------------------------------------------------------------
+    // Canonical mesh / world / view space (importers + shape generators)
+    //
+    //   Handedness: right-handed (right × up = forward)
+    //   Axes:       +X right, +Y up, +Z ahead (Unity-like labels)
+    //   Winding:    clockwise when viewed from outside = front face
+    //               OpenGL: GL_CW. Vulkan after a Y-up→Y-down last-mile
+    //               (e.g. scale(1,-1,-1)): use VK_FRONT_FACE_COUNTER_CLOCKWISE
+    //               — FB signed area flips with Y; mesh data stays CW.
+    //   Normals:    outward
+    //   Tangents:   .xyz = tangent, .w = bitangent sign for TBN
+    //   Texcoords:  (0,0) = top-left; V increases downward
+    //
+    // -----------------------------------------------------------------------
+
     using float32x2 = math::Vector<float, 2>;
     using float32x3 = math::Vector<float, 3>;
     using float32x4 = math::Vector<float, 4>;
@@ -179,43 +195,6 @@ namespace mango::import3d
         std::vector<Node> nodes;
         std::vector<u32> roots;
     };
-
-    // -----------------------------------------------------------------------
-    // Canonical mesh space (all importers + shape generators)
-    //
-    //   Handedness: right-handed
-    //   Axes:       +X right, +Y up, +Z toward viewer (glTF / Vulkan world)
-    //   Winding:    clockwise when viewed from outside
-    //               (use VK_FRONT_FACE_CLOCKWISE)
-    //   Normals:    outward
-    //   Tangents:   .xyz = tangent, .w = bitangent sign for TBN
-    //   Texcoords:  (0,0) = top-left of the image; V increases downward
-    //               (glTF / Vulkan sampling; mango Bitmap row 0 = top)
-    //
-    // Importers bake this on load. Do not apply a post-import basis or UV fix.
-    // Camera helpers look down −Z (Vulkan/OpenGL eye space) so perspectiveVK /
-    // orthoVK match these meshes.
-    // -----------------------------------------------------------------------
-
-    inline void reverseTriangleWinding(Triangle& triangle)
-    {
-        std::swap(triangle.vertex[1], triangle.vertex[2]);
-    }
-
-    // Outward geometric normal for a CW-outside triangle (p0, p1, p2).
-    // RH cross of CW verts points inward; use the opposite product.
-    inline float32x3 faceNormalOutwardCW(const float32x3& p0, const float32x3& p1, const float32x3& p2)
-    {
-        return normalize(cross(p0 - p2, p0 - p1));
-    }
-
-    inline void reverseTriangleListIndices(u32* indices, size_t count)
-    {
-        for (size_t i = 0; i + 2 < count; i += 3)
-        {
-            std::swap(indices[i + 1], indices[i + 2]);
-        }
-    }
 
     // -----------------------------------------------------------------------
     // shapes

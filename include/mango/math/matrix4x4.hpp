@@ -218,7 +218,8 @@ namespace mango::math
         static Matrix4x4 rotateZ(float angle);
         static Matrix4x4 rotateXYZ(float x, float y, float z);
 
-        // View matrix: camera at `viewer` looking at `target` (Vulkan/OpenGL −Z forward).
+        // View matrix: camera at `viewer` looking at `target` along +Z (classic / Unity-like).
+        // Vulkan *VK projections expect −Z eye space — compose with scale(1,1,-1) before them.
         static Matrix4x4 lookat(const float32x3& target, const float32x3& viewer, const float32x3& up);
 
         static Matrix4x4 orthoGL(float left, float right, float bottom, float top, float znear, float zfar);

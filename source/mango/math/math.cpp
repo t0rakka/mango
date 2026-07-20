@@ -545,9 +545,9 @@ namespace mango::math
 
     Matrix4x4 Matrix4x4::lookat(const float32x3& target, const float32x3& viewer, const float32x3& up)
     {
-        // Vulkan / OpenGL eye space: camera looks down −Z.
-        // zaxis is the view-space +Z basis (points opposite the look direction).
-        const float32x3 zaxis = normalize(viewer - target);
+        // Classic / Unity-like eye space: camera looks along +Z (toward target).
+        // Pair with scale(1,1,-1) before perspectiveVK/orthoVK (those expect −Z).
+        const float32x3 zaxis = normalize(target - viewer);
         const float32x3 xaxis = normalize(cross(up, zaxis));
         const float32x3 yaxis = cross(zaxis, xaxis);
 

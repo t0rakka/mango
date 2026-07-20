@@ -483,13 +483,14 @@ namespace mango::import3d
         }
 
         //printf("v %f %f %f %f\n", value[0], value[1], value[2], value[3]);
-        positions.emplace_back(value[0], value[1], value[2]);
+        // OBJ: typically RH Y-up, +Z toward viewer. 180° about Y → our +Z ahead.
+        positions.emplace_back(-value[0], value[1], -value[2]);
     }
 
     void ReaderOBJ::parse_vn(const std::string_view* tokens, size_t count)
     {
         float32x3 value = parse_float32x3(tokens, count);
-        normals.push_back(value);
+        normals.push_back(float32x3(-value.x, value.y, -value.z));
     }
 
     void ReaderOBJ::parse_vt(const std::string_view* tokens, size_t count)
@@ -656,7 +657,7 @@ namespace mango::import3d
         {
             FaceOBJ face;
 
-            // OBJ faces are typically CCW outside → bake CW (Vulkan mesh contract).
+            // (−x,y,−z) keeps file CCW — bake CW outside.
             face.vertex[0].position = positionIndex[0];
             face.vertex[0].texcoord = texcoordIndex[0];
             face.vertex[0].normal   = normalIndex[0];
@@ -824,7 +825,7 @@ namespace mango::import3d
                             const float32x3& p1 = mesh.vertices[i1].position;
                             const float32x3& p2 = mesh.vertices[i2].position;
 
-                            const float32x3 faceNormal = faceNormalOutwardCW(p0, p1, p2);
+                            const float32x3 faceNormal = normalize(cross(p0 - p2, p0 - p1));
                             accumulated[i0] = accumulated[i0] + faceNormal;
                             accumulated[i1] = accumulated[i1] + faceNormal;
                             accumulated[i2] = accumulated[i2] + faceNormal;

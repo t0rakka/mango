@@ -833,7 +833,7 @@ namespace mango::import3d
 
             material.name = surface.name;
             material.metallicFactor = 0.0f;
-            material.roughnessFactor = 0.5f;
+            material.roughnessFactor = 1.0f;
 
             if (!surface.ctex.name.empty())
             {
@@ -876,12 +876,13 @@ namespace mango::import3d
 
                 Triangle triangle;
 
+                // LWO v5 / LWOB stores faces CCW. Bake CW outside + outward normals.
                 float32x3 p0 = reader.points[current.point[0]];
                 float32x3 p1 = reader.points[current.point[1]];
                 float32x3 p2 = reader.points[current.point[2]];
 
-                // compute triangle normal
-                float32x3 currentNormal = faceNormalOutwardCW(p0, p1, p2);
+                // Outward for file CCW (was using the CW-outward cross → inward normals).
+                float32x3 currentNormal = normalize(cross(p1 - p0, p2 - p0));
 
                 // compute vertex normals
                 for (int j = 0; j < 3; ++j)
@@ -908,7 +909,7 @@ namespace mango::import3d
                         float32x3 s0 = reader.points[shared.point[0]];
                         float32x3 s1 = reader.points[shared.point[1]];
                         float32x3 s2 = reader.points[shared.point[2]];
-                        float32x3 sharedNormal = faceNormalOutwardCW(s0, s1, s2);
+                        float32x3 sharedNormal = normalize(cross(s1 - s0, s2 - s0));
 
                         float angle = dot(currentNormal, sharedNormal);
                         if (angle >= angleLimit)
@@ -927,6 +928,9 @@ namespace mango::import3d
                 triangle.vertex[0].texcoord = surface.ctex.texcoord(p0);
                 triangle.vertex[1].texcoord = surface.ctex.texcoord(p1);
                 triangle.vertex[2].texcoord = surface.ctex.texcoord(p2);
+
+                // CCW → CW outside
+                std::swap(triangle.vertex[1], triangle.vertex[2]);
 
                 trimesh.triangles.push_back(triangle);
             }
@@ -1738,7 +1742,7 @@ namespace mango::import3d
 
         Material material;
         material.metallicFactor = 0.0f;
-        material.roughnessFactor = 0.5f;
+        material.roughnessFactor = 1.0f;
         //material.baseColorTexture = createTexture(filesystem::Path("./"), "texture.jpg"); // HACK
         scene.materials.push_back(material);
 
@@ -1764,8 +1768,8 @@ namespace mango::import3d
                     float32x3 position1 = layer.points[pointIndices[i + 1]];
                     float32x3 position2 = layer.points[pointIndices[i + 2]];
 
-                    // LWO2 fan is typically CCW → bake CW outside.
-                    float32x3 normal = faceNormalOutwardCW(position0, position2, position1);
+                    // File fan is CCW; emit CW outside with matching outward normal.
+                    float32x3 normal = normalize(cross(position1 - position0, position2 - position0));
 
                     Triangle triangle;
 

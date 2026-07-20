@@ -252,14 +252,15 @@ namespace mango::import3d
             float32x3( 0.0f, 0.0f,-1.0f),
         };
 
+        // .w = +1 so B = cross(N, T) points along +V (mikktspace convention).
         const float32x4 tangents [] =
         {
-            float32x4( 0.0f, 0.0f, 1.0f,-1.0f),
-            float32x4( 0.0f, 0.0f,-1.0f,-1.0f),
-            float32x4( 1.0f, 0.0f, 0.0f,-1.0f),
-            float32x4( 1.0f, 0.0f, 0.0f,-1.0f),
-            float32x4(-1.0f, 0.0f, 0.0f,-1.0f),
-            float32x4( 1.0f, 0.0f, 0.0f,-1.0f),
+            float32x4( 0.0f, 0.0f, 1.0f, 1.0f),
+            float32x4( 0.0f, 0.0f,-1.0f, 1.0f),
+            float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
+            float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
+            float32x4(-1.0f, 0.0f, 0.0f, 1.0f),
+            float32x4( 1.0f, 0.0f, 0.0f, 1.0f),
         };
 
         const float32x2 texcoords [] =
@@ -270,6 +271,7 @@ namespace mango::import3d
             float32x2(1.0f, 1.0f),
         };
 
+        // Quads listed so (0,2,1)/(0,3,2) are CW when viewed from outside.
         const u32 faces [] =
         {
             1, 3, 7, 5,
@@ -280,7 +282,7 @@ namespace mango::import3d
             0, 2, 3, 1,
         };
 
-        // Two CW triangles per face (0,2,1) / (0,3,2) — normals stay outward.
+        // Two CW-outside triangles per face (viewed with outward normal toward you).
         const u32 indices [] =
         {
             0,  2,  1,  0,  3,  2,
@@ -356,13 +358,14 @@ namespace mango::import3d
             float32x3(-b, -a,  0),
         };
 
+        // CW-outside face index triples.
         const u32 faces [] =
         {
-            2, 1, 0, 1, 2, 3, 5, 4, 3, 4, 8, 3,
-            7, 6, 0, 6, 9, 0, 11, 10, 4, 10, 11, 6,
-            9, 5, 2, 5, 9, 11, 8, 7, 1, 7, 8, 10,
-            2, 5, 3, 8, 1, 3, 9, 2, 0, 1, 7, 0,
-            11, 9, 6, 7, 10, 6, 5, 11, 4, 10, 8, 4,
+            2, 0, 1, 1, 3, 2, 5, 3, 4, 4, 3, 8,
+            7, 0, 6, 6, 0, 9, 11, 4, 10, 10, 6, 11,
+            9, 2, 5, 5, 11, 9, 8, 1, 7, 7, 10, 8,
+            2, 3, 5, 8, 3, 1, 9, 0, 2, 1, 0, 7,
+            11, 6, 9, 7, 6, 10, 5, 4, 11, 10, 4, 8,
         };
 
         Mesh mesh;
@@ -371,18 +374,10 @@ namespace mango::import3d
 
         for (int i = 0; i < 20; ++i)
         {
-            float32x3 p0 = points[faces[i * 3 + 0]];
-            float32x3 p1 = points[faces[i * 3 + 1]];
-            float32x3 p2 = points[faces[i * 3 + 2]];
-
-            // Convex, origin-centered: CW outside + one flat normal for the whole face.
-            float32x3 outward = normalize(p0 + p1 + p2);
-            if (dot(cross(p1 - p0, p2 - p0), outward) > 0.0f)
-            {
-                std::swap(p1, p2);
-            }
-
-            const float32x3 faceNormal = faceNormalOutwardCW(p0, p1, p2);
+            const float32x3 p0 = points[faces[i * 3 + 0]];
+            const float32x3 p1 = points[faces[i * 3 + 1]];
+            const float32x3 p2 = points[faces[i * 3 + 2]];
+            const float32x3 faceNormal = normalize(cross(p0 - p2, p0 - p1));
 
             Triangle triangle;
             triangle.vertex[0].position = p0;
@@ -459,29 +454,31 @@ namespace mango::import3d
             float32x3 p3 = points[faces[i * 5 + 3]] * scale;
             float32x3 p4 = points[faces[i * 5 + 4]] * scale;
 
-            // One normal for the whole pentagon (flat faceted face).
-            const float32x3 faceOutward = normalize(p0 + p1 + p2 + p3 + p4);
+            float32x3 normal = normalize(cross(p0 - p1, p0 - p2));
 
-            auto pushFace = [&](float32x3 a, float32x3 b, float32x3 c)
-            {
-                if (dot(cross(b - a, c - a), faceOutward) > 0.0f)
-                {
-                    std::swap(b, c);
-                }
+            Triangle triangle;
 
-                Triangle triangle;
-                triangle.vertex[0].position = a;
-                triangle.vertex[1].position = b;
-                triangle.vertex[2].position = c;
-                triangle.vertex[0].normal = faceOutward;
-                triangle.vertex[1].normal = faceOutward;
-                triangle.vertex[2].normal = faceOutward;
-                mesh.triangles.push_back(triangle);
-            };
+            triangle.vertex[0].normal = normal;
+            triangle.vertex[1].normal = normal;
+            triangle.vertex[2].normal = normal;
 
-            pushFace(p0, p1, p2);
-            pushFace(p0, p2, p3);
-            pushFace(p0, p3, p4);
+            triangle.vertex[0].position = p0;
+            triangle.vertex[1].position = p2;
+            triangle.vertex[2].position = p1;
+
+            mesh.triangles.push_back(triangle);
+
+            triangle.vertex[0].position = p0;
+            triangle.vertex[1].position = p3;
+            triangle.vertex[2].position = p2;
+
+            mesh.triangles.push_back(triangle);
+
+            triangle.vertex[0].position = p0;
+            triangle.vertex[1].position = p4;
+            triangle.vertex[2].position = p3;
+
+            mesh.triangles.push_back(triangle);
         }
 
         return std::make_unique<IndexedMesh>(mesh, 0);
@@ -527,7 +524,7 @@ namespace mango::import3d
                 vertex.position = position;
                 vertex.normal   = normalize(float32x3(jcos * icos, jcos * isin, jsin));
                 vertex.texcoord = float32x2(i * uscale, j * vscale);
-                vertex.tangent  = float32x4(tangent, -1.0f);
+                vertex.tangent  = float32x4(tangent, 1.0f);
 
                 mesh.vertices.push_back(vertex);
                 mesh.boundingBox.extend(position);
@@ -546,7 +543,7 @@ namespace mango::import3d
                 int c = ci + j + 1;
                 int d = ni + j + 1;
 
-                // CW outside (was a,b,c / b,d,c).
+                // CW when viewed from outside
                 mesh.indices.push_back(a);
                 mesh.indices.push_back(c);
                 mesh.indices.push_back(b);
@@ -632,7 +629,8 @@ namespace mango::import3d
                 vertex.position = centerpoint + normal;
                 vertex.normal   = normalize(normal);
                 vertex.texcoord = float32x2(j * uscale, i * vscale);
-                vertex.tangent  = float32x4(tangent, -1.0f);
+                // T along +U (around tube); B = cross(N,T) along +V → w = +1.
+                vertex.tangent  = float32x4(tangent, 1.0f);
 
                 mesh.boundingBox.extend(vertex.position);
             }
@@ -657,21 +655,29 @@ namespace mango::import3d
         mesh.vertices[params.steps * (params.facets + 1) + params.facets] = mesh.vertices[0];
         mesh.vertices[params.steps * (params.facets + 1) + params.facets].texcoord = float32x2(params.uscale, params.vscale);
 
-        // generate indices — swap strip pair order for CW outside
-        mesh.indices.resize((params.steps + 1) * params.facets * 2);
-
-        for (int j = 0; j < params.facets; j++)
+        for (int i = 0; i < params.steps; ++i)
         {
-            for (int i = 0; i < params.steps + 1; i++)
+            for (int j = 0; j < params.facets; ++j)
             {
-                mesh.indices[i * 2 + 0 + j * (params.steps + 1) * 2] = (j + 0 + i * (params.facets + 1));
-                mesh.indices[i * 2 + 1 + j * (params.steps + 1) * 2] = (j + 1 + i * (params.facets + 1));
+                const u32 a = u32(j + 0 + (i + 0) * (params.facets + 1));
+                const u32 b = u32(j + 1 + (i + 0) * (params.facets + 1));
+                const u32 c = u32(j + 0 + (i + 1) * (params.facets + 1));
+                const u32 d = u32(j + 1 + (i + 1) * (params.facets + 1));
+
+                // CW when viewed from outside
+                mesh.indices.push_back(a);
+                mesh.indices.push_back(b);
+                mesh.indices.push_back(c);
+
+                mesh.indices.push_back(b);
+                mesh.indices.push_back(d);
+                mesh.indices.push_back(c);
             }
         }
 
         Primitive primitive;
 
-        primitive.type = Primitive::Type::TriangleStrip;
+        primitive.type = Primitive::Type::TriangleList;
         primitive.start = 0;
         primitive.count = u32(mesh.indices.size());
         primitive.base = 0;

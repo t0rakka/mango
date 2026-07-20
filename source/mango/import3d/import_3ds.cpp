@@ -73,11 +73,11 @@ namespace
 
         float32x3 computeNormal(const Face3DS& face) const
         {
-            // 3DS stores CW outside — same as faceNormalOutwardCW.
+            // 3DS stores CW outside
             const float32x3& p0 = positions[face.index[0]];
             const float32x3& p1 = positions[face.index[1]];
             const float32x3& p2 = positions[face.index[2]];
-            return faceNormalOutwardCW(p0, p1, p2);
+            return normalize(cross(p0 - p2, p0 - p1));
         }
     };
 

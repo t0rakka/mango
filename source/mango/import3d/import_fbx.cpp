@@ -1296,9 +1296,15 @@ namespace mango::import3d
 
                 if (count == 3)
                 {
-                    float32x3 position0 = current.positions.values[tempIndex[0]];
-                    float32x3 position1 = current.positions.values[tempIndex[1]];
-                    float32x3 position2 = current.positions.values[tempIndex[2]];
+                    // FBX geometry is typically RH Y-up (same family as glTF).
+                    // 180° about Y → our +Z ahead; winding stays CCW until reverse below.
+                    auto toOurs = [](const float32x3& v) {
+                        return float32x3(-v.x, v.y, -v.z);
+                    };
+
+                    float32x3 position0 = toOurs(current.positions.values[tempIndex[0]]);
+                    float32x3 position1 = toOurs(current.positions.values[tempIndex[1]]);
+                    float32x3 position2 = toOurs(current.positions.values[tempIndex[2]]);
 
                     triangle.vertex[0].position = position0;
                     triangle.vertex[1].position = position1;
@@ -1306,21 +1312,27 @@ namespace mango::import3d
 
                     if (current.normals.mappingType == ByVertice)
                     {
-                        triangle.vertex[0].normal = current.normals.values[tempIndex[0]];
-                        triangle.vertex[1].normal = current.normals.values[tempIndex[1]];
-                        triangle.vertex[2].normal = current.normals.values[tempIndex[2]];
+                        triangle.vertex[0].normal = toOurs(current.normals.values[tempIndex[0]]);
+                        triangle.vertex[1].normal = toOurs(current.normals.values[tempIndex[1]]);
+                        triangle.vertex[2].normal = toOurs(current.normals.values[tempIndex[2]]);
+                    }
+                    else if (hasNormals && current.normals.mappingType == ByPolygonVertex)
+                    {
+                        for (int vi = 0; vi < 3; ++vi)
+                            triangle.vertex[vi].normal = toOurs(triangle.vertex[vi].normal);
                     }
 
-                    // FBX polygons are typically CCW outside → bake CW.
-                    reverseTriangleWinding(triangle);
+                    // Bake CW outside.
+                    std::swap(triangle.vertex[1], triangle.vertex[2]);
 
                     if (!hasNormals)
                     {
                         // TODO: smoothing groups (need file for testing)
-                        float32x3 normal = faceNormalOutwardCW(
-                            triangle.vertex[0].position,
-                            triangle.vertex[1].position,
-                            triangle.vertex[2].position);
+                        float32x3 p0 = triangle.vertex[0].position;
+                        float32x3 p1 = triangle.vertex[1].position;
+                        float32x3 p2 = triangle.vertex[2].position;
+                        float32x3 normal = normalize(cross(p0 - p2, p0 - p1));
+
                         triangle.vertex[0].normal = normal;
                         triangle.vertex[1].normal = normal;
                         triangle.vertex[2].normal = normal;
