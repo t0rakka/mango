@@ -1075,6 +1075,13 @@ namespace mango::import3d
             material.baseColorTexture = createTexture(path, material3ds.texture_map1.filename);
             material.emissiveTexture = createTexture(path, material3ds.texture_self_illum.filename);
 
+            // Texture replaces diffuse in classic 3DS shading. Old scenes often leave
+            // diffuse black/dark because the modeler never used it once a map was set.
+            if (material.baseColorTexture)
+            {
+                material.baseColorFactor = float32x4(1.0f, 1.0f, 1.0f, 1.0f);
+            }
+
             materials.push_back(material);
         }
 
