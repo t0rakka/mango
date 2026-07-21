@@ -1,0 +1,32 @@
+{
+    "name": "mango",
+    "version-string": "3.3.1",
+    "description": "Cross-platform C++ image processing and graphics library.",
+    "license": "ZLIB",
+
+    "dependencies": [
+        "zlib",
+        "bzip2",
+        "lz4",
+        "zstd",
+        "liblzma",
+
+        "libpng",
+        "libjpeg-turbo",
+        "libtiff",
+        "giflib",
+        "libwebp",
+
+        "freetype",
+        "harfbuzz",
+
+        "lcms",
+        "openjpeg",
+
+        "libjxl",
+        "libheif",
+        "libavif",
+
+        "openexr"
+    ]
+}
