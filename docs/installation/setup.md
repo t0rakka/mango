@@ -11,94 +11,42 @@ The external libraries are divided into three categories: REQUIRED libraries MUS
 <h2><img src="logo-linux.png" alt="logo" width="80"/> Linux</h2>
 
 
-There are different package managers but our examples use apt-get (Ubuntu, Mint, etc.).
+There are different package managers but here we use apt-get (Debian, Ubuntu, Mint, etc.)
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
-    sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev
-
-### OPTIONAL Libraries (Core, Image)
-
-    sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev
-
-### OPTIONAL Libraries (OpenGL)
-
-    sudo apt-get install mesa-common-dev libgl1-mesa-dev
-
-### OPTIONAL Libraries (Vulkan)
-
-    sudo apt-get install glslang-dev
-
-### REQUIRED Libraries (Import3D)
-
-    sudo apt-get install libsimdjson-dev
-
-### OPTIONAL Libraries (Examples)
-
-    sudo apt-get install libjpeg-dev libpng-dev
+    sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev
 
 ### Building
 
-Building on Linux is fairly straightforward; generate build system scripts, run them, install.
+Building on Linux is fairly straightforward; generate build system scripts, run them, install:
 
     cmake -S . -B build -G "Ninja"
     cd build
     ninja
     sudo ninja install
 
-Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. You're ready to go. 
+Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. Configure the cmake options before building to tune the library size and dependencies to your taste.
 
 
 <h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch Linux</h2>
 
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
-    sudo pacman -S fmt z libdeflate zstd lcms2
-
-### OPTIONAL Libraries (Core, Image)
-
-    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib
-
-### OPTIONAL Libraries (OpenGL)
-
-    sudo pacman -S mesa
-
-### OPTIONAL Libraries (Vulkan)
-
-    sudo pacman -S glslang
-
-### REQUIRED Libraries (Import3D)
-
-    sudo pacman -S simdjson
-
-### OPTIONAL Libraries (Examples)
-
-    sudo pacman -S libjpeg-turbo libpng
+    sudo pacman -S fmt z libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng
 
 ### Building
 
-On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
+On Arch Linux the building is exactly same as it is on Linux Debian/Ubuntu/Mint.
 
 
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
 
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
-    brew install fmt zlib libdeflate zstd lcms2
-
-### OPTIONAL Libraries (Core, Image)
-
-    brew install jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib
-
-### REQUIRED Libraries (Import3D)
-
-    brew install simdjson
-
-### OPTIONAL Libraries (Examples)
-
-    brew install libjpeg-turbo libpng
+    brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib freetype harfbuzz simdjson libjpeg-turbo libpng
 
 ### Building
 
@@ -110,7 +58,7 @@ On macOS the building is exactly same as it is on Linux.
 
 The Emscripten build is still work-in-progress but is partially working. The recommended way is to install dependencies using vcpkg, the preset builds examples so the libraries usually in examples are included in the required libraries below. The target is currently node and the cmake configuration builds specifically for node with native filesystem access enabled for testing purposes.
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
     vcpkg install --triplet wasm32-emscripten fmt zlib libdeflate zstd lcms libjpeg-turbo libpng
 
