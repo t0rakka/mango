@@ -118,53 +118,24 @@ The Emscripten build is still work-in-progress but is partially working. The rec
 <h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
 
 
-Windows is different and long story short the vcpkg is the supported method to get the libraries. If you are new to vcpkg just install it using Microsoft's official installation instructions. It is recommended that VCPKG_DEFAULT_TRIPLET environment variable is set, while not necessary this way you avoid having to type it all the time everywhere.
+Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
 
-Here are the environment variables that are needed, the x64-windows is just example, x86 32-bit triplet also works.
-
-    VCPKG_DEFAULT_TRIPLET   x64-windows
     VCPKG_ROOT              <vcpkg_root>
-    path: <vcpkg_root>\installed\x64-windows\bin
-          <vcpkg_root>
+    VCPKG_DEFAULT_TRIPLET   x64-windows
 
-### REQUIRED Libraries (Core, Image)
-
-    vcpkg install pkgconf fmt zlib libdeflate zstd lcms
-
-### OPTIONAL Libraries (Core, Image)
-
-    vcpkg install libjxl openjpeg libwebp libavif libheif libraw isal lz4 bzip2 jxrlib
-
-### OPTIONAL Libraries (Vulkan)
-
-    vcpkg install glslang
-
-### REQUIRED Libraries (Import3D)
-
-    vcpkg install simdjson
-
-### OPTIONAL Libraries (Examples)
-
-    vcpkg install libjpeg-turbo libpng blend2d
+Dependencies come from `vcpkg.json` (manifest mode). The Windows presets enable all features (`base`, `image`, `vulkan`, `examples`) so configure installs everything needed.
 
 ### Building
-
-Here's the part where VCPKG_ROOT environment variable comes in handy; you don't need to manually type the path where VCPKG is installed on your system. The first cmake call generates the Visual Studio solution files into the build\ directory. Once you go into the directory you can open the mango.sln file or keep using the command line to compile and install the library.
-
-    cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" -DINTEL_DELUXE=ON
-    cd build
-    cmake --build . --config Release --parallel
-    cmake --install .
-
-It is also possible to use the presets:
 
     cmake --preset windows
     cmake --build --preset windows-release
     cmake --install build
 
-If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
+Ninja alternatives: `windows-ninja-release` / `windows-ninja-debug`.
 
-Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than POSIX builds where the selection mechanism is different.
+First configure can take a while while vcpkg builds dependencies into the build tree. Fine-grained control of what mango itself compiles is still via CMake options in `CMakeLists.txt`.
+
+If you are not sure where mango was installed, re-run configure in the build directory and the install prefix is printed to the console.
 
 #### INTEL_DELUXE
 
