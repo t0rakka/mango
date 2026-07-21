@@ -1,0 +1,55 @@
+{
+    "name": "mango",
+    "version-string": "3.3.1",
+    "description": "Cross-platform C++ image processing and graphics library.",
+    "license": "ZLIB",
+
+    "dependencies": [],
+    "default-features": ["base", "image", "vulkan", "examples"],
+
+    "features": {
+        "base": {
+            "description": "Core compression and utility dependencies",
+            "dependencies": [
+                "pkgconf",
+                "fmt",
+                "zlib",
+                "libdeflate",
+                "zstd",
+                "isal",
+                "lz4",
+                "bzip2",
+                "simdjson"
+            ]
+        },
+        "image": {
+            "description": "Image codec and color-management dependencies",
+            "dependencies": [
+                "lcms",
+                "libjxl",
+                "openjpeg",
+                "libwebp",
+                "libavif",
+                "libheif",
+                "libraw",
+                "jxrlib"
+            ]
+        },
+        "vulkan": {
+            "description": "Vulkan / text rendering dependencies",
+            "dependencies": [
+                "glslang",
+                "freetype",
+                "harfbuzz"
+            ]
+        },
+        "examples": {
+            "description": "Dependencies used by example programs",
+            "dependencies": [
+                "libjpeg-turbo",
+                "libpng",
+                "blend2d"
+            ]
+        }
+    }
+}

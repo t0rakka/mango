@@ -11,94 +11,42 @@ The external libraries are divided into three categories: REQUIRED libraries MUS
 <h2><img src="logo-linux.png" alt="logo" width="80"/> Linux</h2>
 
 
-There are different package managers but our examples use apt-get (Ubuntu, Mint, etc.).
+There are different package managers but here we use apt-get (Debian, Ubuntu, Mint, etc.)
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
-    sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev
-
-### OPTIONAL Libraries (Core, Image)
-
-    sudo apt-get install libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev
-
-### OPTIONAL Libraries (OpenGL)
-
-    sudo apt-get install mesa-common-dev libgl1-mesa-dev
-
-### OPTIONAL Libraries (Vulkan)
-
-    sudo apt-get install glslang-dev
-
-### REQUIRED Libraries (Import3D)
-
-    sudo apt-get install libsimdjson-dev
-
-### OPTIONAL Libraries (Examples)
-
-    sudo apt-get install libjpeg-dev libpng-dev
+    sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev
 
 ### Building
 
-Building on Linux is fairly straightforward; generate build system scripts, run them, install.
+Building on Linux is fairly straightforward; generate build system scripts, run them, install:
 
     cmake -S . -B build -G "Ninja"
     cd build
     ninja
     sudo ninja install
 
-Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. You're ready to go. 
+Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. Configure the cmake options before building to tune the library size and dependencies to your taste.
 
 
 <h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch Linux</h2>
 
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
-    sudo pacman -S fmt z libdeflate zstd lcms2
-
-### OPTIONAL Libraries (Core, Image)
-
-    sudo pacman -S libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib
-
-### OPTIONAL Libraries (OpenGL)
-
-    sudo pacman -S mesa
-
-### OPTIONAL Libraries (Vulkan)
-
-    sudo pacman -S glslang
-
-### REQUIRED Libraries (Import3D)
-
-    sudo pacman -S simdjson
-
-### OPTIONAL Libraries (Examples)
-
-    sudo pacman -S libjpeg-turbo libpng
+    sudo pacman -S fmt z libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng
 
 ### Building
 
-On Arch Linux the building is exactly same as it is on Linux Ubuntu/Mint.
+On Arch Linux the building is exactly same as it is on Linux Debian/Ubuntu/Mint.
 
 
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
 
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
-    brew install fmt zlib libdeflate zstd lcms2
-
-### OPTIONAL Libraries (Core, Image)
-
-    brew install jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib
-
-### REQUIRED Libraries (Import3D)
-
-    brew install simdjson
-
-### OPTIONAL Libraries (Examples)
-
-    brew install libjpeg-turbo libpng
+    brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib freetype harfbuzz simdjson libjpeg-turbo libpng
 
 ### Building
 
@@ -110,7 +58,7 @@ On macOS the building is exactly same as it is on Linux.
 
 The Emscripten build is still work-in-progress but is partially working. The recommended way is to install dependencies using vcpkg, the preset builds examples so the libraries usually in examples are included in the required libraries below. The target is currently node and the cmake configuration builds specifically for node with native filesystem access enabled for testing purposes.
 
-### REQUIRED Libraries (Core, Image)
+### Dependencies
 
     vcpkg install --triplet wasm32-emscripten fmt zlib libdeflate zstd lcms libjpeg-turbo libpng
 
@@ -118,53 +66,24 @@ The Emscripten build is still work-in-progress but is partially working. The rec
 <h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
 
 
-Windows is different and long story short the vcpkg is the supported method to get the libraries. If you are new to vcpkg just install it using Microsoft's official installation instructions. It is recommended that VCPKG_DEFAULT_TRIPLET environment variable is set, while not necessary this way you avoid having to type it all the time everywhere.
+Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
 
-Here are the environment variables that are needed, the x64-windows is just example, x86 32-bit triplet also works.
-
-    VCPKG_DEFAULT_TRIPLET   x64-windows
     VCPKG_ROOT              <vcpkg_root>
-    path: <vcpkg_root>\installed\x64-windows\bin
-          <vcpkg_root>
+    VCPKG_DEFAULT_TRIPLET   x64-windows
 
-### REQUIRED Libraries (Core, Image)
-
-    vcpkg install pkgconf fmt zlib libdeflate zstd lcms
-
-### OPTIONAL Libraries (Core, Image)
-
-    vcpkg install libjxl openjpeg libwebp libavif libheif libraw isal lz4 bzip2 jxrlib
-
-### OPTIONAL Libraries (Vulkan)
-
-    vcpkg install glslang
-
-### REQUIRED Libraries (Import3D)
-
-    vcpkg install simdjson
-
-### OPTIONAL Libraries (Examples)
-
-    vcpkg install libjpeg-turbo libpng blend2d
+Dependencies come from `vcpkg.json` (manifest mode). The Windows presets enable all features (`base`, `image`, `vulkan`, `examples`) so configure installs everything needed.
 
 ### Building
-
-Here's the part where VCPKG_ROOT environment variable comes in handy; you don't need to manually type the path where VCPKG is installed on your system. The first cmake call generates the Visual Studio solution files into the build\ directory. Once you go into the directory you can open the mango.sln file or keep using the command line to compile and install the library.
-
-    cmake -S . -B build -DCMAKE_TOOLCHAIN_FILE="$env:VCPKG_ROOT\scripts\buildsystems\vcpkg.cmake" -DINTEL_DELUXE=ON
-    cd build
-    cmake --build . --config Release --parallel
-    cmake --install .
-
-It is also possible to use the presets:
 
     cmake --preset windows
     cmake --build --preset windows-release
     cmake --install build
 
-If you are not sure where the MANGO was installed, you can write "cmake .." in the build directory and the target directory will be printed into the console.
+Ninja alternatives: `windows-ninja-release` / `windows-ninja-debug`.
 
-Windows build generator is so-called "multi generator" where there are different configurations and it is recommended you use --config parameter to choose one you want to build. It works a bit differently than POSIX builds where the selection mechanism is different.
+First configure can take a while while vcpkg builds dependencies into the build tree. Fine-grained control of what mango itself compiles is still via CMake options in `CMakeLists.txt`.
+
+If you are not sure where mango was installed, re-run configure in the build directory and the install prefix is printed to the console.
 
 #### INTEL_DELUXE
 

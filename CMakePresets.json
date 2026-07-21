@@ -18,21 +18,23 @@
         },
         {
             "name": "vcpkg",
-            "description": "vcpkg toolchain setup for dependency resolution",
+            "description": "vcpkg toolchain + kitchen-sink manifest features (base, image, vulkan, examples)",
             "cacheVariables": {
-                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake"
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_MANIFEST_FEATURES": "base;image;vulkan;examples",
+                "VCPKG_INSTALL_OPTIONS": "--no-print-usage"
             }
         },
         {
             "name": "windows",
-            "description": "Windows build using Visual Studio and vcpkg toolchain",
+            "description": "Windows Visual Studio build (vcpkg installs all manifest features)",
             "inherits": ["options", "vcpkg"],
             "generator": "Visual Studio 17 2022",
             "binaryDir": "${sourceDir}/build"
         },
         {
             "name": "windows-ninja-release",
-            "description": "Windows Ninja Release build with vcpkg toolchain",
+            "description": "Windows Ninja Release build (vcpkg installs all manifest features)",
             "inherits": ["options", "ninja", "vcpkg"],
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
@@ -41,7 +43,7 @@
         },
         {
             "name": "windows-ninja-debug",
-            "description": "Windows Ninja Debug build with vcpkg toolchain",
+            "description": "Windows Ninja Debug build (vcpkg installs all manifest features)",
             "inherits": ["options", "ninja", "vcpkg"],
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
