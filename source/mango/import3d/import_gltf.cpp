@@ -692,8 +692,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float y = uload32f(data + 4);
                     float z = uload32f(data + 8);
                     // glTF: RH, +Z toward viewer, CCW outside.
-                    // 180° about Y → our RH +Z ahead; winding stays CCW (reverse below).
-                    float32x3 position(-x, y, -z);
+                    // Reflect Z → our LH Unity-like (+X right, +Y up, +Z ahead).
+                    // Handedness flip from Z-reflect already yields CW front faces.
+                    float32x3 position(x, y, -z);
 
                     data += attributePosition.stride;
 
@@ -723,7 +724,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float x = uload32f(data + 0);
                     float y = uload32f(data + 4);
                     float z = uload32f(data + 8);
-                    float32x3 normal(-x, y, -z);
+                    float32x3 normal(x, y, -z);
 
                     data += attributeNormal.stride;
 
@@ -747,7 +748,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     float y = uload32f(data + 4);
                     float z = uload32f(data + 8);
                     float w = uload32f(data + 12);
-                    float32x4 tangent(-x, y, -z, w);
+                    float32x4 tangent(x, y, -z, w);
 
                     data += attributeTangent.stride;
 
@@ -905,15 +906,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         {
                             Triangle triangle;
 
-                            // After (−x,y,−z) winding is still CCW — bake CW outside.
+                            // Z-reflect already yields CW front faces — keep file order.
                             triangle.vertex[0] = vertices[indices[i - 2]];
-                            triangle.vertex[1] = vertices[indices[i - 0]];
-                            triangle.vertex[2] = vertices[indices[i - 1]];
-
-                            // Tangents authored for CCW; flip bitangent sign with winding.
-                            triangle.vertex[0].tangent.w = -triangle.vertex[0].tangent.w;
-                            triangle.vertex[1].tangent.w = -triangle.vertex[1].tangent.w;
-                            triangle.vertex[2].tangent.w = -triangle.vertex[2].tangent.w;
+                            triangle.vertex[1] = vertices[indices[i - 1]];
+                            triangle.vertex[2] = vertices[indices[i - 0]];
 
                             trimesh.triangles.push_back(triangle);
                         }
@@ -943,11 +939,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                             triangle.vertex[2] = vertices[indices[i]];
                             Vertex newest = triangle.vertex[2];
 
-                            std::swap(triangle.vertex[1], triangle.vertex[2]);
-
-                            triangle.vertex[0].tangent.w = -triangle.vertex[0].tangent.w;
-                            triangle.vertex[1].tangent.w = -triangle.vertex[1].tangent.w;
-                            triangle.vertex[2].tangent.w = -triangle.vertex[2].tangent.w;
                             trimesh.triangles.push_back(triangle);
 
                             v0 = v1;
@@ -966,14 +957,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         for (size_t i = 2; i < indices.size(); ++i)
                         {
                             triangle.vertex[2] = vertices[indices[i]];
-
-                            Triangle cw = triangle;
-                            std::swap(cw.vertex[1], cw.vertex[2]);
-
-                            cw.vertex[0].tangent.w = -cw.vertex[0].tangent.w;
-                            cw.vertex[1].tangent.w = -cw.vertex[1].tangent.w;
-                            cw.vertex[2].tangent.w = -cw.vertex[2].tangent.w;
-                            trimesh.triangles.push_back(cw);
+                            trimesh.triangles.push_back(triangle);
                             triangle.vertex[1] = triangle.vertex[2];
                         }
                         break;
@@ -1027,36 +1011,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                         continue;
                 }
 
-                // (−x,y,−z) keeps file CCW — bake CW outside.
-                switch (primitive.type)
-                {
-                    case Primitive::Type::TriangleList:
-                        for (size_t i = 0; i + 2 < indices.size(); i += 3)
-                        {
-                            std::swap(indices[i + 1], indices[i + 2]);
-                        }
-                        break;
-
-                    case Primitive::Type::TriangleStrip:
-                        if (indices.size() >= 2)
-                        {
-                            std::swap(indices[0], indices[1]);
-                        }
-                        break;
-
-                    case Primitive::Type::TriangleFan:
-                        if (indices.size() >= 3)
-                        {
-                            std::reverse(indices.begin() + 1, indices.end());
-                        }
-                        break;
-                }
-
-                if (mesh.flags & Vertex::Tangent)
-                {
-                    for (Vertex& vertex : vertices)
-                        vertex.tangent.w = -vertex.tangent.w;
-                }
+                // Z-reflect (det −1) already turns glTF CCW into CW — keep index order.
 
                 primitive.start = u32(mesh.indices.size());
                 primitive.count = u32(indices.size());
@@ -1099,13 +1054,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             node.transform = scale * rotation * translation;
         }
 
-        // glTF node TRS is in +Z-toward-viewer space; conjugate by 180° about Y
-        // so meshes and nodes share our +Z-ahead RH space: M' = S M S, S=diag(-1,1,-1).
-        matrix4x4& m = node.transform;
-        m[0] = float32x4( m[0][0], -m[0][1],  m[0][2], -m[0][3]);
-        m[1] = float32x4(-m[1][0],  m[1][1], -m[1][2],  m[1][3]);
-        m[2] = float32x4( m[2][0], -m[2][1],  m[2][2], -m[2][3]);
-        m[3] = float32x4(-m[3][0],  m[3][1], -m[3][2],  m[3][3]);
+        // Same S as mesh attributes: diag(1,1,-1). M' = S M S keeps node space aligned.
+        const matrix4x4 S = matrix4x4::scale(1.0f, 1.0f, -1.0f);
+        node.transform = S * node.transform * S;
 
         node.name = current.name;
 

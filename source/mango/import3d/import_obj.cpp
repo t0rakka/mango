@@ -484,13 +484,13 @@ namespace mango::import3d
 
         //printf("v %f %f %f %f\n", value[0], value[1], value[2], value[3]);
         // OBJ: typically RH Y-up, +Z toward viewer. 180° about Y → our +Z ahead.
-        positions.emplace_back(-value[0], value[1], -value[2]);
+        positions.emplace_back(value[0], value[1], -value[2]);
     }
 
     void ReaderOBJ::parse_vn(const std::string_view* tokens, size_t count)
     {
         float32x3 value = parse_float32x3(tokens, count);
-        normals.push_back(float32x3(-value.x, value.y, -value.z));
+        normals.push_back(float32x3(value.x, value.y, -value.z));
     }
 
     void ReaderOBJ::parse_vt(const std::string_view* tokens, size_t count)
@@ -657,18 +657,18 @@ namespace mango::import3d
         {
             FaceOBJ face;
 
-            // (−x,y,−z) keeps file CCW — bake CW outside.
+            // Z-reflect already yields CW front faces — keep file corner order.
             face.vertex[0].position = positionIndex[0];
             face.vertex[0].texcoord = texcoordIndex[0];
             face.vertex[0].normal   = normalIndex[0];
 
-            face.vertex[1].position = positionIndex[i + 2];
-            face.vertex[1].texcoord = texcoordIndex[i + 2];
-            face.vertex[1].normal   = normalIndex[i + 2];
+            face.vertex[1].position = positionIndex[i + 1];
+            face.vertex[1].texcoord = texcoordIndex[i + 1];
+            face.vertex[1].normal   = normalIndex[i + 1];
 
-            face.vertex[2].position = positionIndex[i + 1];
-            face.vertex[2].texcoord = texcoordIndex[i + 1];
-            face.vertex[2].normal   = normalIndex[i + 1];
+            face.vertex[2].position = positionIndex[i + 2];
+            face.vertex[2].texcoord = texcoordIndex[i + 2];
+            face.vertex[2].normal   = normalIndex[i + 2];
 
             faces.push_back(face);
         }

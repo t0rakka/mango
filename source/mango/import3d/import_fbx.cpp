@@ -1285,7 +1285,7 @@ namespace mango::import3d
                 {
                     // Transform once at read — fan reuses these across triangles.
                     const float32x3 n = current.normals.values[i];
-                    triangle.vertex[count].normal = float32x3(-n.x, n.y, -n.z);
+                    triangle.vertex[count].normal = float32x3(n.x, n.y, -n.z);
                 }
 
                 if (hasTexcoords)
@@ -1299,9 +1299,9 @@ namespace mango::import3d
                 if (count == 3)
                 {
                     // FBX geometry is typically RH Y-up (same family as glTF).
-                    // 180° about Y → our +Z ahead; winding stays CCW until reverse below.
+                    // Reflect Z → our LH Unity-like (+X right, +Y up, +Z ahead); CW bake below.
                     auto toOurs = [](const float32x3& v) {
-                        return float32x3(-v.x, v.y, -v.z);
+                        return float32x3(v.x, v.y, -v.z);
                     };
 
                     float32x3 position0 = toOurs(current.positions.values[tempIndex[0]]);
@@ -1320,8 +1320,7 @@ namespace mango::import3d
                     }
                     // ByPolygonVertex: already remapped when the corner was read.
 
-                    // Bake CW outside.
-                    std::swap(triangle.vertex[1], triangle.vertex[2]);
+                    // Z-reflect already yields CW front faces — keep corner order.
 
                     if (!hasNormals)
                     {
@@ -1339,9 +1338,6 @@ namespace mango::import3d
                     trimesh.triangles.push_back(triangle);
 
                     // Fan: reuse vertex[0], advance the shared edge to former vertex[2].
-                    // CW swap already put that corner (pos/normal/uv) into vertex[1] —
-                    // do not copy vertex[2]→vertex[1] after the swap (that restores the
-                    // wrong ByPolygonVertex normal and mosaics quads/ngons).
                     tempIndex[1] = tempIndex[2];
                     --count;
                 }
