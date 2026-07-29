@@ -571,6 +571,135 @@ bool test11()
     return success;
 }
 
+bool test12()
+{
+    // Pool throughput with real payload (crc32c per task) + utilization pulse.
+    // Compare tasks/s across machines; payload sizes span overhead-bound → bandwidth-bound.
+
+    ThreadPool& pool = ThreadPool::getInstance();
+    const size_t workers = size_t(pool.size());
+
+    struct Config
+    {
+        size_t payload;
+        size_t tasks_per_worker;
+        const char* label;
+    };
+
+    const Config configs [] =
+    {
+        { 1024,       4096, "1 KB"  },  // enqueue / scheduling heavy
+        { 4 * 1024,   2048, "4 KB"  },  // JPEG-block-ish
+        { 64 * 1024,   512, "64 KB" },  // memory / SIMD bound
+    };
+
+    printf("  workers: %zu\n", workers);
+    printf("  %8s  %10s  %12s  %10s  %8s  %s\n",
+        "payload", "tasks", "tasks/s", "MB/s", "ms", "util(mean)");
+    printf("  --------  ----------  ------------  ----------  --------  ----------\n");
+
+    bool success = true;
+    u32 guard = 0;
+
+    for (const Config& cfg : configs)
+    {
+        Buffer block(cfg.payload);
+        std::memset(block.data(), 0x3c, cfg.payload);
+        ConstMemory memory = block;
+
+        const size_t task_count = workers * cfg.tasks_per_worker;
+
+        ConcurrentQueue q;
+        std::atomic<u32> crc_accum { 0 };
+        std::vector<std::function<void()>> bulk(task_count);
+
+        for (size_t i = 0; i < task_count; ++i)
+        {
+            bulk[i] = [&]
+            {
+                u32 crc = crc32c(0, memory);
+                crc_accum.fetch_xor(crc, std::memory_order_relaxed);
+            };
+        }
+
+        // Open the util window after prep so construction cost is not in the pulse.
+        pool.utilization();
+        const u64 time0 = Time::us();
+        q.enqueue_bulk(bulk);
+        q.wait();
+        const u64 elapsed_us = std::max(u64(1), Time::us() - time0);
+
+        auto util = pool.utilization();
+        float util_sum = 0.0f;
+        for (float u : util)
+            util_sum += u;
+        const float util_mean = util.empty() ? 0.0f : util_sum / float(util.size());
+
+        const double sec = double(elapsed_us) / 1.0e6;
+        const double tasks_per_sec = double(task_count) / sec;
+        const double mb = double(task_count * cfg.payload) / (1024.0 * 1024.0);
+        const double mb_per_sec = mb / sec;
+        const double ms = double(elapsed_us) / 1000.0;
+
+        printf("  %8s  %10zu  %12.0f  %10.0f  %8.1f  %6.1f%%\n",
+            cfg.label, task_count, tasks_per_sec, mb_per_sec, ms, util_mean * 100.0);
+
+        // Touch the result so the compiler cannot DCE the work.
+        guard ^= crc_accum.load();
+        if (crc_accum.load() == 0 && task_count > 0)
+        {
+            // Possible but unlikely for these patterns; still count as ran.
+        }
+    }
+
+    // Cold-start after park: drain → idle → one bulk wave; report time-to-drain.
+    {
+        ConcurrentQueue settle;
+        settle.wait();
+        Sleep::ms(20); // workers should be parked
+
+        constexpr size_t payload = 4 * 1024;
+        Buffer block(payload);
+        std::memset(block.data(), 0x91, payload);
+        ConstMemory memory = block;
+
+        const size_t task_count = workers * 64;
+        std::vector<std::function<void()>> bulk(task_count);
+        std::atomic<size_t> done { 0 };
+
+        for (size_t i = 0; i < task_count; ++i)
+        {
+            bulk[i] = [&]
+            {
+                crc32c(0, memory);
+                done.fetch_add(1, std::memory_order_relaxed);
+            };
+        }
+
+        pool.utilization();
+        const u64 time0 = Time::us();
+        ConcurrentQueue q;
+        q.enqueue_bulk(bulk);
+        q.wait();
+        const u64 elapsed_us = std::max(u64(1), Time::us() - time0);
+        auto util = pool.utilization();
+        float util_sum = 0.0f;
+        for (float u : util)
+            util_sum += u;
+        const float util_mean = util.empty() ? 0.0f : util_sum / float(util.size());
+
+        printf("  cold 4 KB × %zu after 20 ms idle: %.1f ms  (%.0f tasks/s, util %.1f%%)\n",
+            task_count, double(elapsed_us) / 1000.0,
+            double(task_count) / (double(elapsed_us) / 1.0e6), util_mean * 100.0);
+
+        success = done.load() == task_count;
+        guard ^= u32(done.load());
+    }
+
+    printf("  checksum: %08x\n", guard);
+    return success;
+}
+
 int main(int argc, char* argv[])
 {
     int count = 1;
@@ -602,6 +731,7 @@ int main(int argc, char* argv[])
         { "test9",  "nested wait() from workers (deadlock check)",    test9 },
         { "test10", "crc32c main (parallel) vs worker (nested CQ)", test10 },
         { "test11", "bounded in-flight + worker crc (hdecompress-like)", test11 },
+        { "test12", "pool throughput (crc32c payload) + utilization",   test12 },
     };
 
     int passed = 0;
