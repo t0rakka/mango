@@ -10,6 +10,7 @@
 #include "../../external/concurrentqueue/readerwriterqueue.h"
 
 using std::chrono::high_resolution_clock;
+using std::chrono::steady_clock;
 using std::chrono::duration_cast;
 using std::chrono::microseconds;
 using std::chrono::milliseconds;
@@ -113,6 +114,8 @@ namespace mango
     ThreadPool::ThreadPool(size_t size)
         : m_queue(nullptr)
         , m_threads(size)
+        , m_workers(size)
+        , m_utilization_busy_ns(size, 0)
     {
         m_queue = new TaskQueue;
 
@@ -195,6 +198,66 @@ namespace mango
             ThreadPoolDepthGuard() { ++g_thread_pool_depth; }
             ~ThreadPoolDepthGuard() { --g_thread_pool_depth; }
         };
+
+        static u64 steady_ns()
+        {
+            return u64(duration_cast<std::chrono::nanoseconds>(
+                steady_clock::now().time_since_epoch()).count());
+        }
+
+        // Worker idle backoff: brief pause/yield, then park. Wake is notify-driven;
+        // the wait_for timeout is only for rechecking m_stop.
+        constexpr auto kPauseFor = microseconds(32);
+        constexpr auto kYieldFor = microseconds(256);
+        constexpr auto kParkFor  = milliseconds(2);
+    }
+
+    std::vector<float> ThreadPool::utilization()
+    {
+        const size_t n = m_workers.size();
+        std::vector<float> result(n, 0.0f);
+
+        const u64 now_ns = steady_ns();
+
+        std::lock_guard<std::mutex> lock(m_utilization_mutex);
+
+        if (m_utilization_stamp_ns == 0)
+        {
+            // Open the sampling window; first pulse is always zero.
+            for (size_t i = 0; i < n; ++i)
+            {
+                u64 busy = m_workers[i].busy_ns.load(std::memory_order_relaxed);
+                const u64 stamp = m_workers[i].busy_stamp_ns.load(std::memory_order_relaxed);
+                if (stamp)
+                    busy += now_ns - stamp;
+                m_utilization_busy_ns[i] = busy;
+            }
+            m_utilization_stamp_ns = now_ns;
+            return result;
+        }
+
+        const u64 wall_ns = now_ns - m_utilization_stamp_ns;
+        if (!wall_ns)
+            return result;
+
+        for (size_t i = 0; i < n; ++i)
+        {
+            u64 busy = m_workers[i].busy_ns.load(std::memory_order_relaxed);
+            const u64 stamp = m_workers[i].busy_stamp_ns.load(std::memory_order_relaxed);
+            if (stamp)
+                busy += now_ns - stamp;
+
+            const u64 delta = busy - m_utilization_busy_ns[i];
+            m_utilization_busy_ns[i] = busy;
+
+            float u = float(delta) / float(wall_ns);
+            if (u < 0.0f) u = 0.0f;
+            if (u > 1.0f) u = 1.0f;
+            result[i] = u;
+        }
+
+        m_utilization_stamp_ns = now_ns;
+        return result;
     }
 
     void ThreadPool::thread(size_t threadID)
@@ -203,33 +266,43 @@ namespace mango
         TraceThread th(name);
 
         Consumer consumer(*m_queue);
+        WorkerState& worker = m_workers[threadID];
 
-        auto time0 = high_resolution_clock::now();
+        auto idle_start = high_resolution_clock::now();
 
         while (!m_stop.load(std::memory_order_relaxed))
         {
             Task task;
             if (m_queue->tasks.try_dequeue(consumer.token, task))
             {
+                const u64 t0 = steady_ns();
+                worker.busy_stamp_ns.store(t0, std::memory_order_relaxed);
+
                 process(task);
-                time0 = high_resolution_clock::now();
+
+                const u64 t1 = steady_ns();
+                worker.busy_stamp_ns.store(0, std::memory_order_relaxed);
+                worker.busy_ns.fetch_add(t1 - t0, std::memory_order_relaxed);
+
+                idle_start = high_resolution_clock::now();
             }
             else
             {
-                auto time1 = high_resolution_clock::now();
-                auto elapsed = time1 - time0;
-                if (elapsed >= milliseconds(60))
+                const auto idle = high_resolution_clock::now() - idle_start;
+                if (idle < kPauseFor)
                 {
-                    std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_queue_condition.wait_for(lock, milliseconds(60));
+                    pause();
                 }
-                else if (elapsed >= microseconds(24))
+                else if (idle < kYieldFor)
                 {
                     std::this_thread::yield();
                 }
                 else
                 {
-                    pause();
+                    // Park until notified (or a short stop-check timeout).
+                    std::unique_lock<std::mutex> lock(m_queue_mutex);
+                    m_queue_condition.wait_for(lock, kParkFor);
+                    idle_start = high_resolution_clock::now();
                 }
             }
         }

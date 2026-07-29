@@ -59,6 +59,14 @@ namespace mango
             std::function<void()> func;
         };
 
+        // One cache line per worker; only that worker writes.
+        // busy_stamp_ns is non-zero while the worker is inside process().
+        struct alignas(64) WorkerState
+        {
+            std::atomic<u64> busy_ns { 0 };
+            std::atomic<u64> busy_stamp_ns { 0 };
+        };
+
     public:
         ThreadPool(size_t size);
         ~ThreadPool();
@@ -67,6 +75,11 @@ namespace mango
         static ThreadPool& getInstance();
 
         int size() const;
+
+        // Per-worker busy fraction in [0, 1] since the previous call (zeros on the
+        // first call). Cheap pulse for HUDs — not a trace. Calling this updates the
+        // sampling window; ~10 Hz is plenty for a graph.
+        std::vector<float> utilization();
 
     protected:
         struct Consumer;
@@ -90,6 +103,12 @@ namespace mango
         std::condition_variable m_queue_condition;
 
         std::vector<std::thread> m_threads;
+        std::vector<WorkerState> m_workers;
+
+        // Snapshot bookkeeping (touched only by utilization(), not by workers).
+        std::mutex m_utilization_mutex;
+        std::vector<u64> m_utilization_busy_ns;
+        u64 m_utilization_stamp_ns = 0;
     };
 
     // ----------------------------------------------------------------------------------
