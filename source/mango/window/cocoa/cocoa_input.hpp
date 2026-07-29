@@ -26,6 +26,8 @@ namespace mango::cocoa
 
     void viewKeyDown(Window* window, WindowContext* context, NSEvent* event);
     void viewKeyUp(Window* window, WindowContext* context, NSEvent* event);
+    // Shift/Control/Alt/Command arrive as flagsChanged on Cocoa, not keyDown/keyUp.
+    void viewFlagsChanged(Window* window, WindowContext* context, NSEvent* event);
     void viewMouseMove(Window* window, NSView* view, NSEvent* event);
     void viewMouseClick(Window* window, NSView* view, NSEvent* event, MouseButton button, int clickCount);
     void viewScrollWheel(Window* window, NSView* view, NSEvent* event);

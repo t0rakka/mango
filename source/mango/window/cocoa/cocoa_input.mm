@@ -121,6 +121,70 @@ namespace mango::cocoa
         setKeyState(context, code, false);
     }
 
+    void viewFlagsChanged(Window* window, WindowContext* context, NSEvent* event)
+    {
+        const Keycode code = translateKeyCode(u32(event.keyCode));
+        if (code == KEYCODE_NONE)
+        {
+            return;
+        }
+
+        const NSEventModifierFlags flags = event.modifierFlags;
+
+        auto isDown = [&](Keycode kc) -> bool
+        {
+            const int keyIndex = int(kc);
+            return (context->keystate[keyIndex >> 5] & (1u << (keyIndex & 31))) != 0;
+        };
+
+        auto applyModifier = [&](Keycode left, Keycode right, NSEventModifierFlags flag)
+        {
+            if (code != left && code != right)
+            {
+                return false;
+            }
+
+            const bool flagDown = (flags & flag) != 0;
+            if (flagDown)
+            {
+                // This key changed while the modifier bit is still set: either it was
+                // just pressed, or it was released while the other side is still held.
+                const bool pressed = !isDown(code);
+                setKeyState(context, code, pressed);
+                if (pressed)
+                {
+                    window->onKeyPress(code, translateKeyMask(flags));
+                }
+                else
+                {
+                    window->onKeyRelease(code);
+                }
+            }
+            else
+            {
+                // Modifier fully released — clear both sides.
+                if (isDown(left))
+                {
+                    setKeyState(context, left, false);
+                    window->onKeyRelease(left);
+                }
+                if (isDown(right))
+                {
+                    setKeyState(context, right, false);
+                    window->onKeyRelease(right);
+                }
+            }
+            return true;
+        };
+
+        if (applyModifier(KEYCODE_LEFT_SHIFT, KEYCODE_RIGHT_SHIFT, NSEventModifierFlagShift))
+            return;
+        if (applyModifier(KEYCODE_LEFT_CONTROL, KEYCODE_RIGHT_CONTROL, NSEventModifierFlagControl))
+            return;
+        if (applyModifier(KEYCODE_LEFT_ALT, KEYCODE_RIGHT_ALT, NSEventModifierFlagOption))
+            return;
+    }
+
     static
     void dispatchMouseMoveInternal(Window* window, NSView* view, NSEvent* event)
     {

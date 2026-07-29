@@ -143,6 +143,11 @@ namespace mango::vulkan
     mango::cocoa::viewKeyUp(mangoWindow, mangoContext, event);
 }
 
+- (void)flagsChanged:(NSEvent*)event
+{
+    mango::cocoa::viewFlagsChanged(mangoWindow, mangoContext, event);
+}
+
 - (void)mouseMoved:(NSEvent*)event { mango::cocoa::viewMouseMove(mangoWindow, self, event); }
 - (void)mouseDragged:(NSEvent*)event { mango::cocoa::viewMouseMove(mangoWindow, self, event); }
 - (void)rightMouseDragged:(NSEvent*)event { mango::cocoa::viewMouseMove(mangoWindow, self, event); }
