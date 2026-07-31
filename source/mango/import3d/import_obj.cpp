@@ -676,6 +676,8 @@ namespace mango::import3d
 
     ImportOBJ::ImportOBJ(const filesystem::Path& path, const std::string& filename)
     {
+        basePath = path.pathname();
+
         u64 time0 = mango::Time::ms();
 
         ReaderOBJ reader(path, filename);
@@ -683,6 +685,22 @@ namespace mango::import3d
         u64 time1 = mango::Time::ms();
 
         printLine("Materials: {}", reader.m_materials.size());
+
+        std::unordered_map<std::string, u32> imageIndexByKey;
+        auto addFileImage = [&](const std::string& filename) -> u32
+        {
+            if (filename.empty())
+                return ImageSample::none;
+
+            auto it = imageIndexByKey.find(filename);
+            if (it != imageIndexByKey.end())
+                return it->second;
+
+            u32 idx = u32(images.size());
+            images.push_back(ImageSource::fromFile(filename));
+            imageIndexByKey.emplace(filename, idx);
+            return idx;
+        };
 
         for (const MaterialOBJ& materialobj : reader.m_materials)
         {
@@ -696,10 +714,21 @@ namespace mango::import3d
             material.metallicFactor = 0.0f;
             material.roughnessFactor = 0.5f;
 
-            material.baseColorTexture = createTexture(path, materialobj.map_kd);
-            material.emissiveTexture = createTexture(path, materialobj.map_ke);
-            material.normalTexture = createTexture(path, materialobj.map_bump);
-            material.occlusionTexture = createTexture(path, materialobj.map_ka);
+            const u32 kd = addFileImage(materialobj.map_kd);
+            if (kd != ImageSample::none)
+                material.baseColor = ImageSample::from(kd, ImageSwizzle::rgba(), ImageColorSpace::sRGB);
+
+            const u32 ke = addFileImage(materialobj.map_ke);
+            if (ke != ImageSample::none)
+                material.emissive = ImageSample::from(ke, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
+
+            const u32 bump = addFileImage(materialobj.map_bump);
+            if (bump != ImageSample::none)
+                material.normal = ImageSample::from(bump, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+
+            const u32 ka = addFileImage(materialobj.map_ka);
+            if (ka != ImageSample::none)
+                material.occlusion = ImageSample::from(ka, ImageSwizzle::r(), ImageColorSpace::Linear);
 
             materials.push_back(material);
         }

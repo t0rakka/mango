@@ -44,6 +44,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 {
     u64 time0 = Time::ms();
 
+    basePath = path.pathname();
+
     // --------------------------------------------------------------------------
     // read
     // --------------------------------------------------------------------------
@@ -197,14 +199,23 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     }
 
     // --------------------------------------------------------------------------
-    // images
+    // images (deferred decode — record sources only)
     // --------------------------------------------------------------------------
 
-    std::vector<Texture> textures;
+    auto mimeString = [](fastgltf::MimeType mime) -> std::string
+    {
+        const std::string_view s = fastgltf::getMimeTypeString(mime);
+        return s.empty() ? std::string {} : std::string(s);
+    };
+
+    images.reserve(asset.images.size());
 
     for (const auto& current : asset.images)
     {
         printLine(Print::Verbose, "[Image]");
+
+        ImageSource source;
+        source.name = std::string(current.name);
 
         std::visit(fastgltf::visitor
         {
@@ -212,91 +223,74 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 MANGO_UNREFERENCED(arg);
             },
-            [&] (const fastgltf::sources::URI& source)
+            [&] (const fastgltf::sources::URI& uri)
             {
-                const std::string filename(source.uri.path().begin(), source.uri.path().end());
-
-                auto file = std::make_unique<filesystem::File>(path, filename);
-                ConstMemory memory = *file;
-
-                Texture texture = createTexture(path, filename);
-                textures.push_back(texture);
-
-                // [x] standard
-                // [ ] binary
-                // [ ] embedded
-                printLine(Print::Verbose, "  URI: \"{}\" {} bytes", filename, memory.size);
+                const std::string filename(uri.uri.path().begin(), uri.uri.path().end());
+                source = ImageSource::fromFile(filename, mimeString(uri.mimeType), source.name);
+                printLine(Print::Verbose, "  URI: \"{}\"", filename);
             },
-            [&] (const fastgltf::sources::Array& source)
+            [&] (const fastgltf::sources::Array& arr)
             {
-                ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
-
-                Texture texture = createTexture(memory);
-                textures.push_back(texture);
-
-                // [ ] standard
-                // [ ] binary
-                // [x] embedded
+                ConstMemory memory(reinterpret_cast<const u8*>(arr.bytes.data()), arr.bytes.size());
+                source = ImageSource::fromMemory(memory, mimeString(arr.mimeType), source.name);
                 printLine(Print::Verbose, "  Array: {} bytes", memory.size);
             },
-            [&] (const fastgltf::sources::Vector& source)
+            [&] (const fastgltf::sources::Vector& vec)
             {
-                ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
-
-                Texture texture = createTexture(memory);
-                textures.push_back(texture);
-
-                // [ ] standard
-                // [ ] binary
-                // [x] embedded
+                ConstMemory memory(reinterpret_cast<const u8*>(vec.bytes.data()), vec.bytes.size());
+                source = ImageSource::fromMemory(memory, mimeString(vec.mimeType), source.name);
                 printLine(Print::Verbose, "  vector: {} bytes", memory.size);
             },
-            [&] (const fastgltf::sources::ByteView& source)
+            [&] (const fastgltf::sources::ByteView& view)
             {
-                // [ ] standard
-                // [ ] binary
-                // [ ] embedded
-                printLine(Print::Verbose, "  ByteView: {} bytes (not supported)", source.bytes.size());
+                printLine(Print::Verbose, "  ByteView: {} bytes (not supported)", view.bytes.size());
+                MANGO_UNREFERENCED(view);
             },
-            [&] (const fastgltf::sources::BufferView& source)
+            [&] (const fastgltf::sources::BufferView& viewSrc)
             {
-                auto& bufferView = asset.bufferViews[source.bufferViewIndex];
+                auto& bufferView = asset.bufferViews[viewSrc.bufferViewIndex];
                 auto& buffer = asset.buffers[bufferView.bufferIndex];
 
                 ConstMemory memory;
-
                 std::visit(fastgltf::visitor
                 {
-                    [] (auto& arg)
-                    {
-                        MANGO_UNREFERENCED(arg);
-                    },
+                    [] (auto& arg) { MANGO_UNREFERENCED(arg); },
                     [&](fastgltf::sources::Array& vector)
                     {
                         memory.address = reinterpret_cast<const u8*>(vector.bytes.data() + bufferView.byteOffset);
                         memory.size = bufferView.byteLength;
-                    }
+                    },
+                    [&](fastgltf::sources::Vector& vector)
+                    {
+                        memory.address = reinterpret_cast<const u8*>(vector.bytes.data() + bufferView.byteOffset);
+                        memory.size = bufferView.byteLength;
+                    },
                 }, buffer.data);
 
-                if (memory.address)
+                if (!memory.address && bufferView.bufferIndex < buffers.size())
                 {
-                    Texture texture = createTexture(memory);
-                    textures.push_back(texture);
+                    const ConstMemory& buf = buffers[bufferView.bufferIndex];
+                    if (buf.address && bufferView.byteOffset + bufferView.byteLength <= buf.size)
+                    {
+                        memory.address = buf.address + bufferView.byteOffset;
+                        memory.size = bufferView.byteLength;
+                    }
                 }
 
-                // [ ] standard
-                // [x] binary
-                // [ ] embedded
+                if (memory.address)
+                    source = ImageSource::fromMemory(memory, mimeString(viewSrc.mimeType), source.name);
+
                 printLine(Print::Verbose, "  BufferView: {} bytes", memory.size);
             },
-            [&] (const fastgltf::sources::CustomBuffer& source)
+            [&] (const fastgltf::sources::CustomBuffer& custom)
             {
                 printLine(Print::Verbose, "  CustomBuffer: TODO");
-                MANGO_UNREFERENCED(source);
+                MANGO_UNREFERENCED(custom);
             },
         }, current.data);
 
-    } // images
+        images.push_back(std::move(source));
+    }
 
     // --------------------------------------------------------------------------
     // materials
@@ -310,7 +304,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         Material material;
 
         const auto* emissiveFactor = current.emissiveFactor.data();
-
         const fastgltf::PBRData& pbr = current.pbrData;
         const auto* baseColorFactor = pbr.baseColorFactor.data();
 
@@ -322,14 +315,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             current.emissiveFactor[1],
             current.emissiveFactor[2]);
 
+        material.name = std::string(current.name);
         material.roughnessFactor = pbr.roughnessFactor;
         material.metallicFactor = pbr.metallicFactor;
-
         material.baseColorFactor[0] = pbr.baseColorFactor[0];
         material.baseColorFactor[1] = pbr.baseColorFactor[1];
         material.baseColorFactor[2] = pbr.baseColorFactor[2];
         material.baseColorFactor[3] = pbr.baseColorFactor[3];
-
         material.emissiveFactor[0] = emissiveFactor[0];
         material.emissiveFactor[1] = emissiveFactor[1];
         material.emissiveFactor[2] = emissiveFactor[2];
@@ -346,70 +338,74 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             return t;
         };
 
-        auto resolveTexture = [&](const fastgltf::TextureInfo& info) -> Texture
+        auto imageIndexOf = [&](const fastgltf::TextureInfo& info) -> u32
         {
-            fastgltf::Texture& texture = asset.textures[info.textureIndex];
-            if (texture.imageIndex.has_value())
-            {
-                return textures[*texture.imageIndex];
-            }
-            return {};
+            if (info.textureIndex >= asset.textures.size())
+                return ImageSample::none;
+            const fastgltf::Texture& texture = asset.textures[info.textureIndex];
+            if (!texture.imageIndex.has_value())
+                return ImageSample::none;
+            const size_t idx = *texture.imageIndex;
+            if (idx >= images.size() || images[idx].empty())
+                return ImageSample::none;
+            return u32(idx);
+        };
+
+        auto bindSample = [&](ImageSample& dst, const fastgltf::TextureInfo& info,
+                              ImageSwizzle swizzle, ImageColorSpace colorSpace)
+        {
+            const u32 img = imageIndexOf(info);
+            if (img == ImageSample::none)
+                return;
+            dst = ImageSample::from(img, swizzle, colorSpace);
+            dst.texCoord = u32(info.texCoordIndex);
+            dst.transform = readUvTransform(info);
         };
 
         if (pbr.baseColorTexture.has_value())
         {
-            material.baseColorTexture = resolveTexture(*pbr.baseColorTexture);
-            material.baseColorTransform = readUvTransform(*pbr.baseColorTexture);
-            if (material.baseColorTexture)
-            {
-                printLine(Print::Verbose, "  baseColorTexture: ({} x {}) scale {} {}",
-                    material.baseColorTexture->width, material.baseColorTexture->height,
-                    material.baseColorTransform.scale.x, material.baseColorTransform.scale.y);
-            }
+            bindSample(material.baseColor, *pbr.baseColorTexture,
+                ImageSwizzle::rgba(), ImageColorSpace::sRGB);
+            if (material.baseColor)
+                printLine(Print::Verbose, "  baseColor: image[{}]", material.baseColor.image);
         }
 
         if (pbr.metallicRoughnessTexture.has_value())
         {
-            material.metallicRoughnessTexture = resolveTexture(*pbr.metallicRoughnessTexture);
-            material.metallicRoughnessTransform = readUvTransform(*pbr.metallicRoughnessTexture);
-            if (material.metallicRoughnessTexture)
-            {
-                printLine(Print::Verbose, "  metallicRoughnessTexture: ({} x {})",
-                    material.metallicRoughnessTexture->width, material.metallicRoughnessTexture->height);
-            }
+            const fastgltf::TextureInfo& info = *pbr.metallicRoughnessTexture;
+            bindSample(material.roughness, info, ImageSwizzle::g(), ImageColorSpace::Linear);
+            bindSample(material.metallic, info, ImageSwizzle::b(), ImageColorSpace::Linear);
+            if (material.roughness)
+                printLine(Print::Verbose, "  metallicRoughness: image[{}] (G=rough, B=metal)",
+                    material.roughness.image);
         }
 
         if (current.normalTexture.has_value())
         {
-            material.normalTexture = resolveTexture(*current.normalTexture);
-            material.normalTransform = readUvTransform(*current.normalTexture);
-            if (material.normalTexture)
-            {
-                printLine(Print::Verbose, "  normalTexture: ({} x {})",
-                    material.normalTexture->width, material.normalTexture->height);
-            }
+            bindSample(material.normal, *current.normalTexture,
+                ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+            material.normal.scale = float(current.normalTexture->scale);
+            if (material.normal)
+                printLine(Print::Verbose, "  normal: image[{}] scale {}",
+                    material.normal.image, material.normal.scale);
         }
 
         if (current.occlusionTexture.has_value())
         {
-            material.occlusionTexture = resolveTexture(*current.occlusionTexture);
-            material.occlusionTransform = readUvTransform(*current.occlusionTexture);
-            if (material.occlusionTexture)
-            {
-                printLine(Print::Verbose, "  occlusionTexture: ({} x {})",
-                    material.occlusionTexture->width, material.occlusionTexture->height);
-            }
+            bindSample(material.occlusion, *current.occlusionTexture,
+                ImageSwizzle::r(), ImageColorSpace::Linear);
+            material.occlusion.scale = float(current.occlusionTexture->strength);
+            if (material.occlusion)
+                printLine(Print::Verbose, "  occlusion: image[{}] strength {}",
+                    material.occlusion.image, material.occlusion.scale);
         }
 
         if (current.emissiveTexture.has_value())
         {
-            material.emissiveTexture = resolveTexture(*current.emissiveTexture);
-            material.emissiveTransform = readUvTransform(*current.emissiveTexture);
-            if (material.emissiveTexture)
-            {
-                printLine(Print::Verbose, "  emissiveTexture: ({} x {})",
-                    material.emissiveTexture->width, material.emissiveTexture->height);
-            }
+            bindSample(material.emissive, *current.emissiveTexture,
+                ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
+            if (material.emissive)
+                printLine(Print::Verbose, "  emissive: image[{}]", material.emissive.image);
         }
 
         switch (current.alphaMode)
@@ -417,11 +413,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             case fastgltf::AlphaMode::Opaque:
                 material.alphaMode = Material::AlphaMode::Opaque;
                 break;
-
             case fastgltf::AlphaMode::Mask:
                 material.alphaMode = Material::AlphaMode::Mask;
                 break;
-
             case fastgltf::AlphaMode::Blend:
                 material.alphaMode = Material::AlphaMode::Blend;
                 break;
@@ -437,20 +431,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             material.clearcoatRoughnessFactor = coat.clearcoatRoughnessFactor;
 
             if (coat.clearcoatTexture.has_value())
-            {
-                material.clearcoatTexture = resolveTexture(*coat.clearcoatTexture);
-                material.clearcoatTransform = readUvTransform(*coat.clearcoatTexture);
-            }
+                bindSample(material.clearcoat, *coat.clearcoatTexture,
+                    ImageSwizzle::r(), ImageColorSpace::Linear);
             if (coat.clearcoatRoughnessTexture.has_value())
-            {
-                material.clearcoatRoughnessTexture = resolveTexture(*coat.clearcoatRoughnessTexture);
-                material.clearcoatRoughnessTransform = readUvTransform(*coat.clearcoatRoughnessTexture);
-            }
+                bindSample(material.clearcoatRoughness, *coat.clearcoatRoughnessTexture,
+                    ImageSwizzle::g(), ImageColorSpace::Linear);
             if (coat.clearcoatNormalTexture.has_value())
-            {
-                material.clearcoatNormalTexture = resolveTexture(*coat.clearcoatNormalTexture);
-                material.clearcoatNormalTransform = readUvTransform(*coat.clearcoatNormalTexture);
-            }
+                bindSample(material.clearcoatNormal, *coat.clearcoatNormalTexture,
+                    ImageSwizzle::rgb1(), ImageColorSpace::Linear);
 
             printLine(Print::Verbose, "  clearcoatFactor: {}", material.clearcoatFactor);
             printLine(Print::Verbose, "  clearcoatRoughnessFactor: {}", material.clearcoatRoughnessFactor);
@@ -466,13 +454,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             material.sheenRoughnessFactor = sheen.sheenRoughnessFactor;
 
             if (sheen.sheenColorTexture.has_value())
-            {
-                material.sheenColorTexture = resolveTexture(*sheen.sheenColorTexture);
-            }
+                bindSample(material.sheenColor, *sheen.sheenColorTexture,
+                    ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
             if (sheen.sheenRoughnessTexture.has_value())
-            {
-                material.sheenRoughnessTexture = resolveTexture(*sheen.sheenRoughnessTexture);
-            }
+                bindSample(material.sheenRoughness, *sheen.sheenRoughnessTexture,
+                    ImageSwizzle::a(), ImageColorSpace::Linear);
 
             printLine(Print::Info, "  sheenColorFactor: {} {} {}  sheenRoughness: {} (shading TBD)",
                 material.sheenColorFactor.x, material.sheenColorFactor.y, material.sheenColorFactor.z,
@@ -482,90 +468,17 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         materials.push_back(material);
 
         if (current.iridescence)
-        {
             printLine(Print::Verbose, "  Iridescence: TODO");
-        }
-
         if (current.specular)
-        {
             printLine(Print::Verbose, "  Specular: TODO");
-        }
-
         if (current.transmission)
-        {
             printLine(Print::Verbose, "  Transmission: TODO");
-        }
-
         if (current.volume)
-        {
             printLine(Print::Verbose, "  Volume: TODO");
-        }
-
-        /*
-
-        struct MaterialClearcoat
-        {
-            float clearcoatFactor;
-            std::optional<TextureInfo> clearcoatTexture;
-            float clearcoatRoughnessFactor;
-            std::optional<TextureInfo> clearcoatRoughnessTexture;
-            std::optional<TextureInfo> clearcoatNormalTexture;
-        };
-
-        struct MaterialIridescence
-        {
-            float iridescenceFactor;
-            std::optional<TextureInfo> iridescenceTexture;
-            float iridescenceIor;
-            float iridescenceThicknessMinimum;
-            float iridescenceThicknessMaximum;
-            std::optional<TextureInfo> iridescenceThicknessTexture;
-        };
-
-        struct MaterialSheen
-        {
-            std::array<float, 3> sheenColorFactor;
-            std::optional<TextureInfo> sheenColorTexture;
-            float sheenRoughnessFactor;
-            std::optional<TextureInfo> sheenRoughnessTexture;
-        };
-
-        struct MaterialSpecular
-        {
-            float specularFactor;
-            std::optional<TextureInfo> specularTexture;
-            std::array<float, 3> specularColorFactor;
-            std::optional<TextureInfo> specularColorTexture;
-        };
-
-        struct MaterialTransmission
-        {
-            float transmissionFactor;
-            std::optional<TextureInfo> transmissionTexture;
-        };
-
-        struct MaterialVolume
-        {
-            float thicknessFactor;
-            std::optional<TextureInfo> thicknessTexture;
-            float attenuationDistance;
-            std::array<float, 3> attenuationColor;
-        };
-
-        struct Material
-        {
-            std::optional<float> emissiveStrength;
-            std::optional<float> ior;
-            bool unlit;
-        };
-
-        */
-
-    } // materials
+    }
 
     if (materials.empty())
     {
-        // Add default material
         Material material;
         materials.push_back(material);
     }
@@ -984,7 +897,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
             bool needTangent = false;
 
-            if (material.normalTexture)
+            if (material.normal)
             {
                 if (!attributeTangent && attributeNormal && attributeTexcoord)
                 {

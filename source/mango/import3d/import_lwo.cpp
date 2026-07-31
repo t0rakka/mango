@@ -827,6 +827,22 @@ namespace mango::import3d
 
         u32 materialIndex = 0;
 
+        std::unordered_map<std::string, u32> imageIndexByKey;
+        auto addFileImage = [&](const std::string& filename) -> u32
+        {
+            if (filename.empty())
+                return ImageSample::none;
+
+            auto it = imageIndexByKey.find(filename);
+            if (it != imageIndexByKey.end())
+                return it->second;
+
+            u32 idx = u32(scene.images.size());
+            scene.images.push_back(ImageSource::fromFile(filename));
+            imageIndexByKey.emplace(filename, idx);
+            return idx;
+        };
+
         for (const auto& surface : reader.surfaces)
         {
             Material material;
@@ -837,15 +853,10 @@ namespace mango::import3d
 
             if (!surface.ctex.name.empty())
             {
-                std::string filename = filesystem::removePath(surface.ctex.name);
-                try
-                {
-                    Texture ctex = createTexture(path, filename);
-                    material.baseColorTexture = ctex;
-                }
-                catch(...)
-                {
-                }
+                const std::string filename = filesystem::removePath(surface.ctex.name);
+                const u32 baseColor = addFileImage(filename);
+                if (baseColor != ImageSample::none)
+                    material.baseColor = ImageSample::from(baseColor, ImageSwizzle::rgba(), ImageColorSpace::sRGB);
             }
 
             scene.materials.push_back(material);
@@ -1815,6 +1826,8 @@ namespace mango::import3d
 
     ImportLWO::ImportLWO(const filesystem::Path& path, const std::string& filename)
     {
+        basePath = path.pathname();
+
         filesystem::File file(path, filename);
         ConstMemory memory = file;
 

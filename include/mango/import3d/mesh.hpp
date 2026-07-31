@@ -8,6 +8,7 @@
 #include <string>
 #include <optional>
 #include <memory>
+#include <cstring>
 #include <algorithm>
 #include <utility>
 #include <unordered_map>
@@ -40,17 +41,119 @@ namespace mango::import3d
     using matrix4x4 = math::Matrix<float, 4, 4>;
 
     // -----------------------------------------------------------------------
-    // texture
+    // images (deferred decode — engine loads / packs / uploads)
+    //
+    // Importers record *how* to get pixel data and *what it means*. They do not
+    // decode bitmaps. ConstMemory embeds are copied into ImageSource so the
+    // Scene owns the bytes for the lifetime of the Import*/Scene object.
+    // File sources are resolved relative to Scene::basePath.
     // -----------------------------------------------------------------------
 
-    using Texture = std::shared_ptr<image::Bitmap>;
+    enum class ImageColorSpace : u8
+    {
+        Auto,   // engine picks from usage (albedo/emissive → sRGB, data → linear)
+        sRGB,
+        Linear,
+    };
 
-    Texture createTexture(const filesystem::Path& path, const std::string& filename);
-    Texture createTexture(ConstMemory memory);
+    enum class ImageChannel : u8
+    {
+        Red = 0,
+        Green = 1,
+        Blue = 2,
+        Alpha = 3,
+        Zero = 4, // constant 0
+        One = 5,  // constant 1
+    };
 
-    // -----------------------------------------------------------------------
-    // material
-    // -----------------------------------------------------------------------
+    // Map source RGBA → sample RGBA. Semantics then read what they need
+    // (baseColor: rgba, metallic/roughness/occlusion/opacity: .r, normal/emissive: .rgb).
+    struct ImageSwizzle
+    {
+        ImageChannel x { ImageChannel::Red };
+        ImageChannel y { ImageChannel::Green };
+        ImageChannel z { ImageChannel::Blue };
+        ImageChannel w { ImageChannel::Alpha };
+
+        static ImageSwizzle rgba() { return {}; }
+        static ImageSwizzle rgb1()
+        {
+            return { ImageChannel::Red, ImageChannel::Green, ImageChannel::Blue, ImageChannel::One };
+        }
+        // Grayscale file → replicate R (also fine if decoder already expanded L→RGB).
+        static ImageSwizzle rrr1()
+        {
+            return { ImageChannel::Red, ImageChannel::Red, ImageChannel::Red, ImageChannel::One };
+        }
+        static ImageSwizzle r()
+        {
+            return { ImageChannel::Red, ImageChannel::Zero, ImageChannel::Zero, ImageChannel::One };
+        }
+        static ImageSwizzle g()
+        {
+            return { ImageChannel::Green, ImageChannel::Zero, ImageChannel::Zero, ImageChannel::One };
+        }
+        static ImageSwizzle b()
+        {
+            return { ImageChannel::Blue, ImageChannel::Zero, ImageChannel::Zero, ImageChannel::One };
+        }
+        static ImageSwizzle a()
+        {
+            return { ImageChannel::Alpha, ImageChannel::Zero, ImageChannel::Zero, ImageChannel::One };
+        }
+    };
+
+    struct ImageSource
+    {
+        std::string filename;              // relative to Scene::basePath when set
+        std::shared_ptr<u8[]> blob;        // owned embed (GLB buffer view, FBX Video, …)
+        size_t blobSize = 0;
+        std::string mimeType;              // "image/jpeg", "image/png", ".ktx2", …
+        std::string name;
+
+        bool empty() const
+        {
+            return filename.empty() && blobSize == 0;
+        }
+
+        bool isFile() const
+        {
+            return !filename.empty() && blobSize == 0;
+        }
+
+        bool isMemory() const
+        {
+            return blobSize > 0 && blob != nullptr;
+        }
+
+        ConstMemory memory() const
+        {
+            return isMemory() ? ConstMemory(blob.get(), blobSize) : ConstMemory {};
+        }
+
+        static ImageSource fromFile(std::string file, std::string mime = {}, std::string debugName = {})
+        {
+            ImageSource src;
+            src.filename = std::move(file);
+            src.mimeType = mime.empty() ? filesystem::getExtension(src.filename) : std::move(mime);
+            src.name = std::move(debugName);
+            return src;
+        }
+
+        static ImageSource fromMemory(ConstMemory mem, std::string mime, std::string debugName = {})
+        {
+            ImageSource src;
+            src.blobSize = mem.size;
+            if (mem.size > 0 && mem.address)
+            {
+                src.blob = std::shared_ptr<u8[]>(new u8[mem.size], std::default_delete<u8[]>());
+                std::memcpy(src.blob.get(), mem.address, mem.size);
+            }
+            src.mimeType = std::move(mime);
+            src.name = std::move(debugName);
+            return src;
+        }
+    };
 
     struct UvTransform
     {
@@ -58,6 +161,41 @@ namespace mango::import3d
         float32x2 offset { 0.0f, 0.0f };
         float rotation { 0.0f }; // radians, counter-clockwise
     };
+
+    // One semantic binding: which image, which channels, UV, color space.
+    struct ImageSample
+    {
+        static constexpr u32 none = ~0u;
+
+        u32 image = none; // index into Scene::images
+        u32 texCoord = 0;
+        ImageSwizzle swizzle {};
+        ImageColorSpace colorSpace { ImageColorSpace::Auto };
+        float scale { 1.0f }; // normal scale / occlusion strength
+        UvTransform transform {};
+
+        bool enabled() const { return image != none; }
+        explicit operator bool() const { return enabled(); }
+
+        static ImageSample from(u32 imageIndex, ImageSwizzle sw = ImageSwizzle::rgba(),
+                                ImageColorSpace cs = ImageColorSpace::Auto)
+        {
+            ImageSample s;
+            s.image = imageIndex;
+            s.swizzle = sw;
+            s.colorSpace = cs;
+            return s;
+        }
+    };
+
+    // Optional decode helpers for tools / tests (importers do not use these).
+    using Texture = std::shared_ptr<image::Bitmap>;
+    Texture createTexture(const filesystem::Path& path, const std::string& filename);
+    Texture createTexture(ConstMemory memory);
+
+    // -----------------------------------------------------------------------
+    // material
+    // -----------------------------------------------------------------------
 
     struct Material
     {
@@ -75,33 +213,27 @@ namespace mango::import3d
         float32x4 baseColorFactor { 1.0f, 1.0f, 1.0f, 1.0f };
         float32x3 emissiveFactor { 0.0f, 0.0f, 0.0f };
 
-        Texture metallicRoughnessTexture;
-        Texture baseColorTexture;
-        Texture emissiveTexture;
-        Texture normalTexture;
-        Texture occlusionTexture;
-
-        UvTransform baseColorTransform;
-        UvTransform metallicRoughnessTransform;
-        UvTransform emissiveTransform;
-        UvTransform normalTransform;
-        UvTransform occlusionTransform;
+        // Semantic samples — engine packs into GPU textures (e.g. glTF ORM).
+        ImageSample baseColor;   // rgba, typically sRGB
+        ImageSample metallic;    // .r after swizzle (glTF MR: Blue)
+        ImageSample roughness;   // .r after swizzle (glTF MR: Green)
+        ImageSample emissive;    // rgb, typically sRGB
+        ImageSample normal;      // rgb, linear
+        ImageSample occlusion;   // .r (glTF often Red of ORM / dedicated map)
+        ImageSample opacity;     // .r — engine may pack into baseColor.a
 
         // KHR_materials_clearcoat (0 = disabled)
         float clearcoatFactor { 0.0f };
         float clearcoatRoughnessFactor { 0.0f };
-        Texture clearcoatTexture;
-        Texture clearcoatRoughnessTexture;
-        Texture clearcoatNormalTexture;
-        UvTransform clearcoatTransform;
-        UvTransform clearcoatRoughnessTransform;
-        UvTransform clearcoatNormalTransform;
+        ImageSample clearcoat;
+        ImageSample clearcoatRoughness;
+        ImageSample clearcoatNormal;
 
         // KHR_materials_sheen (sheenColorFactor ~0 = disabled)
         float32x3 sheenColorFactor { 0.0f, 0.0f, 0.0f };
         float sheenRoughnessFactor { 0.0f };
-        Texture sheenColorTexture;
-        Texture sheenRoughnessTexture;
+        ImageSample sheenColor;
+        ImageSample sheenRoughness;
 
         AlphaMode alphaMode { AlphaMode::Opaque };
         float alphaCutoff { 0.5f };
@@ -266,6 +398,10 @@ namespace mango::import3d
 
     struct Scene
     {
+        // Directory used to resolve ImageSource::filename (asset folder pathname).
+        std::string basePath { "./" };
+
+        std::vector<ImageSource> images;
         std::vector<Material> materials;
         std::vector<std::unique_ptr<IndexedMesh>> meshes;
         std::vector<Skin> skins;

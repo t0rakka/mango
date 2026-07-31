@@ -1058,8 +1058,26 @@ namespace mango::import3d
 
     Import3DS::Import3DS(const filesystem::Path& path, const std::string& filename)
     {
+        basePath = path.pathname();
+
         filesystem::File file(path, filename);
         Reader3DS reader(file);
+
+        std::unordered_map<std::string, u32> imageIndexByKey;
+        auto addFileImage = [&](const std::string& filename) -> u32
+        {
+            if (filename.empty())
+                return ImageSample::none;
+
+            auto it = imageIndexByKey.find(filename);
+            if (it != imageIndexByKey.end())
+                return it->second;
+
+            u32 idx = u32(images.size());
+            images.push_back(ImageSource::fromFile(filename));
+            imageIndexByKey.emplace(filename, idx);
+            return idx;
+        };
 
         for (auto& material3ds : reader.materials)
         {
@@ -1072,15 +1090,18 @@ namespace mango::import3d
             material.metallicFactor = 0.0f;
             material.roughnessFactor = 0.5f;
 
-            material.baseColorTexture = createTexture(path, material3ds.texture_map1.filename);
-            material.emissiveTexture = createTexture(path, material3ds.texture_self_illum.filename);
-
-            // Texture replaces diffuse in classic 3DS shading. Old scenes often leave
-            // diffuse black/dark because the modeler never used it once a map was set.
-            if (material.baseColorTexture)
+            const u32 baseColor = addFileImage(material3ds.texture_map1.filename);
+            if (baseColor != ImageSample::none)
             {
+                material.baseColor = ImageSample::from(baseColor, ImageSwizzle::rgba(), ImageColorSpace::sRGB);
+                // Texture replaces diffuse in classic 3DS shading. Old scenes often leave
+                // diffuse black/dark because the modeler never used it once a map was set.
                 material.baseColorFactor = float32x4(1.0f, 1.0f, 1.0f, 1.0f);
             }
+
+            const u32 emissive = addFileImage(material3ds.texture_self_illum.filename);
+            if (emissive != ImageSample::none)
+                material.emissive = ImageSample::from(emissive, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
 
             materials.push_back(material);
         }

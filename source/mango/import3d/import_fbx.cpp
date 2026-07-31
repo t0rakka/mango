@@ -6,6 +6,7 @@
 #include <cctype>
 #include <cmath>
 #include <cstring>
+#include <functional>
 #include <unordered_map>
 #include <variant>
 #include <mango/core/core.hpp>
@@ -261,39 +262,34 @@ namespace
         return name + "/";
     }
 
-    Texture tryCreateTexture(const filesystem::Path& path, const std::string& filename)
+    std::string joinRelativePath(const std::string& dir, const std::string& file)
     {
-        Texture texture;
-        if (filename.empty())
-            return texture;
-
-        try
-        {
-            texture = createTexture(path, filename);
-        }
-        catch (...)
-        {
-        }
-        return texture;
+        if (dir.empty())
+            return file;
+        std::string result = dir;
+        if (result.back() != '/')
+            result += '/';
+        result += file;
+        return result;
     }
 
-    Texture tryLoadInDirectory(const filesystem::Path& dir, const std::string& basename, const std::string& stem)
+    std::string tryResolveInDirectory(const filesystem::Path& dir, const std::string& basename, const std::string& stem)
     {
         // Exact / case-insensitive basename first (preserves declared extension when present).
         std::string found = findFileIgnoreCase(dir, basename);
         if (!found.empty())
-            return tryCreateTexture(dir, found);
+            return found;
 
         // Stem match: RelativeFilename says .tga, disk has .png (very common).
         found = findFileByStemIgnoreCase(dir, stem);
         if (!found.empty())
-            return tryCreateTexture(dir, found);
+            return found;
 
         return {};
     }
 
-    Texture tryLoadUnder(const filesystem::Path& root, const std::string& relativeDir,
-                         const std::string& basename, const std::string& stem)
+    std::string tryResolveUnder(const filesystem::Path& root, const std::string& relativeDir,
+                                const std::string& basename, const std::string& stem)
     {
         if (relativeDir.empty())
             return {};
@@ -302,7 +298,10 @@ namespace
         {
             // Same nesting model as glTF: Path(assetDir, "texture/") + basename.
             filesystem::Path dir(root, relativeDir);
-            return tryLoadInDirectory(dir, basename, stem);
+            const std::string found = tryResolveInDirectory(dir, basename, stem);
+            if (found.empty())
+                return {};
+            return joinRelativePath(relativeDir, found);
         }
         catch (...)
         {
@@ -311,8 +310,8 @@ namespace
     }
 
     // Resolve an FBX RelativeFilename / FileName against the mesh directory.
-    // Same Path nesting as ImportGLTF / createTexture(path, "textures/foo.png").
-    Texture resolveTexturePath(const filesystem::Path& meshPath, const std::string& declared)
+    // Returns a path relative to meshPath, or empty if no file exists on disk.
+    std::string resolveImageFilename(const filesystem::Path& meshPath, const std::string& declared)
     {
         if (declared.empty())
             return {};
@@ -323,8 +322,8 @@ namespace
         const std::string stem = filesystem::removeExtension(basename);
 
         // 0. Exact declared relative path (glTF-style), including subdirs.
-        if (Texture t = tryCreateTexture(meshPath, normalized))
-            return t;
+        if (!findFileIgnoreCase(meshPath, normalized).empty())
+            return normalized;
 
         // 1. Declared subdirectory next to the .fbx (Textures\Cerberus_A.tga), case-insensitive.
         if (!subdir.empty())
@@ -332,22 +331,22 @@ namespace
             const std::string resolved = findSubdirectoryIgnoreCase(meshPath, subdir);
             if (!resolved.empty())
             {
-                if (Texture t = tryLoadUnder(meshPath, resolved, basename, stem))
-                    return t;
+                if (std::string found = tryResolveUnder(meshPath, resolved, basename, stem); !found.empty())
+                    return found;
             }
         }
 
         // 2. Next to the .fbx.
-        if (Texture t = tryLoadInDirectory(meshPath, basename, stem))
-            return t;
+        if (std::string found = tryResolveInDirectory(meshPath, basename, stem); !found.empty())
+            return found;
 
         // 3. Conventional texture folders next to the .fbx.
         {
             const char* folders[] = { "textures/", "Textures/", "texture/", "Texture/" };
             for (const char* folder : folders)
             {
-                if (Texture t = tryLoadUnder(meshPath, folder, basename, stem))
-                    return t;
+                if (std::string found = tryResolveUnder(meshPath, folder, basename, stem); !found.empty())
+                    return found;
             }
         }
 
@@ -361,8 +360,8 @@ namespace
                 const char* folders[] = { "textures/", "Textures/", "texture/", "Texture/" };
                 for (const char* folder : folders)
                 {
-                    if (Texture t = tryLoadUnder(parentPath, folder, basename, stem))
-                        return t;
+                    if (std::string found = tryResolveUnder(parentPath, folder, basename, stem); !found.empty())
+                        return joinRelativePath("..", found);
                 }
             }
             catch (...)
@@ -373,10 +372,65 @@ namespace
         return {};
     }
 
+    std::string mimeFromFilename(const std::string& filename)
+    {
+        const std::string ext = filesystem::getExtension(filename);
+        return ext.empty() ? std::string("image/png") : ext;
+    }
+
+    // Per-import image cache: FBX often has many Texture objects / materials
+    // pointing at the same RelativeFilename (shared atlases, repeated slots).
+    struct ImageSourceCache
+    {
+        std::unordered_map<std::string, u32> byKey;
+
+        u32 loadFile(const filesystem::Path& meshPath, const std::string& declared,
+                     const std::function<u32(const std::string&)>& addResolvedFile)
+        {
+            if (declared.empty())
+                return ImageSample::none;
+
+            const std::string key = "file:" + normalizePathSeparators(declared);
+            auto it = byKey.find(key);
+            if (it != byKey.end())
+                return it->second;
+
+            u32 index = ImageSample::none;
+            const std::string resolved = resolveImageFilename(meshPath, declared);
+            if (!resolved.empty())
+                index = addResolvedFile(resolved);
+
+            byKey.emplace(key, index);
+            return index;
+        }
+
+        u32 loadEmbedded(u64 videoId, ConstMemory content, const std::string& mime, const std::string& debugName,
+                         const std::function<u32(ConstMemory, const std::string&, const std::string&)>& addMemory)
+        {
+            const std::string key = "embed:" + std::to_string(videoId);
+            auto it = byKey.find(key);
+            if (it != byKey.end())
+                return it->second;
+
+            u32 index = ImageSample::none;
+            if (content.size > 0)
+                index = addMemory(content, mime, debugName);
+
+            byKey.emplace(key, index);
+            return index;
+        }
+    };
+
     // Probe Cerberus-style sidecars: stem ending in _A / Albedo → _N / _M / _R next to it.
     void loadPbrSidecars(const filesystem::Path& meshPath, const std::string& albedoDeclared,
-                         Texture& outNormal, Texture& outMetallic, Texture& outRoughness)
+                         ImageSourceCache& cache,
+                         const std::function<u32(const std::string&)>& addResolvedFile,
+                         u32& outNormal, u32& outMetallic, u32& outRoughness)
     {
+        outNormal = ImageSample::none;
+        outMetallic = ImageSample::none;
+        outRoughness = ImageSample::none;
+
         if (albedoDeclared.empty())
             return;
 
@@ -395,61 +449,23 @@ namespace
             }
         }
 
-        auto loadVariant = [&] (std::initializer_list<const char*> variants) -> Texture
+        auto loadVariant = [&] (std::initializer_list<const char*> variants) -> u32
         {
             for (const char* variant : variants)
             {
-                Texture t = resolveTexturePath(meshPath, std::string("Textures/") + prefix + variant + ".png");
-                if (t)
-                    return t;
-                t = resolveTexturePath(meshPath, prefix + variant + ".png");
-                if (t)
-                    return t;
+                u32 idx = cache.loadFile(meshPath, std::string("Textures/") + prefix + variant + ".png", addResolvedFile);
+                if (idx != ImageSample::none)
+                    return idx;
+                idx = cache.loadFile(meshPath, prefix + variant + ".png", addResolvedFile);
+                if (idx != ImageSample::none)
+                    return idx;
             }
-            return {};
+            return ImageSample::none;
         };
 
         outNormal = loadVariant({ "_N", "_Normal", "_NormalMap", "_Nor" });
         outMetallic = loadVariant({ "_M", "_Metallic", "_Metalness", "_Metal" });
         outRoughness = loadVariant({ "_R", "_Roughness", "_Rough" });
-    }
-
-    // Pack separate metallic + roughness maps into glTF ORM layout (G=roughness, B=metallic).
-    Texture packMetallicRoughness(const Texture& metallic, const Texture& roughness)
-    {
-        if (!metallic && !roughness)
-            return {};
-
-        const int width = metallic ? metallic->width : roughness->width;
-        const int height = metallic ? metallic->height : roughness->height;
-
-        image::Format format(32, image::Format::UNORM, image::Format::RGBA, 8, 8, 8, 8);
-        auto packed = std::make_shared<image::Bitmap>(width, height, format);
-
-        std::unique_ptr<image::TemporaryBitmap> metalView;
-        std::unique_ptr<image::TemporaryBitmap> roughView;
-        if (metallic)
-            metalView = std::make_unique<image::TemporaryBitmap>(*metallic, width, height, format);
-        if (roughness)
-            roughView = std::make_unique<image::TemporaryBitmap>(*roughness, width, height, format);
-
-        for (int y = 0; y < height; ++y)
-        {
-            u32* out = packed->address<u32>(0, y);
-            const u32* mp = metalView ? metalView->address<u32>(0, y) : nullptr;
-            const u32* rp = roughView ? roughView->address<u32>(0, y) : nullptr;
-
-            for (int x = 0; x < width; ++x)
-            {
-                // Authors usually store grayscale in RGB — take R.
-                const u8 metal = mp ? u8(mp[x] & 0xff) : u8(0);
-                const u8 rough = rp ? u8(rp[x] & 0xff) : u8(255);
-                // R unused, G roughness, B metallic, A opaque.
-                out[x] = u32(0xff000000u) | (u32(metal) << 16) | (u32(rough) << 8);
-            }
-        }
-
-        return packed;
     }
 
     float shininessToRoughness(float shininess)
@@ -1444,8 +1460,37 @@ namespace mango::import3d
 
     ImportFBX::ImportFBX(const filesystem::Path& path, const std::string& filename)
     {
+        basePath = path.pathname();
+
         filesystem::File file(path, filename);
         ReaderFBX reader(file);
+
+        std::unordered_map<std::string, u32> imageIndexByKey;
+
+        auto addResolvedFile = [&](const std::string& filename) -> u32
+        {
+            if (filename.empty())
+                return ImageSample::none;
+
+            auto it = imageIndexByKey.find(filename);
+            if (it != imageIndexByKey.end())
+                return it->second;
+
+            u32 idx = u32(images.size());
+            images.push_back(ImageSource::fromFile(filename));
+            imageIndexByKey.emplace(filename, idx);
+            return idx;
+        };
+
+        auto addEmbeddedImage = [&](ConstMemory content, const std::string& mime, const std::string& debugName) -> u32
+        {
+            if (content.size == 0)
+                return ImageSample::none;
+
+            u32 idx = u32(images.size());
+            images.push_back(ImageSource::fromMemory(content, mime, debugName));
+            return idx;
+        };
 
         const char* axisName[] = { "X", "Y", "Z" };
         const int up = reader.m_upAxis >= 0 && reader.m_upAxis <= 2 ? reader.m_upAxis : 1;
@@ -1464,6 +1509,7 @@ namespace mango::import3d
         // ---- materials ----
 
         std::unordered_map<u64, u32> materialIdToIndex;
+        ImageSourceCache imageCache;
 
         if (reader.m_materials.empty())
         {
@@ -1486,8 +1532,8 @@ namespace mango::import3d
                 material.roughnessFactor = shininessToRoughness(src.shininess);
 
                 std::string albedoDeclared;
-                Texture slotMetallic;
-                Texture slotRoughness;
+                u32 slotMetallic = ImageSample::none;
+                u32 slotRoughness = ImageSample::none;
 
                 for (const auto& [slot, textureId] : reader.texturesForMaterial(id))
                 {
@@ -1499,48 +1545,47 @@ namespace mango::import3d
                     const VideoFBX* video = reader.findVideoForTexture(textureId);
                     const std::string declared = ReaderFBX::bestTexturePath(fbxTex, video);
 
-                    Texture loaded;
+                    u32 imageIndex = ImageSample::none;
                     if (video && video->content.size > 0)
                     {
-                        try
-                        {
-                            loaded = createTexture(video->content);
-                        }
-                        catch (...)
-                        {
-                        }
+                        const std::string mime = mimeFromFilename(
+                            !video->relativeFilename.empty() ? video->relativeFilename : video->filename);
+                        imageIndex = imageCache.loadEmbedded(video->id, video->content, mime, video->name, addEmbeddedImage);
                     }
-                    if (!loaded)
-                        loaded = resolveTexturePath(path, declared);
+                    if (imageIndex == ImageSample::none && !declared.empty())
+                        imageIndex = imageCache.loadFile(path, declared, addResolvedFile);
 
                     const std::string slotLower = toLower(slot);
                     if (slotLower == "diffusecolor" || slotLower == "diffuse" ||
                         slotLower == "basecolor" || slotLower == "basecolour")
                     {
-                        material.baseColorTexture = loaded;
+                        if (imageIndex != ImageSample::none)
+                            material.baseColor = ImageSample::from(imageIndex, ImageSwizzle::rgba(), ImageColorSpace::sRGB);
                         albedoDeclared = declared;
                     }
                     else if (slotLower == "normalmap" || slotLower == "bump" ||
                              slotLower == "normal")
                     {
-                        material.normalTexture = loaded;
+                        if (imageIndex != ImageSample::none)
+                            material.normal = ImageSample::from(imageIndex, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
                     }
                     else if (slotLower == "emissivecolor" || slotLower == "emissive")
                     {
-                        material.emissiveTexture = loaded;
+                        if (imageIndex != ImageSample::none)
+                            material.emissive = ImageSample::from(imageIndex, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
                     }
                     else if (slotLower == "shininessexponent" || slotLower == "shininess" ||
                              slotLower == "roughness" || slotLower == "specularroughness")
                     {
                         // Tripo / PBR-in-Phong: ShininessExponent often carries a roughness map.
-                        slotRoughness = loaded;
+                        slotRoughness = imageIndex;
                     }
                     else if (slotLower == "reflectionfactor" || slotLower == "reflection" ||
                              slotLower == "metallic" || slotLower == "metalness" ||
                              slotLower == "specularfactor")
                     {
                         // ReflectionFactor commonly carries a metallic map in PBR FBX exports.
-                        slotMetallic = loaded;
+                        slotMetallic = imageIndex;
                     }
                     else if (slotLower == "transparentcolor" || slotLower == "transparencyfactor")
                     {
@@ -1549,9 +1594,9 @@ namespace mango::import3d
                     else
                     {
                         // Unknown slot — if we have no albedo yet, treat as base color.
-                        if (!material.baseColorTexture && loaded)
+                        if (!material.baseColor && imageIndex != ImageSample::none)
                         {
-                            material.baseColorTexture = loaded;
+                            material.baseColor = ImageSample::from(imageIndex, ImageSwizzle::rgba(), ImageColorSpace::sRGB);
                             albedoDeclared = declared;
                         }
                     }
@@ -1561,48 +1606,49 @@ namespace mango::import3d
                 }
 
                 // Cerberus-style PBR sidecars next to the albedo map (_N / _M / _R).
-                Texture sidecarNormal;
-                Texture sidecarMetallic;
-                Texture sidecarRoughness;
-                loadPbrSidecars(path, albedoDeclared, sidecarNormal, sidecarMetallic, sidecarRoughness);
+                u32 sidecarNormal = ImageSample::none;
+                u32 sidecarMetallic = ImageSample::none;
+                u32 sidecarRoughness = ImageSample::none;
+                loadPbrSidecars(path, albedoDeclared, imageCache, addResolvedFile,
+                    sidecarNormal, sidecarMetallic, sidecarRoughness);
 
-                if (!material.normalTexture && sidecarNormal)
-                    material.normalTexture = sidecarNormal;
+                if (!material.normal && sidecarNormal != ImageSample::none)
+                    material.normal = ImageSample::from(sidecarNormal, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
 
                 // Prefer explicit FBX property slots; fill gaps from filename sidecars.
-                const Texture metallicMap = slotMetallic ? slotMetallic : sidecarMetallic;
-                const Texture roughnessMap = slotRoughness ? slotRoughness : sidecarRoughness;
+                const u32 metallicMap = slotMetallic != ImageSample::none ? slotMetallic : sidecarMetallic;
+                const u32 roughnessMap = slotRoughness != ImageSample::none ? slotRoughness : sidecarRoughness;
 
-                if (metallicMap || roughnessMap)
+                if (metallicMap != ImageSample::none)
                 {
-                    // Pack into glTF ORM: R unused, G = roughness, B = metallic (8-bit UNORM).
-                    material.metallicRoughnessTexture =
-                        packMetallicRoughness(metallicMap, roughnessMap);
-                    // Texture fully drives the channels when present.
-                    if (metallicMap)
-                        material.metallicFactor = 1.0f;
-                    if (roughnessMap)
-                        material.roughnessFactor = 1.0f;
+                    material.metallic = ImageSample::from(metallicMap, ImageSwizzle::r(), ImageColorSpace::Linear);
+                    material.metallicFactor = 1.0f;
+                }
+                if (roughnessMap != ImageSample::none)
+                {
+                    material.roughness = ImageSample::from(roughnessMap, ImageSwizzle::r(), ImageColorSpace::Linear);
+                    material.roughnessFactor = 1.0f;
                 }
 
                 // Concise material summary
                 printLine(Print::Verbose, "[FBX] material '{}'", material.name);
-                if (material.baseColorTexture)
-                    printLine(Print::Verbose, "  baseColor:  {}x{}  ('{}')",
-                        material.baseColorTexture->width, material.baseColorTexture->height, albedoDeclared);
+                if (material.baseColor)
+                    printLine(Print::Verbose, "  baseColor:  image[{}]  ('{}')", material.baseColor.image, albedoDeclared);
                 else
                     printLine(Print::Verbose, "  baseColor:  none  ('{}')", albedoDeclared);
-                if (material.normalTexture)
-                    printLine(Print::Verbose, "  normal:     {}x{}{}",
-                        material.normalTexture->width, material.normalTexture->height,
-                        sidecarNormal ? "  [sidecar]" : "");
+                if (material.normal)
+                    printLine(Print::Verbose, "  normal:     image[{}]{}", material.normal.image,
+                        sidecarNormal != ImageSample::none ? "  [sidecar]" : "");
                 else
                     printLine(Print::Verbose, "  normal:     none");
-                if (material.metallicRoughnessTexture)
-                    printLine(Print::Verbose, "  metalRough: {}x{}{}",
-                        material.metallicRoughnessTexture->width, material.metallicRoughnessTexture->height,
-                        (slotMetallic || slotRoughness) ? "  [ShininessExponent/ReflectionFactor packed]"
-                        : (sidecarMetallic || sidecarRoughness) ? "  [sidecar _M/_R packed]" : "");
+                if (material.metallic || material.roughness)
+                    printLine(Print::Verbose, "  metalRough: metal={} rough={}{}",
+                        material.metallic ? material.metallic.image : u32(ImageSample::none),
+                        material.roughness ? material.roughness.image : u32(ImageSample::none),
+                        (slotMetallic != ImageSample::none || slotRoughness != ImageSample::none)
+                            ? "  [ShininessExponent/ReflectionFactor]"
+                        : (sidecarMetallic != ImageSample::none || sidecarRoughness != ImageSample::none)
+                            ? "  [sidecar _M/_R]" : "");
                 else
                     printLine(Print::Verbose, "  metalRough: none");
                 printLine(Print::Verbose, "  metallicFactor: {}  roughnessFactor: {}",
@@ -1611,6 +1657,8 @@ namespace mango::import3d
                 materialIdToIndex[id] = u32(materials.size());
                 materials.push_back(std::move(material));
             }
+
+            printLine(Print::Info, "[FBX] images: {}", images.size());
         }
 
         // ---- skeleton nodes (all FBX Models) ----
@@ -2078,7 +2126,7 @@ namespace mango::import3d
                 totalTriangles += bucket.triangles.size();
 
                 if (hasNormals && hasTexcoords &&
-                    materialIndex < materials.size() && materials[materialIndex].normalTexture)
+                    materialIndex < materials.size() && materials[materialIndex].normal)
                 {
                     bucket.computeTangents();
                 }
