@@ -834,6 +834,12 @@ namespace
                     m_connections.push_back(std::move(connection));
                 }
             }
+            else if (name == "LayerElementNormal" || name == "LayerElementUV")
+            {
+                // Defaults for this layer; Mapping/Reference nodes override before data arrays.
+                currentMappingType = ByPolygonVertex;
+                currentReferenceType = Direct;
+            }
             else if (name == "P")
             {
                 if (m_current == Current::Material)
@@ -964,6 +970,14 @@ namespace
                 {
                     // TODO
                 }
+                else if (name == "NormalsIndex" || name == "NormalIndex")
+                {
+                    if (std::holds_alternative<std::vector<s32>>(properties[0].value))
+                    {
+                        mesh.normals.indices = std::get<std::vector<s32>>(properties[0].value);
+                        mesh.normals.referenceType = IndexToDirect;
+                    }
+                }
                 else if (name == "UV")
                 {
                     if (std::holds_alternative<std::vector<float32>>(properties[0].value))
@@ -990,6 +1004,7 @@ namespace
                     if (std::holds_alternative<std::vector<s32>>(properties[0].value))
                     {
                         mesh.texcoords.indices = std::get<std::vector<s32>>(properties[0].value);
+                        mesh.texcoords.referenceType = IndexToDirect;
                     }
                 }
                 else if (name == "Materials")
@@ -1241,11 +1256,27 @@ namespace mango::import3d
             bool hasNormals = !current.normals.values.empty();
             bool hasTexcoords = !current.texcoords.values.empty();
             bool hasTexcoordIndices = !current.texcoords.indices.empty();
+            bool hasNormalIndices = !current.normals.indices.empty();
 
             if (hasTexcoords)
             {
                 trimesh.flags |= Vertex::Texcoord;
             }
+
+            const char* mappingName = "ByPolygonVertex";
+            switch (current.normals.mappingType)
+            {
+                case ByVertice:       mappingName = "ByVertice"; break;
+                case ByEdge:          mappingName = "ByEdge"; break;
+                case AllSame:         mappingName = "AllSame"; break;
+                case ByPolygon:       mappingName = "ByPolygon"; break;
+                case ByPolygonVertex: default: break;
+            }
+            printLine(Print::Verbose, "  [FBX] normals: {} {}  values={} indices={}",
+                mappingName,
+                current.normals.referenceType == IndexToDirect || hasNormalIndices ? "IndexToDirect" : "Direct",
+                current.normals.values.size(),
+                current.normals.indices.size());
 
             // Resolve material index for this geometry.
             u32 materialIndex = 0;
@@ -1275,13 +1306,88 @@ namespace mango::import3d
             const size_t positionCount = current.positions.values.size();
             const size_t normalCount = current.normals.values.size();
             const size_t texcoordCount = current.texcoords.values.size();
+            const size_t normalIndexCount = current.normals.indices.size();
+            const size_t texcoordIndexCount = current.texcoords.indices.size();
 
             auto toOurs = [](const float32x3& v) {
                 return float32x3(v.x, v.y, -v.z);
             };
 
+            // Resolve a normal for polygon-corner stream index `corner` / control point `posIndex`.
+            auto resolveNormal = [&](size_t corner, s32 posIndex, size_t polygonIndex) -> float32x3
+            {
+                if (!hasNormals || normalCount == 0)
+                    return float32x3(0.0f, 1.0f, 0.0f);
+
+                size_t valueIndex = 0;
+
+                switch (current.normals.mappingType)
+                {
+                    case ByVertice:
+                        valueIndex = size_t(posIndex);
+                        break;
+
+                    case ByPolygon:
+                        valueIndex = polygonIndex;
+                        break;
+
+                    case AllSame:
+                        valueIndex = 0;
+                        break;
+
+                    case ByEdge:
+                        // Not supported — fall back to polygon-vertex stream.
+                        valueIndex = corner;
+                        break;
+
+                    case ByPolygonVertex:
+                    default:
+                        valueIndex = corner;
+                        break;
+                }
+
+                if (current.normals.referenceType == IndexToDirect || hasNormalIndices)
+                {
+                    if (valueIndex >= normalIndexCount)
+                        return float32x3(0.0f, 1.0f, 0.0f);
+                    const s32 idx = current.normals.indices[valueIndex];
+                    if (idx < 0 || size_t(idx) >= normalCount)
+                        return float32x3(0.0f, 1.0f, 0.0f);
+                    return toOurs(current.normals.values[size_t(idx)]);
+                }
+
+                if (valueIndex >= normalCount)
+                    return float32x3(0.0f, 1.0f, 0.0f);
+                return toOurs(current.normals.values[valueIndex]);
+            };
+
+            auto resolveTexcoord = [&](size_t corner, s32 posIndex) -> float32x2
+            {
+                if (!hasTexcoords || texcoordCount == 0)
+                    return float32x2(0.0f, 0.0f);
+
+                size_t valueIndex = corner;
+                if (current.texcoords.mappingType == ByVertice)
+                    valueIndex = size_t(posIndex);
+
+                if (current.texcoords.referenceType == IndexToDirect || hasTexcoordIndices)
+                {
+                    if (valueIndex >= texcoordIndexCount)
+                        return float32x2(0.0f, 0.0f);
+                    const s32 idx = current.texcoords.indices[valueIndex];
+                    if (idx < 0 || size_t(idx) >= texcoordCount)
+                        return float32x2(0.0f, 0.0f);
+                    return current.texcoords.values[size_t(idx)];
+                }
+
+                if (valueIndex >= texcoordCount)
+                    return float32x2(0.0f, 0.0f);
+                return current.texcoords.values[valueIndex];
+            };
+
             s32 cornerPos[3] {};
             int corners = 0;
+            size_t polygonIndex = 0;
             Triangle triangle;
 
             for (size_t i = 0; i < current.positions.indices.size(); ++i)
@@ -1293,24 +1399,15 @@ namespace mango::import3d
                 if (posIndex < 0 || size_t(posIndex) >= positionCount)
                 {
                     corners = 0;
+                    if (endOfPolygon)
+                        ++polygonIndex;
                     continue;
                 }
 
                 cornerPos[corners] = posIndex;
-
-                if (hasNormals && current.normals.mappingType == ByPolygonVertex)
-                {
-                    // Direct ByPolygonVertex: one normal per polygon corner (same order as indices).
-                    if (i < normalCount)
-                        triangle.vertex[corners].normal = toOurs(current.normals.values[i]);
-                }
-
+                triangle.vertex[corners].normal = resolveNormal(i, posIndex, polygonIndex);
                 if (hasTexcoords)
-                {
-                    s32 uvIndex = hasTexcoordIndices ? current.texcoords.indices[i] : s32(i);
-                    if (uvIndex >= 0 && size_t(uvIndex) < texcoordCount)
-                        triangle.vertex[corners].texcoord = current.texcoords.values[uvIndex];
-                }
+                    triangle.vertex[corners].texcoord = resolveTexcoord(i, posIndex);
 
                 ++corners;
 
@@ -1320,21 +1417,10 @@ namespace mango::import3d
                     triangle.vertex[1].position = toOurs(current.positions.values[cornerPos[1]]);
                     triangle.vertex[2].position = toOurs(current.positions.values[cornerPos[2]]);
 
-                    if (hasNormals && current.normals.mappingType == ByVertice)
-                    {
-                        if (size_t(cornerPos[0]) < normalCount)
-                            triangle.vertex[0].normal = toOurs(current.normals.values[cornerPos[0]]);
-                        if (size_t(cornerPos[1]) < normalCount)
-                            triangle.vertex[1].normal = toOurs(current.normals.values[cornerPos[1]]);
-                        if (size_t(cornerPos[2]) < normalCount)
-                            triangle.vertex[2].normal = toOurs(current.normals.values[cornerPos[2]]);
-                    }
-
                     // Z-reflect already yields CW front faces — keep corner order.
 
                     if (!hasNormals)
                     {
-                        printLine("      no normals");
                         // TODO: smoothing groups (need file for testing)
                         const float32x3& p0 = triangle.vertex[0].position;
                         const float32x3& p1 = triangle.vertex[1].position;
@@ -1357,6 +1443,7 @@ namespace mango::import3d
                 if (endOfPolygon)
                 {
                     corners = 0;
+                    ++polygonIndex;
                 }
             }
 
