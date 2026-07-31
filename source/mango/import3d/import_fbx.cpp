@@ -432,6 +432,16 @@ namespace
         MappingInformationType currentMappingType { ByPolygonVertex };
         ReferenceInformationType currentReferenceType { Direct };
 
+        // FBX GlobalSettings axis system (0=X, 1=Y, 2=Z). Defaults = Maya Y-up.
+        s32 m_upAxis = 1;
+        s32 m_upSign = 1;
+        s32 m_frontAxis = 2;
+        s32 m_frontSign = -1; // Maya: front toward viewer along −Z
+        s32 m_coordAxis = 0;
+        s32 m_coordSign = 1;
+        s32 m_originalUpAxis = -1; // -1 = unknown / not authored
+        bool m_axisFromFile = false;
+
         std::vector<MeshFBX> m_meshes;
         std::unordered_map<u64, MaterialFBX> m_materials;
         std::unordered_map<u64, TextureFBX> m_textures;
@@ -440,7 +450,7 @@ namespace
         std::vector<ConnectionFBX> m_connections;
 
         // Object currently being filled by nested nodes (Properties70 / filenames).
-        enum class Current : u8 { None, Geometry, Model, Material, Texture, Video };
+        enum class Current : u8 { None, Geometry, Model, Material, Texture, Video, GlobalSettings };
         Current m_current { Current::None };
         u64 m_current_id { 0 };
 
@@ -519,6 +529,21 @@ namespace
             return output;
         }
 
+        static bool holdsInt(const Property& property)
+        {
+            return std::holds_alternative<u32>(property.value) ||
+                   std::holds_alternative<u16>(property.value);
+        }
+
+        static s32 getInt(const Property& property)
+        {
+            if (std::holds_alternative<u32>(property.value))
+                return s32(std::get<u32>(property.value));
+            if (std::holds_alternative<u16>(property.value))
+                return s32(std::get<u16>(property.value));
+            return 0;
+        }
+
         static bool holdsString(const Property& property)
         {
             return std::holds_alternative<std::string_view>(property.value);
@@ -545,6 +570,66 @@ namespace
                 id = std::get<u64>(properties[0].value);
             if (properties.size() > 1 && holdsString(properties[1]))
                 name = objectName(getString(properties[1]));
+        }
+
+        void parseAxisProperty(const std::vector<Property>& properties)
+        {
+            if (properties.empty() || !holdsString(properties[0]) || properties.size() < 5)
+                return;
+            if (!holdsInt(properties[4]))
+                return;
+
+            const std::string_view key = getString(properties[0]);
+            const s32 value = getInt(properties[4]);
+
+            if (key == "UpAxis")
+            {
+                m_upAxis = value;
+                m_axisFromFile = true;
+            }
+            else if (key == "UpAxisSign")
+                m_upSign = value < 0 ? -1 : 1;
+            else if (key == "FrontAxis")
+                m_frontAxis = value;
+            else if (key == "FrontAxisSign")
+                m_frontSign = value < 0 ? -1 : 1;
+            else if (key == "CoordAxis")
+                m_coordAxis = value;
+            else if (key == "CoordAxisSign")
+                m_coordSign = value < 0 ? -1 : 1;
+            else if (key == "OriginalUpAxis")
+                m_originalUpAxis = value; // 0xFFFFFFFF → -1 (unknown)
+        }
+
+        // Map FBX vectors into engine space: +X right, +Y up, +Z ahead (Unity-like LH),
+        // matching glTF importer output.
+        float32x3 toOurs(const float32x3& p) const
+        {
+            // Tripo and some converters leave UpAxis=Y / FrontAxis=Z while the mesh
+            // itself is still Z-up with +X forward (OriginalUpAxis == -1). Trusting
+            // GlobalSettings then yields: red→ahead, green→left, blue→down.
+            // Remap (-Y, Z, X) restores right / up / ahead.
+            if (m_originalUpAxis < 0)
+                return float32x3(-p.y, p.z, p.x);
+
+            auto axis = [](s32 index, s32 sign) -> float32x3
+            {
+                const float s = float(sign);
+                switch (index)
+                {
+                    case 0:  return float32x3(s, 0.0f, 0.0f);
+                    case 1:  return float32x3(0.0f, s, 0.0f);
+                    case 2:  return float32x3(0.0f, 0.0f, s);
+                    default: return float32x3(0.0f, 0.0f, 0.0f);
+                }
+            };
+
+            // FBX "Front" points toward the viewer (glTF +Z). Engine ahead = −front.
+            const float32x3 right = axis(m_coordAxis, m_coordSign);
+            const float32x3 up = axis(m_upAxis, m_upSign);
+            const float32x3 front = axis(m_frontAxis, m_frontSign);
+
+            return float32x3(dot(p, right), dot(p, up), -dot(p, front));
         }
 
         void parseMaterialProperty(MaterialFBX& material, const std::vector<Property>& properties)
@@ -630,7 +715,7 @@ namespace
             switch (level)
             {
                 case 0:
-                    if (name != "Objects" && name != "Connections")
+                    if (name != "Objects" && name != "Connections" && name != "GlobalSettings")
                     {
                         return end;
                     }
@@ -638,8 +723,10 @@ namespace
 
                 case 1:
                     // Under Objects: geometry + material graph. Under Connections: C records.
+                    // Under GlobalSettings: Properties70.
                     if (name != "Geometry" && name != "Model" && name != "Material" &&
-                        name != "Texture" && name != "Video" && name != "C")
+                        name != "Texture" && name != "Video" && name != "C" &&
+                        name != "Properties70")
                     {
                         return end;
                     }
@@ -778,7 +865,11 @@ namespace
             p = next;
 
             // ---- top-level object open ----
-            if (name == "Geometry")
+            if (name == "GlobalSettings")
+            {
+                m_current = Current::GlobalSettings;
+            }
+            else if (name == "Geometry")
             {
                 MeshFBX mesh;
                 std::string unused;
@@ -847,6 +938,10 @@ namespace
                     auto it = m_materials.find(m_current_id);
                     if (it != m_materials.end())
                         parseMaterialProperty(it->second, properties);
+                }
+                else if (m_current == Current::GlobalSettings)
+                {
+                    parseAxisProperty(properties);
                 }
             }
             else if (name == "RelativeFilename")
@@ -1115,6 +1210,20 @@ namespace mango::import3d
         filesystem::File file(path, filename);
         ReaderFBX reader(file);
 
+        const char* axisName[] = { "X", "Y", "Z" };
+        const int up = reader.m_upAxis >= 0 && reader.m_upAxis <= 2 ? reader.m_upAxis : 1;
+        const int front = reader.m_frontAxis >= 0 && reader.m_frontAxis <= 2 ? reader.m_frontAxis : 2;
+        const int coord = reader.m_coordAxis >= 0 && reader.m_coordAxis <= 2 ? reader.m_coordAxis : 0;
+        printLine(Print::Info, "[FBX] axes: up={}{} front={}{} coord={}{}{}",
+            reader.m_upSign < 0 ? "-" : "+",
+            axisName[up],
+            reader.m_frontSign < 0 ? "-" : "+",
+            axisName[front],
+            reader.m_coordSign < 0 ? "-" : "+",
+            axisName[coord],
+            reader.m_originalUpAxis < 0 ? "  (OriginalUpAxis unknown → Z-up remap)"
+                : reader.m_axisFromFile ? "" : "  (defaults)");
+
         // ---- materials ----
 
         std::unordered_map<u64, u32> materialIdToIndex;
@@ -1333,8 +1442,8 @@ namespace mango::import3d
             const size_t normalIndexCount = current.normals.indices.size();
             const size_t texcoordIndexCount = current.texcoords.indices.size();
 
-            auto toOurs = [](const float32x3& v) {
-                return float32x3(v.x, v.y, -v.z);
+            auto toOurs = [&](const float32x3& v) {
+                return reader.toOurs(v);
             };
 
             // Resolve a normal for polygon-corner stream index `corner` / control point `posIndex`.
