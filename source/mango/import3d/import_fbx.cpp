@@ -48,9 +48,9 @@ namespace
         ArrayFBX<float32x3> positions;
         ArrayFBX<float32x3> normals;
         ArrayFBX<float32x2> texcoords;
-        // LayerElementMaterial / AllSame: index into materials linked to the parent Model.
-        u32 materialIndex = 0;
-        bool hasMaterialIndex = false;
+        // LayerElementMaterial: indices into materials linked to the parent Model.
+        // ByPolygon (typical): one entry per polygon. AllSame: a single entry.
+        ArrayFBX<s32> materials;
     };
 
     struct MaterialFBX
@@ -453,6 +453,7 @@ namespace
         enum class Current : u8 { None, Geometry, Model, Material, Texture, Video, GlobalSettings };
         Current m_current { Current::None };
         u64 m_current_id { 0 };
+        bool m_skip_uv_layer { false };
 
         ReaderFBX(ConstMemory memory)
             : m_memory(memory)
@@ -877,6 +878,7 @@ namespace
                 m_meshes.push_back(std::move(mesh));
                 m_current = Current::Geometry;
                 m_current_id = m_meshes.back().id;
+                m_skip_uv_layer = false;
             }
             else if (name == "Model")
             {
@@ -925,11 +927,31 @@ namespace
                     m_connections.push_back(std::move(connection));
                 }
             }
-            else if (name == "LayerElementNormal" || name == "LayerElementUV")
+            else if (name == "LayerElementNormal")
             {
                 // Defaults for this layer; Mapping/Reference nodes override before data arrays.
                 currentMappingType = ByPolygonVertex;
                 currentReferenceType = Direct;
+                if (!m_meshes.empty() && m_current == Current::Geometry)
+                    m_meshes.back().normals = {};
+            }
+            else if (name == "LayerElementUV")
+            {
+                currentMappingType = ByPolygonVertex;
+                currentReferenceType = Direct;
+                // First UV set only (ignore lightmap / extra UV channels).
+                m_skip_uv_layer = !m_meshes.empty()
+                    && m_current == Current::Geometry
+                    && !m_meshes.back().texcoords.values.empty();
+                if (!m_skip_uv_layer && !m_meshes.empty() && m_current == Current::Geometry)
+                    m_meshes.back().texcoords = {};
+            }
+            else if (name == "LayerElementMaterial")
+            {
+                currentMappingType = AllSame;
+                currentReferenceType = Direct;
+                if (!m_meshes.empty() && m_current == Current::Geometry)
+                    m_meshes.back().materials = {};
             }
             else if (name == "P")
             {
@@ -1076,12 +1098,14 @@ namespace
                 }
                 else if (name == "UV")
                 {
-                    if (std::holds_alternative<std::vector<float32>>(properties[0].value))
+                    if (!m_skip_uv_layer &&
+                        std::holds_alternative<std::vector<float32>>(properties[0].value))
                     {
                         auto vec = std::get<std::vector<float32>>(properties[0].value);
 
                         mesh.texcoords.mappingType = currentMappingType;
                         mesh.texcoords.referenceType = currentReferenceType;
+                        mesh.texcoords.values.clear();
 
                         for (size_t i = 0; i + 1 < vec.size(); i += 2)
                         {
@@ -1097,7 +1121,8 @@ namespace
                 }
                 else if (name == "UVIndex")
                 {
-                    if (std::holds_alternative<std::vector<s32>>(properties[0].value))
+                    if (!m_skip_uv_layer &&
+                        std::holds_alternative<std::vector<s32>>(properties[0].value))
                     {
                         mesh.texcoords.indices = std::get<std::vector<s32>>(properties[0].value);
                         mesh.texcoords.referenceType = IndexToDirect;
@@ -1105,15 +1130,20 @@ namespace
                 }
                 else if (name == "Materials")
                 {
-                    // LayerElementMaterial indices into materials connected to the parent Model.
+                    // Per-polygon (or AllSame) indices into materials connected to the parent Model.
                     if (std::holds_alternative<std::vector<s32>>(properties[0].value))
                     {
-                        auto vec = std::get<std::vector<s32>>(properties[0].value);
-                        if (!vec.empty())
-                        {
-                            mesh.materialIndex = u32(std::max(s32(0), vec[0]));
-                            mesh.hasMaterialIndex = true;
-                        }
+                        mesh.materials.values = std::get<std::vector<s32>>(properties[0].value);
+                        mesh.materials.mappingType = currentMappingType;
+                        mesh.materials.referenceType = currentReferenceType;
+                    }
+                }
+                else if (name == "MaterialsIndex" || name == "MaterialIndex")
+                {
+                    if (std::holds_alternative<std::vector<s32>>(properties[0].value))
+                    {
+                        mesh.materials.indices = std::get<std::vector<s32>>(properties[0].value);
+                        mesh.materials.referenceType = IndexToDirect;
                     }
                 }
                 else if (name == "Smoothing")
@@ -1411,29 +1441,93 @@ namespace mango::import3d
                 current.normals.values.size(),
                 current.normals.indices.size());
 
-            // Resolve material index for this geometry.
-            u32 materialIndex = 0;
+            const char* uvMappingName = "ByPolygonVertex";
+            switch (current.texcoords.mappingType)
+            {
+                case ByVertice:       uvMappingName = "ByVertice"; break;
+                case ByEdge:          uvMappingName = "ByEdge"; break;
+                case AllSame:         uvMappingName = "AllSame"; break;
+                case ByPolygon:       uvMappingName = "ByPolygon"; break;
+                case ByPolygonVertex: default: break;
+            }
+            printLine(Print::Verbose, "  [FBX] uvs: {} {}  values={} indices={}",
+                uvMappingName,
+                current.texcoords.referenceType == IndexToDirect || hasTexcoordIndices ? "IndexToDirect" : "Direct",
+                current.texcoords.values.size(),
+                current.texcoords.indices.size());
+
+            // Materials linked to this geometry's parent Model (slot order = LayerElementMaterial indices).
+            std::vector<u64> modelMaterials;
             if (!reader.m_materials.empty())
             {
                 const u64 modelId = reader.modelForGeometry(current.id);
-                std::vector<u64> modelMaterials =
-                    modelId ? reader.materialsForModel(modelId) : std::vector<u64>{};
-
+                modelMaterials = modelId ? reader.materialsForModel(modelId) : std::vector<u64>{};
                 if (modelMaterials.empty())
-                {
-                    // Fall back: first material in the file.
                     modelMaterials.push_back(reader.m_materials.begin()->first);
+            }
+
+            auto resolveMaterialSlot = [&](size_t polygonIndex) -> u32
+            {
+                if (current.materials.values.empty())
+                    return 0;
+
+                size_t valueIndex = 0;
+                switch (current.materials.mappingType)
+                {
+                    case ByPolygon:
+                        valueIndex = polygonIndex;
+                        break;
+                    case ByPolygonVertex:
+                        // Rare for materials — treat like ByPolygon using first corner's poly.
+                        valueIndex = polygonIndex;
+                        break;
+                    case AllSame:
+                    default:
+                        valueIndex = 0;
+                        break;
                 }
 
-                u32 localIndex = current.hasMaterialIndex ? current.materialIndex : 0;
-                if (localIndex >= modelMaterials.size())
-                    localIndex = 0;
+                s32 slot = 0;
+                if (current.materials.referenceType == IndexToDirect && !current.materials.indices.empty())
+                {
+                    if (valueIndex >= current.materials.indices.size())
+                        return 0;
+                    const s32 idx = current.materials.indices[valueIndex];
+                    if (idx < 0 || size_t(idx) >= current.materials.values.size())
+                        return 0;
+                    slot = current.materials.values[size_t(idx)];
+                }
+                else
+                {
+                    // Blender IndexToDirect often stores per-polygon slots directly in Materials
+                    // with an empty MaterialsIndex — treat values as the slot indices.
+                    if (valueIndex >= current.materials.values.size())
+                        valueIndex = 0;
+                    slot = current.materials.values[valueIndex];
+                }
 
-                const u64 materialId = modelMaterials[localIndex];
-                auto it = materialIdToIndex.find(materialId);
-                if (it != materialIdToIndex.end())
-                    materialIndex = it->second;
-            }
+                if (slot < 0)
+                    slot = 0;
+                return u32(slot);
+            };
+
+            auto materialIndexForSlot = [&](u32 slot) -> u32
+            {
+                if (modelMaterials.empty())
+                    return 0;
+                if (slot >= modelMaterials.size())
+                    slot = 0;
+                auto it = materialIdToIndex.find(modelMaterials[slot]);
+                return it != materialIdToIndex.end() ? it->second : 0;
+            };
+
+            printLine(Print::Verbose, "  [FBX] materials: {} {}  values={} indices={}  modelSlots={}",
+                current.materials.mappingType == ByPolygon ? "ByPolygon" :
+                    current.materials.mappingType == AllSame ? "AllSame" : "other",
+                current.materials.referenceType == IndexToDirect ? "IndexToDirect" : "Direct",
+                current.materials.values.size(),
+                current.materials.indices.size(),
+                modelMaterials.size());
 
             // Fan-triangulate PolygonVertexIndex (last corner of each polygon is ~index).
             const size_t positionCount = current.positions.values.size();
@@ -1518,10 +1612,14 @@ namespace mango::import3d
                 return current.texcoords.values[valueIndex];
             };
 
+            // One Mesh bucket per material slot so IndexedMesh gets separate primitives.
+            std::unordered_map<u32, Mesh> meshesByMaterial;
+
             s32 cornerPos[3] {};
             int corners = 0;
             size_t polygonIndex = 0;
             Triangle triangle;
+            u32 polygonMaterial = materialIndexForSlot(resolveMaterialSlot(0));
 
             for (size_t i = 0; i < current.positions.indices.size(); ++i)
             {
@@ -1536,6 +1634,9 @@ namespace mango::import3d
                         ++polygonIndex;
                     continue;
                 }
+
+                if (corners == 0)
+                    polygonMaterial = materialIndexForSlot(resolveMaterialSlot(polygonIndex));
 
                 cornerPos[corners] = posIndex;
                 triangle.vertex[corners].normal = resolveNormal(i, posIndex, polygonIndex);
@@ -1565,7 +1666,10 @@ namespace mango::import3d
                         triangle.vertex[2].normal = normal;
                     }
 
-                    trimesh.triangles.push_back(triangle);
+                    Mesh& bucket = meshesByMaterial[polygonMaterial];
+                    if (bucket.triangles.empty())
+                        bucket.flags = trimesh.flags;
+                    bucket.triangles.push_back(triangle);
 
                     // Fan: keep vertex 0, slide vertex 2 → vertex 1 (pos + corner attrs).
                     triangle.vertex[1] = triangle.vertex[2];
@@ -1580,17 +1684,23 @@ namespace mango::import3d
                 }
             }
 
-            // Same as glTF: normal maps need mikktspace tangents (.xyz + .w bitangent sign).
-            // Run after Z-reflect / UV flips so TBN matches engine-space geometry.
-            if (hasNormals && hasTexcoords &&
-                materialIndex < materials.size() && materials[materialIndex].normalTexture)
+            size_t totalTriangles = 0;
+            for (auto& [materialIndex, bucket] : meshesByMaterial)
             {
-                trimesh.computeTangents();
-                printLine(Print::Verbose, "  [FBX] computed tangents ({} triangles)",
-                    trimesh.triangles.size());
+                totalTriangles += bucket.triangles.size();
+
+                // Same as glTF: normal maps need mikktspace tangents (.xyz + .w bitangent sign).
+                if (hasNormals && hasTexcoords &&
+                    materialIndex < materials.size() && materials[materialIndex].normalTexture)
+                {
+                    bucket.computeTangents();
+                }
+
+                mesh.append(bucket, materialIndex);
             }
 
-            mesh.append(trimesh, materialIndex);
+            printLine(Print::Verbose, "  [FBX] primitives: {} ({} triangles)",
+                meshesByMaterial.size(), totalTriangles);
         }
 
         meshes.push_back(std::move(ptr));
