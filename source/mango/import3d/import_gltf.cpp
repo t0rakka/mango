@@ -4,6 +4,7 @@
 */
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_gltf.hpp>
+#include <mango/math/quaternion.hpp>
 
 #include <algorithm>
 #include <fastgltf/core.hpp>
@@ -26,6 +27,7 @@ namespace
         size_t stride = 0;
         size_t components;
         fastgltf::ComponentType type;
+        bool normalized = false;
 
         operator bool () const
         {
@@ -589,6 +591,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             Attribute attributeTangent;
             Attribute attributeTexcoord;
             Attribute attributeColor;
+            Attribute attributeJoints;
+            Attribute attributeWeights;
 
             for (auto attributeIterator = primitiveIterator->attributes.begin(); attributeIterator != primitiveIterator->attributes.end(); ++attributeIterator)
             {
@@ -622,6 +626,16 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     attribute = &attributeColor;
                     mesh.flags |= Vertex::Color;
                 }
+                else if (name == "JOINTS_0")
+                {
+                    attribute = &attributeJoints;
+                    mesh.flags |= Vertex::Joints;
+                }
+                else if (name == "WEIGHTS_0")
+                {
+                    attribute = &attributeWeights;
+                    mesh.flags |= Vertex::Weights;
+                }
                 else
                 {
                     message = " : NOT SUPPORTED!";
@@ -630,6 +644,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 printLine(Print::Verbose, "    [Attribute:\"{}\"{}]", name, message);
 
                 auto& accessor = asset.accessors[attributeIterator->accessorIndex];
+                if (!accessor.bufferViewIndex.has_value())
+                    continue;
+
                 auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
 
                 auto offset = view.byteOffset + accessor.byteOffset;
@@ -656,6 +673,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     case fastgltf::ComponentType::UnsignedShort:
                         printLine(Print::Verbose, "      type: u16 x {}", components);
                         break;
+                    case fastgltf::ComponentType::UnsignedInt:
+                        printLine(Print::Verbose, "      type: u32 x {}", components);
+                        break;
                     case fastgltf::ComponentType::Float:
                         printLine(Print::Verbose, "      type: f32 x {}", components);
                         break;
@@ -674,6 +694,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     attribute->stride = stride;
                     attribute->components = components;
                     attribute->type = accessor.componentType;
+                    attribute->normalized = accessor.normalized;
                 }
 
             } // attributeIterator
@@ -794,6 +815,87 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     data += attributeColor.stride;
 
                     vertices[i].color = float32x4(color, 1.0f);
+                }
+            }
+
+            // glTF JOINTS_0 / WEIGHTS_0 (set 0 only — up to 4 influences).
+            if (attributeJoints)
+            {
+                if (attributeJoints.count != attributePosition.count)
+                    continue;
+
+                const u8* data = attributeJoints.data;
+                const size_t comps = std::min(attributeJoints.components, size_t(4));
+
+                for (size_t i = 0; i < attributeJoints.count; ++i)
+                {
+                    switch (attributeJoints.type)
+                    {
+                        case fastgltf::ComponentType::UnsignedByte:
+                            for (size_t c = 0; c < comps; ++c)
+                                vertices[i].joint[c] = data[c];
+                            break;
+
+                        case fastgltf::ComponentType::UnsignedShort:
+                            for (size_t c = 0; c < comps; ++c)
+                                vertices[i].joint[c] = uload16(data + c * 2);
+                            break;
+
+                        default:
+                            break;
+                    }
+                    data += attributeJoints.stride;
+                }
+            }
+
+            if (attributeWeights)
+            {
+                if (attributeWeights.count != attributePosition.count)
+                    continue;
+
+                const u8* data = attributeWeights.data;
+                const size_t comps = std::min(attributeWeights.components, size_t(4));
+
+                for (size_t i = 0; i < attributeWeights.count; ++i)
+                {
+                    float w[4] = { 0.0f, 0.0f, 0.0f, 0.0f };
+
+                    switch (attributeWeights.type)
+                    {
+                        case fastgltf::ComponentType::Float:
+                            for (size_t c = 0; c < comps; ++c)
+                                w[c] = uload32f(data + c * 4);
+                            break;
+
+                        case fastgltf::ComponentType::UnsignedByte:
+                            for (size_t c = 0; c < comps; ++c)
+                            {
+                                const float v = float(data[c]);
+                                w[c] = attributeWeights.normalized ? v / 255.0f : v;
+                            }
+                            break;
+
+                        case fastgltf::ComponentType::UnsignedShort:
+                            for (size_t c = 0; c < comps; ++c)
+                            {
+                                const float v = float(uload16(data + c * 2));
+                                w[c] = attributeWeights.normalized ? v / 65535.0f : v;
+                            }
+                            break;
+
+                        default:
+                            break;
+                    }
+
+                    // Spec says weights sum to 1; renormalize defensively.
+                    float sum = w[0] + w[1] + w[2] + w[3];
+                    if (sum > 0.0f)
+                    {
+                        const float inv = 1.0f / sum;
+                        vertices[i].weight = float32x4(w[0] * inv, w[1] * inv, w[2] * inv, w[3] * inv);
+                    }
+
+                    data += attributeWeights.stride;
                 }
             }
 
@@ -1029,17 +1131,251 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     }
 
     // --------------------------------------------------------------------------
+    // skins
+    // --------------------------------------------------------------------------
+
+    const matrix4x4 axisReflect = matrix4x4::scale(1.0f, 1.0f, -1.0f);
+
+    for (const auto& current : asset.skins)
+    {
+        Skin skin;
+        skin.name = current.name;
+
+        for (std::size_t joint : current.joints)
+            skin.joints.push_back(u32(joint));
+
+        if (current.skeleton.has_value())
+            skin.skeleton = u32(current.skeleton.value());
+
+        skin.inverseBindMatrices.assign(skin.joints.size(), matrix4x4(1.0f));
+
+        if (current.inverseBindMatrices.has_value())
+        {
+            const auto& accessor = asset.accessors[current.inverseBindMatrices.value()];
+            if (accessor.bufferViewIndex.has_value())
+            {
+                const auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
+                const size_t offset = view.byteOffset + accessor.byteOffset;
+                const u8* data = buffers[view.bufferIndex].address + offset;
+
+                size_t stride = view.byteStride.has_value()
+                    ? view.byteStride.value()
+                    : fastgltf::getElementByteSize(accessor.type, accessor.componentType);
+
+                const size_t count = std::min(accessor.count, skin.joints.size());
+                for (size_t i = 0; i < count; ++i)
+                {
+                    // glTF MAT4 is column-major; mango matrix4x4 ctor takes row-major floats.
+                    // Reading 16 floats in memory order into mango's row layout matches how
+                    // node matrices are imported (fmat4x4::data() → matrix4x4).
+                    float m[16];
+                    for (int k = 0; k < 16; ++k)
+                        m[k] = uload32f(data + i * stride + size_t(k) * 4);
+
+                    matrix4x4 ibm(m);
+                    // Same S M S as node transforms so IBM space matches Z-reflected mesh.
+                    skin.inverseBindMatrices[i] = axisReflect * ibm * axisReflect;
+                }
+            }
+        }
+
+        printLine(Print::Verbose, "[Skin]\n  \"{}\" joints={} ibms={}",
+            skin.name, skin.joints.size(), skin.inverseBindMatrices.size());
+
+        skins.push_back(std::move(skin));
+    }
+
+    // --------------------------------------------------------------------------
+    // animations
+    // --------------------------------------------------------------------------
+
+    auto readFloatAccessor = [&](std::size_t accessorIndex, std::vector<float>& out, size_t* outComponents) -> bool
+    {
+        if (accessorIndex >= asset.accessors.size())
+            return false;
+        const auto& accessor = asset.accessors[accessorIndex];
+        if (!accessor.bufferViewIndex.has_value())
+            return false;
+        if (accessor.componentType != fastgltf::ComponentType::Float)
+            return false;
+
+        const auto& view = asset.bufferViews[accessor.bufferViewIndex.value()];
+        const size_t offset = view.byteOffset + accessor.byteOffset;
+        const u8* data = buffers[view.bufferIndex].address + offset;
+        const size_t components = fastgltf::getNumComponents(accessor.type);
+        const size_t stride = view.byteStride.has_value()
+            ? view.byteStride.value()
+            : fastgltf::getElementByteSize(accessor.type, accessor.componentType);
+
+        out.resize(accessor.count * components);
+        for (size_t i = 0; i < accessor.count; ++i)
+        {
+            for (size_t c = 0; c < components; ++c)
+                out[i * components + c] = uload32f(data + i * stride + c * 4);
+        }
+        if (outComponents)
+            *outComponents = components;
+        return true;
+    };
+
+    // Keys are converted into engine space (same Z-reflect as meshes / node locals).
+    auto fixTranslation = [](float* v)
+    {
+        v[2] = -v[2];
+    };
+    auto fixRotation = [&](float* v)
+    {
+        // R' = S R S with S = diag(1,1,-1), then back to quaternion.
+        matrix4x4 R(math::Quaternion(v[0], v[1], v[2], v[3]));
+        matrix4x4 Rp = axisReflect * R * axisReflect;
+        math::Quaternion q(Rp);
+        // Keep hemisphere stable for interpolation.
+        if (q.w < 0.0f)
+        {
+            q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w;
+        }
+        v[0] = q.x; v[1] = q.y; v[2] = q.z; v[3] = q.w;
+    };
+
+    for (const auto& current : asset.animations)
+    {
+        Animation animation;
+        animation.name = current.name;
+
+        animation.samplers.reserve(current.samplers.size());
+        for (const auto& srcSampler : current.samplers)
+        {
+            AnimationSampler sampler;
+
+            switch (srcSampler.interpolation)
+            {
+                case fastgltf::AnimationInterpolation::Step:
+                    sampler.interpolation = AnimationInterpolation::Step;
+                    break;
+                case fastgltf::AnimationInterpolation::CubicSpline:
+                    sampler.interpolation = AnimationInterpolation::CubicSpline;
+                    break;
+                case fastgltf::AnimationInterpolation::Linear:
+                default:
+                    sampler.interpolation = AnimationInterpolation::Linear;
+                    break;
+            }
+
+            size_t timeComponents = 0;
+            if (!readFloatAccessor(srcSampler.inputAccessor, sampler.times, &timeComponents))
+            {
+                printLine(Print::Verbose, "[Animation] \"{}\" sampler: bad input accessor", animation.name);
+                animation.samplers.push_back(std::move(sampler));
+                continue;
+            }
+
+            size_t valueComponents = 0;
+            if (!readFloatAccessor(srcSampler.outputAccessor, sampler.values, &valueComponents))
+            {
+                printLine(Print::Verbose, "[Animation] \"{}\" sampler: bad output accessor", animation.name);
+                animation.samplers.push_back(std::move(sampler));
+                continue;
+            }
+
+            sampler.components = u32(valueComponents);
+
+            if (!sampler.times.empty())
+                animation.duration = std::max(animation.duration, sampler.times.back());
+
+            animation.samplers.push_back(std::move(sampler));
+        }
+
+        animation.channels.reserve(current.channels.size());
+        for (const auto& srcChannel : current.channels)
+        {
+            AnimationChannel channel;
+            channel.sampler = u32(srcChannel.samplerIndex);
+
+            switch (srcChannel.path)
+            {
+                case fastgltf::AnimationPath::Rotation:
+                    channel.path = AnimationPath::Rotation;
+                    break;
+                case fastgltf::AnimationPath::Scale:
+                    channel.path = AnimationPath::Scale;
+                    break;
+                case fastgltf::AnimationPath::Weights:
+                    channel.path = AnimationPath::Weights;
+                    break;
+                case fastgltf::AnimationPath::Translation:
+                default:
+                    channel.path = AnimationPath::Translation;
+                    break;
+            }
+
+            if (srcChannel.nodeIndex.has_value())
+            {
+                const u32 nodeIndex = u32(srcChannel.nodeIndex.value());
+                channel.node = nodeIndex;
+                if (nodeIndex < asset.nodes.size())
+                    channel.targetName = std::string(asset.nodes[nodeIndex].name);
+            }
+
+            animation.channels.push_back(std::move(channel));
+        }
+
+        // Axis-fix each sampler once (samplers may be shared by multiple channels).
+        std::vector<bool> samplerFixed(animation.samplers.size(), false);
+        for (const AnimationChannel& channel : animation.channels)
+        {
+            if (channel.sampler >= animation.samplers.size() || samplerFixed[channel.sampler])
+                continue;
+            if (channel.path == AnimationPath::Weights || channel.path == AnimationPath::Scale)
+            {
+                samplerFixed[channel.sampler] = true;
+                continue;
+            }
+
+            AnimationSampler& sampler = animation.samplers[channel.sampler];
+            if (sampler.components < 3 || sampler.values.empty())
+            {
+                samplerFixed[channel.sampler] = true;
+                continue;
+            }
+
+            const size_t elementCount =
+                sampler.interpolation == AnimationInterpolation::CubicSpline ? 3 : 1;
+            const size_t stride = size_t(sampler.components) * elementCount;
+            for (size_t i = 0; i + stride <= sampler.values.size(); i += stride)
+            {
+                for (size_t e = 0; e < elementCount; ++e)
+                {
+                    float* v = sampler.values.data() + i + e * sampler.components;
+                    if (channel.path == AnimationPath::Translation)
+                        fixTranslation(v);
+                    else if (channel.path == AnimationPath::Rotation && sampler.components >= 4)
+                        fixRotation(v);
+                }
+            }
+            samplerFixed[channel.sampler] = true;
+        }
+
+        printLine(Print::Verbose, "[Animation]\n  \"{}\" duration={:.3f}s samplers={} channels={}",
+            animation.name, animation.duration, animation.samplers.size(), animation.channels.size());
+
+        animations.push_back(std::move(animation));
+    }
+
+    // --------------------------------------------------------------------------
     // nodes
     // --------------------------------------------------------------------------
 
     for (const auto& current : asset.nodes)
     {
         Node node;
+        node.name = current.name;
 
         if (const auto* matrix = std::get_if<fastgltf::math::fmat4x4>(&current.transform))
         {
             const float* data = matrix->data();
-            node.transform = matrix4x4(data);
+            node.transform = axisReflect * matrix4x4(data) * axisReflect;
+            // Matrix-only node: TRS not separated (rare for skinned bones).
+            node.hasTRS = false;
         }
         else if (const auto* trs = std::get_if<fastgltf::TRS>(&current.transform))
         {
@@ -1047,18 +1383,21 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             const float* r = trs->rotation.data();
             const float* s = trs->scale.data();
 
-            matrix4x4 translation = matrix4x4::translate(t[0], t[1], t[2]);
-            matrix4x4 rotation(math::Quaternion(r[0], r[1], r[2], r[3]));
-            matrix4x4 scale = matrix4x4::scale(s[0], s[1], s[2]);
+            float translation[3] = { t[0], t[1], t[2] };
+            float rotation[4] = { r[0], r[1], r[2], r[3] };
+            fixTranslation(translation);
+            fixRotation(rotation);
 
-            node.transform = scale * rotation * translation;
+            node.translation = float32x3(translation[0], translation[1], translation[2]);
+            node.rotation = float32x4(rotation[0], rotation[1], rotation[2], rotation[3]);
+            node.scale = float32x3(s[0], s[1], s[2]);
+            node.hasTRS = true;
+
+            matrix4x4 T = matrix4x4::translate(node.translation.x, node.translation.y, node.translation.z);
+            matrix4x4 R(math::Quaternion(node.rotation.x, node.rotation.y, node.rotation.z, node.rotation.w));
+            matrix4x4 S = matrix4x4::scale(node.scale.x, node.scale.y, node.scale.z);
+            node.transform = S * R * T;
         }
-
-        // Same S as mesh attributes: diag(1,1,-1). M' = S M S keeps node space aligned.
-        const matrix4x4 S = matrix4x4::scale(1.0f, 1.0f, -1.0f);
-        node.transform = S * node.transform * S;
-
-        node.name = current.name;
 
         for (auto child : current.children)
         {
@@ -1068,6 +1407,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         if (current.meshIndex)
         {
             node.mesh = u32(current.meshIndex.value());
+        }
+
+        if (current.skinIndex)
+        {
+            node.skin = u32(current.skinIndex.value());
         }
 
         nodes.push_back(node);
@@ -1093,12 +1437,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // --------------------------------------------------------------------------
 
     printLine(Print::Verbose, "[Summary]");
-    printLine(Print::Verbose, "  Buffers:   {}", asset.buffers.size());
-    printLine(Print::Verbose, "  Images:    {}", asset.images.size());
-    printLine(Print::Verbose, "  Materials: {}", asset.materials.size());
-    printLine(Print::Verbose, "  Meshes:    {}", asset.meshes.size());
-    printLine(Print::Verbose, "  Nodes:     {}", asset.nodes.size());
-    printLine(Print::Verbose, "  Scenes:    {}", asset.scenes.size());
+    printLine(Print::Verbose, "  Buffers:    {}", asset.buffers.size());
+    printLine(Print::Verbose, "  Images:     {}", asset.images.size());
+    printLine(Print::Verbose, "  Materials:  {}", asset.materials.size());
+    printLine(Print::Verbose, "  Meshes:     {}", asset.meshes.size());
+    printLine(Print::Verbose, "  Skins:      {}", asset.skins.size());
+    printLine(Print::Verbose, "  Animations: {}", asset.animations.size());
+    printLine(Print::Verbose, "  Nodes:      {}", asset.nodes.size());
+    printLine(Print::Verbose, "  Scenes:     {}", asset.scenes.size());
 
     u64 time1 = Time::ms();
     printLine(Print::Verbose, "Time: {} ms", time1 - time0);

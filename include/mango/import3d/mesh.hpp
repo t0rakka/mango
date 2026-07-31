@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -10,6 +10,7 @@
 #include <memory>
 #include <algorithm>
 #include <utility>
+#include <unordered_map>
 #include <mango/core/buffer.hpp>
 #include <mango/math/math.hpp>
 #include <mango/image/image.hpp>
@@ -120,6 +121,9 @@ namespace mango::import3d
             Texcoord  = 0x0004,
             Tangent   = 0x0008,
             Color     = 0x0010,
+            // glTF JOINTS_0 / WEIGHTS_0 (set 0, up to 4 influences).
+            Joints    = 0x0020,
+            Weights   = 0x0040,
         };
 
         float32x3 position { 0.0f, 0.0f, 0.0f };
@@ -127,6 +131,10 @@ namespace mango::import3d
         float32x2 texcoord { 0.0f, 0.0f };
         float32x4 tangent  { 0.0f, 0.0f, 0.0f, 0.0f };
         float32x4 color    { 0.0f, 0.0f, 0.0f, 0.0f };
+
+        // Indices into Skin::joints (not node indices). Unused slots = 0 with weight 0.
+        u16 joint[4] { 0, 0, 0, 0 };
+        float32x4 weight { 0.0f, 0.0f, 0.0f, 0.0f };
     };
 
     struct Triangle
@@ -177,6 +185,65 @@ namespace mango::import3d
     };
 
     // -----------------------------------------------------------------------
+    // skinning (glTF-compatible)
+    // -----------------------------------------------------------------------
+
+    // Parallel to glTF skin: joints[i] is a node index; inverseBindMatrices[i]
+    // transforms mesh bind-pose positions into that joint's local space.
+    // Vertex::joint[] indexes into this joints[] array (JOINTS_0).
+    struct Skin
+    {
+        std::string name;
+        std::vector<u32> joints;
+        std::vector<matrix4x4> inverseBindMatrices;
+        std::optional<u32> skeleton; // optional skeleton root node
+    };
+
+    // -----------------------------------------------------------------------
+    // animation (glTF-compatible; BVH can emit the same type later)
+    // -----------------------------------------------------------------------
+
+    enum class AnimationPath : u8
+    {
+        Translation, // float3
+        Rotation,    // float4 quaternion xyzw
+        Scale,       // float3
+        Weights,     // morph target weights (float[N])
+    };
+
+    enum class AnimationInterpolation : u8
+    {
+        Linear,
+        Step,
+        CubicSpline, // values layout: [in-tangent, value, out-tangent] × keyframe
+    };
+
+    struct AnimationSampler
+    {
+        AnimationInterpolation interpolation { AnimationInterpolation::Linear };
+        std::vector<float> times;   // seconds, monotonically increasing
+        std::vector<float> values;  // tightly packed: keyCount * components
+                                    // (or 3 * keyCount * components for CubicSpline)
+        u32 components { 0 };       // 3 (T/S), 4 (R), or morph weight count
+    };
+
+    struct AnimationChannel
+    {
+        u32 sampler = 0;
+        std::optional<u32> node;    // index into Scene::nodes (glTF)
+        std::string targetName;     // node name — for BVH / retarget by name
+        AnimationPath path { AnimationPath::Translation };
+    };
+
+    struct Animation
+    {
+        std::string name;
+        float duration = 0.0f; // max sample time (seconds)
+        std::vector<AnimationSampler> samplers;
+        std::vector<AnimationChannel> channels;
+    };
+
+    // -----------------------------------------------------------------------
     // scene
     // -----------------------------------------------------------------------
 
@@ -184,17 +251,50 @@ namespace mango::import3d
     {
         std::string name;
         std::vector<u32> children;
+
+        // Bind-pose local transform. Prefer TRS for animation sampling; `transform`
+        // is the composed matrix (scale * rotation * translation) in engine space.
+        float32x3 translation { 0.0f, 0.0f, 0.0f };
+        float32x4 rotation { 0.0f, 0.0f, 0.0f, 1.0f }; // quaternion xyzw
+        float32x3 scale { 1.0f, 1.0f, 1.0f };
         matrix4x4 transform { 1.0f };
+        bool hasTRS = false; // true when translation/rotation/scale are authoritative
+
         std::optional<u32> mesh;
+        std::optional<u32> skin; // glTF: skin lives on the node that instances the mesh
     };
 
     struct Scene
     {
         std::vector<Material> materials;
         std::vector<std::unique_ptr<IndexedMesh>> meshes;
+        std::vector<Skin> skins;
+        std::vector<Animation> animations;
         std::vector<Node> nodes;
         std::vector<u32> roots;
     };
+
+    // -----------------------------------------------------------------------
+    // animation binding (external clips → rigged Scene)
+    // -----------------------------------------------------------------------
+
+    // Rename channel targets before bind: sourceName (e.g. BVH "LeftUpLeg") →
+    // rig name (e.g. "thigh_l"). Unknown keys are left unchanged.
+    void remapAnimationNames(Animation& animation,
+        const std::unordered_map<std::string, std::string>& sourceToTarget);
+
+    struct AnimationBindStats
+    {
+        u32 bound = 0;     // channels that resolved to a node
+        u32 unbound = 0;   // channels with no matching node name
+        std::vector<std::string> missing; // unique unbound target names
+    };
+
+    // Set channel.node by matching channel.targetName to scene.nodes[].name.
+    // Clips stay usable unbound (name-only) for sharing across compatible rigs;
+    // bind once per Model/Scene instance before playback.
+    AnimationBindStats bindAnimation(Animation& animation, const Scene& scene,
+        bool caseInsensitive = true);
 
     // -----------------------------------------------------------------------
     // shapes

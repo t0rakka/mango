@@ -3,7 +3,10 @@
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <algorithm>
+#include <cctype>
 #include <map>
+#include <unordered_map>
+#include <unordered_set>
 #include <mango/core/core.hpp>
 #include <mango/import3d/mesh.hpp>
 #include "../../external/mikktspace/mikktspace.h"
@@ -686,6 +689,73 @@ namespace mango::import3d
         mesh.primitives.push_back(primitive);
 
         return ptr;
+    }
+
+    void remapAnimationNames(Animation& animation,
+        const std::unordered_map<std::string, std::string>& sourceToTarget)
+    {
+        if (sourceToTarget.empty())
+            return;
+
+        for (AnimationChannel& channel : animation.channels)
+        {
+            auto it = sourceToTarget.find(channel.targetName);
+            if (it != sourceToTarget.end())
+                channel.targetName = it->second;
+        }
+    }
+
+    AnimationBindStats bindAnimation(Animation& animation, const Scene& scene, bool caseInsensitive)
+    {
+        AnimationBindStats stats;
+
+        std::unordered_map<std::string, u32> nameToNode;
+        nameToNode.reserve(scene.nodes.size() * 2);
+
+        auto keyOf = [&](std::string name) -> std::string
+        {
+            if (!caseInsensitive)
+                return name;
+            for (char& c : name)
+                c = char(std::tolower(u8(c)));
+            return name;
+        };
+
+        for (u32 i = 0; i < u32(scene.nodes.size()); ++i)
+        {
+            const std::string key = keyOf(scene.nodes[i].name);
+            // First wins — duplicate names keep the earlier node.
+            nameToNode.emplace(key, i);
+        }
+
+        std::unordered_set<std::string> missingSet;
+
+        for (AnimationChannel& channel : animation.channels)
+        {
+            if (channel.targetName.empty())
+            {
+                channel.node.reset();
+                ++stats.unbound;
+                continue;
+            }
+
+            auto it = nameToNode.find(keyOf(channel.targetName));
+            if (it != nameToNode.end())
+            {
+                channel.node = it->second;
+                ++stats.bound;
+            }
+            else
+            {
+                channel.node.reset();
+                ++stats.unbound;
+                missingSet.insert(channel.targetName);
+            }
+        }
+
+        stats.missing.assign(missingSet.begin(), missingSet.end());
+        std::sort(stats.missing.begin(), stats.missing.end());
+        return stats;
     }
 
 } // namespace mango::import3d

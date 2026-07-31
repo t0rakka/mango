@@ -13,6 +13,7 @@
 #include <mango/import3d/import_lwo.hpp>
 #include <mango/import3d/import_fbx.hpp>
 #include <mango/import3d/import_gltf.hpp>
+#include <mango/import3d/import_bvh.hpp>
 
 namespace mango::import3d
 {
@@ -25,5 +26,9 @@ namespace mango::import3d
     //   .lwo         → ImportLWO
     // Throws on unsupported extension or importer failure.
     std::unique_ptr<Scene> importScene(const std::string& filename);
+
+    // Load an external animation clip (.bvh). Bind to a rigged Scene with
+    // remapAnimationNames() + bindAnimation() before playback.
+    // (Also available as importAnimation in import_bvh.hpp.)
 
 } // namespace mango::import3d

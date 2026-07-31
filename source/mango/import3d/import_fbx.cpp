@@ -2,7 +2,9 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <cstring>
 #include <unordered_map>
 #include <variant>
@@ -83,6 +85,39 @@ namespace
     };
 
     struct ModelFBX
+    {
+        u64 id = 0;
+        std::string name;
+        std::string type; // Mesh, LimbNode, Null, Root, ...
+        float32x3 translation { 0.0f, 0.0f, 0.0f };
+        float32x3 rotationDeg { 0.0f, 0.0f, 0.0f }; // Lcl Rotation, degrees XYZ
+        float32x3 scaling { 1.0f, 1.0f, 1.0f };
+
+        matrix4x4 localMatrix() const
+        {
+            constexpr float degToRad = 0.017453292519943295769f;
+            // Row-vector convention (v * M): S * R * T  ≡  column-vector T * R * S.
+            return matrix4x4::scale(scaling.x, scaling.y, scaling.z) *
+                   matrix4x4::rotateXYZ(rotationDeg.x * degToRad,
+                                        rotationDeg.y * degToRad,
+                                        rotationDeg.z * degToRad) *
+                   matrix4x4::translate(translation.x, translation.y, translation.z);
+        }
+    };
+
+    struct ClusterFBX
+    {
+        u64 id = 0;
+        std::string name;
+        std::vector<s32> indexes;   // control-point indices
+        std::vector<float> weights;
+        matrix4x4 transform { 1.0f };     // mesh bind
+        matrix4x4 transformLink { 1.0f }; // bone world bind
+        bool hasTransform = false;
+        bool hasTransformLink = false;
+    };
+
+    struct SkinDeformerFBX
     {
         u64 id = 0;
         std::string name;
@@ -447,10 +482,16 @@ namespace
         std::unordered_map<u64, TextureFBX> m_textures;
         std::unordered_map<u64, VideoFBX> m_videos;
         std::unordered_map<u64, ModelFBX> m_models;
+        std::unordered_map<u64, ClusterFBX> m_clusters;
+        std::unordered_map<u64, SkinDeformerFBX> m_skin_deformers;
         std::vector<ConnectionFBX> m_connections;
 
         // Object currently being filled by nested nodes (Properties70 / filenames).
-        enum class Current : u8 { None, Geometry, Model, Material, Texture, Video, GlobalSettings };
+        enum class Current : u8
+        {
+            None, Geometry, Model, Material, Texture, Video, GlobalSettings,
+            Cluster, SkinDeformer
+        };
         Current m_current { Current::None };
         u64 m_current_id { 0 };
         bool m_skip_uv_layer { false };
@@ -573,6 +614,13 @@ namespace
                 name = objectName(getString(properties[1]));
         }
 
+        void readObjectHeader(const std::vector<Property>& properties, u64& id, std::string& name, std::string& type)
+        {
+            readObjectHeader(properties, id, name);
+            if (properties.size() > 2 && holdsString(properties[2]))
+                type = std::string(getString(properties[2]));
+        }
+
         void parseAxisProperty(const std::vector<Property>& properties)
         {
             if (properties.empty() || !holdsString(properties[0]) || properties.size() < 5)
@@ -633,6 +681,35 @@ namespace
             return float32x3(dot(p, right), dot(p, up), -dot(p, front));
         }
 
+        // Change-of-basis for matrices so skin IBMs / node locals match toOurs positions.
+        // Row-vector form: M_ours = R^{-1} * M_fbx * R  where p_ours = p_fbx * R.
+        matrix4x4 toOursMatrix(const matrix4x4& m) const
+        {
+            const float32x3 e0 = toOurs(float32x3(1.0f, 0.0f, 0.0f));
+            const float32x3 e1 = toOurs(float32x3(0.0f, 1.0f, 0.0f));
+            const float32x3 e2 = toOurs(float32x3(0.0f, 0.0f, 1.0f));
+
+            // R such that [x,y,z] * R = toOurs(x,y,z)
+            matrix4x4 R(1.0f);
+            R(0, 0) = e0.x; R(0, 1) = e0.y; R(0, 2) = e0.z;
+            R(1, 0) = e1.x; R(1, 1) = e1.y; R(1, 2) = e1.z;
+            R(2, 0) = e2.x; R(2, 1) = e2.y; R(2, 2) = e2.z;
+
+            return inverse(R) * m * R;
+        }
+
+        static matrix4x4 matrixFrom16(const std::vector<float>& v)
+        {
+            if (v.size() < 16)
+                return matrix4x4(1.0f);
+            // FBX stores 4x4 as 16 floats in row-major order.
+            return matrix4x4(
+                v[0],  v[1],  v[2],  v[3],
+                v[4],  v[5],  v[6],  v[7],
+                v[8],  v[9],  v[10], v[11],
+                v[12], v[13], v[14], v[15]);
+        }
+
         void parseMaterialProperty(MaterialFBX& material, const std::vector<Property>& properties)
         {
             if (properties.empty() || !holdsString(properties[0]))
@@ -667,6 +744,30 @@ namespace
                 readScalar(material.shininess);
             else if (key == "Opacity")
                 readScalar(material.opacity);
+        }
+
+        void parseModelProperty(ModelFBX& model, const std::vector<Property>& properties)
+        {
+            if (properties.empty() || !holdsString(properties[0]))
+                return;
+
+            const std::string_view key = getString(properties[0]);
+
+            auto readVec3 = [&] (float32x3& out)
+            {
+                if (properties.size() >= 7 && holdsFloat(properties[4]) &&
+                    holdsFloat(properties[5]) && holdsFloat(properties[6]))
+                {
+                    out = float32x3(getFloat(properties[4]), getFloat(properties[5]), getFloat(properties[6]));
+                }
+            };
+
+            if (key == "Lcl Translation")
+                readVec3(model.translation);
+            else if (key == "Lcl Rotation")
+                readVec3(model.rotationDeg);
+            else if (key == "Lcl Scaling")
+                readVec3(model.scaling);
         }
 
         void storeFilename(const std::vector<Property>& properties, std::string& relative, std::string& absolute, bool isRelative)
@@ -709,7 +810,7 @@ namespace
             std::string name(p.cast<const char>(), nameLength);
             p += nameLength;
 
-            printLine(Print::Verbose, level * 2, "[{}]", name);
+            printLine(Print::Debug, level * 2, "[{}]", name);
 
             const u8* end = m_memory.address + endOffset;
 
@@ -723,11 +824,11 @@ namespace
                     break;
 
                 case 1:
-                    // Under Objects: geometry + material graph. Under Connections: C records.
+                    // Under Objects: geometry + material graph + deformers. Under Connections: C records.
                     // Under GlobalSettings: Properties70.
                     if (name != "Geometry" && name != "Model" && name != "Material" &&
-                        name != "Texture" && name != "Video" && name != "C" &&
-                        name != "Properties70")
+                        name != "Texture" && name != "Video" && name != "Deformer" &&
+                        name != "C" && name != "Properties70")
                     {
                         return end;
                     }
@@ -752,7 +853,7 @@ namespace
                     {
                         u8 value = *p++;
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u8: {}", value);
+                        printLine(Print::Debug, level * 2 + 2, "u8: {}", value);
                         break;
                     }
 
@@ -760,7 +861,7 @@ namespace
                     {
                         u16 value = p.read16();
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u16: {}", value);
+                        printLine(Print::Debug, level * 2 + 2, "u16: {}", value);
                         break;
                     }
 
@@ -768,7 +869,7 @@ namespace
                     {
                         u32 value = p.read32();
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u32: {}", value);
+                        printLine(Print::Debug, level * 2 + 2, "u32: {}", value);
                         break;
                     }
 
@@ -776,7 +877,7 @@ namespace
                     {
                         u64 value = p.read64();
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u64: {}", value);
+                        printLine(Print::Debug, level * 2 + 2, "u64: {}", value);
                         break;
                     }
 
@@ -784,7 +885,7 @@ namespace
                     {
                         float value = p.read32f();
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "f32: {}", value);
+                        printLine(Print::Debug, level * 2 + 2, "f32: {}", value);
                         break;
                     }
 
@@ -792,7 +893,7 @@ namespace
                     {
                         double value = p.read64f();
                         property.value = float(value);
-                        printLine(Print::Verbose, level * 2 + 2, "f64: {}", value);
+                        printLine(Print::Debug, level * 2 + 2, "f64: {}", value);
                         break;
                     }
 
@@ -800,7 +901,7 @@ namespace
                     {
                         auto value = read_property_array<float, float>(p);
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "f32[{}]", value.size());
+                        printLine(Print::Debug, level * 2 + 2, "f32[{}]", value.size());
                         break;
                     }
 
@@ -808,7 +909,7 @@ namespace
                     {
                         auto value = read_property_array<float, double>(p);
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "f64[{}]", value.size());
+                        printLine(Print::Debug, level * 2 + 2, "f64[{}]", value.size());
                         break;
                     }
 
@@ -816,7 +917,7 @@ namespace
                     {
                         auto value = read_property_array<u64, u64>(p);
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u64[{}]", value.size());
+                        printLine(Print::Debug, level * 2 + 2, "u64[{}]", value.size());
                         break;
                     }
 
@@ -825,7 +926,7 @@ namespace
                         // Signed: PolygonVertexIndex marks polygon ends with ~index.
                         auto value = read_property_array<s32, s32>(p);
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "s32[{}]", value.size());
+                        printLine(Print::Debug, level * 2 + 2, "s32[{}]", value.size());
                         break;
                     }
 
@@ -833,7 +934,7 @@ namespace
                     {
                         auto value = read_property_array<u8, u8>(p);
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u8[{}]", value.size());
+                        printLine(Print::Debug, level * 2 + 2, "u8[{}]", value.size());
                         break;
                     }
 
@@ -843,7 +944,7 @@ namespace
                         std::string_view value(p.cast<const char>(), length);
                         property.value = value;
                         p += length;
-                        printLine(Print::Verbose, level * 2 + 2, "string: \"{}\"", value);
+                        printLine(Print::Debug, level * 2 + 2, "string: \"{}\"", value);
                         break;
                     }
 
@@ -853,7 +954,7 @@ namespace
                         ConstMemory value(p, length);
                         property.value = value;
                         p += length;
-                        printLine(Print::Verbose, level * 2 + 2, "raw: {} bytes", length);
+                        printLine(Print::Debug, level * 2 + 2, "raw: {} bytes", length);
                         break;
                     }
 
@@ -883,10 +984,40 @@ namespace
             else if (name == "Model")
             {
                 ModelFBX model;
-                readObjectHeader(properties, model.id, model.name);
+                readObjectHeader(properties, model.id, model.name, model.type);
                 m_models[model.id] = model;
                 m_current = Current::Model;
                 m_current_id = model.id;
+            }
+            else if (name == "Deformer")
+            {
+                std::string subtype;
+                u64 id = 0;
+                std::string dname;
+                readObjectHeader(properties, id, dname, subtype);
+                if (subtype == "Skin")
+                {
+                    SkinDeformerFBX skin;
+                    skin.id = id;
+                    skin.name = dname;
+                    m_skin_deformers[id] = skin;
+                    m_current = Current::SkinDeformer;
+                    m_current_id = id;
+                }
+                else if (subtype == "Cluster")
+                {
+                    ClusterFBX cluster;
+                    cluster.id = id;
+                    cluster.name = dname;
+                    m_clusters[id] = cluster;
+                    m_current = Current::Cluster;
+                    m_current_id = id;
+                }
+                else
+                {
+                    m_current = Current::None;
+                    m_current_id = 0;
+                }
             }
             else if (name == "Material")
             {
@@ -960,6 +1091,12 @@ namespace
                     auto it = m_materials.find(m_current_id);
                     if (it != m_materials.end())
                         parseMaterialProperty(it->second, properties);
+                }
+                else if (m_current == Current::Model)
+                {
+                    auto it = m_models.find(m_current_id);
+                    if (it != m_models.end())
+                        parseModelProperty(it->second, properties);
                 }
                 else if (m_current == Current::GlobalSettings)
                 {
@@ -1152,6 +1289,42 @@ namespace
                 }
             }
 
+            if (m_current == Current::Cluster)
+            {
+                auto it = m_clusters.find(m_current_id);
+                if (it != m_clusters.end())
+                {
+                    ClusterFBX& cluster = it->second;
+
+                    if (name == "Indexes")
+                    {
+                        if (std::holds_alternative<std::vector<s32>>(properties[0].value))
+                            cluster.indexes = std::get<std::vector<s32>>(properties[0].value);
+                    }
+                    else if (name == "Weights")
+                    {
+                        if (std::holds_alternative<std::vector<float32>>(properties[0].value))
+                            cluster.weights = std::get<std::vector<float32>>(properties[0].value);
+                    }
+                    else if (name == "Transform")
+                    {
+                        if (std::holds_alternative<std::vector<float32>>(properties[0].value))
+                        {
+                            cluster.transform = matrixFrom16(std::get<std::vector<float32>>(properties[0].value));
+                            cluster.hasTransform = true;
+                        }
+                    }
+                    else if (name == "TransformLink")
+                    {
+                        if (std::holds_alternative<std::vector<float32>>(properties[0].value))
+                        {
+                            cluster.transformLink = matrixFrom16(std::get<std::vector<float32>>(properties[0].value));
+                            cluster.hasTransformLink = true;
+                        }
+                    }
+                }
+            }
+
             while (p < end)
             {
                 p = read_node(p, level + 1);
@@ -1228,6 +1401,40 @@ namespace
             }
             return 0;
         }
+
+        // Skin deformer parented under a geometry (Skin → Geometry).
+        u64 skinForGeometry(u64 geometryId) const
+        {
+            for (const ConnectionFBX& c : m_connections)
+            {
+                if (!c.isProperty && c.dst == geometryId && m_skin_deformers.count(c.src))
+                    return c.src;
+            }
+            return 0;
+        }
+
+        // Clusters parented under a skin (Cluster → Skin).
+        std::vector<u64> clustersForSkin(u64 skinId) const
+        {
+            std::vector<u64> result;
+            for (const ConnectionFBX& c : m_connections)
+            {
+                if (!c.isProperty && c.dst == skinId && m_clusters.count(c.src))
+                    result.push_back(c.src);
+            }
+            return result;
+        }
+
+        // Bone Model linked to a cluster (Bone → Cluster).
+        u64 boneForCluster(u64 clusterId) const
+        {
+            for (const ConnectionFBX& c : m_connections)
+            {
+                if (!c.isProperty && c.dst == clusterId && m_models.count(c.src))
+                    return c.src;
+            }
+            return 0;
+        }
     };
 
 } // namespace
@@ -1244,7 +1451,7 @@ namespace mango::import3d
         const int up = reader.m_upAxis >= 0 && reader.m_upAxis <= 2 ? reader.m_upAxis : 1;
         const int front = reader.m_frontAxis >= 0 && reader.m_frontAxis <= 2 ? reader.m_frontAxis : 2;
         const int coord = reader.m_coordAxis >= 0 && reader.m_coordAxis <= 2 ? reader.m_coordAxis : 0;
-        printLine(Print::Info, "[FBX] axes: up={}{} front={}{} coord={}{}{}",
+        printLine(Print::Debug, "[FBX] axes: up={}{} front={}{} coord={}{}{}",
             reader.m_upSign < 0 ? "-" : "+",
             axisName[up],
             reader.m_frontSign < 0 ? "-" : "+",
@@ -1378,33 +1585,193 @@ namespace mango::import3d
                         material.roughnessFactor = 1.0f;
                 }
 
-                // Concise material summary (printEnable(Print::Info, true) to see this).
-                printLine(Print::Info, "[FBX] material '{}'", material.name);
+                // Concise material summary
+                printLine(Print::Verbose, "[FBX] material '{}'", material.name);
                 if (material.baseColorTexture)
-                    printLine(Print::Info, "  baseColor:  {}x{}  ('{}')",
+                    printLine(Print::Verbose, "  baseColor:  {}x{}  ('{}')",
                         material.baseColorTexture->width, material.baseColorTexture->height, albedoDeclared);
                 else
-                    printLine(Print::Info, "  baseColor:  none  ('{}')", albedoDeclared);
+                    printLine(Print::Verbose, "  baseColor:  none  ('{}')", albedoDeclared);
                 if (material.normalTexture)
-                    printLine(Print::Info, "  normal:     {}x{}{}",
+                    printLine(Print::Verbose, "  normal:     {}x{}{}",
                         material.normalTexture->width, material.normalTexture->height,
                         sidecarNormal ? "  [sidecar]" : "");
                 else
-                    printLine(Print::Info, "  normal:     none");
+                    printLine(Print::Verbose, "  normal:     none");
                 if (material.metallicRoughnessTexture)
-                    printLine(Print::Info, "  metalRough: {}x{}{}",
+                    printLine(Print::Verbose, "  metalRough: {}x{}{}",
                         material.metallicRoughnessTexture->width, material.metallicRoughnessTexture->height,
                         (slotMetallic || slotRoughness) ? "  [ShininessExponent/ReflectionFactor packed]"
                         : (sidecarMetallic || sidecarRoughness) ? "  [sidecar _M/_R packed]" : "");
                 else
-                    printLine(Print::Info, "  metalRough: none");
-                printLine(Print::Info, "  metallicFactor: {}  roughnessFactor: {}",
+                    printLine(Print::Verbose, "  metalRough: none");
+                printLine(Print::Verbose, "  metallicFactor: {}  roughnessFactor: {}",
                     material.metallicFactor, material.roughnessFactor);
 
                 materialIdToIndex[id] = u32(materials.size());
                 materials.push_back(std::move(material));
             }
         }
+
+        // ---- skeleton nodes (all FBX Models) ----
+
+        std::unordered_map<u64, u32> modelIdToNode;
+        nodes.reserve(reader.m_models.size() + 1);
+
+        for (const auto& [id, model] : reader.m_models)
+        {
+            Node node;
+            node.name = model.name;
+            node.transform = reader.toOursMatrix(model.localMatrix());
+
+            // Fill bind TRS for external clips (BVH) but keep the matrix as the
+            // skinning source of truth. Decompose→compose does not round-trip for
+            // FBX (Euler Lcl + basis change), and marking hasTRS would rebuild
+            // locals that no longer match IBMs → exploded skin.
+            {
+                const matrix4x4& m = node.transform;
+                float32x3 xaxis(m[0].x, m[0].y, m[0].z);
+                float32x3 yaxis(m[1].x, m[1].y, m[1].z);
+                float32x3 zaxis(m[2].x, m[2].y, m[2].z);
+                node.translation = float32x3(m[3].x, m[3].y, m[3].z);
+                node.scale = float32x3(math::length(xaxis), math::length(yaxis), math::length(zaxis));
+                const float eps = 1.0e-8f;
+                if (node.scale.x > eps) xaxis *= (1.0f / node.scale.x);
+                else xaxis = float32x3(1.0f, 0.0f, 0.0f);
+                if (node.scale.y > eps) yaxis *= (1.0f / node.scale.y);
+                else yaxis = float32x3(0.0f, 1.0f, 0.0f);
+                if (node.scale.z > eps) zaxis *= (1.0f / node.scale.z);
+                else zaxis = float32x3(0.0f, 0.0f, 1.0f);
+                if (math::dot(math::cross(xaxis, yaxis), zaxis) < 0.0f)
+                {
+                    node.scale.x = -node.scale.x;
+                    xaxis = -xaxis;
+                }
+                const math::Quaternion q = math::normalize(math::Quaternion(math::Matrix3x3(xaxis, yaxis, zaxis)));
+                node.rotation = float32x4(q.x, q.y, q.z, q.w);
+                node.hasTRS = false;
+            }
+
+            modelIdToNode[id] = u32(nodes.size());
+            nodes.push_back(std::move(node));
+        }
+
+        std::vector<bool> nodeHasParent(nodes.size(), false);
+        for (const auto& c : reader.m_connections)
+        {
+            if (c.isProperty)
+                continue;
+            auto childIt = modelIdToNode.find(c.src);
+            auto parentIt = modelIdToNode.find(c.dst);
+            if (childIt == modelIdToNode.end() || parentIt == modelIdToNode.end())
+                continue;
+            nodes[parentIt->second].children.push_back(childIt->second);
+            nodeHasParent[childIt->second] = true;
+        }
+
+        // ---- unified skin (glTF JOINTS_0 / WEIGHTS_0, max 4 influences) ----
+
+        Skin skin;
+        skin.name = "FBX.skin";
+        std::unordered_map<u64, u16> boneIdToJoint;
+
+        auto ensureJoint = [&](u64 boneId) -> u16
+        {
+            auto it = boneIdToJoint.find(boneId);
+            if (it != boneIdToJoint.end())
+                return it->second;
+            auto nodeIt = modelIdToNode.find(boneId);
+            if (nodeIt == modelIdToNode.end())
+                return 0;
+            const u16 jointIndex = u16(skin.joints.size());
+            boneIdToJoint[boneId] = jointIndex;
+            skin.joints.push_back(nodeIt->second);
+            skin.inverseBindMatrices.push_back(matrix4x4(1.0f));
+            return jointIndex;
+        };
+
+        // Prefer full LimbNode set so BVH / retarget has every bone; then cluster links.
+        for (const auto& [id, model] : reader.m_models)
+        {
+            if (model.type == "LimbNode" || model.type == "Root")
+                ensureJoint(id);
+        }
+        for (const auto& [clusterId, cluster] : reader.m_clusters)
+        {
+            MANGO_UNREFERENCED(cluster);
+            const u64 boneId = reader.boneForCluster(clusterId);
+            if (boneId && modelIdToNode.count(boneId))
+                ensureJoint(boneId);
+        }
+
+        // Inverse bind: first cluster that links each bone wins.
+        std::vector<bool> ibmSet(skin.joints.size(), false);
+        for (const auto& [clusterId, cluster] : reader.m_clusters)
+        {
+            MANGO_UNREFERENCED(clusterId);
+            if (!cluster.hasTransformLink)
+                continue;
+            const u64 boneId = reader.boneForCluster(clusterId);
+            auto jt = boneIdToJoint.find(boneId);
+            if (jt == boneIdToJoint.end())
+                continue;
+            const u16 jointIndex = jt->second;
+            if (ibmSet[jointIndex])
+                continue;
+
+            matrix4x4 ibm = inverse(cluster.transformLink);
+            if (cluster.hasTransform)
+                ibm = ibm * cluster.transform;
+            skin.inverseBindMatrices[jointIndex] = reader.toOursMatrix(ibm);
+            ibmSet[jointIndex] = true;
+        }
+
+        // Skeleton root hint (glTF skin.skeleton).
+        for (const auto& [id, model] : reader.m_models)
+        {
+            if (model.type == "Null" || model.type == "Root")
+            {
+                auto it = modelIdToNode.find(id);
+                if (it != modelIdToNode.end())
+                {
+                    skin.skeleton = it->second;
+                    break;
+                }
+            }
+        }
+
+        auto packInfluences = [](Vertex& vertex, std::vector<std::pair<u16, float>> list)
+        {
+            vertex.joint[0] = vertex.joint[1] = vertex.joint[2] = vertex.joint[3] = 0;
+            vertex.weight = float32x4(0.0f, 0.0f, 0.0f, 0.0f);
+
+            if (list.empty())
+                return;
+
+            std::sort(list.begin(), list.end(),
+                [](const auto& a, const auto& b) { return a.second > b.second; });
+
+            if (list.size() > 4)
+                list.resize(4);
+
+            float sum = 0.0f;
+            for (const auto& iw : list)
+                sum += iw.second;
+            if (sum <= 0.0f)
+                return;
+            const float inv = 1.0f / sum;
+
+            for (size_t i = 0; i < list.size(); ++i)
+            {
+                vertex.joint[i] = list[i].first;
+                vertex.weight[i] = list[i].second * inv;
+            }
+        };
+
+        const bool haveSkin = !skin.joints.empty() && !reader.m_clusters.empty();
+
+        printLine(Print::Verbose, "[FBX] skeleton: {} nodes, skin joints: {}, clusters: {}",
+            nodes.size(), skin.joints.size(), reader.m_clusters.size());
 
         // ---- meshes ----
 
@@ -1426,6 +1793,55 @@ namespace mango::import3d
                 trimesh.flags |= Vertex::Texcoord;
             }
 
+            // Control-point influences for this geometry (FBX skin is per control point).
+            const size_t positionCount = current.positions.values.size();
+            std::vector<std::vector<std::pair<u16, float>>> cpInfluences(positionCount);
+            bool geometrySkinned = false;
+
+            if (haveSkin)
+            {
+                const u64 skinId = reader.skinForGeometry(current.id);
+                if (skinId)
+                {
+                    for (u64 clusterId : reader.clustersForSkin(skinId))
+                    {
+                        const u64 boneId = reader.boneForCluster(clusterId);
+                        auto jt = boneIdToJoint.find(boneId);
+                        if (jt == boneIdToJoint.end())
+                            continue;
+                        auto cit = reader.m_clusters.find(clusterId);
+                        if (cit == reader.m_clusters.end())
+                            continue;
+                        const ClusterFBX& cluster = cit->second;
+                        const size_t n = std::min(cluster.indexes.size(), cluster.weights.size());
+                        for (size_t i = 0; i < n; ++i)
+                        {
+                            const s32 cp = cluster.indexes[i];
+                            const float w = cluster.weights[i];
+                            if (cp < 0 || size_t(cp) >= positionCount || w <= 0.0f)
+                                continue;
+                            auto& list = cpInfluences[size_t(cp)];
+                            bool merged = false;
+                            for (auto& iw : list)
+                            {
+                                if (iw.first == jt->second)
+                                {
+                                    iw.second += w;
+                                    merged = true;
+                                    break;
+                                }
+                            }
+                            if (!merged)
+                                list.push_back({ jt->second, w });
+                            geometrySkinned = true;
+                        }
+                    }
+                }
+            }
+
+            if (geometrySkinned)
+                trimesh.flags |= Vertex::Joints | Vertex::Weights;
+
             const char* mappingName = "ByPolygonVertex";
             switch (current.normals.mappingType)
             {
@@ -1435,11 +1851,6 @@ namespace mango::import3d
                 case ByPolygon:       mappingName = "ByPolygon"; break;
                 case ByPolygonVertex: default: break;
             }
-            printLine(Print::Verbose, "  [FBX] normals: {} {}  values={} indices={}",
-                mappingName,
-                current.normals.referenceType == IndexToDirect || hasNormalIndices ? "IndexToDirect" : "Direct",
-                current.normals.values.size(),
-                current.normals.indices.size());
 
             const char* uvMappingName = "ByPolygonVertex";
             switch (current.texcoords.mappingType)
@@ -1450,11 +1861,6 @@ namespace mango::import3d
                 case ByPolygon:       uvMappingName = "ByPolygon"; break;
                 case ByPolygonVertex: default: break;
             }
-            printLine(Print::Verbose, "  [FBX] uvs: {} {}  values={} indices={}",
-                uvMappingName,
-                current.texcoords.referenceType == IndexToDirect || hasTexcoordIndices ? "IndexToDirect" : "Direct",
-                current.texcoords.values.size(),
-                current.texcoords.indices.size());
 
             // Materials linked to this geometry's parent Model (slot order = LayerElementMaterial indices).
             std::vector<u64> modelMaterials;
@@ -1478,7 +1884,6 @@ namespace mango::import3d
                         valueIndex = polygonIndex;
                         break;
                     case ByPolygonVertex:
-                        // Rare for materials — treat like ByPolygon using first corner's poly.
                         valueIndex = polygonIndex;
                         break;
                     case AllSame:
@@ -1499,8 +1904,6 @@ namespace mango::import3d
                 }
                 else
                 {
-                    // Blender IndexToDirect often stores per-polygon slots directly in Materials
-                    // with an empty MaterialsIndex — treat values as the slot indices.
                     if (valueIndex >= current.materials.values.size())
                         valueIndex = 0;
                     slot = current.materials.values[valueIndex];
@@ -1521,16 +1924,6 @@ namespace mango::import3d
                 return it != materialIdToIndex.end() ? it->second : 0;
             };
 
-            printLine(Print::Verbose, "  [FBX] materials: {} {}  values={} indices={}  modelSlots={}",
-                current.materials.mappingType == ByPolygon ? "ByPolygon" :
-                    current.materials.mappingType == AllSame ? "AllSame" : "other",
-                current.materials.referenceType == IndexToDirect ? "IndexToDirect" : "Direct",
-                current.materials.values.size(),
-                current.materials.indices.size(),
-                modelMaterials.size());
-
-            // Fan-triangulate PolygonVertexIndex (last corner of each polygon is ~index).
-            const size_t positionCount = current.positions.values.size();
             const size_t normalCount = current.normals.values.size();
             const size_t texcoordCount = current.texcoords.values.size();
             const size_t normalIndexCount = current.normals.indices.size();
@@ -1540,7 +1933,6 @@ namespace mango::import3d
                 return reader.toOurs(v);
             };
 
-            // Resolve a normal for polygon-corner stream index `corner` / control point `posIndex`.
             auto resolveNormal = [&](size_t corner, s32 posIndex, size_t polygonIndex) -> float32x3
             {
                 if (!hasNormals || normalCount == 0)
@@ -1563,7 +1955,6 @@ namespace mango::import3d
                         break;
 
                     case ByEdge:
-                        // Not supported — fall back to polygon-vertex stream.
                         valueIndex = corner;
                         break;
 
@@ -1612,7 +2003,6 @@ namespace mango::import3d
                 return current.texcoords.values[valueIndex];
             };
 
-            // One Mesh bucket per material slot so IndexedMesh gets separate primitives.
             std::unordered_map<u32, Mesh> meshesByMaterial;
 
             s32 cornerPos[3] {};
@@ -1642,6 +2032,8 @@ namespace mango::import3d
                 triangle.vertex[corners].normal = resolveNormal(i, posIndex, polygonIndex);
                 if (hasTexcoords)
                     triangle.vertex[corners].texcoord = resolveTexcoord(i, posIndex);
+                if (geometrySkinned)
+                    packInfluences(triangle.vertex[corners], cpInfluences[size_t(posIndex)]);
 
                 ++corners;
 
@@ -1651,11 +2043,8 @@ namespace mango::import3d
                     triangle.vertex[1].position = toOurs(current.positions.values[cornerPos[1]]);
                     triangle.vertex[2].position = toOurs(current.positions.values[cornerPos[2]]);
 
-                    // Z-reflect already yields CW front faces — keep corner order.
-
                     if (!hasNormals)
                     {
-                        // TODO: smoothing groups (need file for testing)
                         const float32x3& p0 = triangle.vertex[0].position;
                         const float32x3& p1 = triangle.vertex[1].position;
                         const float32x3& p2 = triangle.vertex[2].position;
@@ -1671,7 +2060,6 @@ namespace mango::import3d
                         bucket.flags = trimesh.flags;
                     bucket.triangles.push_back(triangle);
 
-                    // Fan: keep vertex 0, slide vertex 2 → vertex 1 (pos + corner attrs).
                     triangle.vertex[1] = triangle.vertex[2];
                     cornerPos[1] = cornerPos[2];
                     corners = 2;
@@ -1689,7 +2077,6 @@ namespace mango::import3d
             {
                 totalTriangles += bucket.triangles.size();
 
-                // Same as glTF: normal maps need mikktspace tangents (.xyz + .w bitangent sign).
                 if (hasNormals && hasTexcoords &&
                     materialIndex < materials.size() && materials[materialIndex].normalTexture)
                 {
@@ -1705,14 +2092,64 @@ namespace mango::import3d
 
         meshes.push_back(std::move(ptr));
 
-        Node node;
+        if (haveSkin)
+        {
+            const u32 skinIndex = u32(skins.size());
+            skins.push_back(std::move(skin));
 
-        node.name = reader.m_models.empty() ? "FBX.object" : reader.m_models.begin()->second.name;
-        node.transform = matrix4x4(1.0f);
-        node.mesh = 0;
+            // Mesh stays in bind-pose space (identity node). Skin joints live elsewhere.
+            Node meshNode;
+            meshNode.name = "FBX.mesh";
+            meshNode.transform = matrix4x4(1.0f);
+            meshNode.mesh = 0;
+            meshNode.skin = skinIndex;
+            roots.push_back(u32(nodes.size()));
+            nodes.push_back(std::move(meshNode));
+            nodeHasParent.push_back(false);
+        }
+        else if (!nodes.empty())
+        {
+            // Static FBX: put mesh on first root model.
+            for (size_t i = 0; i < nodes.size(); ++i)
+            {
+                if (!nodeHasParent[i])
+                {
+                    nodes[i].mesh = 0;
+                    break;
+                }
+            }
+        }
+        else
+        {
+            Node node;
+            node.name = "FBX.object";
+            node.transform = matrix4x4(1.0f);
+            node.mesh = 0;
+            nodes.push_back(node);
+            nodeHasParent.push_back(false);
+        }
 
-        nodes.push_back(node);
-        roots.push_back(0);
+        for (size_t i = 0; i < nodes.size(); ++i)
+        {
+            if (!nodeHasParent[i])
+                roots.push_back(u32(i));
+        }
+        // Deduplicate roots (mesh node may already be listed).
+        {
+            std::vector<u32> unique;
+            std::vector<bool> seen(nodes.size(), false);
+            for (u32 r : roots)
+            {
+                if (r < nodes.size() && !seen[r])
+                {
+                    seen[r] = true;
+                    unique.push_back(r);
+                }
+            }
+            roots = std::move(unique);
+        }
+        if (roots.empty() && !nodes.empty())
+            roots.push_back(0);
     }
 
 } // namespace mango::import3d
