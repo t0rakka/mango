@@ -37,7 +37,7 @@ namespace
     struct ArrayFBX
     {
         std::vector<T> values;
-        std::vector<u32> indices;
+        std::vector<s32> indices;
         MappingInformationType mappingType { ByPolygonVertex };
         ReferenceInformationType referenceType { Direct };
     };
@@ -106,6 +106,7 @@ namespace
             float32,
             std::vector<u8>,
             std::vector<u32>,
+            std::vector<s32>,
             std::vector<u64>,
             std::vector<float32>,
             std::string_view,
@@ -733,9 +734,10 @@ namespace
 
                     case 'i':
                     {
-                        auto value = read_property_array<u32, u32>(p);
+                        // Signed: PolygonVertexIndex marks polygon ends with ~index.
+                        auto value = read_property_array<s32, s32>(p);
                         property.value = value;
-                        printLine(Print::Verbose, level * 2 + 2, "u32[{}]", value.size());
+                        printLine(Print::Verbose, level * 2 + 2, "s32[{}]", value.size());
                         break;
                     }
 
@@ -920,7 +922,7 @@ namespace
                     {
                         auto vec = std::get<std::vector<float32>>(properties[0].value);
 
-                        for (size_t i = 0; i < vec.size() - 2; i += 3)
+                        for (size_t i = 0; i + 2 < vec.size(); i += 3)
                         {
                             // TODO: coordinate system conversion
                             float x = vec[i + 0];
@@ -933,10 +935,9 @@ namespace
                 }
                 else if (name == "PolygonVertexIndex")
                 {
-                    if (std::holds_alternative<std::vector<u32>>(properties[0].value))
+                    if (std::holds_alternative<std::vector<s32>>(properties[0].value))
                     {
-                        auto vec = std::get<std::vector<u32>>(properties[0].value);
-                        mesh.positions.indices = vec;
+                        mesh.positions.indices = std::get<std::vector<s32>>(properties[0].value);
                     }
                 }
                 else if (name == "Normals")
@@ -948,7 +949,7 @@ namespace
                         mesh.normals.mappingType = currentMappingType;
                         mesh.normals.referenceType = currentReferenceType;
 
-                        for (size_t i = 0; i < vec.size() - 2; i += 3)
+                        for (size_t i = 0; i + 2 < vec.size(); i += 3)
                         {
                             // TODO: coordinate system conversion
                             float x = vec[i + 0];
@@ -972,7 +973,7 @@ namespace
                         mesh.texcoords.mappingType = currentMappingType;
                         mesh.texcoords.referenceType = currentReferenceType;
 
-                        for (size_t i = 0; i < vec.size() - 1; i += 2)
+                        for (size_t i = 0; i + 1 < vec.size(); i += 2)
                         {
                             // FBX / Maya: (0,0) = bottom-left. mango / glTF: (0,0) = top-left
                             // of the image (same as how Bitmap stores rows). Flip V so UVs and
@@ -986,21 +987,20 @@ namespace
                 }
                 else if (name == "UVIndex")
                 {
-                    if (std::holds_alternative<std::vector<u32>>(properties[0].value))
+                    if (std::holds_alternative<std::vector<s32>>(properties[0].value))
                     {
-                        auto vec = std::get<std::vector<u32>>(properties[0].value);
-                        mesh.texcoords.indices = vec;
+                        mesh.texcoords.indices = std::get<std::vector<s32>>(properties[0].value);
                     }
                 }
                 else if (name == "Materials")
                 {
                     // LayerElementMaterial indices into materials connected to the parent Model.
-                    if (std::holds_alternative<std::vector<u32>>(properties[0].value))
+                    if (std::holds_alternative<std::vector<s32>>(properties[0].value))
                     {
-                        auto vec = std::get<std::vector<u32>>(properties[0].value);
+                        auto vec = std::get<std::vector<s32>>(properties[0].value);
                         if (!vec.empty())
                         {
-                            mesh.materialIndex = vec[0];
+                            mesh.materialIndex = u32(std::max(s32(0), vec[0]));
                             mesh.hasMaterialIndex = true;
                         }
                     }
@@ -1100,6 +1100,7 @@ namespace mango::import3d
         ReaderFBX reader(file);
 
         // ---- materials ----
+
         std::unordered_map<u64, u32> materialIdToIndex;
 
         if (reader.m_materials.empty())
@@ -1228,6 +1229,7 @@ namespace mango::import3d
         }
 
         // ---- meshes ----
+
         std::unique_ptr<IndexedMesh> ptr = std::make_unique<IndexedMesh>();
         IndexedMesh& mesh = *ptr;
 
@@ -1269,66 +1271,75 @@ namespace mango::import3d
                     materialIndex = it->second;
             }
 
-            // triangle indices
-            s32 tempIndex[3];
-            int count = 0;
+            // Fan-triangulate PolygonVertexIndex (last corner of each polygon is ~index).
+            const size_t positionCount = current.positions.values.size();
+            const size_t normalCount = current.normals.values.size();
+            const size_t texcoordCount = current.texcoords.values.size();
 
+            auto toOurs = [](const float32x3& v) {
+                return float32x3(v.x, v.y, -v.z);
+            };
+
+            s32 cornerPos[3] {};
+            int corners = 0;
             Triangle triangle;
 
             for (size_t i = 0; i < current.positions.indices.size(); ++i)
             {
-                s32 index = current.positions.indices[i];
+                const s32 raw = current.positions.indices[i];
+                const bool endOfPolygon = raw < 0;
+                const s32 posIndex = endOfPolygon ? -(raw + 1) : raw;
 
-                tempIndex[count] = index < 0 ? -(index + 1) : index;
+                if (posIndex < 0 || size_t(posIndex) >= positionCount)
+                {
+                    corners = 0;
+                    continue;
+                }
+
+                cornerPos[corners] = posIndex;
 
                 if (hasNormals && current.normals.mappingType == ByPolygonVertex)
                 {
-                    // Transform once at read — fan reuses these across triangles.
-                    const float32x3 n = current.normals.values[i];
-                    triangle.vertex[count].normal = float32x3(n.x, n.y, -n.z);
+                    // Direct ByPolygonVertex: one normal per polygon corner (same order as indices).
+                    if (i < normalCount)
+                        triangle.vertex[corners].normal = toOurs(current.normals.values[i]);
                 }
 
                 if (hasTexcoords)
                 {
-                    s32 idx = s32(hasTexcoordIndices ? current.texcoords.indices[i] : i);
-                    triangle.vertex[count].texcoord = current.texcoords.values[idx];
+                    s32 uvIndex = hasTexcoordIndices ? current.texcoords.indices[i] : s32(i);
+                    if (uvIndex >= 0 && size_t(uvIndex) < texcoordCount)
+                        triangle.vertex[corners].texcoord = current.texcoords.values[uvIndex];
                 }
 
-                ++count;
+                ++corners;
 
-                if (count == 3)
+                if (corners == 3)
                 {
-                    // FBX geometry is typically RH Y-up (same family as glTF).
-                    // Reflect Z → our LH Unity-like (+X right, +Y up, +Z ahead); CW bake below.
-                    auto toOurs = [](const float32x3& v) {
-                        return float32x3(v.x, v.y, -v.z);
-                    };
+                    triangle.vertex[0].position = toOurs(current.positions.values[cornerPos[0]]);
+                    triangle.vertex[1].position = toOurs(current.positions.values[cornerPos[1]]);
+                    triangle.vertex[2].position = toOurs(current.positions.values[cornerPos[2]]);
 
-                    float32x3 position0 = toOurs(current.positions.values[tempIndex[0]]);
-                    float32x3 position1 = toOurs(current.positions.values[tempIndex[1]]);
-                    float32x3 position2 = toOurs(current.positions.values[tempIndex[2]]);
-
-                    triangle.vertex[0].position = position0;
-                    triangle.vertex[1].position = position1;
-                    triangle.vertex[2].position = position2;
-
-                    if (current.normals.mappingType == ByVertice)
+                    if (hasNormals && current.normals.mappingType == ByVertice)
                     {
-                        triangle.vertex[0].normal = toOurs(current.normals.values[tempIndex[0]]);
-                        triangle.vertex[1].normal = toOurs(current.normals.values[tempIndex[1]]);
-                        triangle.vertex[2].normal = toOurs(current.normals.values[tempIndex[2]]);
+                        if (size_t(cornerPos[0]) < normalCount)
+                            triangle.vertex[0].normal = toOurs(current.normals.values[cornerPos[0]]);
+                        if (size_t(cornerPos[1]) < normalCount)
+                            triangle.vertex[1].normal = toOurs(current.normals.values[cornerPos[1]]);
+                        if (size_t(cornerPos[2]) < normalCount)
+                            triangle.vertex[2].normal = toOurs(current.normals.values[cornerPos[2]]);
                     }
-                    // ByPolygonVertex: already remapped when the corner was read.
 
                     // Z-reflect already yields CW front faces — keep corner order.
 
                     if (!hasNormals)
                     {
+                        printLine("      no normals");
                         // TODO: smoothing groups (need file for testing)
-                        float32x3 p0 = triangle.vertex[0].position;
-                        float32x3 p1 = triangle.vertex[1].position;
-                        float32x3 p2 = triangle.vertex[2].position;
-                        float32x3 normal = normalize(cross(p0 - p2, p0 - p1));
+                        const float32x3& p0 = triangle.vertex[0].position;
+                        const float32x3& p1 = triangle.vertex[1].position;
+                        const float32x3& p2 = triangle.vertex[2].position;
+                        const float32x3 normal = normalize(cross(p0 - p2, p0 - p1));
 
                         triangle.vertex[0].normal = normal;
                         triangle.vertex[1].normal = normal;
@@ -1337,15 +1348,15 @@ namespace mango::import3d
 
                     trimesh.triangles.push_back(triangle);
 
-                    // Fan: reuse vertex[0], advance the shared edge to former vertex[2].
-                    tempIndex[1] = tempIndex[2];
-                    --count;
+                    // Fan: keep vertex 0, slide vertex 2 → vertex 1 (pos + corner attrs).
+                    triangle.vertex[1] = triangle.vertex[2];
+                    cornerPos[1] = cornerPos[2];
+                    corners = 2;
                 }
 
-                if (index < 0)
+                if (endOfPolygon)
                 {
-                    // start a new polygon
-                    count = 0;
+                    corners = 0;
                 }
             }
 
