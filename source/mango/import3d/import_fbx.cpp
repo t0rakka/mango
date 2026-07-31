@@ -968,7 +968,8 @@ namespace
                 }
                 else if (name == "NormalsW")
                 {
-                    // TODO
+                    // Optional 4th normal component / weight in some exporters — not tangent.w.
+                    // Bitangent sign comes from mikktspace (or LayerElementTangent) later.
                 }
                 else if (name == "NormalsIndex" || name == "NormalIndex")
                 {
@@ -1134,11 +1135,13 @@ namespace mango::import3d
                 material.name = src.name;
                 material.baseColorFactor = float32x4(src.diffuse * src.diffuseFactor, src.opacity);
                 material.emissiveFactor = src.emissive * src.emissiveFactor;
-                // Classic Phong → dielectric unless a metallic map is found below.
+                // Classic Phong defaults; overridden when PBR maps are present.
                 material.metallicFactor = 0.0f;
                 material.roughnessFactor = shininessToRoughness(src.shininess);
 
                 std::string albedoDeclared;
+                Texture slotMetallic;
+                Texture slotRoughness;
 
                 for (const auto& [slot, textureId] : reader.texturesForMaterial(id))
                 {
@@ -1171,13 +1174,27 @@ namespace mango::import3d
                         material.baseColorTexture = loaded;
                         albedoDeclared = declared;
                     }
-                    else if (slotLower == "normalmap" || slotLower == "bump")
+                    else if (slotLower == "normalmap" || slotLower == "bump" ||
+                             slotLower == "normal")
                     {
                         material.normalTexture = loaded;
                     }
                     else if (slotLower == "emissivecolor" || slotLower == "emissive")
                     {
                         material.emissiveTexture = loaded;
+                    }
+                    else if (slotLower == "shininessexponent" || slotLower == "shininess" ||
+                             slotLower == "roughness" || slotLower == "specularroughness")
+                    {
+                        // Tripo / PBR-in-Phong: ShininessExponent often carries a roughness map.
+                        slotRoughness = loaded;
+                    }
+                    else if (slotLower == "reflectionfactor" || slotLower == "reflection" ||
+                             slotLower == "metallic" || slotLower == "metalness" ||
+                             slotLower == "specularfactor")
+                    {
+                        // ReflectionFactor commonly carries a metallic map in PBR FBX exports.
+                        slotMetallic = loaded;
                     }
                     else if (slotLower == "transparentcolor" || slotLower == "transparencyfactor")
                     {
@@ -1206,13 +1223,19 @@ namespace mango::import3d
                 if (!material.normalTexture && sidecarNormal)
                     material.normalTexture = sidecarNormal;
 
-                if (sidecarMetallic || sidecarRoughness)
+                // Prefer explicit FBX property slots; fill gaps from filename sidecars.
+                const Texture metallicMap = slotMetallic ? slotMetallic : sidecarMetallic;
+                const Texture roughnessMap = slotRoughness ? slotRoughness : sidecarRoughness;
+
+                if (metallicMap || roughnessMap)
                 {
+                    // Pack into glTF ORM: R unused, G = roughness, B = metallic (8-bit UNORM).
                     material.metallicRoughnessTexture =
-                        packMetallicRoughness(sidecarMetallic, sidecarRoughness);
-                    if (sidecarMetallic)
+                        packMetallicRoughness(metallicMap, roughnessMap);
+                    // Texture fully drives the channels when present.
+                    if (metallicMap)
                         material.metallicFactor = 1.0f;
-                    if (sidecarRoughness)
+                    if (roughnessMap)
                         material.roughnessFactor = 1.0f;
                 }
 
@@ -1232,7 +1255,8 @@ namespace mango::import3d
                 if (material.metallicRoughnessTexture)
                     printLine(Print::Info, "  metalRough: {}x{}{}",
                         material.metallicRoughnessTexture->width, material.metallicRoughnessTexture->height,
-                        (sidecarMetallic || sidecarRoughness) ? "  [sidecar _M/_R packed]" : "");
+                        (slotMetallic || slotRoughness) ? "  [ShininessExponent/ReflectionFactor packed]"
+                        : (sidecarMetallic || sidecarRoughness) ? "  [sidecar _M/_R packed]" : "");
                 else
                     printLine(Print::Info, "  metalRough: none");
                 printLine(Print::Info, "  metallicFactor: {}  roughnessFactor: {}",
@@ -1445,6 +1469,16 @@ namespace mango::import3d
                     corners = 0;
                     ++polygonIndex;
                 }
+            }
+
+            // Same as glTF: normal maps need mikktspace tangents (.xyz + .w bitangent sign).
+            // Run after Z-reflect / UV flips so TBN matches engine-space geometry.
+            if (hasNormals && hasTexcoords &&
+                materialIndex < materials.size() && materials[materialIndex].normalTexture)
+            {
+                trimesh.computeTangents();
+                printLine(Print::Verbose, "  [FBX] computed tangents ({} triangles)",
+                    trimesh.triangles.size());
             }
 
             mesh.append(trimesh, materialIndex);
