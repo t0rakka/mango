@@ -819,18 +819,6 @@ include(${CMAKE_CURRENT_LIST_DIR}/cmake/mango_simd.cmake)
 mango_configure_isa()
 
 # ------------------------------------------------------------------------------
-# Build Options
-# ------------------------------------------------------------------------------
-
-message("[Build Options]")
-message("    BUILD_OPENGL:    " ${BUILD_OPENGL})
-message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
-message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
-message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
-
-list(POP_BACK CMAKE_MESSAGE_INDENT)
-
-# ------------------------------------------------------------------------------
 # details
 # ------------------------------------------------------------------------------
 
@@ -876,6 +864,18 @@ if (BUILD_VULKAN)
         message("    Text shaping:    disabled (LIBRARY_HARFBUZZ=OFF)")
     endif ()
 endif ()
+
+list(POP_BACK CMAKE_MESSAGE_INDENT)
+
+# ------------------------------------------------------------------------------
+# Build Options
+# ------------------------------------------------------------------------------
+
+message("[Build Options]")
+message("    BUILD_OPENGL:    " ${BUILD_OPENGL})
+message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
+message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
+message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
 
 # ------------------------------------------------------------------------------
 # install
