@@ -114,6 +114,7 @@ namespace mango::image
         ~DecodeTargetBitmap();
 
         bool isDirect() const;
+        const Surface& target() const;
         void resolve(int x, int y, int width, int height);
         void resolve();
     };

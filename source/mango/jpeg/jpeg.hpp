@@ -379,9 +379,9 @@ namespace mango::image::jpeg
                 target->blit(rect.x, rect.y, source);
             }
 
-            if (interface && interface->callback)
+            if (interface && target)
             {
-                interface->callback(rect);
+                interface->clipAndDispatch(*target, rect);
             }
         }
     };

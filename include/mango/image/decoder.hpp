@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -121,15 +121,7 @@ namespace mango::image
         ConstMemory icc;
         ConstMemory exif;
 
-        // Full virtual path of the source image (empty for memory-only sources).
-        std::string filename;
-
-        // Loads a companion / sidecar file located next to the primary image,
-        // identified by a replacement extension (e.g. ".pl5"). Resolves through
-        // the same virtual filesystem (folders and mounted archives) the primary
-        // image came from, and the returned bytes stay valid for the decoder's
-        // lifetime. Returns empty memory when the source is memory-only or the
-        // companion does not exist. May be null - always test before calling.
+        std::string filename; // not available for memory-only sources
         std::function<ConstMemory(const std::string& extension)> acquireCompanion;
 
         ImageDecodeInterface() = default;
@@ -137,18 +129,14 @@ namespace mango::image
 
         virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face);
         virtual ConstMemory memory(int level, int depth, int face);
+
+        void clipAndDispatch(const Surface& dest, ImageDecodeRect rect);
     };
 
     class ImageDecoder : protected NonCopyable
     {
     public:
         ImageDecoder(ConstMemory memory, const std::string& filename);
-
-        // Companion files (sidecars) are resolved relative to 'path', reusing its
-        // already-mounted mapper. Prefer this overload when the image lives inside
-        // mounted containers (zip/rar/iso, possibly stacked) - it avoids re-parsing
-        // the whole container chain just to read a small sidecar. 'path' must
-        // outlive this decoder. 'filename' is the image name relative to 'path'.
         ImageDecoder(ConstMemory memory, const filesystem::Path& path, const std::string& filename);
 
         ~ImageDecoder();

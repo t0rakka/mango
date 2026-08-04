@@ -353,10 +353,11 @@ namespace mango::image::jpeg
                     }
                 }
 
-                if (interface && interface->callback)
+                if (interface)
                 {
-                    ImageDecodeRect rect { 0, y0, width, y1 - y0, float(y1) / float(height) };
-                    interface->callback(rect);
+                    const float progress = float(y1) / float(height);
+                    ImageDecodeRect rect { 0, y0, width, y1 - y0, progress };
+                    interface->clipAndDispatch(dest, rect);
                 }
             });
         }
@@ -449,10 +450,11 @@ namespace mango::image::jpeg
                     }
                 }
 
-                if (interface && interface->callback)
+                if (interface)
                 {
-                    ImageDecodeRect rect { 0, y0, width, y1 - y0, float(y1) / float(height) };
-                    interface->callback(rect);
+                    const float progress = float(y1) / float(height);
+                    ImageDecodeRect rect { 0, y0, width, y1 - y0, progress };
+                    interface->clipAndDispatch(dest, rect);
                 }
             });
         }
@@ -1157,10 +1159,11 @@ namespace mango::image::jpeg
         {
             target.blit(0, 0, *sink);
 
-            if (m_interface && m_interface->callback)
+            if (m_interface)
             {
-                ImageDecodeRect rect { 0, 0, width, height, 1.0f };
-                m_interface->callback(rect);
+                const float progress = 1.0f;
+                ImageDecodeRect rect { 0, 0, width, height, progress };
+                m_interface->clipAndDispatch(target, rect);
             }
 
             status.direct = false;

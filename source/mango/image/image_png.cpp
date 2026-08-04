@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cstring>
 #include <mango/core/core.hpp>
@@ -3262,13 +3262,14 @@ namespace
             image += target.stride;
         }
 
-        ImageDecodeRect rect;
-
-        rect.x = 0;
-        rect.y = y0;
-        rect.width = target.width;
-        rect.height = y1 - y0;
-        rect.progress = float(rect.height) / target.height;
+        ImageDecodeRect rect
+        {
+            .x = 0,
+            .y = y0,
+            .width = target.width,
+            .height = y1 - y0,
+            .progress = float(y1 - y0) / target.height
+        };
 
         if (m_decode_target)
         {
@@ -3276,11 +3277,12 @@ namespace
             {
                 m_decode_target->resolve(rect.x, rect.y, rect.width, rect.height);
             }
-        }
 
-        if (m_interface->callback)
+            m_interface->clipAndDispatch(m_decode_target->target(), rect);
+        }
+        else
         {
-            m_interface->callback(rect);
+            m_interface->clipAndDispatch(target, rect);
         }
     }
 
@@ -3320,13 +3322,14 @@ namespace
             u64 time1 = Time::us();
             m_color_time += (time1 - time0);
 
-            ImageDecodeRect rect;
-
-            rect.x = 0;
-            rect.y = 0;
-            rect.width = target.width;
-            rect.height = target.height;
-            rect.progress = 1.0f;
+            ImageDecodeRect rect
+            {
+                .x = 0,
+                .y = 0,
+                .width = target.width,
+                .height = target.height,
+                .progress = 1.0f
+            };
 
             if (m_decode_target)
             {
@@ -3334,11 +3337,12 @@ namespace
                 {
                     m_decode_target->resolve(rect.x, rect.y, rect.width, rect.height);
                 }
-            }
 
-            if (m_interface->callback)
+                m_interface->clipAndDispatch(m_decode_target->target(), rect);
+            }
+            else
             {
-                m_interface->callback(rect);
+                m_interface->clipAndDispatch(target, rect);
             }
         }
         else

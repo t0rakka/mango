@@ -1125,6 +1125,11 @@ namespace mango::image
         return m_bitmap == nullptr;
     }
 
+    const Surface& DecodeTargetBitmap::target() const
+    {
+        return m_target;
+    }
+
     void DecodeTargetBitmap::resolve(int x, int y, int width, int height)
     {
         if (m_bitmap)

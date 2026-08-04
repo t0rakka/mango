@@ -327,6 +327,46 @@ namespace mango::image
         return ConstMemory();
     }
 
+    void ImageDecodeInterface::clipAndDispatch(const Surface& dest, ImageDecodeRect rect)
+    {
+        if (!callback)
+        {
+            return;
+        }
+
+        if (rect.x < 0)
+        {
+            rect.width += rect.x;
+            rect.x = 0;
+        }
+
+        if (rect.y < 0)
+        {
+            rect.height += rect.y;
+            rect.y = 0;
+        }
+
+        if (rect.x >= dest.width || rect.y >= dest.height || rect.width <= 0 || rect.height <= 0)
+        {
+            return;
+        }
+
+        if (rect.x + rect.width > dest.width)
+        {
+            rect.width = dest.width - rect.x;
+        }
+
+        if (rect.y + rect.height > dest.height)
+        {
+            rect.height = dest.height - rect.y;
+        }
+
+        if (rect.width > 0 && rect.height > 0)
+        {
+            callback(rect);
+        }
+    }
+
     // ----------------------------------------------------------------------------
     // ImageDecoder
     // ----------------------------------------------------------------------------
@@ -537,7 +577,7 @@ namespace mango::image
                     rect.height = interface->header.height;
                     rect.progress = 1.0f;
 
-                    interface->callback(rect);
+                    interface->clipAndDispatch(dest, rect);
                 }
             }
             else
