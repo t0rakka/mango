@@ -6,6 +6,7 @@
 
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
+#include "../window_peers.hpp"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -104,6 +105,8 @@ namespace mango
         bool isKeyPressed(Keycode code) const override;
         void runEventLoop() override;
         void wakeEventLoop() override;
+        void drainPendingEvents() override;
+        int eventFileDescriptor() const override;
 
         void* createNativeWindowForGraphics(int width, int height, u32 flags) override;
     };

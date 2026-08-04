@@ -14,6 +14,7 @@
 #include <cstdlib>
 #include <cstring>
 #include <cstdint>
+#include <vector>
 
 #if defined(MANGO_HAS_XCB_WINDOW)
 #include <X11/Xlib.h>
@@ -31,6 +32,7 @@
 #undef explicit
 
 #include "xcb_window.hpp"
+#include "../window_peers.hpp"
 
 namespace
 {
@@ -1098,6 +1100,7 @@ namespace mango
             }
         }
 
+        window_peers::registerBackend(backend.get());
         return backend;
     }
 
@@ -1547,7 +1550,7 @@ namespace mango
                     {
                         if (client_message->data.data32[0] == atom_delete)
                         {
-                            owner->breakEventLoop();
+                            owner->handleCloseRequest();
                         }
                         else if (sync_supported && client_message->data.data32[0] == atom_sync_request)
                         {
@@ -1594,7 +1597,7 @@ namespace mango
                         {
                             if (static_cast<xcb_atom_t>(e.xclient.data.l[0]) == atom_delete)
                             {
-                                owner->breakEventLoop();
+                                owner->handleCloseRequest();
                             }
                             else if (sync_supported && static_cast<xcb_atom_t>(e.xclient.data.l[0]) == atom_sync_request)
                             {
@@ -1633,6 +1636,26 @@ namespace mango
         }
     }
 
+    void XcbBackend::drainPendingEvents()
+    {
+        bool hadEvents = false;
+        drainEvents(hadEvents);
+
+        // Emit a single resize for the coalesced final size before drawing, so the
+        // frame dispatched below renders at the new extent.
+        if (resize_pending && !busy)
+        {
+            resize_pending = false;
+            owner->onResize(size[0], size[1]);
+            owner->invalidate();
+        }
+    }
+
+    int XcbBackend::eventFileDescriptor() const
+    {
+        return connection ? xcb_get_file_descriptor(connection) : -1;
+    }
+
     void XcbBackend::runEventLoop()
     {
         owner->syncDisplayRefreshRate();
@@ -1651,6 +1674,8 @@ namespace mango
                 owner->onResize(size[0], size[1]);
                 owner->invalidate();
             }
+
+            window_peers::drainOtherBackends(this);
 
             if (!busy)
             {
@@ -1673,29 +1698,43 @@ namespace mango
 
             if (!hadEvents)
             {
-                // Block on the XCB connection fd until an event arrives or the next
-                // frame is due, instead of busy-polling. An idle (WAIT_INFINITE) wait
-                // is capped so a cross-thread state change is observed within the cap;
-                // a pending deadline (animation) is waited exactly so it fires on time.
+                // Block on the XCB connection fd (and peer window fds) until an event
+                // arrives or the next frame is due, instead of busy-polling. An idle
+                // (WAIT_INFINITE) wait is capped so a cross-thread state change is
+                // observed within the cap; a pending deadline (animation) is waited
+                // exactly so it fires on time.
                 const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(mango::Time::us());
                 if (timeout != 0)
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
                     xcb_flush(connection);
 
-                    struct pollfd pfds[2];
-                    int nfds = 1;
-                    pfds[0].fd = xcb_get_file_descriptor(connection);
-                    pfds[0].events = POLLIN;
-
-                    if (xlib_display)
+                    std::vector<pollfd> pfds;
+                    window_peers::forEach([](WindowBackend* backend, void* user)
                     {
-                        pfds[1].fd = ConnectionNumber(static_cast<Display*>(xlib_display));
-                        pfds[1].events = POLLIN;
-                        nfds = 2;
-                    }
+                        auto* out = static_cast<std::vector<pollfd>*>(user);
+                        int fd = backend->eventFileDescriptor();
+                        if (fd >= 0)
+                        {
+                            out->push_back({ fd, POLLIN, 0 });
+                        }
 
-                    ::poll(pfds, nfds, wait_ms);
+                        // XcbBackend may also poll a GLX Xlib Display on the same window.
+                        auto* xcb = dynamic_cast<XcbBackend*>(backend);
+                        if (xcb && xcb->xlib_display)
+                        {
+                            out->push_back({
+                                ConnectionNumber(static_cast<Display*>(xcb->xlib_display)),
+                                POLLIN,
+                                0
+                            });
+                        }
+                    }, &pfds);
+
+                    if (!pfds.empty())
+                    {
+                        ::poll(pfds.data(), pfds.size(), wait_ms);
+                    }
                 }
             }
         }

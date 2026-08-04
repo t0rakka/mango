@@ -9,8 +9,10 @@
 #include <mango/core/timer.hpp>
 
 #include "xlib_window.hpp"
+#include "../window_peers.hpp"
 
 #include <cstdint>
+#include <vector>
 #include <sys/types.h>
 #include <sys/stat.h>
 #include <fcntl.h>
@@ -872,6 +874,7 @@ namespace mango
             }
         }
 
+        window_peers::registerBackend(backend.get());
         return backend;
     }
 
@@ -1012,8 +1015,306 @@ namespace mango
     {
         // The loop blocks in poll() on the X connection fd. Same-thread state changes
         // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
-        // and the idle wait is capped, so a cross-thread change is noticed within the
+        // and the idle wait is capped, so a cross-thread state change is noticed within the
         // cap without an explicit wake. A self-pipe could make this immediate later.
+    }
+
+    int XlibBackend::eventFileDescriptor() const
+    {
+        return display ? ConnectionNumber(x11Display()) : -1;
+    }
+
+    void XlibBackend::drainPendingEvents()
+    {
+        if (!display)
+        {
+            return;
+        }
+
+        while (XPending(x11Display()) > 0)
+        {
+            XEvent e;
+            XNextEvent(x11Display(), &e);
+
+            switch (e.type)
+            {
+                case ButtonPress:
+                {
+                    MouseButton button = translateButton(e.xbutton.button);
+                    int count = 1;
+
+                    switch (e.xbutton.button)
+                    {
+                        case 0:
+                        case 1:
+                        case 2:
+                        case 3:
+                        {
+                            // Simulate double click
+                            u32 time = Time::ms();
+                            if (time - mouse_time[button] < 300)
+                            {
+                                count = 2;
+                            }
+                            mouse_time[button] = time;
+                            break;
+                        }
+
+                        case 4:
+                            count = 120;
+                            break;
+
+                        case 5:
+                            count = -120;
+                            break;
+                    }
+
+                    owner->onMouseClick(e.xbutton.x, e.xbutton.y, button, count);
+                    break;
+                }
+
+                case ButtonRelease:
+                {
+                    MouseButton button = translateButton(e.xbutton.button);
+                    owner->onMouseClick(e.xbutton.x, e.xbutton.y, button, 0);
+                    break;
+                }
+
+                case MotionNotify:
+                    owner->onMouseMove(e.xmotion.x, e.xmotion.y);
+                    break;
+
+                case KeyPress:
+                {
+                    u32 mask = translateKeyMask(e.xkey.state);
+                    owner->onKeyPress(translateEventToKeycode(&e), mask);
+                    break;
+                }
+
+                case KeyRelease:
+                {
+                    bool is_repeat = false;
+
+                    if (XEventsQueued(x11Display(), QueuedAfterReading))
+                    {
+                        XEvent next;
+                        XPeekEvent(x11Display(), &next);
+
+                        if (next.type == KeyPress &&
+                            next.xkey.time == e.xkey.time &&
+                            next.xkey.keycode == e.xkey.keycode)
+                        {
+                            // delete repeated KeyPress event
+                            XNextEvent(x11Display(), &e);
+                            is_repeat = true;
+                        }
+                    }
+
+                    if (!is_repeat)
+                    {
+                        owner->onKeyRelease(translateEventToKeycode(&e));
+                    }
+                    break;
+                }
+
+                case ConfigureNotify:
+                {
+                    // Coalesce: record the new size and flag a pending resize. The whole
+                    // queue is drained in this loop, so the latest size wins; onResize()
+                    // and the frame are emitted once, after draining (see below). The frame
+                    // is what bumps the _NET_WM_SYNC counter, so the compositor keeps the
+                    // previous content until our resized frame lands.
+                    int width = e.xconfigure.width;
+                    int height = e.xconfigure.height;
+                    if (width != size[0] || height != size[1])
+                    {
+                        size[0] = width;
+                        size[1] = height;
+                        resize_pending = true;
+                    }
+
+                    owner->syncDisplayRefreshRate();
+                    break;
+                }
+
+                case Expose:
+                    if (!busy)
+                    {
+                        owner->invalidate();
+                    }
+                    break;
+
+                case DestroyNotify:
+                    break;
+
+                case ClientMessage:
+                {
+                    unsigned int type = e.xclient.message_type;
+
+#if 0
+                    // debugging
+                    char* name = XGetAtomName(x11Display(), type);
+                    printf("ClientMessage: %s\n", name);
+                    XFree(name);
+#endif
+
+                    if (type == atom_xdnd_Enter)
+                    {
+                        bool use_list = e.xclient.data.l[1] & 1;
+                        xdnd_source = e.xclient.data.l[0];
+                        xdnd_version = (e.xclient.data.l[1] >> 24);
+                        if (use_list)
+                        {
+                            // fetch conversion targets
+                            x11Prop p;
+                            ReadProperty(&p, x11Display(), xdnd_source, atom_xdnd_TypeList);
+                            // pick one
+                            atom_xdnd_req = PickTarget(x11Display(), (Atom*)p.data, p.count);
+                            XFree(p.data);
+                        }
+                        else
+                        {
+                            // pick from list of three
+                            atom_xdnd_req = PickTargetFromAtoms(x11Display(),
+                                e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
+                        }
+                    }
+                    else if (type == atom_xdnd_Position)
+                    {
+                        XClientMessageEvent m = { 0 };
+
+                        m.type = ClientMessage;
+                        m.display = e.xclient.display;
+                        m.window = e.xclient.data.l[0];
+                        m.message_type = atom_xdnd_Status;
+                        m.format=32;
+                        m.data.l[0] = x11Window();
+                        m.data.l[1] = (atom_xdnd_req != None);
+                        m.data.l[2] = 0; // specify an empty rectangle
+                        m.data.l[3] = 0;
+                        m.data.l[4] = atom_xdnd_ActionCopy; // we only accept copying anyway
+
+                        XSendEvent(x11Display(), e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
+                        XFlush(x11Display());
+                    }
+                    else if (type == atom_xdnd_Status)
+                    {
+                    }
+                    else if (type == atom_xdnd_TypeList)
+                    {
+                    }
+                    else if (type == atom_xdnd_ActionCopy)
+                    {
+                    }
+                    else if (type == atom_xdnd_Drop)
+                    {
+                        if (atom_xdnd_req == None)
+                        {
+                            // respond to empty request
+                            XClientMessageEvent m = { 0 };
+
+                            m.type = ClientMessage;
+                            m.display = e.xclient.display;
+                            m.window = e.xclient.data.l[0];
+                            m.message_type = atom_xdnd_Finished;
+                            m.format = 32;
+                            m.data.l[0] = x11Window();
+                            m.data.l[1] = 0;
+                            m.data.l[2] = None; // failed
+                            XSendEvent(x11Display(), e.xclient.data.l[0],
+                                False, NoEventMask, (XEvent*)&m);
+                        }
+                        else
+                        {
+                            // convert
+                            if (xdnd_version >= 1)
+                            {
+                                XConvertSelection(x11Display(), atom_xdnd_Selection, atom_xdnd_req, 
+                                                  atom_primary, x11Window(), e.xclient.data.l[2]);
+                            }
+                            else
+                            {
+                                XConvertSelection(x11Display(), atom_xdnd_Selection, atom_xdnd_req, 
+                                                  atom_primary, x11Window(), CurrentTime);
+                            }
+                        }
+                    }
+                    else if (type == atom_xdnd_Finished)
+                    {
+                    }
+                    else if (type == atom_xdnd_Selection)
+                    {
+                    }
+                    else if (type == atom_xdnd_Leave)
+                    {
+                    }
+                    else if (type == atom_protocols)
+                    {
+                        if ((Atom)e.xclient.data.l[0] == atom_delete)
+                        {
+                            owner->handleCloseRequest();
+                            // NOTE: We should destroy the window here since it doesn't exist anymore.
+                        }
+                        else if (sync_supported && (Atom)e.xclient.data.l[0] == atom_sync_request)
+                        {
+                            // Store the value the compositor wants the counter set to once
+                            // we have drawn the frame for the upcoming resize. l[2] is the
+                            // low word, l[3] the high word.
+                            XSyncIntsToValue(&sync_value, e.xclient.data.l[2], int(e.xclient.data.l[3]));
+                            sync_pending = true;
+                        }
+                    }
+
+                    break;
+                }
+
+                case SelectionNotify:
+                {
+                    Atom target = e.xselection.target;
+                    if (target == atom_xdnd_req)
+                    {
+                        // read data
+                        x11Prop p;
+                        ReadProperty(&p, x11Display(), x11Window(), atom_primary);
+
+                        if (p.format == 8)
+                        {
+                            dispatchOnDrop(owner, p);
+                        }
+
+                        XFree(p.data);
+
+                        // send reply
+                        XClientMessageEvent m = { 0 };
+
+                        m.type = ClientMessage;
+                        m.display = x11Display();
+                        m.window = xdnd_source;
+                        m.message_type = atom_xdnd_Finished;
+                        m.format = 32;
+                        m.data.l[0] = x11Window();
+                        m.data.l[1] = 1;
+                        m.data.l[2] = atom_xdnd_ActionCopy;
+                        XSendEvent(x11Display(), xdnd_source, False, NoEventMask, (XEvent*)&m);
+                        XSync(x11Display(), False);
+                    }
+
+                    break;
+                }
+
+                default:
+                    break;
+            } // switch
+        }
+
+        // Emit a single resize for the coalesced final size before drawing, so the
+        // frame dispatched below renders at the new extent.
+        if (resize_pending && !busy)
+        {
+            resize_pending = false;
+            owner->onResize(size[0], size[1]);
+            owner->invalidate();
+        }
     }
 
     void XlibBackend::runEventLoop()
@@ -1027,290 +1328,8 @@ namespace mango
 
         while (owner->isRunning())
         {
-            while (XPending(x11Display()) > 0)
-            {
-                XEvent e;
-                XNextEvent(x11Display(), &e);
-
-                switch (e.type)
-                {
-                    case ButtonPress:
-                    {
-                        MouseButton button = translateButton(e.xbutton.button);
-                        int count = 1;
-
-                        switch (e.xbutton.button)
-                        {
-                            case 0:
-                            case 1:
-                            case 2:
-                            case 3:
-                            {
-                                // Simulate double click
-                                u32 time = Time::ms();
-                                if (time - mouse_time[button] < 300)
-                                {
-                                    count = 2;
-                                }
-                                mouse_time[button] = time;
-                                break;
-                            }
-
-                            case 4:
-                                count = 120;
-                                break;
-
-                            case 5:
-                                count = -120;
-                                break;
-                        }
-
-                        owner->onMouseClick(e.xbutton.x, e.xbutton.y, button, count);
-                        break;
-                    }
-
-                    case ButtonRelease:
-                    {
-                        MouseButton button = translateButton(e.xbutton.button);
-                        owner->onMouseClick(e.xbutton.x, e.xbutton.y, button, 0);
-                        break;
-                    }
-
-                    case MotionNotify:
-                        owner->onMouseMove(e.xmotion.x, e.xmotion.y);
-                        break;
-
-                    case KeyPress:
-                    {
-                        u32 mask = translateKeyMask(e.xkey.state);
-                        owner->onKeyPress(translateEventToKeycode(&e), mask);
-                        break;
-                    }
-
-                    case KeyRelease:
-                    {
-                        bool is_repeat = false;
-
-                        if (XEventsQueued(x11Display(), QueuedAfterReading))
-                        {
-                            XEvent next;
-                            XPeekEvent(x11Display(), &next);
-
-                            if (next.type == KeyPress &&
-                                next.xkey.time == e.xkey.time &&
-                                next.xkey.keycode == e.xkey.keycode)
-                            {
-                                // delete repeated KeyPress event
-                                XNextEvent(x11Display(), &e);
-                                is_repeat = true;
-                            }
-                        }
-
-                        if (!is_repeat)
-                        {
-                            owner->onKeyRelease(translateEventToKeycode(&e));
-                        }
-                        break;
-                    }
-
-                    case ConfigureNotify:
-                    {
-                        // Coalesce: record the new size and flag a pending resize. The whole
-                        // queue is drained in this loop, so the latest size wins; onResize()
-                        // and the frame are emitted once, after draining (see below). The frame
-                        // is what bumps the _NET_WM_SYNC counter, so the compositor keeps the
-                        // previous content until our resized frame lands.
-                        int width = e.xconfigure.width;
-                        int height = e.xconfigure.height;
-                        if (width != size[0] || height != size[1])
-                        {
-                            size[0] = width;
-                            size[1] = height;
-                            resize_pending = true;
-                        }
-
-                        owner->syncDisplayRefreshRate();
-                        break;
-                    }
-
-                    case Expose:
-                        if (!busy)
-                        {
-                            owner->invalidate();
-                        }
-                        break;
-
-                    case DestroyNotify:
-                        break;
-
-                    case ClientMessage:
-                    {
-                        unsigned int type = e.xclient.message_type;
-
-#if 0
-                        // debugging
-                        char* name = XGetAtomName(x11Display(), type);
-                        printf("ClientMessage: %s\n", name);
-                        XFree(name);
-#endif
-
-                        if (type == atom_xdnd_Enter)
-                        {
-                            bool use_list = e.xclient.data.l[1] & 1;
-                            xdnd_source = e.xclient.data.l[0];
-                            xdnd_version = (e.xclient.data.l[1] >> 24);
-                            if (use_list)
-                            {
-                                // fetch conversion targets
-                                x11Prop p;
-                                ReadProperty(&p, x11Display(), xdnd_source, atom_xdnd_TypeList);
-                                // pick one
-                                atom_xdnd_req = PickTarget(x11Display(), (Atom*)p.data, p.count);
-                                XFree(p.data);
-                            }
-                            else
-                            {
-                                // pick from list of three
-                                atom_xdnd_req = PickTargetFromAtoms(x11Display(),
-                                    e.xclient.data.l[2], e.xclient.data.l[3], e.xclient.data.l[4]);
-                            }
-                        }
-                        else if (type == atom_xdnd_Position)
-                        {
-                            XClientMessageEvent m = { 0 };
-
-                            m.type = ClientMessage;
-                            m.display = e.xclient.display;
-                            m.window = e.xclient.data.l[0];
-                            m.message_type = atom_xdnd_Status;
-                            m.format=32;
-                            m.data.l[0] = x11Window();
-                            m.data.l[1] = (atom_xdnd_req != None);
-                            m.data.l[2] = 0; // specify an empty rectangle
-                            m.data.l[3] = 0;
-                            m.data.l[4] = atom_xdnd_ActionCopy; // we only accept copying anyway
-
-                            XSendEvent(x11Display(), e.xclient.data.l[0], False, NoEventMask, (XEvent*)&m);
-                            XFlush(x11Display());
-                        }
-                        else if (type == atom_xdnd_Status)
-                        {
-                        }
-                        else if (type == atom_xdnd_TypeList)
-                        {
-                        }
-                        else if (type == atom_xdnd_ActionCopy)
-                        {
-                        }
-                        else if (type == atom_xdnd_Drop)
-                        {
-                            if (atom_xdnd_req == None)
-                            {
-                                // respond to empty request
-                                XClientMessageEvent m = { 0 };
-
-                                m.type = ClientMessage;
-                                m.display = e.xclient.display;
-                                m.window = e.xclient.data.l[0];
-                                m.message_type = atom_xdnd_Finished;
-                                m.format = 32;
-                                m.data.l[0] = x11Window();
-                                m.data.l[1] = 0;
-                                m.data.l[2] = None; // failed
-                                XSendEvent(x11Display(), e.xclient.data.l[0],
-                                    False, NoEventMask, (XEvent*)&m);
-                            }
-                            else
-                            {
-                                // convert
-                                if (xdnd_version >= 1)
-                                {
-                                    XConvertSelection(x11Display(), atom_xdnd_Selection, atom_xdnd_req, 
-                                                      atom_primary, x11Window(), e.xclient.data.l[2]);
-                                }
-                                else
-                                {
-                                    XConvertSelection(x11Display(), atom_xdnd_Selection, atom_xdnd_req, 
-                                                      atom_primary, x11Window(), CurrentTime);
-                                }
-                            }
-                        }
-                        else if (type == atom_xdnd_Finished)
-                        {
-                        }
-                        else if (type == atom_xdnd_Selection)
-                        {
-                        }
-                        else if (type == atom_xdnd_Leave)
-                        {
-                        }
-                        else if (type == atom_protocols)
-                        {
-                            if ((Atom)e.xclient.data.l[0] == atom_delete)
-                            {
-                                owner->breakEventLoop();
-                                // NOTE: We should destroy the window here since it doesn't exist anymore.
-                            }
-                            else if (sync_supported && (Atom)e.xclient.data.l[0] == atom_sync_request)
-                            {
-                                // Store the value the compositor wants the counter set to once
-                                // we have drawn the frame for the upcoming resize. l[2] is the
-                                // low word, l[3] the high word.
-                                XSyncIntsToValue(&sync_value, e.xclient.data.l[2], int(e.xclient.data.l[3]));
-                                sync_pending = true;
-                            }
-                        }
-
-                        break;
-                    }
-
-                    case SelectionNotify:
-                    {
-                        Atom target = e.xselection.target;
-                        if (target == atom_xdnd_req)
-                        {
-                            // read data
-                            x11Prop p;
-                            ReadProperty(&p, x11Display(), x11Window(), atom_primary);
-
-                            if (p.format == 8)
-                            {
-                                dispatchOnDrop(owner, p);
-                            }
-
-                            XFree(p.data);
-
-                            // send reply
-                            XClientMessageEvent m = { 0 };
-
-                            m.type = ClientMessage;
-                            m.display = x11Display();
-                            m.window = xdnd_source;
-                            m.message_type = atom_xdnd_Finished;
-                            m.format = 32;
-                            m.data.l[0] = x11Window();
-                            m.data.l[1] = 1;
-                            m.data.l[2] = atom_xdnd_ActionCopy;
-                            XSendEvent(x11Display(), xdnd_source, False, NoEventMask, (XEvent*)&m);
-                            XSync(x11Display(), False);
-                        }
-
-                        break;
-                    }
-
-                    default:
-                        break;
-                } // switch
-            }
-
-            // Emit a single resize for the coalesced final size before drawing, so the
-            // frame dispatched below renders at the new extent.
-            if (resize_pending && !busy)
-            {
-                resize_pending = false;
-                owner->onResize(size[0], size[1]);
-                owner->invalidate();
-            }
+            drainPendingEvents();
+            window_peers::drainOtherBackends(this);
 
             if (!busy)
             {
@@ -1327,18 +1346,32 @@ namespace mango
                 }
             }
 
-            // Block on the X connection fd until an event arrives or the next frame is
-            // due, instead of busy-polling. An idle (WAIT_INFINITE) wait is capped so a
-            // cross-thread state change is still observed within the cap; a pending
-            // deadline (animation) is waited exactly, so a timed frame fires on time.
+            // Block on the X connection fd (and peer window fds) until an event arrives
+            // or the next frame is due, instead of busy-polling. An idle (WAIT_INFINITE)
+            // wait is capped so a cross-thread state change is still observed within the
+            // cap; a pending deadline (animation) is waited exactly, so a timed frame
+            // fires on time.
             if (XPending(x11Display()) == 0)
             {
                 const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
                 if (timeout != 0)
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
-                    struct pollfd pfd = { ConnectionNumber(x11Display()), POLLIN, 0 };
-                    ::poll(&pfd, 1, wait_ms);
+
+                    std::vector<pollfd> pfds;
+                    window_peers::forEach([](WindowBackend* backend, void* user)
+                    {
+                        int fd = backend->eventFileDescriptor();
+                        if (fd >= 0)
+                        {
+                            static_cast<std::vector<pollfd>*>(user)->push_back({ fd, POLLIN, 0 });
+                        }
+                    }, &pfds);
+
+                    if (!pfds.empty())
+                    {
+                        ::poll(pfds.data(), pfds.size(), wait_ms);
+                    }
                 }
             }
         }

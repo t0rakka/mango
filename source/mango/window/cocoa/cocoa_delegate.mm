@@ -38,7 +38,9 @@
 - (BOOL)windowShouldClose:(id)sender
 {
     (void)sender;
-    mangoWindow->breakEventLoop();
+    // Keep NO so AppKit does not destroy the NSWindow under us; handleCloseRequest
+    // breaks the loop for the event-loop owner, or hides a secondary window.
+    mangoWindow->handleCloseRequest();
     return NO;
 }
 

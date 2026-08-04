@@ -328,6 +328,11 @@ namespace mango
         virtual void breakEventLoop();
         void requestQuit();
 
+        // Native close button / protocol. Calls onClose(); breaks the event loop
+        // only when this window owns enterEventLoop(). Secondary windows are hidden
+        // so the app can destroy them from onClose without quitting the process.
+        void handleCloseRequest();
+
         bool isRunning() const;
         void invalidate();
         void requestFrameAt(u64 time_us);  // schedule one frame at an absolute monotonic time (microseconds)
