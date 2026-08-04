@@ -15,6 +15,8 @@
         // clear it, encode text into it, then resolve/present separately.
         renderer.bindTarget(targetView);
         renderer.encode(commandBuffer, { .imageView = targetView, .extent = extent, .frameIndex = frameIndex });
+        // Multiple encode() calls per beginFrame() are supported (e.g. layered UI:
+        // quads then fonts per window). Each encode uses a distinct upload slot.
 */
 #pragma once
 

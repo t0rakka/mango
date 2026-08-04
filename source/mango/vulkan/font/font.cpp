@@ -34,6 +34,11 @@ namespace mango::vulkan
 
         static constexpr u32 kTileSize = 64;
         static constexpr u32 kMaxFramesInFlight = 4;
+        // Multiple encode() calls per beginFrame() (e.g. UI window layers) each need a
+        // distinct upload slot — otherwise later encodes clobber staging buffers that
+        // earlier dispatches in the same command buffer will read at submit time.
+        static constexpr u32 kMaxEncodesPerFrame = 16;
+        static constexpr u32 kMaxBatchSlots = kMaxFramesInFlight * kMaxEncodesPerFrame;
         static constexpr VkDeviceSize kAtlasInitialBytes = 256 * 1024;
 
         struct GlyphAtlasSlot
@@ -223,7 +228,7 @@ namespace mango::vulkan
         VkDescriptorPool batchDescriptorPool = VK_NULL_HANDLE;
         VkDescriptorSet targetDescriptorSet = VK_NULL_HANDLE;
         VkImageView boundTargetView = VK_NULL_HANDLE;
-        VkDescriptorSet batchDescriptorSets[kMaxFramesInFlight] = {};
+        VkDescriptorSet batchDescriptorSets[kMaxBatchSlots] = {};
 
         BufferAllocation atlasContours;
         BufferAllocation atlasCurves;
@@ -234,14 +239,16 @@ namespace mango::vulkan
         u32 atlasContourCount = 0;
         u32 atlasCurveCount = 0;
 
-        BufferAllocation instanceBuffers[kMaxFramesInFlight];
-        BufferAllocation tileBuffers[kMaxFramesInFlight];
-        BufferAllocation tileGlyphBuffers[kMaxFramesInFlight];
-        VkDeviceSize instanceBufferCapacity[kMaxFramesInFlight] = {};
-        VkDeviceSize tileBufferCapacity[kMaxFramesInFlight] = {};
-        VkDeviceSize tileGlyphBufferCapacity[kMaxFramesInFlight] = {};
+        BufferAllocation instanceBuffers[kMaxBatchSlots];
+        BufferAllocation tileBuffers[kMaxBatchSlots];
+        BufferAllocation tileGlyphBuffers[kMaxBatchSlots];
+        VkDeviceSize instanceBufferCapacity[kMaxBatchSlots] = {};
+        VkDeviceSize tileBufferCapacity[kMaxBatchSlots] = {};
+        VkDeviceSize tileGlyphBufferCapacity[kMaxBatchSlots] = {};
         static constexpr u32 kFramesInFlight = 2;
         u32 framesInFlight = kFramesInFlight;
+        u32 batchSlotCount = kFramesInFlight * kMaxEncodesPerFrame;
+        u32 encodesInFrame = 0;
 
         std::deque<FaceSlot> faces;
         std::unordered_map<u64, CachedGlyph> glyphCache;
@@ -260,6 +267,8 @@ namespace mango::vulkan
             , queueFamily(family)
             , allocator(&alloc)
             , framesInFlight(kFramesInFlight)
+            , batchSlotCount(kFramesInFlight * kMaxEncodesPerFrame)
+            , encodesInFrame(0)
         {
             createDescriptorSetLayouts();
             createPipelines();
@@ -646,7 +655,7 @@ namespace mango::vulkan
             VkDeviceSize index_bytes = 0;
             batchCapacitiesForExtent(targetExtent, instance_bytes, tile_bytes, index_bytes);
 
-            for (u32 slot = 0; slot < framesInFlight; ++slot)
+            for (u32 slot = 0; slot < batchSlotCount; ++slot)
             {
                 ensureBatchBuffer(slot, instanceBuffers[slot], instanceBufferCapacity[slot], instance_bytes);
                 ensureBatchBuffer(slot, tileBuffers[slot], tileBufferCapacity[slot], tile_bytes);
@@ -675,14 +684,25 @@ namespace mango::vulkan
                 y1 = std::max(y1, rect.y1);
             }
 
-            bounds.x0 = u32(std::max(0.0f, std::floor(x0)));
-            bounds.y0 = u32(std::max(0.0f, std::floor(y0)));
-            bounds.x1 = u32(std::min(float(clip_extent.width), std::ceil(x1)));
-            bounds.y1 = u32(std::min(float(clip_extent.height), std::ceil(y1)));
+            // Clip to the target in float space first. Casting a negative ceil() to u32
+            // (text fully above/left of the image) used to wrap to ~4e9 and blow up tiling.
+            const float clipped_x0 = std::max(0.0f, std::floor(x0));
+            const float clipped_y0 = std::max(0.0f, std::floor(y0));
+            const float clipped_x1 = std::min(float(clip_extent.width), std::ceil(x1));
+            const float clipped_y1 = std::min(float(clip_extent.height), std::ceil(y1));
+            if (clipped_x1 <= clipped_x0 || clipped_y1 <= clipped_y0)
+            {
+                return bounds;
+            }
+
+            bounds.x0 = u32(clipped_x0);
+            bounds.y0 = u32(clipped_y0);
+            bounds.x1 = u32(clipped_x1);
+            bounds.y1 = u32(clipped_y1);
             return bounds;
         }
 
-        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds, u32 frameSlot)
+        void flushTextBatch(VkCommandBuffer cmd, const TextBounds& bounds, u32 frameIndex)
         {
             if (pendingInstances.empty() || bounds.empty() || !targetDescriptorSet)
             {
@@ -694,6 +714,10 @@ namespace mango::vulkan
             const u32 tile_size = kTileSize;
             const u32 tiles_x = (bounds.x1 - tile_origin_x + tile_size - 1) / tile_size;
             const u32 tiles_y = (bounds.y1 - tile_origin_y + tile_size - 1) / tile_size;
+            if (tiles_x == 0 || tiles_y == 0)
+            {
+                return;
+            }
 
             const u32 tile_count = tiles_x * tiles_y;
             batchTileInfos.assign(tile_count, {});
@@ -709,10 +733,25 @@ namespace mango::vulkan
                 const GlyphRect& rect = pendingRects[i];
                 GlyphTileRange& range = glyphTileRanges[i];
 
+                // Glyphs fully outside the clipped tile grid contribute nothing.
+                if (rect.x1 <= origin_x || rect.y1 <= origin_y ||
+                    rect.x0 >= float(bounds.x1) || rect.y0 >= float(bounds.y1))
+                {
+                    range.tx0 = 1;
+                    range.ty0 = 1;
+                    range.tx1 = 0;
+                    range.ty1 = 0;
+                    continue;
+                }
+
                 range.tx0 = u32(std::max(0.0f, rect.x0 - origin_x)) / tile_size;
                 range.ty0 = u32(std::max(0.0f, rect.y0 - origin_y)) / tile_size;
                 range.tx1 = std::min(tiles_x - 1, u32(std::max(0.0f, rect.x1 - 1.0f - origin_x)) / tile_size);
                 range.ty1 = std::min(tiles_y - 1, u32(std::max(0.0f, rect.y1 - 1.0f - origin_y)) / tile_size);
+                if (range.tx0 > range.tx1 || range.ty0 > range.ty1)
+                {
+                    continue;
+                }
 
                 for (u32 ty = range.ty0; ty <= range.ty1; ++ty)
                 {
@@ -736,6 +775,10 @@ namespace mango::vulkan
             for (u32 i = 0; i < glyph_count; ++i)
             {
                 const GlyphTileRange& range = glyphTileRanges[i];
+                if (range.tx0 > range.tx1 || range.ty0 > range.ty1)
+                {
+                    continue;
+                }
 
                 for (u32 ty = range.ty0; ty <= range.ty1; ++ty)
                 {
@@ -752,7 +795,19 @@ namespace mango::vulkan
             const VkDeviceSize tile_bytes = sizeof(GpuTileInfo) * batchTileInfos.size();
             const VkDeviceSize index_bytes = sizeof(u32) * batchTileGlyphs.size();
 
-            const u32 slot = frameSlot % framesInFlight;
+            if (encodesInFrame >= kMaxEncodesPerFrame)
+            {
+                printLine(Print::Error,
+                    "FontRenderer: too many encode() calls in one frame (max {}); later text batches dropped",
+                    kMaxEncodesPerFrame);
+                return;
+            }
+
+            // Per-frame encode index so layered UI can encode multiple times without
+            // clobbering host-visible staging that earlier dispatches still reference.
+            const u32 slot = (frameIndex % framesInFlight) * kMaxEncodesPerFrame + encodesInFrame;
+            ++encodesInFrame;
+
             BufferAllocation& instanceBuffer = instanceBuffers[slot];
             BufferAllocation& tileBuffer = tileBuffers[slot];
             BufferAllocation& tileGlyphBuffer = tileGlyphBuffers[slot];
@@ -897,22 +952,22 @@ namespace mango::vulkan
 
             VkDescriptorPoolSize batchPoolSizes[] =
             {
-                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5 * framesInFlight },
+                { VK_DESCRIPTOR_TYPE_STORAGE_BUFFER, 5 * batchSlotCount },
             };
 
             VkDescriptorPoolCreateInfo batchPoolInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_POOL_CREATE_INFO,
                 .flags = VK_DESCRIPTOR_POOL_CREATE_UPDATE_AFTER_BIND_BIT,
-                .maxSets = framesInFlight,
+                .maxSets = batchSlotCount,
                 .poolSizeCount = 1,
                 .pPoolSizes = batchPoolSizes,
             };
 
             vkCreateDescriptorPool(device, &batchPoolInfo, nullptr, &batchDescriptorPool);
 
-            VkDescriptorSetLayout batchLayouts[kMaxFramesInFlight] = {};
-            for (u32 i = 0; i < framesInFlight; ++i)
+            VkDescriptorSetLayout batchLayouts[kMaxBatchSlots] = {};
+            for (u32 i = 0; i < batchSlotCount; ++i)
             {
                 batchLayouts[i] = batchDescriptorSetLayout;
             }
@@ -921,7 +976,7 @@ namespace mango::vulkan
             {
                 .sType = VK_STRUCTURE_TYPE_DESCRIPTOR_SET_ALLOCATE_INFO,
                 .descriptorPool = batchDescriptorPool,
-                .descriptorSetCount = framesInFlight,
+                .descriptorSetCount = batchSlotCount,
                 .pSetLayouts = batchLayouts,
             };
 
@@ -1001,7 +1056,7 @@ namespace mango::vulkan
 
         void createBatchBuffers()
         {
-            for (u32 i = 0; i < framesInFlight; ++i)
+            for (u32 i = 0; i < batchSlotCount; ++i)
             {
                 instanceBufferCapacity[i] = 64 * 1024;
                 tileBufferCapacity[i] = 16 * 1024;
@@ -1039,7 +1094,7 @@ namespace mango::vulkan
 
         void destroyBatchBuffers()
         {
-            for (u32 i = 0; i < framesInFlight; ++i)
+            for (u32 i = 0; i < batchSlotCount; ++i)
             {
                 if (instanceBuffers[i])
                 {
@@ -1144,8 +1199,8 @@ namespace mango::vulkan
             VkDescriptorBufferInfo contourInfo = { atlasContours.buffer, 0, VK_WHOLE_SIZE };
             VkDescriptorBufferInfo curveInfo = { atlasCurves.buffer, 0, VK_WHOLE_SIZE };
 
-            VkWriteDescriptorSet writes[kMaxFramesInFlight * 2] = {};
-            for (u32 i = 0; i < framesInFlight; ++i)
+            VkWriteDescriptorSet writes[kMaxBatchSlots * 2] = {};
+            for (u32 i = 0; i < batchSlotCount; ++i)
             {
                 writes[i * 2 + 0] =
                 {
@@ -1167,7 +1222,7 @@ namespace mango::vulkan
                 };
             }
 
-            vkUpdateDescriptorSets(device, framesInFlight * 2, writes, 0, nullptr);
+            vkUpdateDescriptorSets(device, batchSlotCount * 2, writes, 0, nullptr);
         }
 
         void updateBatchDescriptors(u32 slot)
@@ -1421,6 +1476,7 @@ namespace mango::vulkan
     {
         m_impl->pendingInstances.clear();
         m_impl->pendingRects.clear();
+        m_impl->encodesInFrame = 0;
     }
 
     TextCursor FontRenderer::cursor(Font font, float x, float baseline_y) const
@@ -1548,8 +1604,7 @@ namespace mango::vulkan
             return;
         }
 
-        const u32 frameSlot = target.frameIndex % m_impl->framesInFlight;
-        m_impl->flushTextBatch(cmd, bounds, frameSlot);
+        m_impl->flushTextBatch(cmd, bounds, target.frameIndex);
         m_impl->pendingInstances.clear();
         m_impl->pendingRects.clear();
     }
