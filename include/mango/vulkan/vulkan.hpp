@@ -193,8 +193,12 @@ namespace mango::vulkan
         std::vector<VkCommandBuffer> m_commandBuffers;
 
         bool m_on_device_ready_called = false;
+        // Primary windows create the device; shared secondaries adopt it and must not destroy it.
+        bool m_ownsDevice = true;
 
         void initDevice(const VulkanDeviceConfig* config);
+        void adoptDevice(VulkanWindow& shared, const VulkanDeviceConfig* config);
+        void createSwapchainAndPool(const VulkanDeviceConfig* config);
         void destroyDevice();
         void allocateCommandBuffers();
         void ensureCommandBuffers();
@@ -203,8 +207,12 @@ namespace mango::vulkan
         u32 findMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const;
 
     public:
+        // Primary window: creates VkDevice. Optional shared: adopts shared's device/queue
+        // (OpenGLWindow-style sharing). Secondary still owns surface + swapchain + command pool.
+        // The secondary must not outlive the primary.
         VulkanWindow(VkInstance instance, int width, int height, u32 flags = 0,
-                     const VulkanDeviceConfig* config = nullptr);
+                     const VulkanDeviceConfig* config = nullptr,
+                     VulkanWindow* shared = nullptr);
         ~VulkanWindow();
 
         operator VkInstance () const
@@ -215,6 +223,11 @@ namespace mango::vulkan
         bool isDeviceReady() const
         {
             return m_device != VK_NULL_HANDLE;
+        }
+
+        bool ownsDevice() const
+        {
+            return m_ownsDevice;
         }
 
         bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex);
@@ -244,6 +257,8 @@ namespace mango::vulkan
         void enterEventLoop(const EventLoopConfig& config);
 
         // Called once while the window is still hidden, before the event loop starts.
+        // Not called for shared secondaries created after the primary is already running;
+        // those should be shown explicitly by the application.
         virtual void onDeviceReady();
 
         // Called when the swapchain extent changes (resize / recreate).

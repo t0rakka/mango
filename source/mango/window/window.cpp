@@ -12,6 +12,7 @@
 #include <mango/core/string.hpp>
 #include "window_backend.hpp"
 #include "window_registry.hpp"
+#include "window_peers.hpp"
 
 namespace mango
 {
@@ -352,14 +353,18 @@ namespace mango
         // (and any setEventLoopConfig()) called before entering are preserved.
         m_event_loop.reset(m_event_loop.config);
         syncDisplayRefreshRate();
+        window_peers::setEventLoopOwner(this);
         m_backend->runEventLoop();
+        window_peers::setEventLoopOwner(nullptr);
     }
 
     void Window::enterEventLoop(const EventLoopConfig& config)
     {
         m_event_loop.reset(config);
         syncDisplayRefreshRate();
+        window_peers::setEventLoopOwner(this);
         m_backend->runEventLoop();
+        window_peers::setEventLoopOwner(nullptr);
     }
 
     void Window::invalidate()
@@ -394,6 +399,22 @@ namespace mango
     void Window::requestQuit()
     {
         breakEventLoop();
+    }
+
+    void Window::handleCloseRequest()
+    {
+        onClose();
+
+        if (window_peers::isEventLoopOwner(this))
+        {
+            breakEventLoop();
+        }
+        else
+        {
+            // Keep the native window out of the way until the app destroys this Window
+            // from onClose (often deferred to the next frame).
+            setVisible(false);
+        }
     }
 
     void Window::breakEventLoop()

@@ -3,12 +3,14 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "window_backend.hpp"
+#include "window_peers.hpp"
 
 namespace mango
 {
 
     WindowBackend::~WindowBackend()
     {
+        window_peers::unregisterBackend(this);
         clearGraphicsHooks();
     }
 

@@ -57,6 +57,14 @@ namespace mango
         virtual void runEventLoop() = 0;
         virtual void wakeEventLoop() = 0;
 
+        // Non-blocking: drain this backend's native connection into owner callbacks.
+        // The event-loop owner calls this on peer backends each iteration so secondary
+        // windows (separate Display / wl_display / etc.) still receive input and close.
+        virtual void drainPendingEvents() {}
+
+        // Native fd to include in the loop owner's poll set (-1 if none / N/A).
+        virtual int eventFileDescriptor() const { return -1; }
+
         void syncGraphicsSurface();
         void presentGraphicsSurface();
         void clearGraphicsHooks();

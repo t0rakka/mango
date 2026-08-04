@@ -68,10 +68,11 @@ namespace mango::vulkan
     // ------------------------------------------------------------------------------
 
     VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags,
-                               const VulkanDeviceConfig* config)
+                               const VulkanDeviceConfig* config, VulkanWindow* shared)
         : Window(width, height, flags | Window::API_VULKAN)
         , m_instance(instance)
         , m_surface(VK_NULL_HANDLE)
+        , m_ownsDevice(shared == nullptr)
     {
         ensureVulkanWindowContent(this, backend(), width, height);
         m_surface = createVulkanSurface(backend(), m_instance);
@@ -80,7 +81,14 @@ namespace mango::vulkan
             MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
         }
 
-        initDevice(config);
+        if (shared)
+        {
+            adoptDevice(*shared, config);
+        }
+        else
+        {
+            initDevice(config);
+        }
     }
 
     VulkanWindow::~VulkanWindow()
@@ -90,6 +98,7 @@ namespace mango::vulkan
         if (m_surface != VK_NULL_HANDLE)
         {
             vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+            m_surface = VK_NULL_HANDLE;
         }
     }
 
@@ -134,6 +143,71 @@ namespace mango::vulkan
 
         MANGO_EXCEPTION("[VulkanWindow] Failed to find suitable memory type.");
         return 0;
+    }
+
+    void VulkanWindow::createSwapchainAndPool(const VulkanDeviceConfig* config)
+    {
+        VulkanDeviceConfig defaults;
+        const VulkanDeviceConfig& settings = config ? *config : defaults;
+
+        m_surfaceFormat = selectSurfaceFormat(m_physicalDevice, m_surface, settings);
+
+        m_swapchain = std::make_unique<Swapchain>(m_device, m_physicalDevice, m_surface,
+            m_surfaceFormat, m_graphicsQueue, this);
+
+        VkCommandPoolCreateInfo poolInfo =
+        {
+            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
+            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
+            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
+        };
+
+        VkResult result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
+        if (result != VK_SUCCESS)
+        {
+            printLine(Print::Error, "[VulkanWindow] vkCreateCommandPool: {}", getString(result));
+            return;
+        }
+
+        m_swapchainExtent = m_swapchain->getExtent();
+        m_swapchainGeneration = m_swapchain->generation();
+        allocateCommandBuffers();
+    }
+
+    void VulkanWindow::adoptDevice(VulkanWindow& shared, const VulkanDeviceConfig* config)
+    {
+        if (!shared.isDeviceReady())
+        {
+            printLine(Print::Error, "[VulkanWindow] Cannot share device: primary window has no device.");
+            return;
+        }
+
+        if (shared.m_instance != m_instance)
+        {
+            printLine(Print::Error, "[VulkanWindow] Cannot share device across different VkInstances.");
+            return;
+        }
+
+        m_physicalDevice = shared.m_physicalDevice;
+        m_device = shared.m_device;
+        m_graphicsQueueFamilyIndex = shared.m_graphicsQueueFamilyIndex;
+        m_graphicsQueue = shared.m_graphicsQueue;
+        m_ownsDevice = false;
+
+        // Queue family must present to this window's surface as well.
+        VkBool32 presentSupported = VK_FALSE;
+        vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, m_graphicsQueueFamilyIndex,
+                                             m_surface, &presentSupported);
+        if (!presentSupported)
+        {
+            printLine(Print::Error,
+                "[VulkanWindow] Shared graphics queue cannot present to the secondary surface.");
+            m_device = VK_NULL_HANDLE;
+            m_graphicsQueue = VK_NULL_HANDLE;
+            return;
+        }
+
+        createSwapchainAndPool(config);
     }
 
     void VulkanWindow::initDevice(const VulkanDeviceConfig* config)
@@ -236,29 +310,9 @@ namespace mango::vulkan
         }
 
         vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
+        m_ownsDevice = true;
 
-        m_surfaceFormat = selectSurfaceFormat(m_physicalDevice, m_surface, settings);
-
-        m_swapchain = std::make_unique<Swapchain>(m_device, m_physicalDevice, m_surface,
-            m_surfaceFormat, m_graphicsQueue, this);
-
-        VkCommandPoolCreateInfo poolInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
-            .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
-        };
-
-        result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "[VulkanWindow] vkCreateCommandPool: {}", getString(result));
-            return;
-        }
-
-        m_swapchainExtent = m_swapchain->getExtent();
-        m_swapchainGeneration = m_swapchain->generation();
-        allocateCommandBuffers();
+        createSwapchainAndPool(config);
     }
 
     void VulkanWindow::destroyDevice()
@@ -284,7 +338,11 @@ namespace mango::vulkan
             m_commandPool = VK_NULL_HANDLE;
         }
 
-        vkDestroyDevice(m_device, nullptr);
+        if (m_ownsDevice)
+        {
+            vkDestroyDevice(m_device, nullptr);
+        }
+
         m_device = VK_NULL_HANDLE;
         m_graphicsQueue = VK_NULL_HANDLE;
     }

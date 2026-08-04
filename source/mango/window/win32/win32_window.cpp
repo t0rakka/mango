@@ -13,12 +13,17 @@
 #include <mango/window/window.hpp>
 
 #include "win32_window.hpp"
+#include "../window_peers.hpp"
 
 #include <shellapi.h>
 
 namespace
 {
     using namespace mango;
+
+    // Shared WNDCLASS for all mango Win32 windows. Register once; Unregister only
+    // when the last WindowContext that used the class is destroyed.
+    int g_wndclass_refcount = 0;
 
     // -----------------------------------------------------------------------
     // enumToVirtual()
@@ -375,8 +380,7 @@ namespace
 
         case WM_CLOSE:
         {
-            window->onClose();
-            window->breakEventLoop();
+            window->handleCloseRequest();
             return 0;
         }
 
@@ -684,7 +688,10 @@ namespace mango
         wndclass.hIcon = ::LoadIcon(NULL, IDI_APPLICATION);
         wndclass.hIconSm = ::LoadIcon(NULL, IDI_APPLICATION);
 
-        ::RegisterClassEx(&wndclass);
+        if (g_wndclass_refcount++ == 0)
+        {
+            ::RegisterClassEx(&wndclass);
+        }
 
         // configuration
         DWORD mask = WS_OVERLAPPEDWINDOW;
@@ -718,6 +725,11 @@ namespace mango
         if (hwnd)
         {
             ::DestroyWindow(hwnd);
+            hwnd = nullptr;
+        }
+
+        if (--g_wndclass_refcount == 0)
+        {
             ::UnregisterClass(wndclass.lpszClassName, wndclass.hInstance);
         }
     }
@@ -785,6 +797,7 @@ namespace mango
         // register listener window
         LONG_PTR userdata = reinterpret_cast<LONG_PTR>(window);
         ::SetWindowLongPtr(backend->hwnd, GWLP_USERDATA, userdata);
+        window_peers::registerBackend(backend.get());
 
         if (title)
         {

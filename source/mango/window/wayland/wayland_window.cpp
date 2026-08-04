@@ -17,6 +17,7 @@
 #include <vector>
 
 #include "wayland_window.hpp"
+#include "../window_peers.hpp"
 #include <wayland-client-protocol.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "xdg-shell-client-protocol.h"
@@ -308,7 +309,7 @@ namespace
         WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (window->owner)
         {
-            window->owner->breakEventLoop();
+            window->owner->handleCloseRequest();
         }
     }
 
@@ -1103,6 +1104,7 @@ namespace mango
         MANGO_UNREFERENCED(title);
         auto backend = std::make_unique<WaylandBackend>(width, height, flags);
         backend->owner = window;
+        window_peers::registerBackend(backend.get());
         return backend;
     }
 
@@ -1226,6 +1228,26 @@ namespace mango
         // cap without an explicit wake. A self-pipe could make this immediate later.
     }
 
+    int WaylandBackend::eventFileDescriptor() const
+    {
+        return display ? wl_display_get_fd(display) : -1;
+    }
+
+    void WaylandBackend::drainPendingEvents()
+    {
+        if (!display)
+        {
+            return;
+        }
+
+        wl_display_dispatch_pending(display);
+
+        if (pending_resize && !busy)
+        {
+            dispatchPendingResize();
+        }
+    }
+
     void WaylandBackend::beforePresent()
     {
         // wl_surface opaque region is double-buffered and must be set before each
@@ -1243,22 +1265,69 @@ namespace mango
         if (!busy)
         {
             dispatchPendingResize();
+            owner->dispatchFrame();
         }
 
         while (owner->isRunning())
         {
-            // Dispatch anything already queued without blocking.
-            wl_display_dispatch_pending(display);
-            owner->syncDisplayRefreshRate();
-
-            if (pending_resize && !busy)
+            // Snapshot live Wayland backends so prepare_read/poll/read covers every
+            // wl_display while secondary windows share this loop.
+            std::vector<WaylandBackend*> backends;
+            window_peers::forEach([](WindowBackend* backend, void* user)
             {
-                dispatchPendingResize();
+                auto* wl = dynamic_cast<WaylandBackend*>(backend);
+                if (wl && wl->display)
+                {
+                    static_cast<std::vector<WaylandBackend*>*>(user)->push_back(wl);
+                }
+            }, &backends);
+
+            if (backends.empty())
+            {
+                backends.push_back(this);
             }
 
-            if (!busy)
+            // Canonical Wayland pattern across all displays: prepare_read, flush, poll,
+            // then read_events or cancel_read.
+            for (WaylandBackend* wl : backends)
             {
-                owner->dispatchFrame();
+                while (wl_display_prepare_read(wl->display) != 0)
+                {
+                    wl_display_dispatch_pending(wl->display);
+                }
+                wl_display_flush(wl->display);
+            }
+
+            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
+            const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
+
+            std::vector<pollfd> pfds(backends.size());
+            for (size_t i = 0; i < backends.size(); ++i)
+            {
+                pfds[i].fd = wl_display_get_fd(backends[i]->display);
+                pfds[i].events = POLLIN;
+                pfds[i].revents = 0;
+            }
+
+            const int poll_result = ::poll(pfds.data(), pfds.size(), wait_ms);
+
+            for (size_t i = 0; i < backends.size(); ++i)
+            {
+                if (poll_result > 0 && (pfds[i].revents & POLLIN))
+                {
+                    if (wl_display_read_events(backends[i]->display) < 0)
+                    {
+                        if (backends[i] == this)
+                        {
+                            owner->breakEventLoop();
+                        }
+                    }
+                }
+                else
+                {
+                    // timeout (frame due) or error: abandon the read we announced
+                    wl_display_cancel_read(backends[i]->display);
+                }
             }
 
             if (!owner->isRunning())
@@ -1266,35 +1335,21 @@ namespace mango
                 break;
             }
 
-            // Block on the Wayland display fd until an event arrives or the next frame
-            // is due, instead of busy-polling. The poll() sits between prepare_read and
-            // read_events (the canonical Wayland pattern). An idle (WAIT_INFINITE) wait
-            // is capped so a cross-thread state change is observed within the cap; a
-            // pending deadline (animation) is waited exactly so it fires on time.
-            wl_display* wl_disp = display;
-
-            while (wl_display_prepare_read(wl_disp) != 0)
+            for (WaylandBackend* wl : backends)
             {
-                wl_display_dispatch_pending(wl_disp);
-            }
-
-            wl_display_flush(wl_disp);
-
-            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
-            const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
-
-            struct pollfd pfd = { wl_display_get_fd(wl_disp), POLLIN, 0 };
-            if (::poll(&pfd, 1, wait_ms) > 0 && (pfd.revents & POLLIN))
-            {
-                if (wl_display_read_events(wl_disp) < 0)
+                wl_display_dispatch_pending(wl->display);
+                if (wl->pending_resize && !wl->busy)
                 {
-                    owner->breakEventLoop();
+                    wl->dispatchPendingResize();
                 }
             }
-            else
+
+            owner->syncDisplayRefreshRate();
+
+            // Only the loop owner draws; peer windows are drained above.
+            if (!busy)
             {
-                // timeout (frame due) or error: abandon the read we announced
-                wl_display_cancel_read(wl_disp);
+                owner->dispatchFrame();
             }
         }
     }

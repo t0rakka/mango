@@ -5,6 +5,7 @@
 #include <mango/core/exception.hpp>
 #include <mango/core/timer.hpp>
 #include "cocoa_window.h"
+#include "../window_peers.hpp"
 #import <CoreVideo/CoreVideo.h>
 
 // -----------------------------------------------------------------------
@@ -72,6 +73,7 @@ namespace mango
         {
             return nullptr;
         }
+        window_peers::registerBackend(backend.get());
         return backend;
     }
 
