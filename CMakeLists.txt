@@ -10,7 +10,7 @@ if (CMAKE_GENERATOR MATCHES "Visual Studio")
         OR EXISTS "${CMAKE_BINARY_DIR}/.ninja_deps")
         message(WARNING
             "Ninja build artifacts found in a Visual Studio build directory.\n"
-            "    Use build-ninja/ for Ninja (cmake --preset windows-ninja-release) and build/ for VS.\n"
+            "    Use separate binary dirs for Ninja (cmake --preset default) and Visual Studio.\n"
             "    Remove build.ninja, .ninja_log, and .ninja_deps from this folder, or wipe CMakeCache.txt.")
     endif ()
 elseif (CMAKE_GENERATOR MATCHES "Ninja")

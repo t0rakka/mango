@@ -3,22 +3,19 @@
     "cmakeMinimumRequired": { "major": 3, "minor": 19 },
     "configurePresets": [
         {
-            "name": "options",
-            "description": "Common build options shared across presets",
+            "name": "default",
+            "description": "Ninja Release — system / find_package dependencies",
+            "generator": "Ninja",
             "binaryDir": "${sourceDir}/build",
             "cacheVariables": {
+                "CMAKE_BUILD_TYPE": "Release",
                 "INTEL_DELUXE": "ON"
             }
         },
         {
-            "name": "ninja",
-            "description": "Ninja configuration for cross-platform builds",
-            "generator": "Ninja",
-            "binaryDir": "${sourceDir}/build"
-        },
-        {
             "name": "vcpkg",
-            "description": "vcpkg toolchain + kitchen-sink manifest features (base, image, vulkan, examples)",
+            "description": "Ninja Release — vcpkg toolchain + kitchen-sink manifest features",
+            "inherits": ["default"],
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_MANIFEST_FEATURES": "base;image;vulkan;examples",
@@ -26,39 +23,12 @@
             }
         },
         {
-            "name": "windows",
-            "description": "Windows Visual Studio build (vcpkg installs all manifest features)",
-            "inherits": ["options", "vcpkg"],
-            "generator": "Visual Studio 17 2022",
-            "binaryDir": "${sourceDir}/build"
-        },
-        {
-            "name": "windows-ninja-release",
-            "description": "Windows Ninja Release build (vcpkg installs all manifest features)",
-            "inherits": ["options", "ninja", "vcpkg"],
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
-            }
-        },
-        {
-            "name": "windows-ninja-debug",
-            "description": "Windows Ninja Debug build (vcpkg installs all manifest features)",
-            "inherits": ["options", "ninja", "vcpkg"],
-            "binaryDir": "${sourceDir}/build",
-            "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Debug"
-            }
-        },
-        {
-            "name": "emscripten-ninja-release",
-            "description": "Emscripten Release build with Ninja and vcpkg chainload",
-            "inherits": ["options", "ninja", "vcpkg"],
+            "name": "emscripten",
+            "description": "Ninja Release — EMSDK toolchain only (no vcpkg)",
+            "inherits": ["default"],
             "binaryDir": "${sourceDir}/build-emscripten",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release",
-                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
-                "VCPKG_TARGET_TRIPLET": "wasm32-emscripten",
+                "CMAKE_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
                 "CMAKE_OSX_ARCHITECTURES": "",
                 "CMAKE_OSX_DEPLOYMENT_TARGET": "",
                 "BUILD_ALL": "ON",
@@ -66,46 +36,39 @@
             }
         },
         {
-            "name": "default",
-            "description": "Cross-platform Release build using Ninja",
-            "inherits": ["options", "ninja"],
-            "binaryDir": "${sourceDir}/build",
+            "name": "emscripten-vcpkg",
+            "description": "Ninja Release — Emscripten via vcpkg chainload (wasm32-emscripten)",
+            "inherits": ["vcpkg"],
+            "binaryDir": "${sourceDir}/build-emscripten",
             "cacheVariables": {
-                "CMAKE_BUILD_TYPE": "Release"
+                "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
+                "VCPKG_TARGET_TRIPLET": "wasm32-emscripten",
+                "CMAKE_OSX_ARCHITECTURES": "",
+                "CMAKE_OSX_DEPLOYMENT_TARGET": "",
+                "BUILD_ALL": "ON",
+                "BUILD_SHARED_LIBS": "OFF"
             }
         }
     ],
     "buildPresets": [
         {
-            "name": "windows-release",
-            "configurePreset": "windows",
-            "configuration": "Release",
-            "jobs": 0
-        },
-        {
-            "name": "windows-debug",
-            "configurePreset": "windows",
-            "configuration": "Debug",
-            "jobs": 0
-        },
-        {
-            "name": "windows-ninja-release",
-            "configurePreset": "windows-ninja-release",
-            "jobs": 0
-        },
-        {
-            "name": "windows-ninja-debug",
-            "configurePreset": "windows-ninja-debug",
-            "jobs": 0
-        },
-        {
-            "name": "emscripten-release",
-            "configurePreset": "emscripten-ninja-release",
-            "jobs": 0
-        },
-        {
             "name": "default",
             "configurePreset": "default",
+            "jobs": 0
+        },
+        {
+            "name": "vcpkg",
+            "configurePreset": "vcpkg",
+            "jobs": 0
+        },
+        {
+            "name": "emscripten",
+            "configurePreset": "emscripten",
+            "jobs": 0
+        },
+        {
+            "name": "emscripten-vcpkg",
+            "configurePreset": "emscripten-vcpkg",
             "jobs": 0
         }
     ]

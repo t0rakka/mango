@@ -56,11 +56,23 @@ On macOS the building is exactly same as it is on Linux.
 <h2><img src="logo-emscripten.png" alt="logo" width="80"/> Emscripten</h2>
 
 
-The Emscripten build is still work-in-progress but is partially working. The recommended way is to install dependencies using vcpkg, the preset builds examples so the libraries usually in examples are included in the required libraries below. The target is currently node and the cmake configuration builds specifically for node with native filesystem access enabled for testing purposes.
+The Emscripten build is still work-in-progress but is partially working. Activate the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) so `EMSDK` is set.
 
-### Dependencies
+### EMSDK only
 
-    vcpkg install --triplet wasm32-emscripten fmt zlib libdeflate zstd lcms libjpeg-turbo libpng
+    cmake --preset emscripten
+    cmake --build --preset emscripten
+
+No vcpkg. Optional codecs that are not available for wasm stay disabled via `find_package`. Fine on Linux/macOS when you only need a core wasm build.
+
+### EMSDK + vcpkg (recommended on Windows)
+
+Needs `EMSDK` and `VCPKG_ROOT`. Manifest mode installs wasm deps (`wasm32-emscripten`):
+
+    cmake --preset emscripten-vcpkg
+    cmake --build --preset emscripten-vcpkg
+
+The target is currently node; the cmake configuration enables native filesystem access for testing.
 
 
 <h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
@@ -71,15 +83,21 @@ Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
     VCPKG_ROOT              <vcpkg_root>
     VCPKG_DEFAULT_TRIPLET   x64-windows
 
-Dependencies come from `vcpkg.json` (manifest mode). The Windows presets enable all features (`base`, `image`, `vulkan`, `examples`) so configure installs everything needed.
+Dependencies come from `vcpkg.json` (manifest mode). The `vcpkg` preset enables all features (`base`, `image`, `vulkan`, `examples`) so configure installs everything needed.
 
 ### Building
 
-    cmake --preset windows
-    cmake --build --preset windows-release
+Presets are toolchain selectors (always Ninja + Release):
+
+    cmake --preset default           # system / find_package deps
+    cmake --preset vcpkg             # VCPKG_ROOT required
+    cmake --preset emscripten        # EMSDK only
+    cmake --preset emscripten-vcpkg  # EMSDK + VCPKG_ROOT (wasm deps)
+
+    cmake --build --preset vcpkg
     cmake --install build
 
-Ninja alternatives: `windows-ninja-release` / `windows-ninja-debug`.
+Override build type on the configure line when needed, e.g. `cmake --preset vcpkg -DCMAKE_BUILD_TYPE=Debug`.
 
 First configure can take a while while vcpkg builds dependencies into the build tree. Fine-grained control of what mango itself compiles is still via CMake options in `CMakeLists.txt`.
 
