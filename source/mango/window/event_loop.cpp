@@ -44,6 +44,15 @@ namespace mango
         {
             m_pump = &window;
         }
+
+        // Windows attached after run() started still need a live EventLoopState and
+        // the same onEventLoopStarting hook the initial set got (device ready / show).
+        if (m_running)
+        {
+            window.m_event_loop.reset();
+            window.onEventLoopStarting();
+            window.backend()->wakeEventLoop();
+        }
     }
 
     void EventLoop::clear()
@@ -117,9 +126,14 @@ namespace mango
             return;
         }
 
-        for (Window* window : m_windows)
+        // Snapshot so attach/detach from onFrame (e.g. opening a tool window) is safe.
+        const std::vector<Window*> snapshot = m_windows;
+        for (Window* window : snapshot)
         {
-            window->dispatchFrame();
+            if (window->m_event_loop_runner == this)
+            {
+                window->dispatchFrame();
+            }
         }
     }
 
