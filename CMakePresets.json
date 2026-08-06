@@ -14,10 +14,20 @@
         },
         {
             "name": "vcpkg",
-            "description": "Ninja Release — vcpkg toolchain + kitchen-sink manifest features",
+            "description": "Ninja Release — vcpkg toolchain, pre-installed packages (classic mode)",
             "inherits": ["default"],
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_MANIFEST_MODE": "OFF"
+            }
+        },
+        {
+            "name": "vcpkg-manifest",
+            "description": "Ninja Release — vcpkg manifest mode (builds deps into build/vcpkg_installed)",
+            "inherits": ["default"],
+            "cacheVariables": {
+                "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
+                "VCPKG_MANIFEST_MODE": "ON",
                 "VCPKG_MANIFEST_FEATURES": "base;image;vulkan;examples",
                 "VCPKG_INSTALL_OPTIONS": "--no-print-usage"
             }
@@ -38,7 +48,7 @@
         {
             "name": "emscripten-vcpkg",
             "description": "Ninja Release — Emscripten via vcpkg chainload (wasm32-emscripten)",
-            "inherits": ["vcpkg"],
+            "inherits": ["vcpkg-manifest"],
             "binaryDir": "${sourceDir}/build-emscripten",
             "cacheVariables": {
                 "VCPKG_CHAINLOAD_TOOLCHAIN_FILE": "$env{EMSDK}/upstream/emscripten/cmake/Modules/Platform/Emscripten.cmake",
@@ -59,6 +69,11 @@
         {
             "name": "vcpkg",
             "configurePreset": "vcpkg",
+            "jobs": 0
+        },
+        {
+            "name": "vcpkg-manifest",
+            "configurePreset": "vcpkg-manifest",
             "jobs": 0
         },
         {

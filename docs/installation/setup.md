@@ -83,14 +83,15 @@ Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
     VCPKG_ROOT              <vcpkg_root>
     VCPKG_DEFAULT_TRIPLET   x64-windows
 
-Dependencies come from `vcpkg.json` (manifest mode). The `vcpkg` preset enables all features (`base`, `image`, `vulkan`, `examples`) so configure installs everything needed.
+Dependencies are listed in `vcpkg.json`. The **`vcpkg`** preset uses **classic mode** (`VCPKG_MANIFEST_MODE=OFF`): packages must already be in `$VCPKG_ROOT/installed/<triplet>` (from a prior `vcpkg install`). Use **`vcpkg-manifest`** when you want configure to build deps into `build/vcpkg_installed` (all features: `base`, `image`, `vulkan`, `examples`).
 
 ### Building
 
 Presets are toolchain selectors (always Ninja + Release):
 
     cmake --preset default           # system / find_package deps
-    cmake --preset vcpkg             # VCPKG_ROOT required
+    cmake --preset vcpkg             # VCPKG_ROOT, pre-installed packages
+    cmake --preset vcpkg-manifest    # VCPKG_ROOT, manifest install on configure
     cmake --preset emscripten        # EMSDK only
     cmake --preset emscripten-vcpkg  # EMSDK + VCPKG_ROOT (wasm deps)
 
@@ -99,7 +100,7 @@ Presets are toolchain selectors (always Ninja + Release):
 
 Override build type on the configure line when needed, e.g. `cmake --preset vcpkg -DCMAKE_BUILD_TYPE=Debug`.
 
-First configure can take a while while vcpkg builds dependencies into the build tree. Fine-grained control of what mango itself compiles is still via CMake options in `CMakeLists.txt`.
+First configure with **`vcpkg-manifest`** can take a while while vcpkg builds dependencies into the build tree. Fine-grained control of what mango itself compiles is still via CMake options in `CMakeLists.txt`.
 
 If you are not sure where mango was installed, re-run configure in the build directory and the install prefix is printed to the console.
 
