@@ -102,22 +102,22 @@ protected:
     }};
 
 public:
-    FontWindow(VkInstance instance, int width, int height, u32 flags, const std::string& bodyFontPath)
-        : VulkanWindow(instance, width, height, flags)
+    FontWindow(VulkanContext& context, int width, int height, u32 flags, const std::string& bodyFontPath)
+        : VulkanWindow(context, width, height, flags)
         , m_bodyFontPath(bodyFontPath)
     {
     }
 
     void onDeviceReady() override
     {
-        m_allocator = std::make_unique<Allocator>(instance(), m_physicalDevice, m_device, VK_API_VERSION_1_3);
+        m_allocator = std::make_unique<Allocator>(instance(), physicalDevice(), device(), VK_API_VERSION_1_3);
 
         FontRenderer::CreateInfo fontInfo =
         {
-            .physicalDevice = m_physicalDevice,
-            .device = m_device,
-            .queue = m_graphicsQueue,
-            .queueFamily = m_graphicsQueueFamilyIndex,
+            .physicalDevice = physicalDevice(),
+            .device = device(),
+            .queue = graphicsQueue(),
+            .queueFamily = graphicsQueueFamilyIndex(),
             .allocator = m_allocator.get(),
         };
 
@@ -149,9 +149,9 @@ public:
 
     ~FontWindow()
     {
-        if (m_device != VK_NULL_HANDLE)
+        if (device() != VK_NULL_HANDLE)
         {
-            vkDeviceWaitIdle(m_device);
+            vkDeviceWaitIdle(device());
             m_renderTarget.reset();
             m_renderer.reset();
             m_allocator.reset();
@@ -167,10 +167,10 @@ public:
 
         m_renderTarget = std::make_unique<RenderTarget>(RenderTarget::CreateInfo
         {
-            .device = m_device,
+            .device = device(),
             .allocator = m_allocator.get(),
-            .queue = m_graphicsQueue,
-            .queueFamily = m_graphicsQueueFamilyIndex,
+            .queue = graphicsQueue(),
+            .queueFamily = graphicsQueueFamilyIndex(),
             .format = RenderTargetFormat::UNORM8,
             .extent = extent,
         });
@@ -375,7 +375,7 @@ public:
         const u32 frameIndex = swapchain().frameIndex();
         VkCommandBuffer cmd = commandBuffer(frame.imageIndex());
         recordCommandBuffer(cmd, frame.imageIndex(), frameIndex, extent);
-        frame.submitAndPresent(m_graphicsQueue, cmd);
+        frame.submitAndPresent(graphicsQueue(), cmd);
     }
 
     void onFrame(const FrameInfo& info) override
@@ -414,7 +414,7 @@ public:
 
         if (code == KEYCODE_ESC)
         {
-            breakEventLoop();
+            requestQuit();
         }
         else if (code == KEYCODE_F)
         {
@@ -470,14 +470,17 @@ int mangoMain(const mango::CommandLine& commands)
 
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
 
-    FontWindow window(instance, 1280, 720, 0, bodyFontPath);
+    VulkanContext ctx(instance);
+    FontWindow window(ctx, 1280, 720, 0, bodyFontPath);
     window.setTitle("Scanline Sweeper Font (Vulkan)");
 
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
     config.waitForFrame = true;
 
-    window.enterEventLoop(config);
+    EventLoop loop;
+    loop.attach(window, config);
+    loop.run();
 
     return 0;
 }

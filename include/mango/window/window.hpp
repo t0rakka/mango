@@ -173,10 +173,10 @@ namespace mango
 
     struct FrameInfo
     {
-        // Seconds since the previous onFrame (0 on the first frame after enterEventLoop).
+        // Seconds since the previous onFrame (0 on the first frame after EventLoop::run()).
         double dt = 0.0;
 
-        // Seconds since enterEventLoop() (monotonic, for animation phase).
+        // Seconds since EventLoop::run() started (monotonic, for animation phase).
         double time = 0.0;
 
         // Monotonic timestamp when this frame was scheduled (microseconds).
@@ -209,6 +209,10 @@ namespace mango
         // CPU cap = getDisplayRefreshRate() * headroom when tracking is enabled.
         // Set above 1.0 so vsync/present stays the real limiter (nominal Hz is approximate).
         double displayRefreshHeadroom = 2.0;
+
+        // Native close (X button): quit the event loop after onClose(). When false,
+        // the window is hidden and the loop keeps running (tool / secondary windows).
+        bool quitOnClose = true;
     };
 
     struct EventLoopState
@@ -232,7 +236,8 @@ namespace mango
         // loop may block until an OS event arrives (subject to a platform safety cap).
         static constexpr u32 WAIT_INFINITE = 0xffffffffu;
 
-        void reset(const EventLoopConfig& loopConfig);
+        // Resets runtime state for a new EventLoop::run() session. Preserves config.
+        void reset();
         void invalidate();
         bool shouldScheduleFrame(u64 now_us) const;
         bool consumeInvalidated();
@@ -245,15 +250,20 @@ namespace mango
         u32 computeWaitTimeoutMs(u64 now_us) const;
     };
 
+    class EventLoop;
+
     // -----------------------------------------------------------------------
     // Window
     // -----------------------------------------------------------------------
 
     class Window : public NonCopyable
     {
+        friend class EventLoop;
+
     protected:
         std::unique_ptr<WindowBackend> m_backend;
         EventLoopState m_event_loop;
+        EventLoop* m_event_loop_runner = nullptr;
 
         // Construct the backend for the active window system (see getWindowSystem).
         // Concrete window types (OpenGLWindow, VulkanWindow) call this from their
@@ -319,18 +329,12 @@ namespace mango
 
         bool isKeyPressed(Keycode code) const;
 
-        // Run with the currently configured event loop (honors setFrameMode /
-        // setMaxFrameRate / setEventLoopConfig calls made before entering).
-        void enterEventLoop();
-
-        // Run with an explicit config, replacing any prior configuration.
-        void enterEventLoop(const EventLoopConfig& config);
-        virtual void breakEventLoop();
+        // Request exit from the active EventLoop::run(). No-op when no loop is running.
         void requestQuit();
 
-        // Native close button / protocol. Calls onClose(); breaks the event loop
-        // only when this window owns enterEventLoop(). Secondary windows are hidden
-        // so the app can destroy them from onClose without quitting the process.
+        // Native close button / protocol. Calls onClose(); quits the event loop when
+        // EventLoopConfig::quitOnClose is set. Otherwise the window is hidden so the
+        // app can destroy it from onClose without quitting the process.
         void handleCloseRequest();
 
         bool isRunning() const;
@@ -348,6 +352,7 @@ namespace mango
         void setMaxFrameRate(double frameRate);
 
         virtual void onFrame(const FrameInfo& info);
+        virtual void onEventLoopStarting();
         virtual void onResize(int width, int height);
         virtual void onMinimize();
         virtual void onMaximize();

@@ -3,6 +3,7 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "window_peers.hpp"
+#include <mango/window/event_loop.hpp>
 #include "window_backend.hpp"
 
 #include <algorithm>
@@ -18,7 +19,7 @@ namespace window_peers
     {
         std::mutex g_mutex;
         std::vector<WindowBackend*> g_backends;
-        Window* g_loop_owner = nullptr;
+        EventLoop* g_active_loop = nullptr;
     }
 
     void registerBackend(WindowBackend* backend)
@@ -53,7 +54,6 @@ namespace window_peers
             return;
         }
 
-        // Copy under lock so callbacks may destroy/unregister safely.
         std::vector<WindowBackend*> snapshot;
         {
             std::lock_guard<std::mutex> lock(g_mutex);
@@ -96,22 +96,16 @@ namespace window_peers
         }, nullptr);
     }
 
-    void setEventLoopOwner(Window* window)
+    void setActiveEventLoop(EventLoop* loop)
     {
         std::lock_guard<std::mutex> lock(g_mutex);
-        g_loop_owner = window;
+        g_active_loop = loop;
     }
 
-    Window* eventLoopOwner()
+    EventLoop* activeEventLoop()
     {
         std::lock_guard<std::mutex> lock(g_mutex);
-        return g_loop_owner;
-    }
-
-    bool isEventLoopOwner(const Window* window)
-    {
-        std::lock_guard<std::mutex> lock(g_mutex);
-        return g_loop_owner == window;
+        return g_active_loop;
     }
 
 } // namespace window_peers

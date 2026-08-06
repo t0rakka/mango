@@ -73,6 +73,7 @@
 
 #include <mango/image/compression.hpp>
 #include <mango/window/window.hpp>
+#include <mango/window/event_loop.hpp>
 
 namespace mango
 {
@@ -153,8 +154,7 @@ namespace mango
         bool isFullscreen() const override;
         math::int32x2 getWindowSize() const override;
 
-        void enterEventLoop();
-        void enterEventLoop(const EventLoopConfig& config);
+        void onEventLoopStarting() override;
 
         // Called once before the window is shown and the event loop starts.
         virtual void onContextReady();

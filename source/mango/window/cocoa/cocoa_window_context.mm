@@ -6,6 +6,7 @@
 #include "cocoa_input.hpp"
 #include "cocoa_window.h"
 #include "../window_peers.hpp"
+#include <mango/window/event_loop.hpp>
 
 #if defined(MANGO_ENABLE_COCOA)
 
@@ -132,8 +133,8 @@ namespace mango
         [win release];
         ns_window = nullptr;
 
-        // Destroying a secondary window must not stop the shared NSApp run loop.
-        if (window_peers::isEventLoopOwner(owner))
+        // Destroying a non-pump window must not stop the shared NSApp run loop.
+        if (window_peers::isEventLoopPump(owner))
         {
             [NSApp stop:nil];
         }

@@ -106,7 +106,7 @@ namespace mango::vulkan
         void onDeviceReady() override;
 
     public:
-        VulkanFramebuffer(VkInstance instance, int width, int height, BufferMode buffermode = RGBA_DIRECT);
+        VulkanFramebuffer(VulkanContext& context, int width, int height, BufferMode buffermode = RGBA_DIRECT);
         ~VulkanFramebuffer();
 
         int contentWidth() const { return m_width; }

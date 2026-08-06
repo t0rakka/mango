@@ -36,7 +36,7 @@ public:
         switch (code)
         {
         case KEYCODE_ESC:
-            breakEventLoop();
+            requestQuit();
             break;
 
         case KEYCODE_F:
@@ -88,7 +88,10 @@ int mangoMain(const mango::CommandLine& commands)
     Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     TestWindow window(bitmap);
-    window.enterEventLoop();
+
+    EventLoop loop;
+    loop.attach(window);
+    loop.run();
 
     return 0;
 }

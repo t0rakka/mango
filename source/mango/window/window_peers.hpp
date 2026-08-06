@@ -11,10 +11,10 @@ namespace mango
 
     struct WindowBackend;
     class Window;
+    class EventLoop;
 
-    // Process-wide live WindowBackend list. The window that called enterEventLoop()
-    // drains its own connection and then every other backend so secondary windows
-    // receive input/close while sharing one thread / one pump.
+    // Process-wide live WindowBackend list. The active EventLoop drains peer
+    // backends so secondary windows receive input/close while sharing one thread.
     namespace window_peers
     {
 
@@ -26,9 +26,11 @@ namespace mango
 
         void drainOtherBackends(WindowBackend* self);
 
-        void setEventLoopOwner(Window* window);
-        Window* eventLoopOwner();
-        bool isEventLoopOwner(const Window* window);
+        void setActiveEventLoop(EventLoop* loop);
+        EventLoop* activeEventLoop();
+
+        // True when window is the native event pump driver (first attach).
+        bool isEventLoopPump(const Window* window);
 
     } // namespace window_peers
 

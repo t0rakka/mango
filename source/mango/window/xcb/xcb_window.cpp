@@ -33,6 +33,7 @@
 
 #include "xcb_window.hpp"
 #include "../window_peers.hpp"
+#include <mango/window/event_loop.hpp>
 
 namespace
 {
@@ -1658,9 +1659,13 @@ namespace mango
 
     void XcbBackend::runEventLoop()
     {
-        owner->syncDisplayRefreshRate();
+        EventLoop* loop = window_peers::activeEventLoop();
+        if (!loop)
+        {
+            return;
+        }
 
-        while (owner->isRunning())
+        while (loop->isRunning())
         {
             bool hadEvents = false;
 
@@ -1679,7 +1684,7 @@ namespace mango
 
             if (!busy)
             {
-                owner->dispatchFrame();
+                loop->dispatchFrames();
 
                 // glXSwapBuffers can block for a full frame; drain again so Xdnd
                 // Position/Drop messages get timely Status/Finished replies.
@@ -1703,7 +1708,7 @@ namespace mango
                 // (WAIT_INFINITE) wait is capped so a cross-thread state change is
                 // observed within the cap; a pending deadline (animation) is waited
                 // exactly so it fires on time.
-                const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(mango::Time::us());
+                const u32 timeout = loop->computeWaitTimeoutMs(mango::Time::us());
                 if (timeout != 0)
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);

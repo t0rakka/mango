@@ -86,7 +86,7 @@ public:
         switch (key)
         {
             case KEYCODE_ESC:
-                breakEventLoop();
+                requestQuit();
                 break;
             case KEYCODE_F:
                 toggleFullscreen();
@@ -172,7 +172,9 @@ int mangoMain(const mango::CommandLine& commands)
     config.mode = FrameMode::OnDemand;
     config.trackDisplayRefreshRate = false;
 
-    demo.enterEventLoop(config);
+    EventLoop loop;
+    loop.attach(demo, config);
+    loop.run();
 
     return 0;
 }

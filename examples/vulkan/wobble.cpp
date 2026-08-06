@@ -239,8 +239,8 @@ protected:
     }
 
 public:
-    WobbleWindow(VkInstance instance, int width, int height)
-        : VulkanFramebuffer(instance, width, height, RGBA_FLOAT)
+    WobbleWindow(VulkanContext& context, int width, int height)
+        : VulkanFramebuffer(context, width, height, RGBA_FLOAT)
     {
         setExposure(1.35f);
     }
@@ -251,7 +251,7 @@ public:
 
         if (key == KEYCODE_ESC)
         {
-            breakEventLoop();
+            requestQuit();
         }
         else if (key == KEYCODE_F)
         {
@@ -382,14 +382,17 @@ int mangoMain(const mango::CommandLine& commands)
     };
 
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
-    WobbleWindow window(instance, 360, 200);
+    VulkanContext ctx(instance);
+    WobbleWindow window(ctx, 360, 200);
 
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
     config.trackDisplayRefreshRate = true;
     config.waitForFrame = true;
 
-    window.enterEventLoop(config);
+    EventLoop loop;
+    loop.attach(window, config);
+    loop.run();
 
     return 0;
 }

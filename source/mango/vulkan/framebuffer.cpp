@@ -145,8 +145,8 @@ namespace mango::vulkan
     // VulkanFramebuffer
     // -------------------------------------------------------------------
 
-    VulkanFramebuffer::VulkanFramebuffer(VkInstance instance, int width, int height, BufferMode buffermode)
-        : VulkanWindow(instance,
+    VulkanFramebuffer::VulkanFramebuffer(VulkanContext& context, int width, int height, BufferMode buffermode)
+        : VulkanWindow(context,
             adjustWindowSizeToContent(width, height, 0).x,
             adjustWindowSizeToContent(width, height, 0).y,
             0)
@@ -225,172 +225,172 @@ namespace mango::vulkan
 
     void VulkanFramebuffer::destroyGpuResources()
     {
-        if (m_device == VK_NULL_HANDLE)
+        if (device() == VK_NULL_HANDLE)
         {
             return;
         }
 
-        vkDeviceWaitIdle(m_device);
+        vkDeviceWaitIdle(device());
 
         if (m_uploadFence)
         {
-            vkDestroyFence(m_device, m_uploadFence, nullptr);
+            vkDestroyFence(device(), m_uploadFence, nullptr);
             m_uploadFence = VK_NULL_HANDLE;
         }
 
         if (m_uploadPool)
         {
-            vkDestroyCommandPool(m_device, m_uploadPool, nullptr);
+            vkDestroyCommandPool(device(), m_uploadPool, nullptr);
             m_uploadPool = VK_NULL_HANDLE;
         }
 
         if (m_resolvePipeline)
         {
-            vkDestroyPipeline(m_device, m_resolvePipeline, nullptr);
+            vkDestroyPipeline(device(), m_resolvePipeline, nullptr);
             m_resolvePipeline = VK_NULL_HANDLE;
         }
 
         if (m_resolvePipelineLayout)
         {
-            vkDestroyPipelineLayout(m_device, m_resolvePipelineLayout, nullptr);
+            vkDestroyPipelineLayout(device(), m_resolvePipelineLayout, nullptr);
             m_resolvePipelineLayout = VK_NULL_HANDLE;
         }
 
         if (m_resolveDescriptorPool)
         {
-            vkDestroyDescriptorPool(m_device, m_resolveDescriptorPool, nullptr);
+            vkDestroyDescriptorPool(device(), m_resolveDescriptorPool, nullptr);
             m_resolveDescriptorPool = VK_NULL_HANDLE;
         }
 
         if (m_resolveDescriptorLayout)
         {
-            vkDestroyDescriptorSetLayout(m_device, m_resolveDescriptorLayout, nullptr);
+            vkDestroyDescriptorSetLayout(device(), m_resolveDescriptorLayout, nullptr);
             m_resolveDescriptorLayout = VK_NULL_HANDLE;
         }
 
         if (m_resolveFragmentShader)
         {
-            vkDestroyShaderModule(m_device, m_resolveFragmentShader, nullptr);
+            vkDestroyShaderModule(device(), m_resolveFragmentShader, nullptr);
             m_resolveFragmentShader = VK_NULL_HANDLE;
         }
 
         if (m_paletteBuffer)
         {
-            vkDestroyBuffer(m_device, m_paletteBuffer, nullptr);
+            vkDestroyBuffer(device(), m_paletteBuffer, nullptr);
             m_paletteBuffer = VK_NULL_HANDLE;
         }
 
         if (m_paletteMemory)
         {
-            vkFreeMemory(m_device, m_paletteMemory, nullptr);
+            vkFreeMemory(device(), m_paletteMemory, nullptr);
             m_paletteMemory = VK_NULL_HANDLE;
         }
 
         if (m_indexTextureView)
         {
-            vkDestroyImageView(m_device, m_indexTextureView, nullptr);
+            vkDestroyImageView(device(), m_indexTextureView, nullptr);
             m_indexTextureView = VK_NULL_HANDLE;
         }
 
         if (m_indexTexture)
         {
-            vkDestroyImage(m_device, m_indexTexture, nullptr);
+            vkDestroyImage(device(), m_indexTexture, nullptr);
             m_indexTexture = VK_NULL_HANDLE;
         }
 
         if (m_indexTextureMemory)
         {
-            vkFreeMemory(m_device, m_indexTextureMemory, nullptr);
+            vkFreeMemory(device(), m_indexTextureMemory, nullptr);
             m_indexTextureMemory = VK_NULL_HANDLE;
         }
 
         if (m_pipeline)
         {
-            vkDestroyPipeline(m_device, m_pipeline, nullptr);
+            vkDestroyPipeline(device(), m_pipeline, nullptr);
             m_pipeline = VK_NULL_HANDLE;
         }
 
         if (m_pipelineLayout)
         {
-            vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+            vkDestroyPipelineLayout(device(), m_pipelineLayout, nullptr);
             m_pipelineLayout = VK_NULL_HANDLE;
         }
 
         if (m_descriptorPool)
         {
-            vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
+            vkDestroyDescriptorPool(device(), m_descriptorPool, nullptr);
             m_descriptorPool = VK_NULL_HANDLE;
         }
 
         if (m_descriptorLayout)
         {
-            vkDestroyDescriptorSetLayout(m_device, m_descriptorLayout, nullptr);
+            vkDestroyDescriptorSetLayout(device(), m_descriptorLayout, nullptr);
             m_descriptorLayout = VK_NULL_HANDLE;
         }
 
         if (m_vertexShader)
         {
-            vkDestroyShaderModule(m_device, m_vertexShader, nullptr);
+            vkDestroyShaderModule(device(), m_vertexShader, nullptr);
             m_vertexShader = VK_NULL_HANDLE;
         }
 
         if (m_fragmentShader)
         {
-            vkDestroyShaderModule(m_device, m_fragmentShader, nullptr);
+            vkDestroyShaderModule(device(), m_fragmentShader, nullptr);
             m_fragmentShader = VK_NULL_HANDLE;
         }
 
         if (m_vertexBuffer)
         {
-            vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
+            vkDestroyBuffer(device(), m_vertexBuffer, nullptr);
             m_vertexBuffer = VK_NULL_HANDLE;
         }
 
         if (m_vertexBufferMemory)
         {
-            vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
+            vkFreeMemory(device(), m_vertexBufferMemory, nullptr);
             m_vertexBufferMemory = VK_NULL_HANDLE;
         }
 
         if (m_textureView)
         {
-            vkDestroyImageView(m_device, m_textureView, nullptr);
+            vkDestroyImageView(device(), m_textureView, nullptr);
             m_textureView = VK_NULL_HANDLE;
         }
 
         if (m_texture)
         {
-            vkDestroyImage(m_device, m_texture, nullptr);
+            vkDestroyImage(device(), m_texture, nullptr);
             m_texture = VK_NULL_HANDLE;
         }
 
         if (m_textureMemory)
         {
-            vkFreeMemory(m_device, m_textureMemory, nullptr);
+            vkFreeMemory(device(), m_textureMemory, nullptr);
             m_textureMemory = VK_NULL_HANDLE;
         }
 
         if (m_stagingBuffer)
         {
-            vkDestroyBuffer(m_device, m_stagingBuffer, nullptr);
+            vkDestroyBuffer(device(), m_stagingBuffer, nullptr);
             m_stagingBuffer = VK_NULL_HANDLE;
         }
 
         if (m_stagingMemory)
         {
-            vkFreeMemory(m_device, m_stagingMemory, nullptr);
+            vkFreeMemory(device(), m_stagingMemory, nullptr);
             m_stagingMemory = VK_NULL_HANDLE;
         }
 
         if (m_samplerNearest)
         {
-            vkDestroySampler(m_device, m_samplerNearest, nullptr);
+            vkDestroySampler(device(), m_samplerNearest, nullptr);
             m_samplerNearest = VK_NULL_HANDLE;
         }
 
         if (m_samplerLinear)
         {
-            vkDestroySampler(m_device, m_samplerLinear, nullptr);
+            vkDestroySampler(device(), m_samplerLinear, nullptr);
             m_samplerLinear = VK_NULL_HANDLE;
         }
 
@@ -411,10 +411,10 @@ namespace mango::vulkan
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
 
-        vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_stagingBuffer);
+        vkCreateBuffer(device(), &bufferInfo, nullptr, &m_stagingBuffer);
 
         VkMemoryRequirements memReq;
-        vkGetBufferMemoryRequirements(m_device, m_stagingBuffer, &memReq);
+        vkGetBufferMemoryRequirements(device(), m_stagingBuffer, &memReq);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -424,8 +424,8 @@ namespace mango::vulkan
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
         };
 
-        vkAllocateMemory(m_device, &allocInfo, nullptr, &m_stagingMemory);
-        vkBindBufferMemory(m_device, m_stagingBuffer, m_stagingMemory, 0);
+        vkAllocateMemory(device(), &allocInfo, nullptr, &m_stagingMemory);
+        vkBindBufferMemory(device(), m_stagingBuffer, m_stagingMemory, 0);
     }
 
     void VulkanFramebuffer::createTexture()
@@ -451,10 +451,10 @@ namespace mango::vulkan
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         };
 
-        vkCreateImage(m_device, &imageInfo, nullptr, &m_texture);
+        vkCreateImage(device(), &imageInfo, nullptr, &m_texture);
 
         VkMemoryRequirements memReq;
-        vkGetImageMemoryRequirements(m_device, m_texture, &memReq);
+        vkGetImageMemoryRequirements(device(), m_texture, &memReq);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -463,8 +463,8 @@ namespace mango::vulkan
             .memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
         };
 
-        vkAllocateMemory(m_device, &allocInfo, nullptr, &m_textureMemory);
-        vkBindImageMemory(m_device, m_texture, m_textureMemory, 0);
+        vkAllocateMemory(device(), &allocInfo, nullptr, &m_textureMemory);
+        vkBindImageMemory(device(), m_texture, m_textureMemory, 0);
 
         VkComponentMapping swizzle =
         {
@@ -489,7 +489,7 @@ namespace mango::vulkan
             },
         };
 
-        vkCreateImageView(m_device, &viewInfo, nullptr, &m_textureView);
+        vkCreateImageView(device(), &viewInfo, nullptr, &m_textureView);
     }
 
     void VulkanFramebuffer::createIndexTexture()
@@ -509,10 +509,10 @@ namespace mango::vulkan
             .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
         };
 
-        vkCreateImage(m_device, &imageInfo, nullptr, &m_indexTexture);
+        vkCreateImage(device(), &imageInfo, nullptr, &m_indexTexture);
 
         VkMemoryRequirements memReq;
-        vkGetImageMemoryRequirements(m_device, m_indexTexture, &memReq);
+        vkGetImageMemoryRequirements(device(), m_indexTexture, &memReq);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -521,8 +521,8 @@ namespace mango::vulkan
             .memoryTypeIndex = findMemoryType(memReq.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
         };
 
-        vkAllocateMemory(m_device, &allocInfo, nullptr, &m_indexTextureMemory);
-        vkBindImageMemory(m_device, m_indexTexture, m_indexTextureMemory, 0);
+        vkAllocateMemory(device(), &allocInfo, nullptr, &m_indexTextureMemory);
+        vkBindImageMemory(device(), m_indexTexture, m_indexTextureMemory, 0);
 
         VkImageViewCreateInfo viewInfo =
         {
@@ -538,7 +538,7 @@ namespace mango::vulkan
             },
         };
 
-        vkCreateImageView(m_device, &viewInfo, nullptr, &m_indexTextureView);
+        vkCreateImageView(device(), &viewInfo, nullptr, &m_indexTextureView);
     }
 
     void VulkanFramebuffer::createPaletteBuffer()
@@ -553,10 +553,10 @@ namespace mango::vulkan
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
 
-        vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_paletteBuffer);
+        vkCreateBuffer(device(), &bufferInfo, nullptr, &m_paletteBuffer);
 
         VkMemoryRequirements memReq;
-        vkGetBufferMemoryRequirements(m_device, m_paletteBuffer, &memReq);
+        vkGetBufferMemoryRequirements(device(), m_paletteBuffer, &memReq);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -566,8 +566,8 @@ namespace mango::vulkan
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
         };
 
-        vkAllocateMemory(m_device, &allocInfo, nullptr, &m_paletteMemory);
-        vkBindBufferMemory(m_device, m_paletteBuffer, m_paletteMemory, 0);
+        vkAllocateMemory(device(), &allocInfo, nullptr, &m_paletteMemory);
+        vkBindBufferMemory(device(), m_paletteBuffer, m_paletteMemory, 0);
         uploadPalette();
     }
 
@@ -594,9 +594,9 @@ namespace mango::vulkan
         }
 
         void* data = nullptr;
-        vkMapMemory(m_device, m_paletteMemory, 0, sizeof(m_palette), 0, &data);
+        vkMapMemory(device(), m_paletteMemory, 0, sizeof(m_palette), 0, &data);
         std::memcpy(data, m_palette, sizeof(m_palette));
-        vkUnmapMemory(m_device, m_paletteMemory);
+        vkUnmapMemory(device(), m_paletteMemory);
     }
 
     void VulkanFramebuffer::createSamplers()
@@ -611,11 +611,11 @@ namespace mango::vulkan
             .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
         };
 
-        vkCreateSampler(m_device, &samplerInfo, nullptr, &m_samplerNearest);
+        vkCreateSampler(device(), &samplerInfo, nullptr, &m_samplerNearest);
 
         samplerInfo.magFilter = VK_FILTER_LINEAR;
         samplerInfo.minFilter = VK_FILTER_LINEAR;
-        vkCreateSampler(m_device, &samplerInfo, nullptr, &m_samplerLinear);
+        vkCreateSampler(device(), &samplerInfo, nullptr, &m_samplerLinear);
     }
 
     void VulkanFramebuffer::createPresentPipeline()
@@ -629,8 +629,8 @@ namespace mango::vulkan
             MANGO_EXCEPTION("[VulkanFramebuffer] shader compilation failed.");
         }
 
-        m_vertexShader = Compiler::createShaderModule(m_device, vs);
-        m_fragmentShader = Compiler::createShaderModule(m_device, fs);
+        m_vertexShader = Compiler::createShaderModule(device(), vs);
+        m_fragmentShader = Compiler::createShaderModule(device(), fs);
 
         VkDescriptorSetLayoutBinding samplerBinding =
         {
@@ -647,7 +647,7 @@ namespace mango::vulkan
             .pBindings = &samplerBinding,
         };
 
-        vkCreateDescriptorSetLayout(m_device, &layoutInfo, nullptr, &m_descriptorLayout);
+        vkCreateDescriptorSetLayout(device(), &layoutInfo, nullptr, &m_descriptorLayout);
 
         VkPushConstantRange pushRanges[2];
         u32 pushRangeCount = 1;
@@ -679,7 +679,7 @@ namespace mango::vulkan
             .pPushConstantRanges = pushRanges,
         };
 
-        vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
+        vkCreatePipelineLayout(device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
 
         VkDescriptorPoolSize poolSize =
         {
@@ -695,7 +695,7 @@ namespace mango::vulkan
             .pPoolSizes = &poolSize,
         };
 
-        vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool);
+        vkCreateDescriptorPool(device(), &poolInfo, nullptr, &m_descriptorPool);
 
         VkDescriptorSetAllocateInfo allocInfo =
         {
@@ -705,7 +705,7 @@ namespace mango::vulkan
             .pSetLayouts = &m_descriptorLayout,
         };
 
-        vkAllocateDescriptorSets(m_device, &allocInfo, &m_descriptorSet);
+        vkAllocateDescriptorSets(device(), &allocInfo, &m_descriptorSet);
 
         VkDescriptorImageInfo imageInfo =
         {
@@ -724,7 +724,7 @@ namespace mango::vulkan
             .pImageInfo = &imageInfo,
         };
 
-        vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+        vkUpdateDescriptorSets(device(), 1, &write, 0, nullptr);
 
         VkPipelineShaderStageCreateInfo stages[] =
         {
@@ -853,7 +853,7 @@ namespace mango::vulkan
             .layout = m_pipelineLayout,
         };
 
-        vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline);
+        vkCreateGraphicsPipelines(device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_pipeline);
     }
 
     void VulkanFramebuffer::createResolvePipeline()
@@ -866,7 +866,7 @@ namespace mango::vulkan
             MANGO_EXCEPTION("[VulkanFramebuffer] resolve shader compilation failed.");
         }
 
-        m_resolveFragmentShader = Compiler::createShaderModule(m_device, fs);
+        m_resolveFragmentShader = Compiler::createShaderModule(device(), fs);
 
         VkDescriptorSetLayoutBinding bindings[] =
         {
@@ -891,7 +891,7 @@ namespace mango::vulkan
             .pBindings = bindings,
         };
 
-        vkCreateDescriptorSetLayout(m_device, &layoutInfo, nullptr, &m_resolveDescriptorLayout);
+        vkCreateDescriptorSetLayout(device(), &layoutInfo, nullptr, &m_resolveDescriptorLayout);
 
         VkPushConstantRange pushRange =
         {
@@ -909,7 +909,7 @@ namespace mango::vulkan
             .pPushConstantRanges = &pushRange,
         };
 
-        vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_resolvePipelineLayout);
+        vkCreatePipelineLayout(device(), &pipelineLayoutInfo, nullptr, &m_resolvePipelineLayout);
 
         VkDescriptorPoolSize poolSizes[] =
         {
@@ -925,7 +925,7 @@ namespace mango::vulkan
             .pPoolSizes = poolSizes,
         };
 
-        vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_resolveDescriptorPool);
+        vkCreateDescriptorPool(device(), &poolInfo, nullptr, &m_resolveDescriptorPool);
 
         VkDescriptorSetAllocateInfo allocInfo =
         {
@@ -935,7 +935,7 @@ namespace mango::vulkan
             .pSetLayouts = &m_resolveDescriptorLayout,
         };
 
-        vkAllocateDescriptorSets(m_device, &allocInfo, &m_resolveDescriptorSet);
+        vkAllocateDescriptorSets(device(), &allocInfo, &m_resolveDescriptorSet);
 
         VkDescriptorImageInfo imageInfo =
         {
@@ -971,7 +971,7 @@ namespace mango::vulkan
             },
         };
 
-        vkUpdateDescriptorSets(m_device, 2, writes, 0, nullptr);
+        vkUpdateDescriptorSets(device(), 2, writes, 0, nullptr);
 
         VkPipelineShaderStageCreateInfo stages[] =
         {
@@ -1100,7 +1100,7 @@ namespace mango::vulkan
             .layout = m_resolvePipelineLayout,
         };
 
-        vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_resolvePipeline);
+        vkCreateGraphicsPipelines(device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_resolvePipeline);
     }
 
     void VulkanFramebuffer::createQuadGeometry()
@@ -1124,10 +1124,10 @@ namespace mango::vulkan
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
 
-        vkCreateBuffer(m_device, &bufferInfo, nullptr, &m_vertexBuffer);
+        vkCreateBuffer(device(), &bufferInfo, nullptr, &m_vertexBuffer);
 
         VkMemoryRequirements memReq;
-        vkGetBufferMemoryRequirements(m_device, m_vertexBuffer, &memReq);
+        vkGetBufferMemoryRequirements(device(), m_vertexBuffer, &memReq);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -1137,13 +1137,13 @@ namespace mango::vulkan
                 VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT),
         };
 
-        vkAllocateMemory(m_device, &allocInfo, nullptr, &m_vertexBufferMemory);
-        vkBindBufferMemory(m_device, m_vertexBuffer, m_vertexBufferMemory, 0);
+        vkAllocateMemory(device(), &allocInfo, nullptr, &m_vertexBufferMemory);
+        vkBindBufferMemory(device(), m_vertexBuffer, m_vertexBufferMemory, 0);
 
         void* data = nullptr;
-        vkMapMemory(m_device, m_vertexBufferMemory, 0, size, 0, &data);
+        vkMapMemory(device(), m_vertexBufferMemory, 0, size, 0, &data);
         std::memcpy(data, vertices, sizeof(vertices));
-        vkUnmapMemory(m_device, m_vertexBufferMemory);
+        vkUnmapMemory(device(), m_vertexBufferMemory);
     }
 
     void VulkanFramebuffer::createUploadCommands()
@@ -1152,10 +1152,10 @@ namespace mango::vulkan
         {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
+            .queueFamilyIndex = graphicsQueueFamilyIndex(),
         };
 
-        vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_uploadPool);
+        vkCreateCommandPool(device(), &poolInfo, nullptr, &m_uploadPool);
 
         VkCommandBufferAllocateInfo allocInfo =
         {
@@ -1165,14 +1165,14 @@ namespace mango::vulkan
             .commandBufferCount = 1,
         };
 
-        vkAllocateCommandBuffers(m_device, &allocInfo, &m_uploadCommand);
+        vkAllocateCommandBuffers(device(), &allocInfo, &m_uploadCommand);
 
         VkFenceCreateInfo fenceInfo =
         {
             .sType = VK_STRUCTURE_TYPE_FENCE_CREATE_INFO,
         };
 
-        vkCreateFence(m_device, &fenceInfo, nullptr, &m_uploadFence);
+        vkCreateFence(device(), &fenceInfo, nullptr, &m_uploadFence);
     }
 
     Surface VulkanFramebuffer::lock()
@@ -1183,13 +1183,13 @@ namespace mango::vulkan
         }
 
         void* data = nullptr;
-        vkMapMemory(m_device, m_stagingMemory, 0, VK_WHOLE_SIZE, 0, &data);
+        vkMapMemory(device(), m_stagingMemory, 0, VK_WHOLE_SIZE, 0, &data);
         return Surface(m_width, m_height, m_format, m_stride, data);
     }
 
     void VulkanFramebuffer::unlock()
     {
-        vkUnmapMemory(m_device, m_stagingMemory);
+        vkUnmapMemory(device(), m_stagingMemory);
 
         if (m_is_palette)
         {
@@ -1280,9 +1280,9 @@ namespace mango::vulkan
             .pCommandBuffers = &m_uploadCommand,
         };
 
-        vkResetFences(m_device, 1, &m_uploadFence);
-        vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_uploadFence);
-        vkWaitForFences(m_device, 1, &m_uploadFence, VK_TRUE, UINT64_MAX);
+        vkResetFences(device(), 1, &m_uploadFence);
+        vkQueueSubmit(graphicsQueue(), 1, &submitInfo, m_uploadFence);
+        vkWaitForFences(device(), 1, &m_uploadFence, VK_TRUE, UINT64_MAX);
         m_texture_uploaded = true;
     }
 
@@ -1363,9 +1363,9 @@ namespace mango::vulkan
             .pCommandBuffers = &m_uploadCommand,
         };
 
-        vkResetFences(m_device, 1, &m_uploadFence);
-        vkQueueSubmit(m_graphicsQueue, 1, &submitInfo, m_uploadFence);
-        vkWaitForFences(m_device, 1, &m_uploadFence, VK_TRUE, UINT64_MAX);
+        vkResetFences(device(), 1, &m_uploadFence);
+        vkQueueSubmit(graphicsQueue(), 1, &submitInfo, m_uploadFence);
+        vkWaitForFences(device(), 1, &m_uploadFence, VK_TRUE, UINT64_MAX);
         m_index_texture_uploaded = true;
     }
 
@@ -1536,7 +1536,7 @@ namespace mango::vulkan
             .pImageInfo = &imageInfo,
         };
 
-        vkUpdateDescriptorSets(m_device, 1, &write, 0, nullptr);
+        vkUpdateDescriptorSets(device(), 1, &write, 0, nullptr);
 
         vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipeline);
         vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_GRAPHICS, m_pipelineLayout, 0, 1, &m_descriptorSet, 0, nullptr);
@@ -1591,7 +1591,7 @@ namespace mango::vulkan
         recordPresent(cmd, frame.imageIndex(), filter);
         vkEndCommandBuffer(cmd);
 
-        frame.submitAndPresent(m_graphicsQueue, cmd);
+        frame.submitAndPresent(graphicsQueue(), cmd);
     }
 
 } // namespace mango::vulkan

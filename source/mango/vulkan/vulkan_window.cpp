@@ -44,67 +44,43 @@ namespace mango::vulkan
             return mango::vulkan::selectSurfaceFormat(surfaceFormats, settings.surfaceFormatIntent).format;
         }
 
-        u32 selectGraphicsPresentQueueFamily(VulkanWindow& window, VkPhysicalDevice physicalDevice)
-        {
-            std::vector<VkQueueFamilyProperties> queueFamilies = getPhysicalDeviceQueueFamilyProperties(physicalDevice);
-
-            for (size_t i = 0; i < queueFamilies.size(); ++i)
-            {
-                const VkQueueFamilyProperties& properties = queueFamilies[i];
-                if ((properties.queueFlags & VK_QUEUE_GRAPHICS_BIT) &&
-                    window.getPresentationSupport(physicalDevice, u32(i)))
-                {
-                    return u32(i);
-                }
-            }
-
-            return UINT32_MAX;
-        }
-
     } // namespace
 
-    // ------------------------------------------------------------------------------
-    // VulkanWindow
-    // ------------------------------------------------------------------------------
-
-    VulkanWindow::VulkanWindow(VkInstance instance, int width, int height, u32 flags,
-                               const VulkanDeviceConfig* config, VulkanWindow* shared)
+    VulkanWindow::VulkanWindow(VulkanContext& context, int width, int height, u32 flags,
+                               const VulkanDeviceConfig* config)
         : Window(width, height, flags | Window::API_VULKAN)
-        , m_instance(instance)
+        , m_context(context)
         , m_surface(VK_NULL_HANDLE)
-        , m_ownsDevice(shared == nullptr)
     {
         ensureVulkanWindowContent(this, backend(), width, height);
-        m_surface = createVulkanSurface(backend(), m_instance);
+        m_surface = createVulkanSurface(backend(), m_context.instance());
         if (!m_surface)
         {
             MANGO_EXCEPTION("[VulkanWindow] Creating surface failed.");
         }
 
-        if (shared)
+        m_context.initialize(*this, m_surface, config);
+
+        if (isDeviceReady())
         {
-            adoptDevice(*shared, config);
-        }
-        else
-        {
-            initDevice(config);
+            createSwapchainAndPool(config);
         }
     }
 
     VulkanWindow::~VulkanWindow()
     {
-        destroyDevice();
+        destroyWindowResources();
 
         if (m_surface != VK_NULL_HANDLE)
         {
-            vkDestroySurfaceKHR(m_instance, m_surface, nullptr);
+            vkDestroySurfaceKHR(m_context.instance(), m_surface, nullptr);
             m_surface = VK_NULL_HANDLE;
         }
     }
 
     bool VulkanWindow::getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex)
     {
-        return getVulkanPresentationSupport(backend(), physicalDevice, queueFamilyIndex);
+        return m_context.getPresentationSupport(*this, physicalDevice, queueFamilyIndex);
     }
 
     Swapchain& VulkanWindow::swapchain()
@@ -127,42 +103,24 @@ namespace mango::vulkan
         return VK_NULL_HANDLE;
     }
 
-    u32 VulkanWindow::findMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const
-    {
-        VkPhysicalDeviceMemoryProperties memProperties;
-        vkGetPhysicalDeviceMemoryProperties(m_physicalDevice, &memProperties);
-
-        for (u32 i = 0; i < memProperties.memoryTypeCount; ++i)
-        {
-            if ((typeFilter & (1 << i)) &&
-                (memProperties.memoryTypes[i].propertyFlags & properties) == properties)
-            {
-                return i;
-            }
-        }
-
-        MANGO_EXCEPTION("[VulkanWindow] Failed to find suitable memory type.");
-        return 0;
-    }
-
     void VulkanWindow::createSwapchainAndPool(const VulkanDeviceConfig* config)
     {
         VulkanDeviceConfig defaults;
         const VulkanDeviceConfig& settings = config ? *config : defaults;
 
-        m_surfaceFormat = selectSurfaceFormat(m_physicalDevice, m_surface, settings);
+        m_surfaceFormat = selectSurfaceFormat(m_context.physicalDevice(), m_surface, settings);
 
-        m_swapchain = std::make_unique<Swapchain>(m_device, m_physicalDevice, m_surface,
-            m_surfaceFormat, m_graphicsQueue, this);
+        m_swapchain = std::make_unique<Swapchain>(m_context.device(), m_context.physicalDevice(), m_surface,
+            m_surfaceFormat, m_context.graphicsQueue(), this);
 
         VkCommandPoolCreateInfo poolInfo =
         {
             .sType = VK_STRUCTURE_TYPE_COMMAND_POOL_CREATE_INFO,
             .flags = VK_COMMAND_POOL_CREATE_RESET_COMMAND_BUFFER_BIT,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
+            .queueFamilyIndex = m_context.graphicsQueueFamilyIndex(),
         };
 
-        VkResult result = vkCreateCommandPool(m_device, &poolInfo, nullptr, &m_commandPool);
+        VkResult result = vkCreateCommandPool(m_context.device(), &poolInfo, nullptr, &m_commandPool);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "[VulkanWindow] vkCreateCommandPool: {}", getString(result));
@@ -174,159 +132,18 @@ namespace mango::vulkan
         allocateCommandBuffers();
     }
 
-    void VulkanWindow::adoptDevice(VulkanWindow& shared, const VulkanDeviceConfig* config)
+    void VulkanWindow::destroyWindowResources()
     {
-        if (!shared.isDeviceReady())
-        {
-            printLine(Print::Error, "[VulkanWindow] Cannot share device: primary window has no device.");
-            return;
-        }
-
-        if (shared.m_instance != m_instance)
-        {
-            printLine(Print::Error, "[VulkanWindow] Cannot share device across different VkInstances.");
-            return;
-        }
-
-        m_physicalDevice = shared.m_physicalDevice;
-        m_device = shared.m_device;
-        m_graphicsQueueFamilyIndex = shared.m_graphicsQueueFamilyIndex;
-        m_graphicsQueue = shared.m_graphicsQueue;
-        m_ownsDevice = false;
-
-        // Queue family must present to this window's surface as well.
-        VkBool32 presentSupported = VK_FALSE;
-        vkGetPhysicalDeviceSurfaceSupportKHR(m_physicalDevice, m_graphicsQueueFamilyIndex,
-                                             m_surface, &presentSupported);
-        if (!presentSupported)
-        {
-            printLine(Print::Error,
-                "[VulkanWindow] Shared graphics queue cannot present to the secondary surface.");
-            m_device = VK_NULL_HANDLE;
-            m_graphicsQueue = VK_NULL_HANDLE;
-            return;
-        }
-
-        createSwapchainAndPool(config);
-    }
-
-    void VulkanWindow::initDevice(const VulkanDeviceConfig* config)
-    {
-        VulkanDeviceConfig defaults;
-        const VulkanDeviceConfig& settings = config ? *config : defaults;
-
-        m_physicalDevice = settings.physicalDevice;
-        if (!m_physicalDevice)
-        {
-            m_physicalDevice = selectPhysicalDevice(m_instance);
-        }
-
-        if (!m_physicalDevice)
-        {
-            printLine(Print::Error, "[VulkanWindow] No suitable physical device.");
-            return;
-        }
-
-        m_graphicsQueueFamilyIndex = selectGraphicsPresentQueueFamily(*this, m_physicalDevice);
-        if (m_graphicsQueueFamilyIndex == UINT32_MAX)
-        {
-            printLine(Print::Error, "[VulkanWindow] No graphics + present queue family.");
-            return;
-        }
-
-        float queuePriority = 1.0f;
-
-        VkDeviceQueueCreateInfo queueCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_QUEUE_CREATE_INFO,
-            .queueFamilyIndex = m_graphicsQueueFamilyIndex,
-            .queueCount = 1,
-            .pQueuePriorities = &queuePriority,
-        };
-
-        std::vector<const char*> deviceExtensions = requiredDeviceExtensions();
-        for (const char* extension : settings.deviceExtensions)
-        {
-            deviceExtensions.push_back(extension);
-        }
-
-        VkPhysicalDeviceFeatures supportedFeatures {};
-        vkGetPhysicalDeviceFeatures(m_physicalDevice, &supportedFeatures);
-
-        VkPhysicalDeviceFeatures deviceFeatures {};
-        if (supportedFeatures.shaderStorageImageReadWithoutFormat)
-        {
-            deviceFeatures.shaderStorageImageReadWithoutFormat = VK_TRUE;
-        }
-        if (supportedFeatures.shaderStorageImageWriteWithoutFormat)
-        {
-            deviceFeatures.shaderStorageImageWriteWithoutFormat = VK_TRUE;
-        }
-
-        VkPhysicalDeviceDescriptorIndexingFeatures supportedIndexing
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_DESCRIPTOR_INDEXING_FEATURES,
-        };
-
-        VkPhysicalDeviceFeatures2 supportedFeatures2
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_FEATURES_2,
-            .pNext = &supportedIndexing,
-        };
-
-        vkGetPhysicalDeviceFeatures2(m_physicalDevice, &supportedFeatures2);
-
-        VkPhysicalDeviceVulkan12Features features12 =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_2_FEATURES,
-            .descriptorBindingStorageBufferUpdateAfterBind =
-                supportedIndexing.descriptorBindingStorageBufferUpdateAfterBind,
-            .timelineSemaphore = VK_TRUE,
-        };
-
-        VkPhysicalDeviceVulkan13Features features13 =
-        {
-            .sType = VK_STRUCTURE_TYPE_PHYSICAL_DEVICE_VULKAN_1_3_FEATURES,
-            .pNext = &features12,
-            .dynamicRendering = VK_TRUE,
-        };
-
-        VkDeviceCreateInfo deviceCreateInfo =
-        {
-            .sType = VK_STRUCTURE_TYPE_DEVICE_CREATE_INFO,
-            .pNext = settings.deviceCreateInfoPNext ? settings.deviceCreateInfoPNext : &features13,
-            .queueCreateInfoCount = 1,
-            .pQueueCreateInfos = &queueCreateInfo,
-            .enabledExtensionCount = u32(deviceExtensions.size()),
-            .ppEnabledExtensionNames = deviceExtensions.data(),
-            .pEnabledFeatures = &deviceFeatures,
-        };
-
-        VkResult result = vkCreateDevice(m_physicalDevice, &deviceCreateInfo, nullptr, &m_device);
-        if (result != VK_SUCCESS)
-        {
-            printLine(Print::Error, "[VulkanWindow] vkCreateDevice: {}", getString(result));
-            return;
-        }
-
-        vkGetDeviceQueue(m_device, m_graphicsQueueFamilyIndex, 0, &m_graphicsQueue);
-        m_ownsDevice = true;
-
-        createSwapchainAndPool(config);
-    }
-
-    void VulkanWindow::destroyDevice()
-    {
-        if (m_device == VK_NULL_HANDLE)
+        if (!isDeviceReady())
         {
             return;
         }
 
-        vkDeviceWaitIdle(m_device);
+        vkDeviceWaitIdle(m_context.device());
 
         if (m_commandPool != VK_NULL_HANDLE && !m_commandBuffers.empty())
         {
-            vkFreeCommandBuffers(m_device, m_commandPool, u32(m_commandBuffers.size()), m_commandBuffers.data());
+            vkFreeCommandBuffers(m_context.device(), m_commandPool, u32(m_commandBuffers.size()), m_commandBuffers.data());
             m_commandBuffers.clear();
         }
 
@@ -334,17 +151,9 @@ namespace mango::vulkan
 
         if (m_commandPool != VK_NULL_HANDLE)
         {
-            vkDestroyCommandPool(m_device, m_commandPool, nullptr);
+            vkDestroyCommandPool(m_context.device(), m_commandPool, nullptr);
             m_commandPool = VK_NULL_HANDLE;
         }
-
-        if (m_ownsDevice)
-        {
-            vkDestroyDevice(m_device, nullptr);
-        }
-
-        m_device = VK_NULL_HANDLE;
-        m_graphicsQueue = VK_NULL_HANDLE;
     }
 
     void VulkanWindow::allocateCommandBuffers()
@@ -356,7 +165,7 @@ namespace mango::vulkan
 
         if (!m_commandBuffers.empty())
         {
-            vkFreeCommandBuffers(m_device, m_commandPool, u32(m_commandBuffers.size()), m_commandBuffers.data());
+            vkFreeCommandBuffers(m_context.device(), m_commandPool, u32(m_commandBuffers.size()), m_commandBuffers.data());
             m_commandBuffers.clear();
         }
 
@@ -371,7 +180,7 @@ namespace mango::vulkan
             .commandBufferCount = imageCount,
         };
 
-        vkAllocateCommandBuffers(m_device, &allocInfo, m_commandBuffers.data());
+        vkAllocateCommandBuffers(m_context.device(), &allocInfo, m_commandBuffers.data());
     }
 
     void VulkanWindow::ensureCommandBuffers()
@@ -428,9 +237,6 @@ namespace mango::vulkan
             return;
         }
 
-        // The swapchain is created in the constructor while the native window is still
-        // unmapped; the surface extent often settles once the window exists. Recreate
-        // before the first draw so extent-dependent resources match the drawable.
         m_swapchain->requestRecreate();
 
         FrameInfo info {};
@@ -438,12 +244,10 @@ namespace mango::vulkan
         info.trigger = FrameTrigger::Invalidate;
         onFrame(info);
 
-        // Present at least one frame before showing the window so the compositor never
-        // displays an undefined swapchain image (white flash on macOS/Metal).
-        vkDeviceWaitIdle(m_device);
+        vkDeviceWaitIdle(m_context.device());
     }
 
-    void VulkanWindow::enterEventLoop()
+    void VulkanWindow::onEventLoopStarting()
     {
         if (!m_on_device_ready_called)
         {
@@ -455,24 +259,6 @@ namespace mango::vulkan
                 setVisible(true);
             }
         }
-
-        Window::enterEventLoop();
-    }
-
-    void VulkanWindow::enterEventLoop(const EventLoopConfig& config)
-    {
-        if (!m_on_device_ready_called)
-        {
-            m_on_device_ready_called = true;
-            if (isDeviceReady())
-            {
-                onDeviceReady();
-                presentInitialFrame();
-                setVisible(true);
-            }
-        }
-
-        Window::enterEventLoop(config);
     }
 
     void VulkanWindow::onDeviceReady()
@@ -490,9 +276,6 @@ namespace mango::vulkan
 
         if (m_swapchain && width > 1 && height > 1)
         {
-            // The host surface (e.g. CAMetalLayer after fullscreen exit) can settle one
-            // frame after the last reported extent. Recreate proactively so we do not
-            // present a single stretched/clear-only SUBOPTIMAL frame.
             m_swapchain->requestRecreate();
         }
     }

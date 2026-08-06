@@ -47,7 +47,7 @@ public:
         switch (code)
         {
         case KEYCODE_ESC:
-            breakEventLoop();
+            requestQuit();
             break;
 
         case KEYCODE_F:
@@ -133,6 +133,9 @@ int mangoMain(const mango::CommandLine& commands)
 
     EventLoopConfig config;
     config.mode = FrameMode::OnDemand;
-    window.enterEventLoop(config);
+
+    EventLoop loop;
+    loop.attach(window, config);
+    loop.run();
     return 0;
 }
