@@ -196,7 +196,7 @@ public:
         switch (code)
         {
         case KEYCODE_ESC:
-            breakEventLoop();
+            requestQuit();
             break;
 
         case KEYCODE_F:
@@ -241,6 +241,9 @@ public:
 int mangoMain(const mango::CommandLine& commands)
 {
     DemoWindow window;
-    window.enterEventLoop();
+
+    EventLoop loop;
+    loop.attach(window);
+    loop.run();
     return 0;
 }

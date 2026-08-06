@@ -12,10 +12,12 @@
 
 #include <mango/core/configure.hpp>
 #include <mango/window/window.hpp>
+#include <mango/window/event_loop.hpp>
 #include <mango/vulkan/allocator.hpp>
 #include <mango/vulkan/colorspace.hpp>
 #include <mango/vulkan/swapchain.hpp>
 #include <mango/vulkan/compiler.hpp>
+#include <mango/vulkan/context.hpp>
 
 namespace mango::vulkan
 {
@@ -176,13 +178,8 @@ namespace mango::vulkan
     class VulkanWindow : public Window
     {
     protected:
-        VkInstance m_instance = VK_NULL_HANDLE;
+        VulkanContext& m_context;
         VkSurfaceKHR m_surface = VK_NULL_HANDLE;
-
-        VkPhysicalDevice m_physicalDevice = VK_NULL_HANDLE;
-        VkDevice m_device = VK_NULL_HANDLE;
-        u32 m_graphicsQueueFamilyIndex = 0;
-        VkQueue m_graphicsQueue = VK_NULL_HANDLE;
 
         VkSurfaceFormatKHR m_surfaceFormat {};
         VkExtent2D m_swapchainExtent { 0, 0 };
@@ -193,51 +190,39 @@ namespace mango::vulkan
         std::vector<VkCommandBuffer> m_commandBuffers;
 
         bool m_on_device_ready_called = false;
-        // Primary windows create the device; shared secondaries adopt it and must not destroy it.
-        bool m_ownsDevice = true;
 
-        void initDevice(const VulkanDeviceConfig* config);
-        void adoptDevice(VulkanWindow& shared, const VulkanDeviceConfig* config);
         void createSwapchainAndPool(const VulkanDeviceConfig* config);
-        void destroyDevice();
+        void destroyWindowResources();
         void allocateCommandBuffers();
         void ensureCommandBuffers();
         void presentInitialFrame();
 
-        u32 findMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const;
-
     public:
-        // Primary window: creates VkDevice. Optional shared: adopts shared's device/queue
-        // (OpenGLWindow-style sharing). Secondary still owns surface + swapchain + command pool.
-        // The secondary must not outlive the primary.
-        VulkanWindow(VkInstance instance, int width, int height, u32 flags = 0,
-                     const VulkanDeviceConfig* config = nullptr,
-                     VulkanWindow* shared = nullptr);
+        VulkanWindow(VulkanContext& context, int width, int height, u32 flags = 0,
+                     const VulkanDeviceConfig* config = nullptr);
         ~VulkanWindow();
 
         operator VkInstance () const
         {
-            return m_instance;
+            return m_context.instance();
         }
+
+        VulkanContext& context() { return m_context; }
+        const VulkanContext& context() const { return m_context; }
 
         bool isDeviceReady() const
         {
-            return m_device != VK_NULL_HANDLE;
-        }
-
-        bool ownsDevice() const
-        {
-            return m_ownsDevice;
+            return m_context.isDeviceReady();
         }
 
         bool getPresentationSupport(VkPhysicalDevice physicalDevice, u32 queueFamilyIndex);
 
-        VkInstance instance() const { return m_instance; }
+        VkInstance instance() const { return m_context.instance(); }
         VkSurfaceKHR surface() const { return m_surface; }
-        VkPhysicalDevice physicalDevice() const { return m_physicalDevice; }
-        VkDevice device() const { return m_device; }
-        VkQueue graphicsQueue() const { return m_graphicsQueue; }
-        u32 graphicsQueueFamilyIndex() const { return m_graphicsQueueFamilyIndex; }
+        VkPhysicalDevice physicalDevice() const { return m_context.physicalDevice(); }
+        VkDevice device() const { return m_context.device(); }
+        VkQueue graphicsQueue() const { return m_context.graphicsQueue(); }
+        u32 graphicsQueueFamilyIndex() const { return m_context.graphicsQueueFamilyIndex(); }
         VkSurfaceFormatKHR surfaceFormat() const { return m_surfaceFormat; }
         VkExtent2D swapchainExtent() const { return m_swapchainExtent; }
 
@@ -247,22 +232,17 @@ namespace mango::vulkan
         VkCommandPool commandPool() const { return m_commandPool; }
         VkCommandBuffer commandBuffer(u32 imageIndex) const;
 
-        // Acquire a swapchain image (resize/recreate/retry handled internally).
-        // After a successful return, swapchainExtent() matches the drawable.
-        // Calls onSwapchainResize() when the swapchain is recreated or the extent changes.
-        // Skip rendering when the returned Frame is empty (e.g. minimized).
+        u32 findMemoryType(u32 typeFilter, VkMemoryPropertyFlags properties) const
+        {
+            return m_context.findMemoryType(typeFilter, properties);
+        }
+
         Swapchain::Frame beginDraw();
 
-        void enterEventLoop();
-        void enterEventLoop(const EventLoopConfig& config);
+        void onEventLoopStarting() override;
 
-        // Called once while the window is still hidden, before the event loop starts.
-        // Not called for shared secondaries created after the primary is already running;
-        // those should be shown explicitly by the application.
         virtual void onDeviceReady();
 
-        // Called when the swapchain extent changes (resize / recreate).
-        // Rebuild extent-dependent resources (depth, pipelines with fixed sizes, etc.).
         virtual void onSwapchainResize(VkExtent2D extent);
 
         void onResize(int width, int height) override;

@@ -96,7 +96,7 @@ protected:
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
 
-        VkResult result = vkCreateBuffer(m_device, &bufferInfo, nullptr, &buffer);
+        VkResult result = vkCreateBuffer(device(), &bufferInfo, nullptr, &buffer);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkCreateBuffer: {}", getString(result));
@@ -104,7 +104,7 @@ protected:
         }
 
         VkMemoryRequirements requirements;
-        vkGetBufferMemoryRequirements(m_device, buffer, &requirements);
+        vkGetBufferMemoryRequirements(device(), buffer, &requirements);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -113,14 +113,14 @@ protected:
             .memoryTypeIndex = findMemoryType(requirements.memoryTypeBits, properties),
         };
 
-        result = vkAllocateMemory(m_device, &allocInfo, nullptr, &memory);
+        result = vkAllocateMemory(device(), &allocInfo, nullptr, &memory);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkAllocateMemory: {}", getString(result));
             return;
         }
 
-        vkBindBufferMemory(m_device, buffer, memory, 0);
+        vkBindBufferMemory(device(), buffer, memory, 0);
     }
 
     VkFormat findDepthFormat()
@@ -135,7 +135,7 @@ protected:
         for (VkFormat format : candidates)
         {
             VkFormatProperties properties;
-            vkGetPhysicalDeviceFormatProperties(m_physicalDevice, format, &properties);
+            vkGetPhysicalDeviceFormatProperties(physicalDevice(), format, &properties);
 
             if (properties.optimalTilingFeatures & VK_FORMAT_FEATURE_DEPTH_STENCIL_ATTACHMENT_BIT)
             {
@@ -164,7 +164,7 @@ protected:
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
 
-        VkResult result = vkCreateImage(m_device, &imageInfo, nullptr, &m_depthImage);
+        VkResult result = vkCreateImage(device(), &imageInfo, nullptr, &m_depthImage);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkCreateImage: {}", getString(result));
@@ -172,7 +172,7 @@ protected:
         }
 
         VkMemoryRequirements requirements;
-        vkGetImageMemoryRequirements(m_device, m_depthImage, &requirements);
+        vkGetImageMemoryRequirements(device(), m_depthImage, &requirements);
 
         VkMemoryAllocateInfo allocInfo =
         {
@@ -181,14 +181,14 @@ protected:
             .memoryTypeIndex = findMemoryType(requirements.memoryTypeBits, VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT),
         };
 
-        result = vkAllocateMemory(m_device, &allocInfo, nullptr, &m_depthImageMemory);
+        result = vkAllocateMemory(device(), &allocInfo, nullptr, &m_depthImageMemory);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkAllocateMemory: {}", getString(result));
             return;
         }
 
-        vkBindImageMemory(m_device, m_depthImage, m_depthImageMemory, 0);
+        vkBindImageMemory(device(), m_depthImage, m_depthImageMemory, 0);
 
         VkImageViewCreateInfo viewInfo =
         {
@@ -206,7 +206,7 @@ protected:
             },
         };
 
-        result = vkCreateImageView(m_device, &viewInfo, nullptr, &m_depthImageView);
+        result = vkCreateImageView(device(), &viewInfo, nullptr, &m_depthImageView);
         if (result != VK_SUCCESS)
         {
             printLine(Print::Error, "vkCreateImageView: {}", getString(result));
@@ -219,19 +219,19 @@ protected:
     {
         if (m_depthImageView)
         {
-            vkDestroyImageView(m_device, m_depthImageView, nullptr);
+            vkDestroyImageView(device(), m_depthImageView, nullptr);
             m_depthImageView = VK_NULL_HANDLE;
         }
 
         if (m_depthImage)
         {
-            vkDestroyImage(m_device, m_depthImage, nullptr);
+            vkDestroyImage(device(), m_depthImage, nullptr);
             m_depthImage = VK_NULL_HANDLE;
         }
 
         if (m_depthImageMemory)
         {
-            vkFreeMemory(m_device, m_depthImageMemory, nullptr);
+            vkFreeMemory(device(), m_depthImageMemory, nullptr);
             m_depthImageMemory = VK_NULL_HANDLE;
         }
     }
@@ -261,8 +261,8 @@ protected:
             return;
         }
 
-        m_vertexShader = Compiler::createShaderModule(m_device, vertexShader);
-        m_fragmentShader = Compiler::createShaderModule(m_device, fragmentShader);
+        m_vertexShader = Compiler::createShaderModule(device(), vertexShader);
+        m_fragmentShader = Compiler::createShaderModule(device(), fragmentShader);
     }
 
     void createDescriptorSetLayout()
@@ -282,7 +282,7 @@ protected:
             .pBindings = &binding,
         };
 
-        vkCreateDescriptorSetLayout(m_device, &layoutInfo, nullptr, &m_descriptorSetLayout);
+        vkCreateDescriptorSetLayout(device(), &layoutInfo, nullptr, &m_descriptorSetLayout);
     }
 
     void createDescriptorPoolAndSet()
@@ -301,7 +301,7 @@ protected:
             .pPoolSizes = &poolSize,
         };
 
-        vkCreateDescriptorPool(m_device, &poolInfo, nullptr, &m_descriptorPool);
+        vkCreateDescriptorPool(device(), &poolInfo, nullptr, &m_descriptorPool);
 
         VkDescriptorSetAllocateInfo allocInfo =
         {
@@ -311,7 +311,7 @@ protected:
             .pSetLayouts = &m_descriptorSetLayout,
         };
 
-        vkAllocateDescriptorSets(m_device, &allocInfo, &m_descriptorSet);
+        vkAllocateDescriptorSets(device(), &allocInfo, &m_descriptorSet);
 
         VkDescriptorBufferInfo bufferInfo =
         {
@@ -330,20 +330,20 @@ protected:
             .pBufferInfo = &bufferInfo,
         };
 
-        vkUpdateDescriptorSets(m_device, 1, &descriptorWrite, 0, nullptr);
+        vkUpdateDescriptorSets(device(), 1, &descriptorWrite, 0, nullptr);
     }
 
     void destroyPipeline()
     {
         if (m_graphicsPipeline)
         {
-            vkDestroyPipeline(m_device, m_graphicsPipeline, nullptr);
+            vkDestroyPipeline(device(), m_graphicsPipeline, nullptr);
             m_graphicsPipeline = VK_NULL_HANDLE;
         }
 
         if (m_pipelineLayout)
         {
-            vkDestroyPipelineLayout(m_device, m_pipelineLayout, nullptr);
+            vkDestroyPipelineLayout(device(), m_pipelineLayout, nullptr);
             m_pipelineLayout = VK_NULL_HANDLE;
         }
     }
@@ -359,7 +359,7 @@ protected:
             .pSetLayouts = &m_descriptorSetLayout,
         };
 
-        vkCreatePipelineLayout(m_device, &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
+        vkCreatePipelineLayout(device(), &pipelineLayoutInfo, nullptr, &m_pipelineLayout);
 
         VkPipelineShaderStageCreateInfo shaderStages[] =
         {
@@ -501,7 +501,7 @@ protected:
             .layout = m_pipelineLayout,
         };
 
-        vkCreateGraphicsPipelines(m_device, VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline);
+        vkCreateGraphicsPipelines(device(), VK_NULL_HANDLE, 1, &pipelineInfo, nullptr, &m_graphicsPipeline);
     }
 
     void createGeometry()
@@ -540,13 +540,13 @@ protected:
             m_indexBuffer, m_indexBufferMemory);
 
         void* data = nullptr;
-        vkMapMemory(m_device, m_vertexBufferMemory, 0, vertexBufferSize, 0, &data);
+        vkMapMemory(device(), m_vertexBufferMemory, 0, vertexBufferSize, 0, &data);
         std::memcpy(data, vertices, sizeof(vertices));
-        vkUnmapMemory(m_device, m_vertexBufferMemory);
+        vkUnmapMemory(device(), m_vertexBufferMemory);
 
-        vkMapMemory(m_device, m_indexBufferMemory, 0, indexBufferSize, 0, &data);
+        vkMapMemory(device(), m_indexBufferMemory, 0, indexBufferSize, 0, &data);
         std::memcpy(data, indices, sizeof(indices));
-        vkUnmapMemory(m_device, m_indexBufferMemory);
+        vkUnmapMemory(device(), m_indexBufferMemory);
 
         createBuffer(sizeof(UniformBufferObject), VK_BUFFER_USAGE_UNIFORM_BUFFER_BIT,
             VK_MEMORY_PROPERTY_HOST_VISIBLE_BIT | VK_MEMORY_PROPERTY_HOST_COHERENT_BIT,
@@ -685,14 +685,14 @@ protected:
         ubo.mvp = model * view * projection;
 
         void* data = nullptr;
-        vkMapMemory(m_device, m_uniformBufferMemory, 0, sizeof(ubo), 0, &data);
+        vkMapMemory(device(), m_uniformBufferMemory, 0, sizeof(ubo), 0, &data);
         std::memcpy(data, &ubo, sizeof(ubo));
-        vkUnmapMemory(m_device, m_uniformBufferMemory);
+        vkUnmapMemory(device(), m_uniformBufferMemory);
     }
 
 public:
-    TestWindow(VkInstance instance, int width, int height, u32 flags)
-        : VulkanWindow(instance, width, height, flags)
+    TestWindow(VulkanContext& context, int width, int height, u32 flags)
+        : VulkanWindow(context, width, height, flags)
     {
         m_startTime = mango::Time::us();
     }
@@ -710,67 +710,67 @@ public:
 
     void onSwapchainResize(VkExtent2D extent) override
     {
-        vkDeviceWaitIdle(m_device);
+        vkDeviceWaitIdle(device());
         destroyDepthResources();
         createDepthResources(extent);
     }
 
     ~TestWindow()
     {
-        if (m_device != VK_NULL_HANDLE)
+        if (device() != VK_NULL_HANDLE)
         {
-            vkDeviceWaitIdle(m_device);
+            vkDeviceWaitIdle(device());
 
             destroyPipeline();
 
             if (m_descriptorPool)
             {
-                vkDestroyDescriptorPool(m_device, m_descriptorPool, nullptr);
+                vkDestroyDescriptorPool(device(), m_descriptorPool, nullptr);
             }
 
             if (m_descriptorSetLayout)
             {
-                vkDestroyDescriptorSetLayout(m_device, m_descriptorSetLayout, nullptr);
+                vkDestroyDescriptorSetLayout(device(), m_descriptorSetLayout, nullptr);
             }
 
             if (m_vertexShader)
             {
-                vkDestroyShaderModule(m_device, m_vertexShader, nullptr);
+                vkDestroyShaderModule(device(), m_vertexShader, nullptr);
             }
 
             if (m_fragmentShader)
             {
-                vkDestroyShaderModule(m_device, m_fragmentShader, nullptr);
+                vkDestroyShaderModule(device(), m_fragmentShader, nullptr);
             }
 
             if (m_vertexBuffer)
             {
-                vkDestroyBuffer(m_device, m_vertexBuffer, nullptr);
+                vkDestroyBuffer(device(), m_vertexBuffer, nullptr);
             }
 
             if (m_vertexBufferMemory)
             {
-                vkFreeMemory(m_device, m_vertexBufferMemory, nullptr);
+                vkFreeMemory(device(), m_vertexBufferMemory, nullptr);
             }
 
             if (m_indexBuffer)
             {
-                vkDestroyBuffer(m_device, m_indexBuffer, nullptr);
+                vkDestroyBuffer(device(), m_indexBuffer, nullptr);
             }
 
             if (m_indexBufferMemory)
             {
-                vkFreeMemory(m_device, m_indexBufferMemory, nullptr);
+                vkFreeMemory(device(), m_indexBufferMemory, nullptr);
             }
 
             if (m_uniformBuffer)
             {
-                vkDestroyBuffer(m_device, m_uniformBuffer, nullptr);
+                vkDestroyBuffer(device(), m_uniformBuffer, nullptr);
             }
 
             if (m_uniformBufferMemory)
             {
-                vkFreeMemory(m_device, m_uniformBufferMemory, nullptr);
+                vkFreeMemory(device(), m_uniformBufferMemory, nullptr);
             }
 
             destroyDepthResources();
@@ -790,7 +790,7 @@ public:
         const VkExtent2D extent = swapchainExtent();
         VkCommandBuffer commandBuffer = this->commandBuffer(frame.imageIndex());
         recordCommandBuffer(commandBuffer, frame.imageIndex(), extent);
-        frame.submitAndPresent(m_graphicsQueue, commandBuffer);
+        frame.submitAndPresent(graphicsQueue(), commandBuffer);
     }
 
     void onFrame(const FrameInfo& info) override
@@ -812,7 +812,7 @@ public:
         switch (code)
         {
             case KEYCODE_ESC:
-                breakEventLoop();
+                requestQuit();
                 break;
 
             case KEYCODE_F:
@@ -869,14 +869,17 @@ int mangoMain(const mango::CommandLine& commands)
 
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
 
-    TestWindow window(instance, 1280, 720, 0);
+    VulkanContext ctx(instance);
+    TestWindow window(ctx, 1280, 720, 0);
     window.setTitle("vkbasic");
 
     EventLoopConfig config;
     config.mode = FrameMode::Continuous;
     config.waitForFrame = true;
 
-    window.enterEventLoop(config);
+    EventLoop loop;
+    loop.attach(window, config);
+    loop.run();
 
     return 0;
 }

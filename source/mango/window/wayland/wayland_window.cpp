@@ -18,6 +18,7 @@
 
 #include "wayland_window.hpp"
 #include "../window_peers.hpp"
+#include <mango/window/event_loop.hpp>
 #include <wayland-client-protocol.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "xdg-shell-client-protocol.h"
@@ -1084,9 +1085,9 @@ namespace mango
 
         if (wl_display_read_events(display) < 0)
         {
-            if (owner)
+            if (EventLoop* loop = window_peers::activeEventLoop())
             {
-                owner->breakEventLoop();
+                loop->quit();
             }
             return;
         }
@@ -1257,18 +1258,23 @@ namespace mango
 
     void WaylandBackend::runEventLoop()
     {
+        EventLoop* loop = window_peers::activeEventLoop();
+        if (!loop)
+        {
+            return;
+        }
+
         processEvents();
         syncSurfaceScale();
         syncGraphicsSurfaceFromResize();
-        owner->syncDisplayRefreshRate();
 
         if (!busy)
         {
             dispatchPendingResize();
-            owner->dispatchFrame();
+            loop->dispatchFrames();
         }
 
-        while (owner->isRunning())
+        while (loop->isRunning())
         {
             // Snapshot live Wayland backends so prepare_read/poll/read covers every
             // wl_display while secondary windows share this loop.
@@ -1298,7 +1304,7 @@ namespace mango
                 wl_display_flush(wl->display);
             }
 
-            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
+            const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
             const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
 
             std::vector<pollfd> pfds(backends.size());
@@ -1319,7 +1325,7 @@ namespace mango
                     {
                         if (backends[i] == this)
                         {
-                            owner->breakEventLoop();
+                            loop->quit();
                         }
                     }
                 }
@@ -1330,7 +1336,7 @@ namespace mango
                 }
             }
 
-            if (!owner->isRunning())
+            if (!loop->isRunning())
             {
                 break;
             }
@@ -1346,10 +1352,9 @@ namespace mango
 
             owner->syncDisplayRefreshRate();
 
-            // Only the loop owner draws; peer windows are drained above.
             if (!busy)
             {
-                owner->dispatchFrame();
+                loop->dispatchFrames();
             }
         }
     }

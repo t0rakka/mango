@@ -4,6 +4,7 @@
 */
 #include <mango/core/exception.hpp>
 #include <mango/core/timer.hpp>
+#include <mango/window/event_loop.hpp>
 #include "cocoa_window.h"
 #include "../window_peers.hpp"
 #import <CoreVideo/CoreVideo.h>
@@ -244,12 +245,15 @@ namespace mango
 
     void WindowContext::runEventLoop()
     {
-        owner->syncDisplayRefreshRate();
-
-        while (owner->isRunning())
+        EventLoop* loop = window_peers::activeEventLoop();
+        if (!loop)
         {
-            // How long we may block before the next frame is due.
-            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
+            return;
+        }
+
+        while (loop->isRunning())
+        {
+            const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
 
             NSDate* deadline;
             if (timeout == 0)
@@ -284,7 +288,7 @@ namespace mango
                          dequeue:YES];
             }
 
-            owner->dispatchFrame();
+            loop->dispatchFrames();
         }
     }
 

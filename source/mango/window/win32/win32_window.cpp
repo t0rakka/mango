@@ -11,6 +11,7 @@
 #include <mango/core/timer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/window/window.hpp>
+#include <mango/window/event_loop.hpp>
 
 #include "win32_window.hpp"
 #include "../window_peers.hpp"
@@ -911,34 +912,29 @@ namespace mango
 
     void WindowContext::runEventLoop()
     {
+        EventLoop* loop = window_peers::activeEventLoop();
+        if (!loop)
+        {
+            return;
+        }
+
         MSG msg;
         ::ZeroMemory(&msg, sizeof(msg));
 
-        owner->syncDisplayRefreshRate();
-
-        // High-resolution waitable timer for sub-15 ms frame pacing. A plain
-        // MsgWaitForMultipleObjectsEx timeout rounds up to the global system timer
-        // resolution (~15.6 ms by default), which caps the loop near 60 Hz once
-        // vsync is disabled. Waiting on a high-resolution timer object instead
-        // honors the requested interval without calling timeBeginPeriod() (which
-        // would change the timer resolution process-wide).
         HANDLE timer = ::CreateWaitableTimerExW(nullptr, nullptr,
             CREATE_WAITABLE_TIMER_HIGH_RESOLUTION, TIMER_ALL_ACCESS);
         if (!timer)
         {
-            // Older systems without high-resolution timer support.
             timer = ::CreateWaitableTimerExW(nullptr, nullptr, 0, TIMER_ALL_ACCESS);
         }
 
-        while (owner->isRunning())
+        while (loop->isRunning())
         {
-            // Drain all pending messages. A NULL filter also delivers thread messages
-            // (e.g. WM_QUIT); DispatchMessage routes each to the window procedure.
             while (::PeekMessage(&msg, NULL, 0, 0, PM_REMOVE))
             {
                 if (msg.message == WM_QUIT)
                 {
-                    owner->breakEventLoop();
+                    loop->quit();
                     break;
                 }
 
@@ -946,23 +942,19 @@ namespace mango
                 ::DispatchMessage(&msg);
             }
 
-            if (!owner->isRunning())
+            if (!loop->isRunning())
             {
                 break;
             }
 
-            owner->dispatchFrame();
+            loop->dispatchFrames();
 
-            if (!owner->isRunning())
+            if (!loop->isRunning())
             {
                 break;
             }
 
-            // Block on the event queue until the next message or the computed deadline
-            // instead of busy-polling with Sleep(). This is what drops idle CPU to ~0%:
-            // when nothing is scheduled the loop sleeps (INFINITE) until real input
-            // arrives or wakeEventLoop() posts a message.
-            const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
+            const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
             if (timeout == 0)
             {
                 continue;

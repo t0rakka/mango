@@ -99,6 +99,7 @@ if (BUILD_MANGO_WINDOW AND NOT EMSCRIPTEN)
         ${MANGO_SOURCE_DIR}/window/window_backend.cpp
         ${MANGO_SOURCE_DIR}/window/window_registry.cpp
         ${MANGO_SOURCE_DIR}/window/window_peers.cpp
+        ${MANGO_SOURCE_DIR}/window/event_loop.cpp
     )
 
     add_library(mango-window ${MANGO_WINDOW_SOURCES})

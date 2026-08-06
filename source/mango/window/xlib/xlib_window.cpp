@@ -10,6 +10,7 @@
 
 #include "xlib_window.hpp"
 #include "../window_peers.hpp"
+#include <mango/window/event_loop.hpp>
 
 #include <cstdint>
 #include <vector>
@@ -1319,21 +1320,25 @@ namespace mango
 
     void XlibBackend::runEventLoop()
     {
+        EventLoop* loop = window_peers::activeEventLoop();
+        if (!loop)
+        {
+            return;
+        }
+
         for (int i = 0; i < 6; ++i)
         {
             mouse_time[i] = 0;
         }
 
-        owner->syncDisplayRefreshRate();
-
-        while (owner->isRunning())
+        while (loop->isRunning())
         {
             drainPendingEvents();
             window_peers::drainOtherBackends(this);
 
             if (!busy)
             {
-                owner->dispatchFrame();
+                loop->dispatchFrames();
 
                 // The resized frame has now been submitted/presented; tell the compositor
                 // it may show the new size. Doing this after dispatchFrame() is what keeps
@@ -1353,7 +1358,7 @@ namespace mango
             // fires on time.
             if (XPending(x11Display()) == 0)
             {
-                const u32 timeout = owner->eventLoop().computeWaitTimeoutMs(Time::us());
+                const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
                 if (timeout != 0)
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);

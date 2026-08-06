@@ -6,6 +6,7 @@
 #include <string>
 #include <mutex>
 #include <mango/window/window.hpp>
+#include <mango/window/event_loop.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/core/exception.hpp>
 #include <mango/core/print.hpp>
@@ -118,9 +119,8 @@ namespace mango
     // EventLoopState
     // ------------------------------------------------------------------------------
 
-    void EventLoopState::reset(const EventLoopConfig& loopConfig)
+    void EventLoopState::reset()
     {
-        config = loopConfig;
         running = true;
         needs_redraw = true;
         frame_in_flight = false;
@@ -241,7 +241,10 @@ namespace mango
 
     Window::~Window()
     {
-        // m_backend destroyed by unique_ptr
+        if (m_event_loop_runner)
+        {
+            m_event_loop_runner->detach(*this);
+        }
     }
 
     void Window::setWindowSystem(WindowSystem ws)
@@ -347,24 +350,28 @@ namespace mango
         return m_backend->isKeyPressed(code);
     }
 
-    void Window::enterEventLoop()
+    void Window::requestQuit()
     {
-        // Reuse the already-configured loop so setFrameMode() / setMaxFrameRate()
-        // (and any setEventLoopConfig()) called before entering are preserved.
-        m_event_loop.reset(m_event_loop.config);
-        syncDisplayRefreshRate();
-        window_peers::setEventLoopOwner(this);
-        m_backend->runEventLoop();
-        window_peers::setEventLoopOwner(nullptr);
+        if (m_event_loop_runner)
+        {
+            m_event_loop_runner->quit();
+        }
     }
 
-    void Window::enterEventLoop(const EventLoopConfig& config)
+    void Window::handleCloseRequest()
     {
-        m_event_loop.reset(config);
-        syncDisplayRefreshRate();
-        window_peers::setEventLoopOwner(this);
-        m_backend->runEventLoop();
-        window_peers::setEventLoopOwner(nullptr);
+        onClose();
+
+        if (m_event_loop_runner && m_event_loop.config.quitOnClose)
+        {
+            m_event_loop_runner->quit();
+        }
+        else
+        {
+            // Keep the native window out of the way until the app destroys this Window
+            // from onClose (often deferred to the next frame).
+            setVisible(false);
+        }
     }
 
     void Window::invalidate()
@@ -394,33 +401,6 @@ namespace mango
     bool Window::isRunning() const
     {
         return m_event_loop.running;
-    }
-
-    void Window::requestQuit()
-    {
-        breakEventLoop();
-    }
-
-    void Window::handleCloseRequest()
-    {
-        onClose();
-
-        if (window_peers::isEventLoopOwner(this))
-        {
-            breakEventLoop();
-        }
-        else
-        {
-            // Keep the native window out of the way until the app destroys this Window
-            // from onClose (often deferred to the next frame).
-            setVisible(false);
-        }
-    }
-
-    void Window::breakEventLoop()
-    {
-        m_event_loop.running = false;
-        m_backend->wakeEventLoop();
     }
 
     const EventLoopConfig& Window::getEventLoopConfig() const
@@ -528,6 +508,10 @@ namespace mango
     void Window::onFrame(const FrameInfo& info)
     {
         MANGO_UNREFERENCED(info);
+    }
+
+    void Window::onEventLoopStarting()
+    {
     }
 
     void Window::onResize(int width, int height)

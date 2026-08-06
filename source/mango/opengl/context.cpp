@@ -351,7 +351,7 @@ namespace mango
         printLine("Version:  \"{}\"", reinterpret_cast<const char *>(s2));
     }
 
-    void OpenGLWindow::enterEventLoop()
+    void OpenGLWindow::onEventLoopStarting()
     {
         if (!m_context_ready)
         {
@@ -359,20 +359,6 @@ namespace mango
             onContextReady();
             setVisible(true);
         }
-
-        Window::enterEventLoop();
-    }
-
-    void OpenGLWindow::enterEventLoop(const EventLoopConfig& config)
-    {
-        if (!m_context_ready)
-        {
-            m_context_ready = true;
-            onContextReady();
-            setVisible(true);
-        }
-
-        Window::enterEventLoop(config);
     }
 
     void OpenGLWindow::onContextReady()
