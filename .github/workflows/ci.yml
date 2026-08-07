@@ -1,0 +1,40 @@
+name: CI Build Test
+
+on:
+  push:
+    branches: [ '**' ]
+  pull_request:
+    branches: [ main, master ]
+
+jobs:
+  build:
+    name: Build on ${{ matrix.os }}
+    runs-on: ${{ matrix.os }}
+    strategy:
+      fail-fast: false
+      matrix:
+        # Test on Windows, Ubuntu (Linux), and macOS
+        os: [windows-latest, ubuntu-latest, macos-latest]
+
+    steps:
+    - name: Checkout repository
+      uses: actions/checkout@v4
+
+    # Install Vulkan SDK (required for mango)
+    - name: Setup Vulkan SDK
+      uses: humbletim/setup-vulkan-sdk@v1.2.0
+      with:
+        vulkan-query-version: latest
+        vulkan-components: 'Vulkan-Headers, Vulkan-Loader'
+        vulkan-use-cache: true
+
+    # Run vcpkg and configure CMake using your presets
+    - name: Run vcpkg and CMake Configure
+      uses: lukka/run-vulkan-vcpkg@v11
+      with:
+        configurePreset: 'vcpkg' # Replace with your exact configure preset name if different
+        buildPreset: 'vcpkg-build' # Replace with your exact build preset name if different
+
+    # Build the project using the preset
+    - name: Build Project
+      run: cmake --build --preset vcpkg-build
