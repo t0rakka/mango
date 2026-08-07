@@ -13,6 +13,8 @@ jobs:
     runs-on: windows-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
+      # x-gha binary caching was removed from vcpkg; use a filesystem cache + actions/cache.
+      VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite
     steps:
       - uses: actions/checkout@v4
 
@@ -20,8 +22,22 @@ jobs:
       - name: Install NASM
         uses: ilammy/setup-nasm@v1
 
+      # Action tags are CMake versions (v3.31.6) or @latest — there is no lukka/get-cmake@v4.
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v4
+        uses: lukka/get-cmake@latest
+
+      - name: Restore vcpkg binary cache
+        id: vcpkg-cache
+        uses: actions/cache/restore@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-bin-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          restore-keys: |
+            vcpkg-bin-${{ runner.os }}-x64-
+
+      - name: Ensure binary cache directory
+        shell: pwsh
+        run: New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE/vcpkg-binary-cache" | Out-Null
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
@@ -33,6 +49,15 @@ jobs:
         with:
           configurePreset: vcpkg-manifest
           buildPreset: vcpkg-manifest
+
+      # Save even on failure so packages that did build are reused next run.
+      # Skip when the primary key already exists (exact cache hit).
+      - name: Save vcpkg binary cache
+        if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
+        uses: actions/cache/save@v4
+        with:
+          path: ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-bin-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
 
       - name: Dump vcpkg / CMake failure logs
         if: failure()
@@ -103,7 +128,7 @@ jobs:
           cmake --install /tmp/glslang-build
 
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v4
+        uses: lukka/get-cmake@latest
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
@@ -127,7 +152,7 @@ jobs:
             vulkan-loader
 
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v4
+        uses: lukka/get-cmake@latest
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
