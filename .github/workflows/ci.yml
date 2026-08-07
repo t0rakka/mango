@@ -1,41 +1,83 @@
-name: CI Build Test
+name: CI
 
 on:
   push:
-    branches: [ '**' ]
+    branches: ['**']
   pull_request:
-    branches: [ main, master ]
+    branches: [main, master]
   workflow_dispatch:
 
 jobs:
-  build:
-    name: Build on ${{ matrix.os }}
-    runs-on: ${{ matrix.os }}
-    strategy:
-      fail-fast: false
-      matrix:
-        # Test on Windows, Ubuntu (Linux), and macOS
-        os: [windows-latest, ubuntu-latest, macos-latest]
-
+  windows:
+    name: Windows (vcpkg)
+    runs-on: windows-latest
     steps:
-    - name: Checkout repository
-      uses: actions/checkout@v4
+      - uses: actions/checkout@v4
 
-    # Install Vulkan SDK (required for mango)
-    - name: Setup Vulkan SDK
-      uses: humbletim/setup-vulkan-sdk@v1.2.0
-      with:
-        vulkan-query-version: latest
-        vulkan-components: 'Vulkan-Headers, Vulkan-Loader'
-        vulkan-use-cache: true
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
 
-    # Run vcpkg and configure CMake using your presets
-    - name: Run vcpkg and CMake Configure
-      uses: lukka/run-vulkan-vcpkg@v11
-      with:
-        configurePreset: 'vcpkg' # Replace with your exact configure preset name if different
-        buildPreset: 'vcpkg-build' # Replace with your exact build preset name if different
+      - name: Setup vcpkg
+        uses: lukka/run-vcpkg@v11
 
-    # Build the project using the preset
-    - name: Build Project
-      run: cmake --build --preset vcpkg-build
+      - name: Setup Vulkan SDK
+        uses: humbletim/setup-vulkan-sdk@v1.2.0
+        with:
+          vulkan-query-version: latest
+          vulkan-components: Vulkan-Headers,Vulkan-Loader
+          vulkan-use-cache: true
+
+      - name: Configure and build
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: vcpkg-manifest
+          buildPreset: vcpkg-manifest
+
+  linux:
+    name: Linux (apt)
+    runs-on: ubuntu-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          sudo apt-get update
+          sudo apt-get install -y --no-install-recommends \
+            ninja-build pkg-config \
+            libx11-dev libxext-dev libxrandr-dev \
+            libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev \
+            libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev \
+            libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev \
+            mesa-common-dev libgl1-mesa-dev libvulkan-dev glslang-dev \
+            libfreetype-dev libharfbuzz-dev libsimdjson-dev \
+            libjpeg-dev libpng-dev
+
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Configure and build
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: default
+          buildPreset: default
+
+  macos:
+    name: macOS (brew)
+    runs-on: macos-latest
+    steps:
+      - uses: actions/checkout@v4
+
+      - name: Install dependencies
+        run: |
+          brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp \
+            libavif libheif libraw isa-l lz4 bzip2 jxrlib freetype harfbuzz \
+            simdjson libjpeg-turbo libpng molten-vk vulkan-headers vulkan-loader
+
+      - name: Install CMake and Ninja
+        uses: lukka/get-cmake@latest
+
+      - name: Configure and build
+        uses: lukka/run-cmake@v10
+        with:
+          configurePreset: default
+          buildPreset: default
