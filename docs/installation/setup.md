@@ -8,18 +8,27 @@ A long time ago MANGO was self-contained source tree where all external librarie
 The external libraries are divided into three categories: REQUIRED libraries MUST be installed. OPTIONAL libraries can be disabled by the build script options and they are also disabled if the libraries cannot be found. The EXAMPLE libraries must be installed if examples are going to be compiled (image codec benchmarks specifically).
 
 
-<h2><img src="logo-linux.png" alt="logo" width="80"/> Linux</h2>
+<h2><img src="logo-linux.png" alt="logo" width="80"/> Debian / Ubuntu (apt)</h2>
 
 
-There are different package managers but here we use apt-get (Debian, Ubuntu, Mint, etc.)
+Debian, Ubuntu, Mint, Raspberry Pi OS, and other apt-based distros.
 
 ### Dependencies
 
     sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev
 
-### Building
 
-Building on Linux is fairly straightforward; generate build system scripts, run them, install:
+<h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch / pacman</h2>
+
+
+Arch Linux and other pacman-based distros.
+
+### Dependencies
+
+    sudo pacman -S fmt z libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng
+
+
+### Building (Linux)
 
     cmake -S . -B build -G "Ninja"
     cd build
@@ -27,18 +36,6 @@ Building on Linux is fairly straightforward; generate build system scripts, run 
     sudo ninja install
 
 Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. Configure the cmake options before building to tune the library size and dependencies to your taste.
-
-
-<h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch Linux</h2>
-
-
-### Dependencies
-
-    sudo pacman -S fmt z libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng
-
-### Building
-
-On Arch Linux the building is exactly same as it is on Linux Debian/Ubuntu/Mint.
 
 
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
@@ -51,6 +48,55 @@ On Arch Linux the building is exactly same as it is on Linux Debian/Ubuntu/Mint.
 ### Building
 
 On macOS the building is exactly same as it is on Linux.
+
+
+<h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
+
+
+Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
+
+    VCPKG_ROOT              <vcpkg_root>
+    VCPKG_DEFAULT_TRIPLET   x64-windows
+
+### Dependencies
+
+**Classic mode** (`cmake --preset vcpkg`) — install packages once into the global vcpkg tree; configure stays fast. Re-run when `vcpkg.json` changes:
+
+    vcpkg install pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib glslang freetype harfbuzz libjpeg-turbo libpng blend2d
+
+**Manifest mode** (`cmake --preset vcpkg-manifest`) — skip the command above; vcpkg builds deps from `vcpkg.json` into `build/vcpkg_installed` on configure. Convenient but slow on every configure.
+
+### Building
+
+Presets are toolchain selectors (always Ninja + Release):
+
+    cmake --preset default           # system / find_package deps
+    cmake --preset vcpkg             # classic vcpkg (pre-installed packages)
+    cmake --preset vcpkg-manifest    # manifest vcpkg (builds deps on configure)
+    cmake --preset emscripten        # EMSDK only
+    cmake --preset emscripten-vcpkg  # EMSDK + VCPKG_ROOT (wasm deps)
+
+    cmake --build --preset vcpkg
+    cmake --install build
+
+Override build type on the configure line when needed, e.g. `cmake --preset vcpkg -DCMAKE_BUILD_TYPE=Debug`.
+
+Fine-grained control of what mango itself compiles is via CMake options in `CMakeLists.txt`.
+
+If you are not sure where mango was installed, re-run configure in the build directory and the install prefix is printed to the console.
+
+#### INTEL_DELUXE
+
+The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. When targeting older processors it is recommended to cherry pick the extensions.
+
+#### WSL
+
+If you are compiling on Windows WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
+
+    [interop]
+    appendWindowsPath = false
+
+Don't forget to restart the WSL; "wsl --shutdown" for the setting to take effect.
 
 
 <h2><img src="logo-emscripten.png" alt="logo" width="80"/> Emscripten</h2>
@@ -73,46 +119,3 @@ Needs `EMSDK` and `VCPKG_ROOT`. Manifest mode installs wasm deps (`wasm32-emscri
     cmake --build --preset emscripten-vcpkg
 
 The target is currently node; the cmake configuration enables native filesystem access for testing.
-
-
-<h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
-
-
-Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
-
-    VCPKG_ROOT              <vcpkg_root>
-    VCPKG_DEFAULT_TRIPLET   x64-windows
-
-Dependencies are listed in `vcpkg.json`. The **`vcpkg`** preset uses **classic mode** (`VCPKG_MANIFEST_MODE=OFF`): packages must already be in `$VCPKG_ROOT/installed/<triplet>` (from a prior `vcpkg install`). Use **`vcpkg-manifest`** when you want configure to build deps into `build/vcpkg_installed` (all features: `base`, `image`, `vulkan`, `examples`).
-
-### Building
-
-Presets are toolchain selectors (always Ninja + Release):
-
-    cmake --preset default           # system / find_package deps
-    cmake --preset vcpkg             # VCPKG_ROOT, pre-installed packages
-    cmake --preset vcpkg-manifest    # VCPKG_ROOT, manifest install on configure
-    cmake --preset emscripten        # EMSDK only
-    cmake --preset emscripten-vcpkg  # EMSDK + VCPKG_ROOT (wasm deps)
-
-    cmake --build --preset vcpkg
-    cmake --install build
-
-Override build type on the configure line when needed, e.g. `cmake --preset vcpkg -DCMAKE_BUILD_TYPE=Debug`.
-
-First configure with **`vcpkg-manifest`** can take a while while vcpkg builds dependencies into the build tree. Fine-grained control of what mango itself compiles is still via CMake options in `CMakeLists.txt`.
-
-If you are not sure where mango was installed, re-run configure in the build directory and the install prefix is printed to the console.
-
-#### INTEL_DELUXE
-
-The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. When targeting older processors it is recommended to cherry pick the extensions.
-
-#### WSL
-
-If you are compiling on Windows WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
-
-    [interop]
-    appendWindowsPath = false
-
-Don't forget to restart the WSL; "wsl --shutdown" for the setting to take effect.
