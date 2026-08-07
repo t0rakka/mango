@@ -237,12 +237,19 @@ if (BUILD_VULKAN)
         target_link_options(mango-vulkan PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
     endif ()
 
-    if (WIN32)
-        target_include_directories(mango-vulkan PUBLIC ${Vulkan_INCLUDE_DIRS})
-        target_link_libraries(mango-vulkan PUBLIC ${Vulkan_LIBRARIES})
-    elseif (APPLE)
+    if (APPLE)
         target_compile_definitions(mango-vulkan PRIVATE VK_USE_PLATFORM_METAL_EXT)
-        target_include_directories(mango-vulkan PUBLIC ${Vulkan_INCLUDE_DIRS})
+    endif ()
+
+    # Prefer the imported target so include/link usage requirements stay portable.
+    # Never put absolute vcpkg-manifest paths (under the build tree) into the
+    # install interface — CMake rejects that for exported targets.
+    if (TARGET Vulkan::Vulkan)
+        target_link_libraries(mango-vulkan PUBLIC Vulkan::Vulkan)
+    elseif (Vulkan_LIBRARIES OR Vulkan_INCLUDE_DIRS)
+        foreach (_vk_inc IN LISTS Vulkan_INCLUDE_DIRS)
+            target_include_directories(mango-vulkan PUBLIC "$<BUILD_INTERFACE:${_vk_inc}>")
+        endforeach ()
         target_link_libraries(mango-vulkan PUBLIC ${Vulkan_LIBRARIES})
     else ()
         target_link_libraries(mango-vulkan PUBLIC vulkan)

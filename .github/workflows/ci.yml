@@ -16,51 +16,97 @@ jobs:
       # x-gha binary caching was removed from vcpkg; use a filesystem cache + actions/cache.
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
-      # isal (and a few other ports) need an assembler on Windows.
-      - name: Install NASM
-        uses: ilammy/setup-nasm@v1
+      # Prefer shell/choco over Node-20 actions (setup-nasm / get-cmake / msvc-dev-cmd).
+      - name: Install NASM, Ninja, CMake
+        shell: pwsh
+        run: |
+          choco install nasm ninja -y --no-progress
+          $ver = "3.31.6"
+          $zip = Join-Path $env:RUNNER_TEMP "cmake.zip"
+          $dest = Join-Path $env:RUNNER_TEMP "cmake"
+          Invoke-WebRequest `
+            "https://github.com/Kitware/CMake/releases/download/v$ver/cmake-$ver-windows-x86_64.zip" `
+            -OutFile $zip
+          Expand-Archive $zip -DestinationPath $dest -Force
+          Add-Content $env:GITHUB_PATH (Join-Path $dest "cmake-$ver-windows-x86_64\bin")
+          # NASM installer path is not always on PATH for subsequent steps.
+          Add-Content $env:GITHUB_PATH "C:\Program Files\NASM"
 
-      # Pin CMake 3.31.x — @latest currently pulls 4.4.x; keep CI on a known-good line.
-      - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v3.31.6
-
-      - name: Restore vcpkg binary cache
+      - name: Restore vcpkg cache
         id: vcpkg-cache
-        uses: actions/cache/restore@v4
+        uses: actions/cache/restore@v5
         with:
-          path: ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-bin-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          path: |
+            ${{ github.workspace }}/vcpkg
+            ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-classic-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-bin-${{ runner.os }}-x64-
+            vcpkg-classic-${{ runner.os }}-x64-
 
       - name: Ensure binary cache directory
         shell: pwsh
         run: New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE/vcpkg-binary-cache" | Out-Null
 
+      # Classic mode: install into $VCPKG_ROOT/installed (not build/vcpkg_installed).
       - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-        with:
-          vcpkgJsonGlob: vcpkg.json
-
-      # Split configure/build so the failing step is obvious in the UI.
-      - name: Configure
         shell: pwsh
-        run: cmake --preset vcpkg-manifest
+        run: |
+          $ErrorActionPreference = "Stop"
+          $baseline = (Get-Content vcpkg.json -Raw | ConvertFrom-Json).'builtin-baseline'
+          $root = Join-Path $env:GITHUB_WORKSPACE "vcpkg"
+          if (-not (Test-Path (Join-Path $root ".git"))) {
+            if (Test-Path $root) { Remove-Item -Recurse -Force $root }
+            New-Item -ItemType Directory -Path $root | Out-Null
+            git -C $root init
+            git -C $root remote add origin https://github.com/microsoft/vcpkg.git
+          }
+          git -C $root fetch --depth 1 origin $baseline
+          git -C $root checkout --force FETCH_HEAD
+          if (-not (Test-Path (Join-Path $root "vcpkg.exe"))) {
+            & (Join-Path $root "bootstrap-vcpkg.bat") -disableMetrics
+          }
+          "VCPKG_ROOT=$root" | Add-Content $env:GITHUB_ENV
+
+      - name: Install vcpkg packages (classic)
+        shell: pwsh
+        working-directory: ${{ github.workspace }}/vcpkg
+        run: |
+          $ErrorActionPreference = "Stop"
+          # Run from VCPKG_ROOT so the repo-root vcpkg.json does not force manifest mode.
+          # Packages land in VCPKG_ROOT/installed (classic), matching cmake --preset vcpkg.
+          # List matches docs/installation/setup.md (default features).
+          & .\vcpkg.exe install --triplet x64-windows `
+            pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson `
+            lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib `
+            vulkan-headers vulkan-loader glslang freetype harfbuzz `
+            libjpeg-turbo libpng blend2d
+
+      - name: Configure
+        shell: cmd
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+            call "%%i\VC\Auxiliary\Build\vcvars64.bat"
+          )
+          cmake --preset vcpkg -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
 
       - name: Build
-        shell: pwsh
-        run: cmake --build --preset vcpkg-manifest
+        shell: cmd
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+            call "%%i\VC\Auxiliary\Build\vcvars64.bat"
+          )
+          cmake --build --preset vcpkg
 
-      # Save even on failure so packages that did build are reused next run.
-      # Skip when the primary key already exists (exact cache hit).
-      - name: Save vcpkg binary cache
+      - name: Save vcpkg cache
         if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
-        uses: actions/cache/save@v4
+        uses: actions/cache/save@v5
         with:
-          path: ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-bin-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          path: |
+            ${{ github.workspace }}/vcpkg
+            ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-classic-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
 
       - name: Collect failure logs
         if: failure()
@@ -88,7 +134,6 @@ jobs:
                 Get-Content $_.FullName -Tail 60 -ErrorAction SilentlyContinue
               }
           }
-          # Surface the most likely fatal lines in the job log.
           Get-ChildItem $out -File -ErrorAction SilentlyContinue | ForEach-Object {
             Select-String -Path $_.FullName -Pattern 'error:|FAILED|CMake Error|ninja: error' -SimpleMatch:$false |
               Select-Object -Last 30 |
@@ -97,7 +142,7 @@ jobs:
 
       - name: Upload failure logs
         if: failure()
-        uses: actions/upload-artifact@v4
+        uses: actions/upload-artifact@v6
         with:
           name: windows-ci-failure-logs
           path: ci-failure-logs/
@@ -110,7 +155,7 @@ jobs:
       GLSLANG_PREFIX: /home/runner/.cache/mango-glslang
       CMAKE_PREFIX_PATH: /home/runner/.cache/mango-glslang
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
@@ -134,7 +179,7 @@ jobs:
       # Build a known-good glslang from upstream; everything else stays on apt.
       - name: Cache glslang
         id: cache-glslang
-        uses: actions/cache@v4
+        uses: actions/cache@v5
         with:
           path: ${{ env.GLSLANG_PREFIX }}
           key: glslang-15.1.0-linux
@@ -150,14 +195,10 @@ jobs:
           cmake --build /tmp/glslang-build -j"$(nproc)"
           cmake --install /tmp/glslang-build
 
-      - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v3.31.6
-
       - name: Configure and build
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: default
-          buildPreset: default
+        run: |
+          cmake --preset default
+          cmake --build --preset default
 
   macos:
     name: macOS (brew)
@@ -165,20 +206,16 @@ jobs:
     env:
       HOMEBREW_NO_REQUIRE_TAP_TRUST: 1
     steps:
-      - uses: actions/checkout@v4
+      - uses: actions/checkout@v5
 
       - name: Install dependencies
         run: |
-          brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp \
+          brew install cmake ninja fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp \
             libavif libheif libraw isa-l lz4 bzip2 jxrlib freetype harfbuzz \
             simdjson libjpeg-turbo libpng glslang molten-vk vulkan-headers \
             vulkan-loader
 
-      - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v3.31.6
-
       - name: Configure and build
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: default
-          buildPreset: default
+        run: |
+          cmake --preset default
+          cmake --build --preset default
