@@ -71,13 +71,12 @@ jobs:
 
       - name: Install vcpkg packages (classic)
         shell: pwsh
-        working-directory: ${{ github.workspace }}/vcpkg
         run: |
           $ErrorActionPreference = "Stop"
-          # Run from VCPKG_ROOT so the repo-root vcpkg.json does not force manifest mode.
-          # Packages land in VCPKG_ROOT/installed (classic), matching cmake --preset vcpkg.
-          # List matches docs/installation/setup.md (default features).
-          & .\vcpkg.exe install --triplet x64-windows `
+          # Repo-root vcpkg.json makes vcpkg prefer manifest mode even when cwd is
+          # VCPKG_ROOT; --classic forces install into VCPKG_ROOT/installed.
+          # Package list matches docs/installation/setup.md (default features).
+          & "$env:VCPKG_ROOT/vcpkg.exe" install --classic --triplet x64-windows `
             pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson `
             lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib `
             vulkan-headers vulkan-loader glslang freetype harfbuzz `
