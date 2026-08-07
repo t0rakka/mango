@@ -1,10 +1,11 @@
 <h1><img src="docs/mango-logo.png" alt="logo" width="80"/> MANGO - C++20 Graphics Library for the NÖRDS.</h1>
 
-[![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
-
 Library for C++ masochists. It does short vector math, SIMD, encodes and decodes images, virtual filesystem and other tricks.
 
 "We wasted our time so that you don't have to waste yours."
+
+
+[![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
 
 
 ## [Installation Guide](docs/installation/setup.md)
