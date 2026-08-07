@@ -88,6 +88,8 @@ jobs:
           for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
             call "%%i\VC\Auxiliary\Build\vcvars64.bat"
           )
+          rem vcvars64.bat points VCPKG_ROOT at VS's bundled vcpkg; use the tree we installed into.
+          set VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg
           cmake --preset vcpkg -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
 
       - name: Build
@@ -96,6 +98,7 @@ jobs:
           for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
             call "%%i\VC\Auxiliary\Build\vcvars64.bat"
           )
+          set VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg
           cmake --build --preset vcpkg
 
       - name: Save vcpkg cache
