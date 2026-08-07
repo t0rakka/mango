@@ -22,9 +22,9 @@ jobs:
       - name: Install NASM
         uses: ilammy/setup-nasm@v1
 
-      # Action tags are CMake versions (v3.31.6) or @latest — there is no lukka/get-cmake@v4.
+      # Pin CMake 3.31.x — @latest currently pulls 4.4.x; keep CI on a known-good line.
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.31.6
 
       - name: Restore vcpkg binary cache
         id: vcpkg-cache
@@ -44,11 +44,14 @@ jobs:
         with:
           vcpkgJsonGlob: vcpkg.json
 
-      - name: Configure and build
-        uses: lukka/run-cmake@v10
-        with:
-          configurePreset: vcpkg-manifest
-          buildPreset: vcpkg-manifest
+      # Split configure/build so the failing step is obvious in the UI.
+      - name: Configure
+        shell: pwsh
+        run: cmake --preset vcpkg-manifest
+
+      - name: Build
+        shell: pwsh
+        run: cmake --build --preset vcpkg-manifest
 
       # Save even on failure so packages that did build are reused next run.
       # Skip when the primary key already exists (exact cache hit).
@@ -59,26 +62,46 @@ jobs:
           path: ${{ github.workspace }}/vcpkg-binary-cache
           key: vcpkg-bin-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
 
-      - name: Dump vcpkg / CMake failure logs
+      - name: Collect failure logs
         if: failure()
         shell: pwsh
         run: |
+          $out = "ci-failure-logs"
+          New-Item -ItemType Directory -Force -Path $out | Out-Null
           $patterns = @(
-            'build/vcpkg_installed/**/vcpkg*.log',
-            'vcpkg/buildtrees/**/*.log',
             'build/CMakeFiles/CMakeError.log',
             'build/CMakeFiles/CMakeOutput.log',
-            'build/CMakeCache.txt'
+            'build/CMakeCache.txt',
+            'vcpkg/buildtrees/*/*err*.log',
+            'vcpkg/buildtrees/*/*out*.log',
+            'vcpkg/buildtrees/*/install-*.log',
+            'vcpkg/buildtrees/*/config-*-rel-*.log'
           )
           foreach ($pat in $patterns) {
             Get-ChildItem -Path $pat -ErrorAction SilentlyContinue |
               Sort-Object LastWriteTime -Descending |
-              Select-Object -First 20 |
+              Select-Object -First 40 |
               ForEach-Object {
+                $dest = Join-Path $out ($_.Name + '-' + $_.Directory.Name)
+                Copy-Item $_.FullName $dest -ErrorAction SilentlyContinue
                 Write-Host "===== $($_.FullName) ====="
-                Get-Content $_.FullName -Tail 80 -ErrorAction SilentlyContinue
+                Get-Content $_.FullName -Tail 60 -ErrorAction SilentlyContinue
               }
           }
+          # Surface the most likely fatal lines in the job log.
+          Get-ChildItem $out -File -ErrorAction SilentlyContinue | ForEach-Object {
+            Select-String -Path $_.FullName -Pattern 'error:|FAILED|CMake Error|ninja: error' -SimpleMatch:$false |
+              Select-Object -Last 30 |
+              ForEach-Object { Write-Host $_.Line }
+          }
+
+      - name: Upload failure logs
+        if: failure()
+        uses: actions/upload-artifact@v4
+        with:
+          name: windows-ci-failure-logs
+          path: ci-failure-logs/
+          if-no-files-found: ignore
 
   linux:
     name: Linux (apt)
@@ -128,7 +151,7 @@ jobs:
           cmake --install /tmp/glslang-build
 
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.31.6
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
@@ -152,7 +175,7 @@ jobs:
             vulkan-loader
 
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@latest
+        uses: lukka/get-cmake@v3.31.6
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
