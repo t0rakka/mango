@@ -5,6 +5,11 @@ Library for C++ masochists. It does short vector math, SIMD, encodes and decodes
 "We wasted our time so that you don't have to waste yours."
 
 
+### Build Status
+
+[![CI Build Test](https://github.com)](https://github.com)
+
+
 ## [Installation Guide](docs/installation/setup.md)
 ## [Code Examples](docs/examples/examples.md)
 
