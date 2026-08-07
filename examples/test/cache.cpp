@@ -214,34 +214,31 @@ int main()
 
     Test tests [] =
     {
-        { "lru_basic",              test_lru_basic },
-        { "lru_capacity_guard",     test_lru_capacity_guard },
-        { "arc_basic",              test_arc_basic },
-        { "twoq_promotion",         test_twoq_promotion },
-        { "cost_lru_budget",        test_cost_lru_budget },
-        { "cost_lru_zero_cost",     test_cost_lru_zero_cost },
-        { "cost_lru_oversized",     test_cost_lru_oversized_entry },
-        { "cost_lru_update_cost",   test_cost_lru_update_cost },
+        { "lru_basic           ",                test_lru_basic },
+        { "lru_capacity_guard  ",       test_lru_capacity_guard },
+        { "arc_basic           ",                test_arc_basic },
+        { "twoq_promotion      ",           test_twoq_promotion },
+        { "cost_lru_budget     ",          test_cost_lru_budget },
+        { "cost_lru_zero_cost  ",       test_cost_lru_zero_cost },
+        { "cost_lru_oversized  ", test_cost_lru_oversized_entry },
+        { "cost_lru_update_cost",     test_cost_lru_update_cost },
     };
 
     int passed = 0;
 
     for (const auto& test : tests)
     {
-        printLine("------------------------------------------------------------");
-        printLine(" {}", test.name);
-        printLine("------------------------------------------------------------");
+        bool status = test.func();
+        printLine(" {} : {}", test.name, status ? "PASSED" : "FAILED");
 
-        if (!test.func())
+        if (status)
         {
-            printLine("");
-            printLine("FAILED: {}", test.name);
-            return 1;
+            ++passed;
         }
-
-        printLine("  OK");
-        printLine("");
-        ++passed;
+        else
+        {
+            return -1;
+        }
     }
 
     printLine("============================================================");
