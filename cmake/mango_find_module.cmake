@@ -521,10 +521,12 @@ function (mango_probe_image_format_dependencies)
     endif ()
 
     if (IMAGE_FORMAT_JXL)
-        locate_module(JXL libjxl "" "" 0.7 _jxl_found)
-        locate_module(JXL_THREADS libjxl_threads "" "" 0.7 _jxl_threads_found)
+        # libjxl 0.9 removed deprecated decoder color-profile args and added
+        # JxlEncoderDistanceFromQuality; Ubuntu apt still ships 0.7.
+        locate_module(JXL libjxl "" "" 0.9 _jxl_found)
+        locate_module(JXL_THREADS libjxl_threads "" "" 0.9 _jxl_threads_found)
         if (NOT _jxl_found OR NOT _jxl_threads_found)
-            message("    JXL: disabling IMAGE_FORMAT_JXL")
+            message("    JXL: disabling IMAGE_FORMAT_JXL (need libjxl >= 0.9)")
             set(IMAGE_FORMAT_JXL OFF PARENT_SCOPE)
         endif ()
     endif ()
@@ -630,8 +632,8 @@ function (mango_link_libraries)
     endif ()
 
     if (IMAGE_FORMAT_JXL)
-        find_module(mango-image JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.7)
-        find_module(mango-image JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.7)
+        find_module(mango-image JXL ${INTERFACE} OPTIONAL libjxl "" "" 0.9)
+        find_module(mango-image JXL_THREADS ${INTERFACE} OPTIONAL libjxl_threads "" "" 0.9)
     endif ()
 
     if (IMAGE_FORMAT_JP2)

@@ -29,6 +29,9 @@ jobs:
   linux:
     name: Linux (apt)
     runs-on: ubuntu-latest
+    env:
+      GLSLANG_PREFIX: /home/runner/.cache/mango-glslang
+      CMAKE_PREFIX_PATH: /home/runner/.cache/mango-glslang
     steps:
       - uses: actions/checkout@v4
 
@@ -38,24 +41,34 @@ jobs:
           sudo apt-get install -y --no-install-recommends \
             cmake ninja-build pkg-config git \
             libx11-dev libxext-dev libxrandr-dev \
+            libwayland-dev wayland-protocols \
             libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev \
-            libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev \
+            libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev \
             libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev \
             mesa-common-dev libgl1-mesa-dev libvulkan-dev \
             libfreetype-dev libharfbuzz-dev libsimdjson-dev \
             libjpeg-dev libpng-dev
+          # libjxl-dev omitted: Ubuntu noble ships 0.7; mango needs >= 0.9 (see mango_find_module.cmake).
 
       # Ubuntu glslang-dev ships a broken CMake config (missing tool targets).
       # Build a known-good glslang from upstream; everything else stays on apt.
+      - name: Cache glslang
+        id: cache-glslang
+        uses: actions/cache@v4
+        with:
+          path: ${{ env.GLSLANG_PREFIX }}
+          key: glslang-15.1.0-linux
+
       - name: Install glslang (Khronos)
+        if: steps.cache-glslang.outputs.cache-hit != 'true'
         run: |
           git clone --depth 1 --branch 15.1.0 https://github.com/KhronosGroup/glslang.git /tmp/glslang
           cmake -S /tmp/glslang -B /tmp/glslang-build -G Ninja \
             -DCMAKE_BUILD_TYPE=Release \
             -DENABLE_OPT=OFF \
-            -DCMAKE_INSTALL_PREFIX=/usr/local
+            -DCMAKE_INSTALL_PREFIX="$GLSLANG_PREFIX"
           cmake --build /tmp/glslang-build -j"$(nproc)"
-          sudo cmake --install /tmp/glslang-build
+          cmake --install /tmp/glslang-build
 
       - name: Install CMake and Ninja
         uses: lukka/get-cmake@v3.31.6
