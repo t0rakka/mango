@@ -38,6 +38,8 @@
         "vulkan": {
             "description": "Vulkan / text rendering dependencies",
             "dependencies": [
+                "vulkan-headers",
+                "vulkan-loader",
                 "glslang",
                 "freetype",
                 "harfbuzz"

@@ -62,7 +62,7 @@ Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
 
 **Classic mode** (`cmake --preset vcpkg`) — install packages once into the global vcpkg tree; configure stays fast. Re-run when `vcpkg.json` changes:
 
-    vcpkg install pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib glslang freetype harfbuzz libjpeg-turbo libpng blend2d
+    vcpkg install pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib vulkan-headers vulkan-loader glslang freetype harfbuzz libjpeg-turbo libpng blend2d
 
 **Manifest mode** (`cmake --preset vcpkg-manifest`) — skip the command above; vcpkg builds deps from `vcpkg.json` into `build/vcpkg_installed` on configure. Convenient but slow on every configure.
 
