@@ -36,7 +36,7 @@ jobs:
         run: |
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
-            ninja-build pkg-config \
+            cmake ninja-build pkg-config git \
             libx11-dev libxext-dev libxrandr-dev \
             libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev \
             libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev \
@@ -45,13 +45,17 @@ jobs:
             libfreetype-dev libharfbuzz-dev libsimdjson-dev \
             libjpeg-dev libpng-dev
 
-      # Ubuntu's glslang-dev CMake package is incomplete (missing tool targets).
-      # Install glslang from vcpkg; everything else stays on apt.
-      - name: Setup vcpkg
-        uses: lukka/run-vcpkg@v11
-
-      - name: Install glslang (vcpkg)
-        run: ${{ github.workspace }}/vcpkg/vcpkg install glslang --triplet x64-linux
+      # Ubuntu glslang-dev ships a broken CMake config (missing tool targets).
+      # Build a known-good glslang from upstream; everything else stays on apt.
+      - name: Install glslang (Khronos)
+        run: |
+          git clone --depth 1 --branch 15.1.0 https://github.com/KhronosGroup/glslang.git /tmp/glslang
+          cmake -S /tmp/glslang -B /tmp/glslang-build -G Ninja \
+            -DCMAKE_BUILD_TYPE=Release \
+            -DENABLE_OPT=OFF \
+            -DCMAKE_INSTALL_PREFIX=/usr/local
+          cmake --build /tmp/glslang-build -j"$(nproc)"
+          sudo cmake --install /tmp/glslang-build
 
       - name: Install CMake and Ninja
         uses: lukka/get-cmake@v3.31.6
@@ -61,8 +65,6 @@ jobs:
         with:
           configurePreset: default
           buildPreset: default
-        env:
-          CMAKE_PREFIX_PATH: ${{ github.workspace }}/vcpkg/installed/x64-linux
 
   macos:
     name: macOS (brew)
