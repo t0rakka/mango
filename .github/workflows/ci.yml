@@ -11,20 +11,49 @@ jobs:
   windows:
     name: Windows (vcpkg)
     runs-on: windows-latest
+    env:
+      VCPKG_DEFAULT_TRIPLET: x64-windows
     steps:
       - uses: actions/checkout@v4
 
+      # isal (and a few other ports) need an assembler on Windows.
+      - name: Install NASM
+        uses: ilammy/setup-nasm@v1
+
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v3.31.6
+        uses: lukka/get-cmake@v4
 
       - name: Setup vcpkg
         uses: lukka/run-vcpkg@v11
+        with:
+          vcpkgJsonGlob: vcpkg.json
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
         with:
           configurePreset: vcpkg-manifest
           buildPreset: vcpkg-manifest
+
+      - name: Dump vcpkg / CMake failure logs
+        if: failure()
+        shell: pwsh
+        run: |
+          $patterns = @(
+            'build/vcpkg_installed/**/vcpkg*.log',
+            'vcpkg/buildtrees/**/*.log',
+            'build/CMakeFiles/CMakeError.log',
+            'build/CMakeFiles/CMakeOutput.log',
+            'build/CMakeCache.txt'
+          )
+          foreach ($pat in $patterns) {
+            Get-ChildItem -Path $pat -ErrorAction SilentlyContinue |
+              Sort-Object LastWriteTime -Descending |
+              Select-Object -First 20 |
+              ForEach-Object {
+                Write-Host "===== $($_.FullName) ====="
+                Get-Content $_.FullName -Tail 80 -ErrorAction SilentlyContinue
+              }
+          }
 
   linux:
     name: Linux (apt)
@@ -40,7 +69,10 @@ jobs:
           sudo apt-get update
           sudo apt-get install -y --no-install-recommends \
             cmake ninja-build pkg-config git \
-            libx11-dev libxext-dev libxrandr-dev \
+            libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev \
+            libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev \
+            libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev \
+            libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev \
             libwayland-dev wayland-protocols \
             libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev \
             libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev \
@@ -71,7 +103,7 @@ jobs:
           cmake --install /tmp/glslang-build
 
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v3.31.6
+        uses: lukka/get-cmake@v4
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
@@ -95,7 +127,7 @@ jobs:
             vulkan-loader
 
       - name: Install CMake and Ninja
-        uses: lukka/get-cmake@v3.31.6
+        uses: lukka/get-cmake@v4
 
       - name: Configure and build
         uses: lukka/run-cmake@v10
