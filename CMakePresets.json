@@ -22,14 +22,14 @@
             }
         },
         {
-            "name": "vcpkg-manifest",
+            "name":         "vcpkg-manifest",
             "description": "Ninja Release — vcpkg manifest mode (builds deps into build/vcpkg_installed)",
             "inherits": ["default"],
             "cacheVariables": {
                 "CMAKE_TOOLCHAIN_FILE": "$env{VCPKG_ROOT}/scripts/buildsystems/vcpkg.cmake",
                 "VCPKG_MANIFEST_MODE": "ON",
                 "VCPKG_MANIFEST_FEATURES": "base;image;vulkan;examples",
-                "VCPKG_INSTALL_OPTIONS": "--no-print-usage"
+                "VCPKG_INSTALL_OPTIONS": "--clean-after-build;--no-print-usage"
             }
         },
         {

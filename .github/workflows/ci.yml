@@ -13,7 +13,8 @@ jobs:
     runs-on: windows-latest
     env:
       VCPKG_DEFAULT_TRIPLET: x64-windows
-      # x-gha binary caching was removed from vcpkg; use a filesystem cache + actions/cache.
+      # Binary cache: vcpkg stores built packages here; actions/cache persists it across runs.
+      # (Classic mode + caching the whole vcpkg/ tree exceeded GitHub's 10 GB limit and never saved.)
       VCPKG_BINARY_SOURCES: clear;files,${{ github.workspace }}/vcpkg-binary-cache,readwrite
     steps:
       - uses: actions/checkout@v5
@@ -34,22 +35,22 @@ jobs:
           # NASM installer path is not always on PATH for subsequent steps.
           Add-Content $env:GITHUB_PATH "C:\Program Files\NASM"
 
-      - name: Restore vcpkg cache
-        id: vcpkg-cache
+      - name: Restore vcpkg binary cache
+        id: vcpkg-bincache
         uses: actions/cache/restore@v5
         with:
-          path: |
-            ${{ github.workspace }}/vcpkg
-            ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-classic-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          path: ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-bincache-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-classic-${{ runner.os }}-x64-
+            vcpkg-bincache-${{ runner.os }}-x64-
 
       - name: Ensure binary cache directory
         shell: pwsh
-        run: New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE/vcpkg-binary-cache" | Out-Null
+        run: |
+          New-Item -ItemType Directory -Force -Path "$env:GITHUB_WORKSPACE/vcpkg-binary-cache" | Out-Null
+          $n = (Get-ChildItem "$env:GITHUB_WORKSPACE/vcpkg-binary-cache" -Recurse -File -ErrorAction SilentlyContinue | Measure-Object).Count
+          Write-Host "vcpkg binary cache restore: cache-hit=${{ steps.vcpkg-bincache.outputs.cache-hit }}, files=$n"
 
-      # Classic mode: install into $VCPKG_ROOT/installed (not build/vcpkg_installed).
       - name: Setup vcpkg
         shell: pwsh
         run: |
@@ -69,28 +70,15 @@ jobs:
           }
           "VCPKG_ROOT=$root" | Add-Content $env:GITHUB_ENV
 
-      - name: Install vcpkg packages (classic)
-        shell: pwsh
-        run: |
-          $ErrorActionPreference = "Stop"
-          # Repo-root vcpkg.json makes vcpkg prefer manifest mode even when cwd is
-          # VCPKG_ROOT; --classic forces install into VCPKG_ROOT/installed.
-          # Package list matches docs/installation/setup.md (default features).
-          & "$env:VCPKG_ROOT/vcpkg.exe" install --classic --triplet x64-windows `
-            pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson `
-            lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib `
-            vulkan-headers vulkan-loader glslang freetype harfbuzz `
-            libjpeg-turbo libpng blend2d
-
       - name: Configure
         shell: cmd
         run: |
           for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
             call "%%i\VC\Auxiliary\Build\vcvars64.bat"
           )
-          rem vcvars64.bat points VCPKG_ROOT at VS's bundled vcpkg; use the tree we installed into.
+          rem vcvars64.bat points VCPKG_ROOT at VS's bundled vcpkg; use the tree we bootstrapped.
           set VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg
-          cmake --preset vcpkg -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+          cmake --preset vcpkg-manifest -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
 
       - name: Build
         shell: cmd
@@ -99,16 +87,15 @@ jobs:
             call "%%i\VC\Auxiliary\Build\vcvars64.bat"
           )
           set VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg
-          cmake --build --preset vcpkg
+          cmake --build --preset vcpkg-manifest
 
-      - name: Save vcpkg cache
-        if: always() && steps.vcpkg-cache.outputs.cache-hit != 'true'
+      # Always save: configure may build packages missing from a partial cache restore.
+      - name: Save vcpkg binary cache
+        if: always()
         uses: actions/cache/save@v5
         with:
-          path: |
-            ${{ github.workspace }}/vcpkg
-            ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-classic-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          path: ${{ github.workspace }}/vcpkg-binary-cache
+          key: vcpkg-bincache-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
 
       - name: Collect failure logs
         if: failure()
