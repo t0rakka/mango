@@ -89,6 +89,10 @@ jobs:
           set VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg
           cmake --build --preset vcpkg-manifest
 
+      - name: Test
+        shell: cmd
+        run: ctest --test-dir build --output-on-failure -j %NUMBER_OF_PROCESSORS%
+
       # Always save: configure may build packages missing from a partial cache restore.
       - name: Save vcpkg binary cache
         if: always()
@@ -189,6 +193,9 @@ jobs:
           cmake --preset default
           cmake --build --preset default
 
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j"$(nproc)"
+
   macos:
     name: macOS (brew)
     runs-on: macos-latest
@@ -208,3 +215,6 @@ jobs:
         run: |
           cmake --preset default
           cmake --build --preset default
+
+      - name: Test
+        run: ctest --test-dir build --output-on-failure -j"$(sysctl -n hw.ncpu)"

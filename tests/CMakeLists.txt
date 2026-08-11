@@ -23,6 +23,9 @@ foreach(test IN LISTS MANGO_TESTS)
     target_link_libraries(${test} PRIVATE mango::mango)
     set_target_properties(${test} PROPERTIES FOLDER "tests")
     source_group("" FILES ${test}.cpp)
+
+    add_test(NAME ${test} COMMAND ${test})
+    set_tests_properties(${test} PROPERTIES WORKING_DIRECTORY ${CMAKE_CURRENT_BINARY_DIR})
 endforeach()
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
