@@ -1,12 +1,9 @@
 
 list(APPEND EXAMPLES
     aes
-    cache
     checksum
     hash
     compress
-    threads
-    pathtest
     particle
     mathtest
     container
@@ -17,5 +14,3 @@ foreach(example IN LISTS EXAMPLES)
     set_target_properties(${example} PROPERTIES FOLDER "examples/test")
     source_group("" FILES ${example}.cpp)
 endforeach()
-
-file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})

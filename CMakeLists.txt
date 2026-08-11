@@ -33,6 +33,7 @@ OPTION(BUILD_OPENGL         "Build OpenGL support"                       ON)
 OPTION(BUILD_VULKAN         "Build Vulkan support"                       ON)
 OPTION(BUILD_IMPORT3D       "Build Import3D support"                     ON)
 OPTION(BUILD_EXAMPLES       "Build examples"                             ON)
+OPTION(BUILD_TESTS          "Build tests"                                ON)
 
 # Window system backends (Linux). All compiled and linked together so the active
 # backend is chosen at runtime via the WindowSystem enum; toggle one off to drop
@@ -123,6 +124,7 @@ if (BUILD_MINIMAL)
     set(BUILD_VULKAN     OFF)
     set(BUILD_IMPORT3D   OFF)
     set(BUILD_EXAMPLES   OFF)
+    set(BUILD_TESTS      OFF)
 endif ()
 
 if (BUILD_OPENGL OR BUILD_VULKAN)
@@ -879,6 +881,7 @@ message("    BUILD_OPENGL:    " ${BUILD_OPENGL})
 message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
 message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
 message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
+message("    BUILD_TESTS:     " ${BUILD_TESTS})
 
 # ------------------------------------------------------------------------------
 # install
@@ -975,5 +978,15 @@ if (BUILD_EXAMPLES)
             endforeach ()
         endforeach ()
     endif ()
+
+endif ()
+
+# ------------------------------------------------------------------------------
+# tests
+# ------------------------------------------------------------------------------
+
+if (BUILD_TESTS)
+
+    add_subdirectory(tests)
 
 endif ()
