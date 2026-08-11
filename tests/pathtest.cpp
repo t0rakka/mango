@@ -94,122 +94,122 @@ void test1()
 
 void test2()
 {
-    Path path("data/foo/");
-    print(path, "data/foo/");
+    Path path("data/pathtest/foo/");
+    print(path, "data/pathtest/foo/");
 }
 
 void test3()
 {
-    Path path("data/kokopaska.zip/");
-    print(path, "data/kokopaska.zip/");
+    Path path("data/pathtest/kokopaska.zip/");
+    print(path, "data/pathtest/kokopaska.zip/");
 }
 
 void test4()
 {
-    Path path("data/kokopaska2.zip/foo/");
-    print(path, "data/kokopaska2.zip/foo/");
+    Path path("data/pathtest/kokopaska2.zip/foo/");
+    print(path, "data/pathtest/kokopaska2.zip/foo/");
 }
 
 void test5()
 {
-    Path path("data/outer.zip/data/inner.zip/");
-    print(path, "data/outer.zip/data/inner.zip/");
+    Path path("data/pathtest/outer.zip/data/inner.zip/");
+    print(path, "data/pathtest/outer.zip/data/inner.zip/");
 }
 
 void test6()
 {
-    Path path1("data/outer.zip/data/");
-    print(path1, "data/outer.zip/data/");
+    Path path1("data/pathtest/outer.zip/data/");
+    print(path1, "data/pathtest/outer.zip/data/");
 
     Path path2(path1, "inner.zip/");
-    print(path2, "data/outer.zip/data/inner.zip/");
+    print(path2, "data/pathtest/outer.zip/data/inner.zip/");
 }
 
 // opening a file
 
 void test7()
 {
-    File file("data/kokopaska.zip/test/flower1.jpg");
-    print(file, "data/kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
+    File file("data/pathtest/kokopaska.zip/test/flower1.jpg");
+    print(file, "data/pathtest/kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test8()
 {
-    File file("data/outer.zip/data/inner.zip/test/flower1.jpg");
-    print(file, "data/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+    File file("data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg");
+    print(file, "data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 // opening a file with pathing
 
 void test9()
 {
-    Path path("data/kokopaska.zip/");
-    print(path, "data/kokopaska.zip/");
+    Path path("data/pathtest/kokopaska.zip/");
+    print(path, "data/pathtest/kokopaska.zip/");
 
     File file(path, "test/flower1.jpg");
-    print(file, "data/kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test10()
 {
-    Path path("data/outer.zip/data/inner.zip/");
-    print(path, "data/outer.zip/data/inner.zip/");
+    Path path("data/pathtest/outer.zip/data/inner.zip/");
+    print(path, "data/pathtest/outer.zip/data/inner.zip/");
 
     File file(path, "test/flower1.jpg");
-    print(file, "data/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test11()
 {
-    Path path1("data/outer.zip/");
-    print(path1, "data/outer.zip/");
+    Path path1("data/pathtest/outer.zip/");
+    print(path1, "data/pathtest/outer.zip/");
 
     Path path2(path1, "data/inner.zip/");
-    print(path2, "data/outer.zip/data/inner.zip/");
+    print(path2, "data/pathtest/outer.zip/data/inner.zip/");
 
     File file(path2, "test/flower1.jpg");
-    print(file, "data/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 // pathing with fs folder
 
 void test12()
 {
-    Path path1("data/");
-    print(path1, "data/");
+    Path path1("data/pathtest/");
+    print(path1, "data/pathtest/");
 
     Path path2(path1, "kokopaska.zip/");
-    print(path2, "data/kokopaska.zip/");
+    print(path2, "data/pathtest/kokopaska.zip/");
 
     File file(path2, "test/flower1.jpg");
-    print(file, "data/kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/kokopaska.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test13()
 {
-    Path path1("data/");
-    print(path1, "data/");
+    Path path1("data/pathtest/");
+    print(path1, "data/pathtest/");
 
     Path path2(path1, "outer.zip/data/inner.zip/");
-    print(path2, "data/outer.zip/data/inner.zip/");
+    print(path2, "data/pathtest/outer.zip/data/inner.zip/");
 
     File file(path2, "test/flower1.jpg");
-    print(file, "data/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test14()
 {
-    Path path1("data/");
-    print(path1, "data/");
+    Path path1("data/pathtest/");
+    print(path1, "data/pathtest/");
 
     Path path2(path1, "outer.zip/");
-    print(path2, "data/outer.zip/");
+    print(path2, "data/pathtest/outer.zip/");
 
     Path path3(path2, "data/inner.zip/");
-    print(path3, "data/outer.zip/data/inner.zip/");
+    print(path3, "data/pathtest/outer.zip/data/inner.zip/");
 
     File file(path3, "test/flower1.jpg");
-    print(file, "data/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test15()
@@ -220,35 +220,35 @@ void test15()
 
 void test16()
 {
-    Path path1("data/");
-    print(path1, "data/");
+    Path path1("data/pathtest/");
+    print(path1, "data/pathtest/");
 
     Path path2(path1, "foo/");
-    print(path2, "data/foo/");
+    print(path2, "data/pathtest/foo/");
 }
 
 void test17()
 {
-    Path path("data/");
-    print(path, "data/");
+    Path path("data/pathtest/");
+    print(path, "data/pathtest/");
 
     File file(path, "foo/test.data");
-    print(file, "data/foo/test.data", 0x149cd379);
+    print(file, "data/pathtest/foo/test.data", 0x149cd379);
 }
 
 void test18()
 {
-    Path path("data/outer.zip/data/inner.zip/");
-    print(path, "data/outer.zip/data/inner.zip/");
+    Path path("data/pathtest/outer.zip/data/inner.zip/");
+    print(path, "data/pathtest/outer.zip/data/inner.zip/");
 
     File file(path, "test/flower1.jpg");
-    print(file, "data/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
+    print(file, "data/pathtest/outer.zip/data/inner.zip/test/flower1.jpg", 0xbb8abc19);
 }
 
 void test19()
 {
-    File file("data/kokopaska.zip");
-    print(file, "data/kokopaska.zip", 0x5d61ea66);
+    File file("data/pathtest/kokopaska.zip");
+    print(file, "data/pathtest/kokopaska.zip", 0x5d61ea66);
 
     ConstMemory memory = file;
     Path path(memory, ".zip");
@@ -260,8 +260,8 @@ void test19()
 
 void test20()
 {
-    File file("data/foo/test.data");
-    print(file, "data/foo/test.data", 0x149cd379);
+    File file("data/pathtest/foo/test.data");
+    print(file, "data/pathtest/foo/test.data", 0x149cd379);
 
     ConstMemory memory = file;
     Path path(memory, ".data");
@@ -278,61 +278,61 @@ void test21()
 
 void test22()
 {
-    File file("data/case.hbs/bench/IMG_2177.JPG");
-    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
+    File file("data/pathtest/case.hbs/bench/IMG_2177.JPG");
+    print(file, "data/pathtest/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test23()
 {
-    Path path("data/case.hbs/");
-    print(path, "data/case.hbs/");
+    Path path("data/pathtest/case.hbs/");
+    print(path, "data/pathtest/case.hbs/");
 
     File file(path, "bench/IMG_2177.JPG");
-    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/pathtest/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test24()
 {
-    Path path("data/case.hbs/bench/");
-    print(path, "data/case.hbs/bench/");
+    Path path("data/pathtest/case.hbs/bench/");
+    print(path, "data/pathtest/case.hbs/bench/");
 
     File file(path, "IMG_2177.JPG");
-    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/pathtest/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test25()
 {
-    Path path1("data/case.hbs/");
-    print(path1, "data/case.hbs/");
+    Path path1("data/pathtest/case.hbs/");
+    print(path1, "data/pathtest/case.hbs/");
 
     Path path2(path1, "bench/");
-    print(path2, "data/case.hbs/bench/");
+    print(path2, "data/pathtest/case.hbs/bench/");
 
     File file(path2, "IMG_2177.JPG");
-    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/pathtest/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test26()
 {
-    Path path1("data/");
-    print(path1, "data/");
+    Path path1("data/pathtest/");
+    print(path1, "data/pathtest/");
 
     Path path2(path1, "case.hbs/");
-    print(path2, "data/case.hbs/");
+    print(path2, "data/pathtest/case.hbs/");
 
     Path path3(path2, "bench/");
-    print(path3, "data/case.hbs/bench/");
+    print(path3, "data/pathtest/case.hbs/bench/");
 
     File file(path3, "IMG_2177.JPG");
-    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
+    print(file, "data/pathtest/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 // memory mapped container
 
 void test27()
 {
-    File file1("data/outer.zip");
-    print(file1, "data/outer.zip", 0x12ea02f3);
+    File file1("data/pathtest/outer.zip");
+    print(file1, "data/pathtest/outer.zip", 0x12ea02f3);
 
     ConstMemory memory = file1;
     Path path1(memory, ".zip");
@@ -347,42 +347,42 @@ void test27()
 
 void test28()
 {
-    File file(Path("data/case.hbs/"), "bench/IMG_2177.JPG");
-    print(file, "data/case.hbs/bench/IMG_2177.JPG", 0x472da743);
+    File file(Path("data/pathtest/case.hbs/"), "bench/IMG_2177.JPG");
+    print(file, "data/pathtest/case.hbs/bench/IMG_2177.JPG", 0x472da743);
 }
 
 void test29()
 {
     // bad.xxx is not a file; it is a folder
 
-    Path path("data/bad.xxx/");
-    print(path, "data/bad.xxx/");
+    Path path("data/pathtest/bad.xxx/");
+    print(path, "data/pathtest/bad.xxx/");
 
     File file1(path, "dummy.data");
-    print(file1, "data/bad.xxx/dummy.data", 0xd0746829);
+    print(file1, "data/pathtest/bad.xxx/dummy.data", 0xd0746829);
 
-    File file2("data/bad.xxx/dummy.data");
-    print(file2, "data/bad.xxx/dummy.data", 0xd0746829);
+    File file2("data/pathtest/bad.xxx/dummy.data");
+    print(file2, "data/pathtest/bad.xxx/dummy.data", 0xd0746829);
 }
 
 void test30()
 {
     // bad.zip is not a file; it is a folder
 
-    Path path("data/bad.zip/");
-    print(path, "data/bad.zip/");
+    Path path("data/pathtest/bad.zip/");
+    print(path, "data/pathtest/bad.zip/");
 
     File file1(path, "dummy.data");
-    print(file1, "data/bad.zip/dummy.data", 0xd0746829);
+    print(file1, "data/pathtest/bad.zip/dummy.data", 0xd0746829);
 
-    File file2("data/bad.zip/dummy.data");
-    print(file2, "data/bad.zip/dummy.data", 0xd0746829);
+    File file2("data/pathtest/bad.zip/dummy.data");
+    print(file2, "data/pathtest/bad.zip/dummy.data", 0xd0746829);
 }
 
 void test31()
 {
-    File file1("data/outer.zip");
-    print(file1, "data/outer.zip", 0x12ea02f3);
+    File file1("data/pathtest/outer.zip");
+    print(file1, "data/pathtest/outer.zip", 0x12ea02f3);
 
     ConstMemory memory = file1;
     File file2(memory, ".zip", "data/inner.zip/test/flower1.jpg");
@@ -394,14 +394,14 @@ void test32()
     // These are corrupted / not container files
     // We still should be able to index them and get nothing
 
-    Path path1("data/fake/random.zip/");
-    print(path1, "data/fake/random.zip/");
+    Path path1("data/pathtest/fake/random.zip/");
+    print(path1, "data/pathtest/fake/random.zip/");
 
-    Path path2("data/fake/random.rar/");
-    print(path2, "data/fake/random.rar/");
+    Path path2("data/pathtest/fake/random.rar/");
+    print(path2, "data/pathtest/fake/random.rar/");
 
-    Path path3("data/fake/random.hbs/");
-    print(path3, "data/fake/random.hbs/");
+    Path path3("data/pathtest/fake/random.hbs/");
+    print(path3, "data/pathtest/fake/random.hbs/");
 }
 
 // -----------------------------------------------------------------------------------
@@ -457,4 +457,6 @@ int main(int argc, char *argv[])
     else
         printf("  All tests PASSED.                    \n");
     printLine();
+
+    return g_count_failed ? 1 : 0;
 }

@@ -8,6 +8,8 @@ using namespace mango;
 
 constexpr u64 MB = 1 << 20;
 
+static int g_count_failed = 0;
+
 template <typename T>
 void print(T hash)
 {
@@ -41,6 +43,7 @@ void check(T hash, T correct)
 
     if (!success)
     {
+        ++g_count_failed;
         printf("  ");
         for (size_t i = 0; i < size; ++i)
         {
@@ -96,6 +99,8 @@ void print(const Buffer& buffer, const char* name, u64 time0, u64 time1, u32 val
     u32 rate = u32(x / (delta * MB));
     const char* status = (value == correct) ? "" : "FAILED";
     printf("%s    %5d.%1d ms (%6d MB/s ) %s\n", name, delta_major, delta_minor, rate, status);
+    if (value != correct)
+        ++g_count_failed;
 }
 
 void test_md5(const Buffer& buffer)
@@ -193,4 +198,12 @@ int main()
     test_xxhash64(buffer);
     test_xx3hash64(buffer);
     test_xx3hash128(buffer);
+
+    if (g_count_failed)
+    {
+        printf("\n  %d check(s) FAILED.\n", g_count_failed);
+        return 1;
+    }
+
+    return 0;
 }
