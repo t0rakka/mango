@@ -91,7 +91,11 @@ jobs:
 
       - name: Test
         shell: cmd
-        run: ctest --test-dir build --output-on-failure -j %NUMBER_OF_PROCESSORS%
+        run: |
+          for /f "usebackq delims=" %%i in (`"%ProgramFiles(x86)%\Microsoft Visual Studio\Installer\vswhere.exe" -latest -products * -requires Microsoft.VisualStudio.Component.VC.Tools.x86.x64 -property installationPath`) do (
+            call "%%i\VC\Auxiliary\Build\vcvars64.bat"
+          )
+          ctest --test-dir build --output-on-failure -j %NUMBER_OF_PROCESSORS%
 
       # Always save: configure may build packages missing from a partial cache restore.
       - name: Save vcpkg binary cache
