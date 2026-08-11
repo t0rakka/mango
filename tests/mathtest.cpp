@@ -8,6 +8,8 @@
 using namespace mango;
 using namespace mango::math;
 
+static int g_count_failed = 0;
+
 // ----------------------------------------------------------------------
 // permutations
 // ----------------------------------------------------------------------
@@ -50,6 +52,8 @@ const char* get_status(bool identical)
 void check(const char* text, float32x2 v, float x, float y)
 {
     bool identical = eq(v.x, x) && eq(v.y, y);
+    if (!identical)
+        ++g_count_failed;
     const char* status = get_status(identical);
     printLine("  {} {:.6f} {:.6f}                   {}", text, float(v.x), float(v.y), status);
 }
@@ -57,6 +61,8 @@ void check(const char* text, float32x2 v, float x, float y)
 void check(const char* text, float32x3 v, float x, float y, float z)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z);
+    if (!identical)
+        ++g_count_failed;
     const char* status = get_status(identical);
     printLine("  {} {:.6f} {:.6f} {:.6f}          {}", text, float(v.x), float(v.y), float(v.z), status);
 }
@@ -64,6 +70,8 @@ void check(const char* text, float32x3 v, float x, float y, float z)
 void check(const char* text, float32x4 v, float x, float y, float z, float w)
 {
     bool identical = eq(v.x, x) && eq(v.y, y) && eq(v.z, z) && eq(v.w, w);
+    if (!identical)
+        ++g_count_failed;
     const char* status = get_status(identical);
     printLine("  {} {:.6f} {:.6f} {:.6f} {:.6f} {}", text, float(v.x), float(v.y), float(v.z), float(v.w), status);
 }
@@ -948,6 +956,8 @@ void benchmark()
         printLine("    {}", name);
         printLine("      throughput : {:.3f} M inv/s", inv_per_sec / 1000000.0);
         printLine("      max error  : {:.9f}", err);
+        if (err > 1e-4f)
+            ++g_count_failed;
     };
 
     printLine("  matrix4x4 inverse");
@@ -1038,4 +1048,13 @@ int main()
 
     // benchmarking
     benchmark();
+
+    if (g_count_failed)
+    {
+        printLine("");
+        printLine("  {} check(s) FAILED.", g_count_failed);
+        return 1;
+    }
+
+    return 0;
 }

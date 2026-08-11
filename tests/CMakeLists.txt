@@ -12,6 +12,10 @@ set(MANGO_TESTS
     cache
     threads
     pathtest
+    mathtest
+    hash
+    checksum
+    aes
 )
 
 foreach(test IN LISTS MANGO_TESTS)

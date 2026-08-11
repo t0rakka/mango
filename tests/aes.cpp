@@ -2,18 +2,26 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
-#include <mango/core/core.hpp>
+#include <mango/mango.hpp>
 
 using namespace mango;
 
 constexpr u64 MB = 1 << 20;
-constexpr int N = 40;
-constexpr u64 BUFFER_SIZE = 32 * MB;
+constexpr u64 FULL_BUFFER_SIZE = 32 * MB;
+constexpr int FULL_ITERATIONS = 40;
 constexpr int BAR_WIDTH = 32;
 
-void print(const Buffer& buffer, u64 time0, u64 time1)
+static int g_count_failed = 0;
+
+static bool has_aes_hw()
 {
-    u64 x = N * u64(buffer.size()) * 1000000; // buffer size in bytes * microseconds_in_second
+    const u64 flags = cpu::getFlags();
+    return (flags & (INTEL_AES | ARM_AES)) != 0;
+}
+
+void print(const Buffer& buffer, u64 time0, u64 time1, int iterations)
+{
+    u64 x = iterations * u64(buffer.size()) * 1000000; // buffer size in bytes * microseconds_in_second
     u32 delta = time1 - time0;
     printf("%5d.%1d ms (%6d MB/s )\n",
         u32(delta / 1000),
@@ -21,10 +29,10 @@ void print(const Buffer& buffer, u64 time0, u64 time1)
         u32(x / (delta * MB)));
 }
 
-void progress(int i)
+void progress(int i, int iterations)
 {
     // fraction done
-    double fraction = double(i + 1) / N;
+    double fraction = double(i + 1) / iterations;
     int filled = int(fraction * BAR_WIDTH);
 
     // build bar
@@ -64,15 +72,16 @@ void test_fips()
 
     if (!memcmp(result, expected, 16))
     {
-        printLine("Status: OK\n");
+        printLine("Status: OK");
     }
     else
     {
-        printLine("Status: FAILED\n");
+        printLine("Status: FAILED");
+        ++g_count_failed;
     }
 }
 
-void test_aes(int bits)
+void test_aes(int bits, u64 buffer_size, int iterations)
 {
     const u8 key[] =
     {
@@ -82,59 +91,80 @@ void test_aes(int bits)
 
     AES aes(key, bits);
 
-    constexpr u64 size = BUFFER_SIZE;
+    Buffer buffer(buffer_size);
+    Buffer output(buffer_size);
+    Buffer temp(buffer_size);
 
-    Buffer buffer(size);
-    Buffer output(size);
-    Buffer temp(size);
-
-    for (u64 i = 0; i < size; ++i)
+    for (u64 i = 0; i < buffer_size; ++i)
     {
         buffer[i] = i;
     }
 
     u64 time0 = Time::us();
 
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < iterations; ++i)
     {
-        progress(i);
-        aes.ecb_encrypt(temp, buffer, size);
+        progress(i, iterations);
+        aes.ecb_encrypt(temp, buffer, buffer_size);
     }
 
     u64 time1 = Time::us();
 
     printf("\r\033[K"); // clear line
     printf("aes%d encrypt: ", bits);
-    print(buffer, time0, time1);
+    print(buffer, time0, time1, iterations);
 
 
-    for (int i = 0; i < N; ++i)
+    for (int i = 0; i < iterations; ++i)
     {
-        progress(i);
-        aes.ecb_decrypt(output, temp, size);
+        progress(i, iterations);
+        aes.ecb_decrypt(output, temp, buffer_size);
     }
 
     u64 time2 = Time::us();
 
     printf("\r\033[K"); // clear line
     printf("aes%d decrypt: ", bits);
-    print(buffer, time1, time2);
+    print(buffer, time1, time2, iterations);
 
-    if (!memcmp(output, buffer, size))
+    if (!memcmp(output, buffer, buffer_size))
     {
         printf("AES%d: PASSED\n\n", bits);
     }
     else
     {
         printf("AES%d: FAILED\n\n", bits);
+        ++g_count_failed;
     }
 }
 
 int main()
 {
+    const bool hw_aes = has_aes_hw();
+    const u64 buffer_size = hw_aes ? FULL_BUFFER_SIZE : FULL_BUFFER_SIZE / 10;
+    const int iterations = FULL_ITERATIONS;
+
     printLine(getPlatformInfo());
+
+    if (hw_aes)
+    {
+        printLine("AES hardware: detected");
+    }
+    else
+    {
+        printLine("AES hardware: not detected (using {} MB buffer, 10% of full size)", buffer_size / MB);
+    }
+
     test_fips();
-    test_aes(128);
-    test_aes(192);
-    test_aes(256);
+    test_aes(128, buffer_size, iterations);
+    test_aes(192, buffer_size, iterations);
+    test_aes(256, buffer_size, iterations);
+
+    if (g_count_failed)
+    {
+        printf("\n  %d check(s) FAILED.\n", g_count_failed);
+        return 1;
+    }
+
+    return 0;
 }

@@ -8,8 +8,12 @@ using namespace mango;
 
 constexpr u64 MB = 1 << 20;
 
+static int g_count_failed = 0;
+
 void print(u32 value, u32 reference)
 {
+    if (value != reference)
+        ++g_count_failed;
     printLine("    {:#010x} : {}", value, value == reference ? "OK" : "FAILED");
 }
 
@@ -136,4 +140,12 @@ int main()
     print(buffer, "crc32c:        ", time1);
     print(buffer, "adler32:       ", time2);
     printLine("");
+
+    if (g_count_failed)
+    {
+        printLine("  {} check(s) FAILED.", g_count_failed);
+        return 1;
+    }
+
+    return 0;
 }
