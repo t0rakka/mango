@@ -66,16 +66,22 @@ namespace
     // Codec IDs stored as big-endian integers (7-Zip convention)
     enum CodecID : u64
     {
-        CODEC_COPY    = 0x00,
-        CODEC_DELTA   = 0x03,
-        CODEC_LZMA2   = 0x21,
-        CODEC_LZMA    = 0x030101,
-        CODEC_PPMD    = 0x030401,
-        CODEC_BCJ     = 0x03030103,
-        CODEC_BCJ2    = 0x0303011B,
-        CODEC_DEFLATE = 0x040108,
-        CODEC_BZIP2   = 0x040202,
-        CODEC_AES     = 0x06F10701,
+        CODEC_COPY      = 0x00,
+        CODEC_DELTA     = 0x03,
+        CODEC_BCJ_SHORT = 0x04,       // xz / short form
+        CODEC_LZMA2     = 0x21,
+        CODEC_SWAP2     = 0x020302,
+        CODEC_SWAP4     = 0x020304,
+        CODEC_LZMA      = 0x030101,
+        CODEC_PPMD      = 0x030401,
+        CODEC_BCJ       = 0x03030103,
+        CODEC_BCJ2      = 0x0303011B,
+        CODEC_DEFLATE   = 0x040108,
+        CODEC_DEFLATE64 = 0x040109,
+        CODEC_BZIP2     = 0x040202,
+        CODEC_ZSTD      = 0x04F71101, // 7-Zip-zstd plugin
+        CODEC_LZ4       = 0x04F71104, // 7-Zip-zstd plugin
+        CODEC_AES       = 0x06F10701,
     };
 
     // -----------------------------------------------------------------
@@ -985,6 +991,25 @@ namespace
         }
     }
 
+    void filterSwap2(u8* data, size_t size)
+    {
+        size &= ~size_t(1);
+        for (size_t i = 0; i < size; i += 2)
+        {
+            std::swap(data[i], data[i + 1]);
+        }
+    }
+
+    void filterSwap4(u8* data, size_t size)
+    {
+        size &= ~size_t(3);
+        for (size_t i = 0; i < size; i += 4)
+        {
+            std::swap(data[i + 0], data[i + 3]);
+            std::swap(data[i + 1], data[i + 2]);
+        }
+    }
+
     // x86 BCJ decoder (7-Zip / LZMA SDK Bra86 encoding=0)
     void filterBcjX86(u8* data, size_t size, u32 ip)
     {
@@ -1083,7 +1108,30 @@ namespace
                 return output;
             }
 
+            case CODEC_SWAP2:
+            {
+                if (input.size < out_size)
+                {
+                    MANGO_EXCEPTION("[mapper.7z] Swap2 stream is truncated.");
+                }
+                std::memcpy(output->data(), input.address, out_size);
+                filterSwap2(output->data(), out_size);
+                return output;
+            }
+
+            case CODEC_SWAP4:
+            {
+                if (input.size < out_size)
+                {
+                    MANGO_EXCEPTION("[mapper.7z] Swap4 stream is truncated.");
+                }
+                std::memcpy(output->data(), input.address, out_size);
+                filterSwap4(output->data(), out_size);
+                return output;
+            }
+
             case CODEC_BCJ:
+            case CODEC_BCJ_SHORT:
             {
                 if (input.size < out_size)
                 {
@@ -1234,12 +1282,48 @@ namespace
                 return output;
             }
 
+            case CODEC_DEFLATE64:
+            {
+                CompressionStatus status = deflate64::decompress(*output, input);
+                if (!status)
+                {
+                    MANGO_EXCEPTION("[mapper.7z] {}", status.info);
+                }
+                return output;
+            }
+
             case CODEC_BZIP2:
             {
                 Compressor compressor = getCompressor(Compressor::BZIP2);
                 if (!compressor.decompress)
                 {
                     MANGO_EXCEPTION("[mapper.7z] BZIP2 support is not enabled.");
+                }
+                CompressionStatus status = compressor.decompress(*output, input);
+                if (!status)
+                {
+                    MANGO_EXCEPTION("[mapper.7z] {}", status.info);
+                }
+                return output;
+            }
+
+            case CODEC_ZSTD:
+            {
+                Compressor compressor = getCompressor(Compressor::ZSTD);
+                CompressionStatus status = compressor.decompress(*output, input);
+                if (!status)
+                {
+                    MANGO_EXCEPTION("[mapper.7z] {}", status.info);
+                }
+                return output;
+            }
+
+            case CODEC_LZ4:
+            {
+                Compressor compressor = getCompressor(Compressor::LZ4);
+                if (!compressor.decompress)
+                {
+                    MANGO_EXCEPTION("[mapper.7z] LZ4 support is not enabled.");
                 }
                 CompressionStatus status = compressor.decompress(*output, input);
                 if (!status)
