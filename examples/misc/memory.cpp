@@ -36,12 +36,12 @@ void example2()
     // Allocate 16 KB of memory
     SharedMemory shared(1024 * 16);
 
-    // A bit different use case.. take ownership of memory allocated by someone else:
-    u8* buffer = new u8[40000];
-    SharedMemory shared2(buffer, 40000);
+    // For memory owned elsewhere, use Memory (non-owning view) instead:
+    std::vector<u8> buffer(40000);
+    Memory memory(buffer.data(), buffer.size());
 
-    // The buffer is now owned by shared2 and releasing the memory would be a programming error:
-    //delete [] buffer; // ERROR! 
+    MANGO_UNREFERENCED(shared);
+    MANGO_UNREFERENCED(memory);
 }
 
 void example3(VirtualMemory& vm)

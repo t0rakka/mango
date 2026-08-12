@@ -40,12 +40,6 @@ namespace mango
         m_ptr = std::shared_ptr<u8>(address, std::default_delete<u8[]>());
     }
 
-    SharedMemory::SharedMemory(u8* address, size_t bytes)
-        : m_memory(address, bytes)
-        , m_ptr(address, std::default_delete<u8[]>())
-    {
-    }
-
     // -----------------------------------------------------------------------
     // aligned malloc/free
     // -----------------------------------------------------------------------

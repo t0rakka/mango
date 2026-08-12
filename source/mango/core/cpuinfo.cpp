@@ -100,7 +100,6 @@ namespace
                     if ((cpuInfo[3] & 0x02000000) != 0) flags |= INTEL_SSE;
                     if ((cpuInfo[3] & 0x04000000) != 0) flags |= INTEL_SSE2;
                     if ((cpuInfo[3] & 0x00008000) != 0) flags |= INTEL_CMOV;
-                    if ((cpuInfo[3] & 0x00800000) != 0) flags |= INTEL_AVX512FP16;
                     // ecx
                     if ((cpuInfo[2] & 0x00000001) != 0) flags |= INTEL_SSE3;
                     if ((cpuInfo[2] & 0x00000200) != 0) flags |= INTEL_SSSE3;
@@ -131,6 +130,7 @@ namespace
                     if ((cpuInfo[1] & 0x20000000) != 0) flags |= INTEL_SHA;
                     if ((cpuInfo[1] & 0x40000000) != 0) flags |= INTEL_AVX512BW;
                     if ((cpuInfo[1] & 0x80000000) != 0) flags |= INTEL_AVX512VL;
+                    if ((cpuInfo[1] & 0x00800000) != 0) flags |= INTEL_AVX512FP16;
                     break;
             }
         }

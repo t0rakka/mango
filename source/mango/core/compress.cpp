@@ -143,8 +143,11 @@ namespace lz4
         {
             status.setError("[lz4] decompression failed.");
         }
+        else
+        {
+            status.size = size_t(result);
+        }
 
-        status.size = dest.size;
         return status;
     }
 
@@ -324,8 +327,11 @@ namespace zstd
         {
             status.setError("[zstd] {}", ZSTD_getErrorName(x));
         }
+        else
+        {
+            status.size = x;
+        }
 
-        status.size = dest.size;
         return status;
     }
 
@@ -764,8 +770,11 @@ namespace lzma
         {
             status.setError("[lzma] {}", error);
         }
+        else
+        {
+            status.size = size_t(destLen);
+        }
 
-        status.size = dest.size;
         return status;
     }
 
@@ -852,8 +861,11 @@ namespace lzma2
         {
             status.setError("[lzma2] {}", error);
         }
+        else
+        {
+            status.size = size_t(destLen);
+        }
 
-        status.size = dest.size;
         return status;
     }
 
@@ -1004,7 +1016,7 @@ namespace ppmd8
             status.setError("[PPMd] decoding error.");
         }
 
-        status.size = dest.size;
+        status.size = offset;
         return status;
     }
 

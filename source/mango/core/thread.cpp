@@ -648,8 +648,20 @@ namespace mango
 
     const TicketQueue::Ticket& TicketQueue::Ticket::operator = (const Ticket& ticket)
     {
-        task = ticket.task;
-        task->count++;
+        if (this != &ticket)
+        {
+            if (!--task->count)
+            {
+                if (!task->func)
+                {
+                    task->promise.set_value();
+                }
+            }
+
+            task = ticket.task;
+            task->count++;
+        }
+
         return *this;
     }
 

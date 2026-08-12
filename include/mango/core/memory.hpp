@@ -73,6 +73,11 @@ namespace mango::detail
 
         Memory slice(size_t slice_offset, size_t slice_size = 0) const
         {
+            if (!address || slice_offset >= size)
+            {
+                return Memory();
+            }
+
             Memory memory(address + slice_offset, size - slice_offset);
             if (slice_size)
             {
@@ -116,7 +121,6 @@ namespace mango
 
     public:
         SharedMemory(size_t bytes);
-        SharedMemory(u8* address, size_t bytes);
 
         operator Memory () const
         {

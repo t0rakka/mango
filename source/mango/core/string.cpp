@@ -332,11 +332,14 @@ namespace mango
             // decode surrogate pair
             if ((code - 0xd800) < 0x400)
             {
-                const u32 low = source[++i];
-
-                if ((low - 0xdc00) < 0x400)
+                if (i + 1 < length)
                 {
-                    code = ((code - 0xd800) << 10) + (low - 0xdc00) + 0x10000;
+                    const u32 low = source[i + 1];
+                    if ((low - 0xdc00) < 0x400)
+                    {
+                        code = ((code - 0xd800) << 10) + (low - 0xdc00) + 0x10000;
+                        ++i;
+                    }
                 }
             }
 
