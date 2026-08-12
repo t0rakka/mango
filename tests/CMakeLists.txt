@@ -16,6 +16,7 @@ set(MANGO_TESTS
     hash
     checksum
     aes
+    ziptest
 )
 
 foreach(test IN LISTS MANGO_TESTS)
