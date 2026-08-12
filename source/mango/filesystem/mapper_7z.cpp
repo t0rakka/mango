@@ -6,8 +6,10 @@
 
 #include <algorithm>
 #include <cstring>
+#include <future>
 #include <mutex>
 #include <optional>
+#include <unordered_map>
 #include <vector>
 
 #include <mango/core/buffer.hpp>
@@ -1076,6 +1078,77 @@ namespace
         }
     }
 
+    class InputStreamPPMD7 : public IByteIn
+    {
+    public:
+        ConstMemory memory;
+        size_t offset { 0 };
+
+        explicit InputStreamPPMD7(ConstMemory memory)
+            : memory(memory)
+        {
+            Read = read_byte;
+        }
+
+        static Byte read_byte(const IByteIn* p)
+        {
+            auto* stream = static_cast<InputStreamPPMD7*>(const_cast<IByteIn*>(p));
+            if (stream->offset < stream->memory.size)
+            {
+                return stream->memory.address[stream->offset++];
+            }
+            return 0;
+        }
+    };
+
+    void decompressPpmd7(Buffer& output, ConstMemory input, const std::vector<u8>& props)
+    {
+        if (props.size() < 5)
+        {
+            MANGO_EXCEPTION("[mapper.7z] Invalid PPMd properties.");
+        }
+
+        const u32 order = props[0];
+        LittleEndianConstPointer pp = props.data() + 1;
+        const u32 mem_size = pp.read32();
+
+        if (order < PPMD7_MIN_ORDER || order > PPMD7_MAX_ORDER)
+        {
+            MANGO_EXCEPTION("[mapper.7z] Invalid PPMd order ({}).", order);
+        }
+
+        InputStreamPPMD7 stream(input);
+
+        CPpmd7 ppmd;
+        Ppmd7_Construct(&ppmd);
+        if (!Ppmd7_Alloc(&ppmd, mem_size, &g_Alloc))
+        {
+            MANGO_EXCEPTION("[mapper.7z] PPMd allocation failed.");
+        }
+
+        ppmd.rc.dec.Stream = &stream;
+        Ppmd7_Init(&ppmd, order);
+        if (!Ppmd7z_RangeDec_Init(&ppmd.rc.dec))
+        {
+            Ppmd7_Free(&ppmd, &g_Alloc);
+            MANGO_EXCEPTION("[mapper.7z] PPMd range decoder init failed.");
+        }
+
+        const size_t out_size = output.size();
+        for (size_t i = 0; i < out_size; ++i)
+        {
+            int symbol = Ppmd7z_DecodeSymbol(&ppmd);
+            if (symbol < 0)
+            {
+                Ppmd7_Free(&ppmd, &g_Alloc);
+                MANGO_EXCEPTION("[mapper.7z] PPMd decode failed.");
+            }
+            output.data()[i] = u8(symbol);
+        }
+
+        Ppmd7_Free(&ppmd, &g_Alloc);
+    }
+
     std::shared_ptr<Buffer> decompressCodec(
         u64 codec_id,
         ConstMemory input,
@@ -1191,72 +1264,7 @@ namespace
 
             case CODEC_PPMD:
             {
-                if (props.size() < 5)
-                {
-                    MANGO_EXCEPTION("[mapper.7z] Invalid PPMd properties.");
-                }
-
-                const u32 order = props[0];
-                LittleEndianConstPointer pp = props.data() + 1;
-                const u32 mem_size = pp.read32();
-
-                if (order < PPMD7_MIN_ORDER || order > PPMD7_MAX_ORDER)
-                {
-                    MANGO_EXCEPTION("[mapper.7z] Invalid PPMd order ({}).", order);
-                }
-
-                struct InputStreamPPMD7 : IByteIn
-                {
-                    ConstMemory memory;
-                    size_t offset;
-
-                    InputStreamPPMD7(ConstMemory memory)
-                        : memory(memory)
-                        , offset(0)
-                    {
-                        Read = read_byte;
-                    }
-
-                    static Byte read_byte(const IByteIn* p)
-                    {
-                        auto* stream = (InputStreamPPMD7*)p;
-                        if (stream->offset < stream->memory.size)
-                        {
-                            return stream->memory.address[stream->offset++];
-                        }
-                        return 0;
-                    }
-                };
-
-                InputStreamPPMD7 stream(input);
-
-                CPpmd7 ppmd;
-                Ppmd7_Construct(&ppmd);
-                if (!Ppmd7_Alloc(&ppmd, mem_size, &g_Alloc))
-                {
-                    MANGO_EXCEPTION("[mapper.7z] PPMd allocation failed.");
-                }
-
-                ppmd.rc.dec.Stream = &stream;
-                Ppmd7_Init(&ppmd, order);
-                if (!Ppmd7z_RangeDec_Init(&ppmd.rc.dec))
-                {
-                    Ppmd7_Free(&ppmd, &g_Alloc);
-                    MANGO_EXCEPTION("[mapper.7z] PPMd range decoder init failed.");
-                }
-
-                for (size_t i = 0; i < out_size; ++i)
-                {
-                    int symbol = Ppmd7z_DecodeSymbol(&ppmd);
-                    if (symbol < 0)
-                    {
-                        Ppmd7_Free(&ppmd, &g_Alloc);
-                        MANGO_EXCEPTION("[mapper.7z] PPMd decode failed.");
-                    }
-                    output->data()[i] = u8(symbol);
-                }
-
-                Ppmd7_Free(&ppmd, &g_Alloc);
+                decompressPpmd7(*output, input, props);
                 return output;
             }
 
@@ -1934,6 +1942,11 @@ namespace
         std::vector<u64> m_folder_pack_start; // first pack-stream index per folder
         bool m_valid { false };
 
+        bool isValid() const
+        {
+            return m_valid;
+        }
+
         explicit Index7z(ConstMemory memory)
             : m_memory(memory)
         {
@@ -1999,49 +2012,40 @@ namespace
         }
 
     private:
+        static constexpr int kMaxEncodedHeaderDepth = 16;
+
+        void parseHeaderFromStream(Stream7z& s, std::vector<std::shared_ptr<Buffer>>& decoded_headers)
+        {
+            for (int depth = 0; depth < kMaxEncodedHeaderDepth; ++depth)
+            {
+                u8 id = s.read8();
+                if (id == kHeader)
+                {
+                    parseHeader(s, m_header);
+                    return;
+                }
+
+                if (id == kEncodedHeader)
+                {
+                    ArchiveHeader encoded;
+                    parseStreamsInfo(s, encoded);
+                    auto decoded = decodeEncodedHeader(encoded);
+                    decoded_headers.push_back(decoded);
+                    s = Stream7z(ConstMemory(decoded->data(), decoded->size()));
+                    continue;
+                }
+
+                MANGO_EXCEPTION("[mapper.7z] Unexpected header property (0x{:x}).", id);
+            }
+
+            MANGO_EXCEPTION("[mapper.7z] Encoded header nesting exceeds {} levels.", kMaxEncodedHeaderDepth);
+        }
+
         void parseTopLevel(ConstMemory header_memory)
         {
+            std::vector<std::shared_ptr<Buffer>> decoded_headers;
             Stream7z s(header_memory);
-            u8 id = s.read8();
-
-            if (id == kHeader)
-            {
-                parseHeader(s, m_header);
-            }
-            else if (id == kEncodedHeader)
-            {
-                ArchiveHeader encoded;
-                parseStreamsInfo(s, encoded);
-                auto decoded = decodeEncodedHeader(encoded);
-
-                Stream7z inner(*decoded);
-                u8 inner_id = inner.read8();
-                if (inner_id == kHeader)
-                {
-                    parseHeader(inner, m_header);
-                }
-                else if (inner_id == kEncodedHeader)
-                {
-                    // nested encoded header
-                    ArchiveHeader nested;
-                    parseStreamsInfo(inner, nested);
-                    auto nested_decoded = decodeEncodedHeader(nested);
-                    Stream7z nested_stream(*nested_decoded);
-                    if (nested_stream.read8() != kHeader)
-                    {
-                        MANGO_EXCEPTION("[mapper.7z] Expected Header after decoding.");
-                    }
-                    parseHeader(nested_stream, m_header);
-                }
-                else
-                {
-                    MANGO_EXCEPTION("[mapper.7z] Unexpected property in decoded header.");
-                }
-            }
-            else
-            {
-                MANGO_EXCEPTION("[mapper.7z] Unexpected top-level property (0x{:x}).", id);
-            }
+            parseHeaderFromStream(s, decoded_headers);
         }
 
         std::shared_ptr<Buffer> decodeEncodedHeader(const ArchiveHeader& encoded)
@@ -2190,18 +2194,10 @@ namespace mango::filesystem
         std::string m_password;
         LRUCache<u32, std::shared_ptr<Buffer>> m_cache { kFolderCacheSize };
         std::mutex m_cache_mutex;
+        std::unordered_map<u32, std::shared_future<std::shared_ptr<Buffer>>> m_inflight;
 
-        std::shared_ptr<Buffer> decompressFolderCached(u32 folder_index)
+        std::shared_ptr<Buffer> decompressFolderUncached(u32 folder_index)
         {
-            {
-                std::lock_guard lock(m_cache_mutex);
-                auto cached = m_cache.get(folder_index);
-                if (cached)
-                {
-                    return *cached;
-                }
-            }
-
             if (!m_index.m_header.has_pack_info)
             {
                 MANGO_EXCEPTION("[mapper.7z] Archive has no pack info.");
@@ -2241,14 +2237,51 @@ namespace mango::filesystem
                 packed.emplace_back(m_index.m_memory.address + offset, size_t(size));
             }
 
-            auto buffer = decompressFolder(folder, packed);
+            return decompressFolder(folder, packed);
+        }
 
+        std::shared_ptr<Buffer> decompressFolderCached(u32 folder_index)
+        {
+            std::unique_lock lock(m_cache_mutex);
+
+            if (auto cached = m_cache.get(folder_index))
             {
-                std::lock_guard lock(m_cache_mutex);
-                m_cache.insert(folder_index, buffer);
+                return *cached;
             }
 
-            return buffer;
+            if (auto it = m_inflight.find(folder_index); it != m_inflight.end())
+            {
+                std::shared_future<std::shared_ptr<Buffer>> future = it->second;
+                lock.unlock();
+                return future.get();
+            }
+
+            auto promise = std::make_shared<std::promise<std::shared_ptr<Buffer>>>();
+            std::shared_future<std::shared_ptr<Buffer>> future = promise->get_future();
+            m_inflight.emplace(folder_index, future);
+            lock.unlock();
+
+            try
+            {
+                auto buffer = decompressFolderUncached(folder_index);
+
+                lock.lock();
+                m_cache.insert(folder_index, buffer);
+                m_inflight.erase(folder_index);
+                lock.unlock();
+
+                promise->set_value(buffer);
+                return buffer;
+            }
+            catch (...)
+            {
+                lock.lock();
+                m_inflight.erase(folder_index);
+                lock.unlock();
+
+                promise->set_exception(std::current_exception());
+                throw;
+            }
         }
 
     public:
@@ -2257,6 +2290,11 @@ namespace mango::filesystem
             , m_password(password)
         {
             MANGO_UNREFERENCED(m_password);
+
+            if (!m_index.isValid())
+            {
+                MANGO_EXCEPTION("[mapper.7z] Invalid or unsupported archive.");
+            }
         }
 
         u64 getSize(const std::string& filename) const override
