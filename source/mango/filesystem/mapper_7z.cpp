@@ -2,6 +2,8 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#if defined(MANGO_ENABLE_LZMA)
+
 #include <algorithm>
 #include <cstring>
 #include <mutex>
@@ -19,10 +21,8 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
-#if defined(MANGO_ENABLE_LZMA)
-    #include "../../external/lzma/Alloc.h"
-    #include "../../external/lzma/Ppmd7.h"
-#endif
+#include "../../external/lzma/Alloc.h"
+#include "../../external/lzma/Ppmd7.h"
 
 namespace
 {
@@ -1151,7 +1151,6 @@ namespace
 
             case CODEC_LZMA:
             {
-#if defined(MANGO_ENABLE_LZMA)
                 if (props.size() != 5)
                 {
                     MANGO_EXCEPTION("[mapper.7z] Invalid LZMA properties.");
@@ -1168,14 +1167,10 @@ namespace
                     MANGO_EXCEPTION("[mapper.7z] {}", status.info);
                 }
                 return output;
-#else
-                MANGO_EXCEPTION("[mapper.7z] LZMA support is not enabled.");
-#endif
             }
 
             case CODEC_LZMA2:
             {
-#if defined(MANGO_ENABLE_LZMA)
                 if (props.size() != 1)
                 {
                     MANGO_EXCEPTION("[mapper.7z] Invalid LZMA2 properties.");
@@ -1192,14 +1187,10 @@ namespace
                     MANGO_EXCEPTION("[mapper.7z] {}", status.info);
                 }
                 return output;
-#else
-                MANGO_EXCEPTION("[mapper.7z] LZMA2 support is not enabled.");
-#endif
             }
 
             case CODEC_PPMD:
             {
-#if defined(MANGO_ENABLE_LZMA)
                 if (props.size() < 5)
                 {
                     MANGO_EXCEPTION("[mapper.7z] Invalid PPMd properties.");
@@ -1267,9 +1258,6 @@ namespace
 
                 Ppmd7_Free(&ppmd, &g_Alloc);
                 return output;
-#else
-                MANGO_EXCEPTION("[mapper.7z] PPMd support is not enabled.");
-#endif
             }
 
             case CODEC_DEFLATE:
@@ -2382,3 +2370,5 @@ namespace mango::filesystem
     }
 
 } // namespace mango::filesystem
+
+#endif // defined(MANGO_ENABLE_LZMA)

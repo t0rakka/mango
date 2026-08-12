@@ -50,8 +50,10 @@ namespace mango::filesystem
         MapperExtension(createMapperRAR, ".rar"),
         MapperExtension(createMapperRAR, ".cbr"),
         MapperExtension(createMapperISO, ".iso"),
+#if defined(MANGO_ENABLE_LZMA)
         MapperExtension(createMapper7Z, ".7z"),
         MapperExtension(createMapper7Z, ".cb7"),
+#endif
     };
 
     static inline
