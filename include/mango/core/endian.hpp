@@ -228,6 +228,52 @@ namespace mango
         std::memcpy(p, &value, sizeof(value));
     }
 
+    // --------------------------------------------------------------
+    // templated unaligned load / store
+    // --------------------------------------------------------------
+
+    template <typename T>
+    T uload(const void* p);
+
+    template <>
+    inline u16 uload<u16>(const void* p)
+    {
+        return uload16(p);
+    }
+
+    template <>
+    inline u32 uload<u32>(const void* p)
+    {
+        return uload32(p);
+    }
+
+    template <>
+    inline u64 uload<u64>(const void* p)
+    {
+        return uload64(p);
+    }
+
+    template <typename T>
+    void ustore(void* p, T value);
+
+    template <>
+    inline void ustore<u16>(void* p, u16 value)
+    {
+        ustore16(p, value);
+    }
+
+    template <>
+    inline void ustore<u32>(void* p, u32 value)
+    {
+        ustore32(p, value);
+    }
+
+    template <>
+    inline void ustore<u64>(void* p, u64 value)
+    {
+        ustore64(p, value);
+    }
+
 } // namespace mango
 
 namespace mango::littleEndian

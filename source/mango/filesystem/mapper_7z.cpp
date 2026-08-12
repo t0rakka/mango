@@ -768,9 +768,9 @@ namespace
             {
                 MANGO_EXCEPTION("[mapper.7z] Truncated filename.");
             }
-            u8 lo = s.read8();
-            u8 hi = s.read8();
-            char16_t ch = char16_t(lo | (u16(hi) << 8));
+
+            char16_t ch = char16_t(uload16(s.ptr()));
+            s.skip(2);
             if (ch == 0)
             {
                 break;
@@ -996,21 +996,12 @@ namespace
 
     void filterSwap2(u8* data, size_t size)
     {
-        size &= ~size_t(1);
-        for (size_t i = 0; i < size; i += 2)
-        {
-            std::swap(data[i], data[i + 1]);
-        }
+        byteswap(Memory(data, size & ~size_t(1)), 16);
     }
 
     void filterSwap4(u8* data, size_t size)
     {
-        size &= ~size_t(3);
-        for (size_t i = 0; i < size; i += 4)
-        {
-            std::swap(data[i + 0], data[i + 3]);
-            std::swap(data[i + 1], data[i + 2]);
-        }
+        byteswap(Memory(data, size & ~size_t(3)), 32);
     }
 
     // x86 BCJ decoder (7-Zip / LZMA SDK Bra86 encoding=0)
@@ -1046,10 +1037,7 @@ namespace
                 continue;
             }
 
-            u32 src = u32(data[pos + 1])
-                    | (u32(data[pos + 2]) << 8)
-                    | (u32(data[pos + 3]) << 16)
-                    | (u32(data[pos + 4]) << 24);
+            u32 src = uload32(data + pos + 1);
 
             for (;;)
             {
@@ -1069,9 +1057,7 @@ namespace
                 src = dest ^ ((u32(1) << (32 - index * 8)) - 1);
             }
 
-            data[pos + 1] = u8(src);
-            data[pos + 2] = u8(src >> 8);
-            data[pos + 3] = u8(src >> 16);
+            ustore32(data + pos + 1, src);
             data[pos + 4] = u8(((0 - ((src >> 24) & 1)) & 0xFF));
             pos += 5;
             state = 0;
@@ -1510,11 +1496,7 @@ namespace
         size_t jump_pos = 0;
         size_t rc_pos = 5;
 
-        u32 code = 0;
-        for (int i = 1; i < 5; ++i)
-        {
-            code = (code << 8) | rc_data.address[i];
-        }
+        u32 code = uload32_reverse(rc_data.address + 1);
         u32 range = 0xffffffffu;
 
         u16 probs[kNumProbs];
@@ -1622,10 +1604,7 @@ namespace
                 {
                     MANGO_EXCEPTION("[mapper.7z] BCJ2 unexpected end of CALL stream.");
                 }
-                val = (u32(call_data.address[call_pos]) << 24)
-                    | (u32(call_data.address[call_pos + 1]) << 16)
-                    | (u32(call_data.address[call_pos + 2]) << 8)
-                    | u32(call_data.address[call_pos + 3]);
+                val = uload32_reverse(call_data.address + call_pos);
                 call_pos += 4;
             }
             else
@@ -1634,10 +1613,7 @@ namespace
                 {
                     MANGO_EXCEPTION("[mapper.7z] BCJ2 unexpected end of JUMP stream.");
                 }
-                val = (u32(jump_data.address[jump_pos]) << 24)
-                    | (u32(jump_data.address[jump_pos + 1]) << 16)
-                    | (u32(jump_data.address[jump_pos + 2]) << 8)
-                    | u32(jump_data.address[jump_pos + 3]);
+                val = uload32_reverse(jump_data.address + jump_pos);
                 jump_pos += 4;
             }
 
@@ -1649,10 +1625,7 @@ namespace
                 MANGO_EXCEPTION("[mapper.7z] BCJ2 output overflow.");
             }
 
-            dest[out_pos + 0] = u8(val);
-            dest[out_pos + 1] = u8(val >> 8);
-            dest[out_pos + 2] = u8(val >> 16);
-            dest[out_pos + 3] = u8(val >> 24);
+            ustore32(dest + out_pos, val);
             out_pos += 4;
             prev_byte = u8(val >> 24);
         }

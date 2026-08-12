@@ -4,12 +4,30 @@
 */
 #include <cassert>
 #include <mango/core/bits.hpp>
+#include <mango/core/endian.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/math/vector.hpp>
 
 namespace mango
 {
     using namespace mango::math;
+
+    namespace
+    {
+
+        template <typename T>
+        void byteswap_scalar(T* data, size_t count)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                T value = uload<T>(data);
+                value = byteswap(value);
+                ustore<T>(data, value);
+                ++data;
+            }
+        }
+
+    } // namespace
 
     // -----------------------------------------------------------------------
     // SharedMemory
@@ -239,9 +257,9 @@ namespace mango
             count -= 8;
         }
 
-        for (size_t i = 0; i < count; ++i)
+        if (count)
         {
-            data[i] = byteswap(data[i]);
+            byteswap_scalar(data, count);
         }
     }
 
@@ -249,20 +267,7 @@ namespace mango
 
     void byteswap(u16* data, size_t count)
     {
-        while (count >= 4)
-        {
-            data[0] = byteswap(data[0]);
-            data[1] = byteswap(data[1]);
-            data[2] = byteswap(data[2]);
-            data[3] = byteswap(data[3]);
-            data += 4;
-            count -= 4;
-        }
-
-        for (size_t i = 0; i < count; ++i)
-        {
-            data[i] = byteswap(data[i]);
-        }
+        byteswap_scalar(data, count);
     }
 
 #endif
@@ -283,9 +288,9 @@ namespace mango
             count -= 4;
         }
 
-        for (size_t i = 0; i < count; ++i)
+        if (count)
         {
-            data[i] = byteswap(data[i]);
+            byteswap_scalar(data, count);
         }
     }
 
@@ -303,9 +308,9 @@ namespace mango
             count -= 2;
         }
 
-        for (size_t i = 0; i < count; ++i)
+        if (count)
         {
-            data[i] = byteswap(data[i]);
+            byteswap_scalar(data, count);
         }
     }
 
@@ -317,6 +322,7 @@ namespace mango
 
         while (count >= 2)
         {
+            // 64 bits per iteration
             u8* ptr = reinterpret_cast<u8*>(data);
             uint8x8_t v = vld1_u8(ptr);
             v = vtbl1_u8(v, table);
@@ -325,9 +331,9 @@ namespace mango
             count -= 2;
         }
 
-        for (size_t i = 0; i < count; ++i)
+        if (count)
         {
-            data[i] = byteswap(data[i]);
+            byteswap_scalar(data, count);
         }
     }
 
@@ -337,6 +343,7 @@ namespace mango
 
         for (size_t i = 0; i < count; ++i)
         {
+            // 64 bits per iteration
             u8* ptr = reinterpret_cast<u8*>(data);
             uint8x8_t v = vld1_u8(ptr);
             v = vtbl1_u8(v, table);
@@ -349,46 +356,40 @@ namespace mango
 
     void byteswap(u32* data, size_t count)
     {
-        while (count >= 4)
-        {
-            data[0] = byteswap(data[0]);
-            data[1] = byteswap(data[1]);
-            data[2] = byteswap(data[2]);
-            data[3] = byteswap(data[3]);
-            data += 4;
-            count -= 4;
-        }
-
-        for (size_t i = 0; i < count; ++i)
-        {
-            data[i] = byteswap(data[i]);
-        }
+        byteswap_scalar(data, count);
     }
 
     void byteswap(u64* data, size_t count)
     {
-        for (size_t i = 0; i < count; ++i)
-        {
-            data[i] = byteswap(data[i]);
-        }
+        byteswap_scalar(data, count);
     }
 
 #endif
 
     void byteswap(Memory memory, int bits)
     {
+        if (!memory.address || bits < 16)
+        {
+            return;
+        }
+
+        const size_t width = size_t(bits >> 3);
+        const size_t bytes = memory.size & ~(width - 1);
+        if (bytes < width)
+        {
+            return;
+        }
+
         switch (bits)
         {
             case 16:
-                byteswap(reinterpret_cast<u16*>(memory.address), memory.size >> 1);
+                byteswap(reinterpret_cast<u16*>(memory.address), bytes >> 1);
                 break;
             case 32:
-                byteswap(reinterpret_cast<u32*>(memory.address), memory.size >> 2);
+                byteswap(reinterpret_cast<u32*>(memory.address), bytes >> 2);
                 break;
             case 64:
-                byteswap(reinterpret_cast<u64*>(memory.address), memory.size >> 3);
-                break;
-            default:
+                byteswap(reinterpret_cast<u64*>(memory.address), bytes >> 3);
                 break;
         }
     }
