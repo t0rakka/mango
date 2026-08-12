@@ -20,6 +20,7 @@ namespace mango::filesystem
     AbstractMapper* createMapperRAR(ConstMemory parent, const std::string& password);
     AbstractMapper* createMapperHBS(ConstMemory parent, const std::string& password);
     AbstractMapper* createMapperISO(ConstMemory parent, const std::string& password);
+    AbstractMapper* createMapper7Z(ConstMemory parent, const std::string& password);
 
     using CreateMapperFunc = AbstractMapper* (*)(ConstMemory, const std::string&);
 
@@ -49,6 +50,8 @@ namespace mango::filesystem
         MapperExtension(createMapperRAR, ".rar"),
         MapperExtension(createMapperRAR, ".cbr"),
         MapperExtension(createMapperISO, ".iso"),
+        MapperExtension(createMapper7Z, ".7z"),
+        MapperExtension(createMapper7Z, ".cb7"),
     };
 
     static inline

@@ -55,15 +55,26 @@ int test(const std::string& pathname, const std::string& filename, u32 expected,
 int main()
 {
     int failed_count = 0;
-    failed_count += test("deflate.zip",      "test.png", 0xb77cd85d, "");
-    failed_count += test("deflate64.zip",    "test.png", 0xb77cd85d, "");
-    failed_count += test("bzip2.zip",        "test.png", 0xb77cd85d, "");
-    failed_count += test("lzma.zip",         "test.png", 0xb77cd85d, "");
-    failed_count += test("ppmd.zip",         "test.png", 0xb77cd85d, "");
-    failed_count += test("bzip2_crypto.zip", "test.png", 0xb77cd85d, "secret1234");
-    failed_count += test("bzip2_aes256.zip", "test.png", 0xb77cd85d, "secret1234");
-    failed_count += test("aes128.zip",       "test.png", 0xb77cd85d, "secret1234");
-    failed_count += test("aes192.zip",       "test.png", 0xb77cd85d, "secret1234");
-    failed_count += test("aes256.zip",       "test.png", 0xb77cd85d, "secret1234");
+
+    // zip tests
+    failed_count += test("deflate.zip",      "test.png",           0xb77cd85d, "");
+    failed_count += test("deflate64.zip",    "test.png",           0xb77cd85d, "");
+    failed_count += test("bzip2.zip",        "test.png",           0xb77cd85d, "");
+    failed_count += test("lzma.zip",         "test.png",           0xb77cd85d, "");
+    failed_count += test("ppmd.zip",         "test.png",           0xb77cd85d, "");
+    failed_count += test("bzip2_crypto.zip", "test.png",           0xb77cd85d, "secret1234");
+    failed_count += test("bzip2_aes256.zip", "test.png",           0xb77cd85d, "secret1234");
+    failed_count += test("aes128.zip",       "test.png",           0xb77cd85d, "secret1234");
+    failed_count += test("aes192.zip",       "test.png",           0xb77cd85d, "secret1234");
+    failed_count += test("aes256.zip",       "test.png",           0xb77cd85d, "secret1234");
+
+    // 7z tests
+    failed_count += test("bzip2.7z",         "test.png",           0xb77cd85d, "");
+    failed_count += test("lzma.7z",          "test.png",           0xb77cd85d, "");
+    failed_count += test("ppmd.7z",          "test.png",           0xb77cd85d, "");
+    failed_count += test("lzma2.7z",         "logo-apple.png",     0xac7b9dcc, "");
+    failed_count += test("lzma2.7z",         "logo-archlinux.png", 0x02b0f3ea, "");
+    failed_count += test("lzma2.7z",         "logo-linux.png",     0x4a42e206, "");
+
     return !!failed_count;
 }
