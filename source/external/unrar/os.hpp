@@ -37,8 +37,14 @@
 #define _UNICODE // Set _T() macro to convert from narrow to wide strings.
 #endif
 
+// Same for WINVER / _WIN32_WINNT: mango (and the Windows SDK) may already
+// have set these to a newer target; unconditional redefine → C4005.
+#ifndef WINVER
 #define WINVER _WIN32_WINNT_WINXP
+#endif
+#ifndef _WIN32_WINNT
 #define _WIN32_WINNT _WIN32_WINNT_WINXP
+#endif
 
 #if !defined(ZIPSFX) && !defined(SFX_MODULE)
 #define RAR_SMP

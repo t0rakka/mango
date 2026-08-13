@@ -695,6 +695,10 @@ foreach(source ${MANGO_UNRAR_SOURCES})
     list(APPEND EXTERNAL_UNRAR "${EXTERNAL_SOURCE_DIR}/unrar/${source}")
 endforeach()
 set_source_files_properties(${EXTERNAL_UNRAR} PROPERTIES COMPILE_DEFINITIONS "SFX_MODULE;SILENT;NOVOLUME")
+# mapper_rar.cpp includes rar.hpp and must use the same layout as the unrar TUs.
+set_source_files_properties(
+    "${MANGO_SOURCE_DIR}/filesystem/mapper_rar.cpp"
+    PROPERTIES COMPILE_DEFINITIONS "SFX_MODULE;SILENT;NOVOLUME")
 if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
     set_source_files_properties(${EXTERNAL_UNRAR} PROPERTIES
         COMPILE_OPTIONS "-Wno-dangling-else;-Wno-switch")

@@ -17,6 +17,20 @@
 #include <mango/filesystem/path.hpp>
 #include "indexer.hpp"
 
+// Must match COMPILE_DEFINITIONS used for source/external/unrar/*.cpp
+// (SFX_MODULE;SILENT;NOVOLUME). Otherwise rar.hpp enables RAR_SMP here while
+// unpack.cpp was built without it — Unpack layout / inline SetDestSize diverge
+// and RAR5 decode silently corrupts on MSVC (Linux/macOS can appear fine).
+#ifndef SFX_MODULE
+#define SFX_MODULE
+#endif
+#ifndef SILENT
+#define SILENT
+#endif
+#ifndef NOVOLUME
+#define NOVOLUME
+#endif
+
 #include "../../external/unrar/rar.hpp"
 
 // -----------------------------------------------------------------
