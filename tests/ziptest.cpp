@@ -56,6 +56,12 @@ int main()
         // hbs tests
         { "test.hbs",         "lorem-1.txt",        0xe65308f5, "" },
         { "test.hbs",         "lorem-2.txt",        0xe65308f5, "" },
+
+        // rar tests
+        { "normal.rar",       "lorem-1.txt",        0xe65308f5, "" },
+        { "normal.rar",       "lorem-2.txt",        0xe65308f5, "" },
+        { "solid.rar",        "lorem-1.txt",        0xe65308f5, "" },
+        { "solid.rar",        "lorem-2.txt",        0xe65308f5, "" },
     };
 
     int failed_count = 0;

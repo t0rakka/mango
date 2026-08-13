@@ -657,10 +657,48 @@ if (LIBRARY_LZFSE)
     )
 endif ()
 
-FILE(GLOB EXTERNAL_UNRAR
-    "${EXTERNAL_SOURCE_DIR}/unrar/*.hpp"
-    "${EXTERNAL_SOURCE_DIR}/unrar/*.cpp"
+set(MANGO_UNRAR_SOURCES
+    global.cpp
+    system.cpp
+    errhnd.cpp
+    options.cpp
+    strlist.cpp
+    strfn.cpp
+    pathfn.cpp
+    smallfn.cpp
+    file.cpp
+    filefn.cpp
+    find.cpp
+    match.cpp
+    rawread.cpp
+    crc.cpp
+    crypt.cpp
+    rijndael.cpp
+    getbits.cpp
+    rarvm.cpp
+    sha1.cpp
+    sha256.cpp
+    blake2s.cpp
+    hash.cpp
+    rdwrfn.cpp
+    unpack.cpp
+    secpassword.cpp
+    timefn.cpp
+    unicode.cpp
+    largepage.cpp
 )
+set(EXTERNAL_UNRAR "")
+foreach(source ${MANGO_UNRAR_SOURCES})
+    list(APPEND EXTERNAL_UNRAR "${EXTERNAL_SOURCE_DIR}/unrar/${source}")
+endforeach()
+set_source_files_properties(${EXTERNAL_UNRAR} PROPERTIES COMPILE_DEFINITIONS "SFX_MODULE;SILENT;NOVOLUME")
+if(CMAKE_CXX_COMPILER_ID MATCHES "Clang|GNU")
+    set_source_files_properties(${EXTERNAL_UNRAR} PROPERTIES
+        COMPILE_OPTIONS "-Wno-dangling-else;-Wno-switch")
+elseif(MSVC)
+    set_source_files_properties(${EXTERNAL_UNRAR} PROPERTIES
+        COMPILE_OPTIONS "/wd4061;/wd4062;/wd4706")
+endif()
 
 FILE(GLOB EXTERNAL_INFLATELIB
     "${EXTERNAL_SOURCE_DIR}/inflatelib/*.h"

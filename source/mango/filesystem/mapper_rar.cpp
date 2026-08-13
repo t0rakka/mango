@@ -1,12 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 /*
     RAR decompression code: Alexander L. Roshal / unRAR library.
 */
 #include <map>
+#include <memory>
 #include <algorithm>
+#include <mango/core/buffer.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/exception.hpp>
@@ -16,6 +18,37 @@
 #include "indexer.hpp"
 
 #include "../../external/unrar/rar.hpp"
+
+// -----------------------------------------------------------------
+// UnRAR link stubs (not used by MapperRAR at runtime)
+// -----------------------------------------------------------------
+// Decompress-only UnRAR (SFX_MODULE/SILENT/NOVOLUME) still references UI
+// symbols from errhnd, rdwrfn, find, and filefn. These no-ops satisfy the
+// linker; the mapper path disables progress and never calls them.
+
+#ifndef RARDLL
+const wchar* St(MSGID StringId)
+{
+    return StringId;
+}
+#endif
+
+void uiExtractProgress(int64 CurFileSize, int64 TotalFileSize, int64 CurSize, int64 TotalSize)
+{
+    MANGO_UNREFERENCED(CurFileSize);
+    MANGO_UNREFERENCED(TotalFileSize);
+    MANGO_UNREFERENCED(CurSize);
+    MANGO_UNREFERENCED(TotalSize);
+}
+
+void uiAlarm(UIALARM_TYPE Type)
+{
+    MANGO_UNREFERENCED(Type);
+}
+
+void uiMsgStore::Msg()
+{
+}
 
 // https://www.rarlab.com/technote.htm
 
@@ -54,26 +87,18 @@ namespace
         }
     };
     
-    bool decompress(u8* output, const u8* input, u64 unpacked_size, u64 packed_size, u8 version)
+    bool decompress(ComprDataIO& io, Unpack& unpack, u8* output, const u8* input,
+        u64 unpacked_size, u64 packed_size, u8 unp_ver, u64 win_size, bool solid)
     {
-        ComprDataIO subDataIO;
-        subDataIO.Init();
+        io.Init();
+        io.EnableShowProgress(false);
+        io.SetUnpackFromMemory(const_cast<byte*>(input), uint(packed_size));
+        io.SetUnpackToMemory(output, uint(unpacked_size));
+        io.SetPackedSizeToRead(packed_size);
 
-        Unpack unpack(&subDataIO);
-        unpack.Init();
-
-        subDataIO.UnpackToMemory = true;
-        subDataIO.UnpackToMemorySize = size_t(unpacked_size);
-        subDataIO.UnpackToMemoryAddr = output;
-
-        subDataIO.UnpackFromMemory = true;
-        subDataIO.UnpackFromMemorySize = size_t(packed_size);
-        subDataIO.UnpackFromMemoryAddr = const_cast<u8*>(input);
-
-        subDataIO.UnpPackedSize = packed_size;
+        unpack.Init(win_size, solid);
         unpack.SetDestSize(unpacked_size);
-
-        unpack.DoUnpack(version, false);
+        unpack.DoUnpack(unp_ver, solid);
 
         return true;
     }
@@ -181,50 +206,6 @@ namespace
     // RAR parsing code
     // -----------------------------------------------------------------
 
-    enum
-    {
-        MARK_HEAD    = 0x72,
-        MAIN_HEAD    = 0x73,
-        FILE_HEAD    = 0x74,
-        COMM_HEAD    = 0x75,
-        AV_HEAD      = 0x76,
-        SUB_HEAD     = 0x77,
-        PROTECT_HEAD = 0x78,
-        SIGN_HEAD    = 0x79,
-        NEWSUB_HEAD  = 0x7a,
-        ENDARC_HEAD  = 0x7b
-    };
-
-    enum
-    {
-        MHD_VOLUME       = 0x0001,
-        MHD_COMMENT      = 0x0002,
-        MHD_LOCK         = 0x0004,
-        MHD_SOLID        = 0x0008,
-        MHD_PACK_COMMENT = 0x0010, // MHD_NEWNUMBERING
-        MHD_AV           = 0x0020,
-        MHD_PROTECT      = 0x0040,
-        MHD_PASSWORD     = 0x0080,
-        MHD_FIRSTVOLUME  = 0x0100,
-        MHD_ENCRYPTVER   = 0x0200
-    };
-
-    enum
-    {
-        LHD_SPLIT_BEFORE = 0x0001, // NOTE: not supported
-        LHD_SPLIT_AFTER  = 0x0002, // NOTE: not supported
-        LHD_PASSWORD     = 0x0004,
-        LHD_COMMENT      = 0x0008,
-        LHD_SOLID        = 0x0010,
-        LHD_LARGE        = 0x0100,
-        LHD_UNICODE      = 0x0200,
-        LHD_SALT         = 0x0400,
-        LHD_VERSION      = 0x0800,
-        LHD_EXTTIME      = 0x1000,
-        LHD_EXTFLAGS     = 0x2000,
-        LHD_SKIP_UNKNOWN = 0x4000
-    };
-
     struct Header
     {
         // common
@@ -251,21 +232,21 @@ namespace
             flags = p.read16();
             size  = p.read16();
 
-            if (flags & LHD_SKIP_UNKNOWN)
+            if (flags & SKIP_IF_UNKNOWN)
             {
                 return;
             }
 
-            if (flags & 0x8000 && type != FILE_HEAD)
+            if (flags & LONG_BLOCK && type != HEAD3_FILE)
             {
                 size = u16(size + p.read32());
             }
 
             switch (type)
             {
-                case MAIN_HEAD:
+                case HEAD3_MAIN:
                 {
-                    if (flags & MHD_ENCRYPTVER)
+                    if (flags & 0x0200)
                     {
                         // encrypted
                         is_encrypted = true;
@@ -273,7 +254,7 @@ namespace
                     break;
                 }
 
-                case FILE_HEAD:
+                case HEAD3_FILE:
                 {
                     packed_size = p.read32();
                     unpacked_size = p.read32();
@@ -331,14 +312,14 @@ namespace
                     break;
                 }
 
-                case MARK_HEAD:
-                case COMM_HEAD:
-                case AV_HEAD:
-                case SUB_HEAD:
-                case PROTECT_HEAD:
-                case SIGN_HEAD:
-                case NEWSUB_HEAD:
-                case ENDARC_HEAD:
+                case HEAD3_MARK:
+                case HEAD3_CMT:
+                case HEAD3_AV:
+                case HEAD3_OLDSERVICE:
+                case HEAD3_PROTECT:
+                case HEAD3_SIGN:
+                case HEAD3_SERVICE:
+                case HEAD3_ENDARC:
                     break;
             }
         }
@@ -353,14 +334,17 @@ namespace
         }
     };
 
-    struct FileHeader
+    struct RarEntry
     {
         u64 packed_size;
         u64 unpacked_size;
         u32 crc;
-        u8  version;
+        u8  unp_ver;
         u8  method;
         bool is_rar5;
+        bool solid_continue;
+        u64 win_size;
+        size_t index;
         std::string filename;
 
         bool folder;
@@ -374,40 +358,19 @@ namespace
             }
             return method != 0x30;
         }
-
-        std::unique_ptr<VirtualMemory> map() const
-        {
-            const u8* v_address = nullptr;
-            const u8* v_delete_address = nullptr;
-            size_t v_size = 0;
-
-            if (!compressed())
-            {
-                // no compression
-                v_address = data;
-                v_delete_address = nullptr;
-                v_size = size_t(unpacked_size);
-            }
-            else
-            {
-                size_t size = size_t(unpacked_size);
-                u8* buffer = new u8[size];
-
-                bool status = decompress(buffer, data, unpacked_size, packed_size, version);
-                if (!status)
-                {
-                    delete[] buffer;
-                    MANGO_EXCEPTION("[mapper.rar] Decompression failed.");
-                }
-
-                v_size = size;
-                v_address = buffer;
-                v_delete_address = buffer;
-            }
-
-            return std::make_unique<VirtualMemoryRAR>(v_address, v_delete_address, v_size);
-        }
     };
+
+    size_t solidGroupStart(const std::vector<RarEntry>& files, size_t file_index)
+    {
+        size_t start = file_index;
+
+        while (start > 0 && files[start].solid_continue)
+        {
+            --start;
+        }
+
+        return start;
+    }
 
 } // namespace
 
@@ -422,8 +385,8 @@ namespace mango::filesystem
     {
     public:
         std::string m_password;
-        std::vector<FileHeader> m_files;
-        Indexer<FileHeader> m_folders;
+        std::vector<RarEntry> m_files;
+        Indexer<RarEntry> m_folders;
         bool is_encrypted { false };
 
         MapperRAR(ConstMemory parent, const std::string& password)
@@ -455,16 +418,29 @@ namespace mango::filesystem
                     //printLine(Print::Info, "[RAR] Incorrect signature.");
                 }
 
+                for (size_t i = 0; i < m_files.size(); ++i)
+                {
+                    m_files[i].index = i;
+                }
+
                 for (auto& header : m_files)
                 {
                     std::string filename = header.filename;
+                    bool is_leaf = true;
+
                     while (!filename.empty())
                     {
                         std::string folder = getPath(filename.substr(0, filename.length() - 1));
 
-                        header.filename = filename.substr(folder.length());
-                        m_folders.insert(folder, filename, header);
-                        header.folder = true;
+                        RarEntry entry = header;
+                        entry.filename = filename.substr(folder.length());
+                        if (!is_leaf)
+                        {
+                            entry.folder = true;
+                        }
+
+                        m_folders.insert(folder, filename, entry);
+                        is_leaf = false;
                         filename = folder;
                     }
                 }
@@ -489,23 +465,29 @@ namespace mango::filesystem
 
                 switch (header.type)
                 {
-                    case FILE_HEAD:
+                    case HEAD3_FILE:
                     {
                         if (header.isSupportedVersion())
                         {
                             if (!header.filename.empty())
                             {
-                                FileHeader file;
+                                RarEntry file;
 
                                 file.packed_size = header.packed_size;
                                 file.unpacked_size = header.unpacked_size;
                                 file.crc = header.file_crc;
-                                file.version = header.version;
+                                file.unp_ver = header.version;
                                 file.method  = header.method;
                                 file.is_rar5 = false;
+                                file.solid_continue = (header.flags & LHD_SOLID) != 0;
+                                file.win_size = 0;
 
                                 int dict_flags = (header.flags >> 5) & 7;
                                 file.folder = (dict_flags == 7);
+                                if (!file.folder)
+                                {
+                                    file.win_size = 0x10000ULL << ((header.flags & LHD_WINDOWMASK) >> 5);
+                                }
                                 file.data = p;
 
                                 file.filename = header.filename;
@@ -528,7 +510,7 @@ namespace mango::filesystem
                         break;
                     }
 
-                    case ENDARC_HEAD:
+                    case HEAD3_ENDARC:
                     {
                         p = end; // terminate parsing
                         break;
@@ -581,11 +563,10 @@ namespace mango::filesystem
 
             bool is_directory = (flags & 1) != 0;
 
-            // compression
-            u32 algorithm = compression & 0x3f; // 0
-            bool is_solid = (compression & 0x40) != 0;
-            u32 method = (compression & 0x380) >> 7; // 0..5
-            //u32 min_dict_size = (compression & 0x3c00) >> 10;
+            u32 comp_info = u32(compression);
+            u32 unp_subver = comp_info & 0x3f;
+            u32 method = (comp_info >> 7) & 7;
+            bool solid_continue = (comp_info & 0x40) != 0;
 
             if (flags & 8)
             {
@@ -593,16 +574,35 @@ namespace mango::filesystem
                 return;
             }
 
-            if (is_solid)
-            {
-                // solid archives are unsupported at this time
-                return;
-            }
-
-            if (!compressed_data.size && !is_directory)
+            if (!compressed_data.size && !is_directory && method != 0)
             {
                 // empty non-directory files are not supported
                 return;
+            }
+
+            u8 unp_ver = 0;
+            u64 win_size = 0;
+
+            if (unp_subver == 0)
+            {
+                unp_ver = VER_PACK5;
+            }
+            else if (unp_subver == 1)
+            {
+                unp_ver = VER_PACK7;
+            }
+            else
+            {
+                return;
+            }
+
+            if (!is_directory && unp_subver <= 1)
+            {
+                win_size = 0x20000ULL << ((comp_info >> 10) & (unp_subver == 0 ? 0x0f : 0x1f));
+                if (unp_subver == 1)
+                {
+                    win_size += win_size / 32 * ((comp_info >> 15) & 0x1f);
+                }
             }
 
             // read filename
@@ -613,14 +613,16 @@ namespace mango::filesystem
             //printf("  %s%s [algorithm: %d, solid: %d, method: %d]\n", 
             //    filename.c_str(), is_directory ? "/" : "", algorithm, is_solid, method);
 
-            FileHeader file;
+            RarEntry file;
 
             file.packed_size = compressed_data.size;
             file.unpacked_size = unpacked_size;
             file.crc = crc;
-            file.version = u8(algorithm);
+            file.unp_ver = unp_ver;
             file.method  = u8(method);
             file.is_rar5 = true;
+            file.solid_continue = solid_continue;
+            file.win_size = win_size;
 
             file.folder = is_directory;
             file.data = compressed_data.address;
@@ -698,7 +700,7 @@ namespace mango::filesystem
 
         u64 getSize(const std::string& filename) const override
         {
-            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            const RarEntry* ptrHeader = m_folders.getHeader(filename);
             if (ptrHeader)
             {
                 return ptrHeader->unpacked_size;
@@ -709,7 +711,7 @@ namespace mango::filesystem
 
         bool isFile(const std::string& filename) const override
         {
-            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            const RarEntry* ptrHeader = m_folders.getHeader(filename);
             if (ptrHeader)
             {
                 return !ptrHeader->folder;
@@ -720,12 +722,12 @@ namespace mango::filesystem
 
         void getIndex(FileIndex& index, const std::string& pathname) override
         {
-            const Indexer<FileHeader>::Folder* ptrFolder = m_folders.getFolder(pathname);
+            const Indexer<RarEntry>::Folder* ptrFolder = m_folders.getFolder(pathname);
             if (ptrFolder)
             {
                 for (auto i : ptrFolder->headers)
                 {
-                    const FileHeader& header = *i.second;
+                    const RarEntry& header = *i.second;
 
                     u32 flags = 0;
                     u64 size = header.unpacked_size;
@@ -751,16 +753,81 @@ namespace mango::filesystem
             }
         }
 
+        std::unique_ptr<VirtualMemory> mapFile(size_t file_index) const
+        {
+            const RarEntry& file = m_files[file_index];
+
+            if (file.folder)
+            {
+                MANGO_EXCEPTION("[mapper.rar] Cannot map directory \"{}\".", file.filename);
+            }
+
+            if (!file.compressed())
+            {
+                return std::make_unique<VirtualMemoryRAR>(
+                    file.data, nullptr, size_t(file.unpacked_size));
+            }
+
+            const size_t group_start = solidGroupStart(m_files, file_index);
+
+            ComprDataIO io;
+            Unpack unpack(&io);
+            Buffer scratch;
+
+            for (size_t i = group_start; i <= file_index; ++i)
+            {
+                const RarEntry& current = m_files[i];
+
+                if (!current.compressed())
+                {
+                    if (i == file_index)
+                    {
+                        return std::make_unique<VirtualMemoryRAR>(
+                            current.data, nullptr, size_t(current.unpacked_size));
+                    }
+                    continue;
+                }
+
+                u8* buffer = nullptr;
+                std::unique_ptr<u8[]> owned;
+
+                if (i == file_index)
+                {
+                    owned = std::make_unique<u8[]>(size_t(current.unpacked_size));
+                    buffer = owned.get();
+                }
+                else
+                {
+                    scratch.resize(size_t(current.unpacked_size));
+                    buffer = scratch.data();
+                }
+
+                if (!decompress(io, unpack, buffer, current.data, current.unpacked_size,
+                    current.packed_size, current.unp_ver, current.win_size, current.solid_continue))
+                {
+                    MANGO_EXCEPTION("[mapper.rar] Decompression failed.");
+                }
+
+                if (i == file_index)
+                {
+                    u8* memory = owned.release();
+                    return std::make_unique<VirtualMemoryRAR>(
+                        memory, memory, size_t(current.unpacked_size));
+                }
+            }
+
+            MANGO_EXCEPTION("[mapper.rar] Decompression failed.");
+        }
+
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
-            const FileHeader* ptrHeader = m_folders.getHeader(filename);
+            const RarEntry* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
                 MANGO_EXCEPTION("[mapper.rar] File \"{}\" not found.", filename);
             }
 
-            const FileHeader& header = *ptrHeader;
-            return header.map();
+            return mapFile(ptrHeader->index);
         }
     };
 
