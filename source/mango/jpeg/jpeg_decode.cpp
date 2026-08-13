@@ -1733,6 +1733,7 @@ namespace mango::image::jpeg
         header.format = m_components > 1
             ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
             : LuminanceFormat(8, Format::UNORM, 8, 0);
+        header.alpha = false;
 
         MANGO_UNREFERENCED(length);
     }
@@ -3035,6 +3036,21 @@ namespace mango::image::jpeg
         m_decode_status.info = getInfo();
 
         return m_decode_status;
+    }
+
+    std::string StreamDecoder::chromaSubsampling() const
+    {
+        if (m_components <= 1)
+            return "grayscale";
+
+        if (Hmax == 1 && Vmax == 1)
+            return "4:4:4";
+        if (Hmax == 2 && Vmax == 1)
+            return "4:2:2";
+        if (Hmax == 2 && Vmax == 2)
+            return "4:2:0";
+
+        return fmt::format("custom (H{}V{})", Hmax, Vmax);
     }
 
     std::string StreamDecoder::getInfo() const

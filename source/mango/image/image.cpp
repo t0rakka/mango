@@ -12,20 +12,8 @@
 namespace mango::image
 {
     const char* detectImageCodecPNM(ConstMemory memory);
-}
 
-namespace
-{
-    using namespace mango;
-
-    std::string getLowerCaseExtension(const std::string& filename)
-    {
-        // strip the filename away and make the extension (.ext) lower-case only
-        std::string extension = filesystem::getExtension(filename);
-        return toLower(extension.empty() ? std::string(".") + filename : extension);
-    }
-
-    std::string getImageFormatExtension(ConstMemory memory)
+    std::string detectImageFormatExtension(ConstMemory memory)
     {
         // Recognize image format from header signature
         struct Signature
@@ -92,11 +80,23 @@ namespace
             }
         }
 
-        // Custom detection
-        if (const char* pnm = image::detectImageCodecPNM(memory))
+        if (const char* pnm = detectImageCodecPNM(memory))
             return pnm;
 
         return "";
+    }
+
+} // namespace mango::image
+
+namespace
+{
+    using namespace mango;
+
+    std::string getLowerCaseExtension(const std::string& filename)
+    {
+        // strip the filename away and make the extension (.ext) lower-case only
+        std::string extension = filesystem::getExtension(filename);
+        return toLower(extension.empty() ? std::string(".") + filename : extension);
     }
 
 } // namespace
@@ -327,6 +327,11 @@ namespace mango::image
         return ConstMemory();
     }
 
+    void ImageDecodeInterface::populateInspect(ImageInspect& report) const
+    {
+        MANGO_UNREFERENCED(report);
+    }
+
     void ImageDecodeInterface::clipAndDispatch(const Surface& dest, ImageDecodeRect rect)
     {
         if (!callback)
@@ -390,7 +395,7 @@ namespace mango::image
     static ImageDecodeInterface* createDecodeInterface(ConstMemory memory, const std::string& filename)
     {
         // Inspect signature to determine image format
-        std::string extension = getImageFormatExtension(memory);
+        std::string extension = detectImageFormatExtension(memory);
         if (extension.empty())
         {
             // signature wasn't recognized -> trust the filename
@@ -631,6 +636,21 @@ namespace mango::image
         }
 
         return memory;
+    }
+
+    ImageInspect ImageDecoder::inspect(ConstMemory memory) const
+    {
+        ImageInspect report;
+
+        if (!m_interface)
+        {
+            report.setError("[ImageInspect] Decoder is not available.");
+            return report;
+        }
+
+        populateImageInspect(report, *m_interface, memory);
+        m_interface->populateInspect(report);
+        return report;
     }
 
     // ----------------------------------------------------------------------------

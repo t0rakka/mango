@@ -256,10 +256,12 @@ namespace
         void configureDecodeOutput()
         {
             const bool fp = isFloatingPoint(m_info);
+            const bool has_alpha = hasAlphaChannel(m_info);
+
+            header.alpha = has_alpha;
 
             if (fp)
             {
-                const bool has_alpha = hasAlphaChannel(m_info);
                 const uint32_t channels = has_alpha ? 4u : 3u;
 
                 header.format = has_alpha
@@ -309,6 +311,16 @@ namespace
             }
 
             return m_status;
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.bit_depth = int(m_info.bits_per_sample);
+            report.progressive = InspectTriState::Yes;
+            report.tiling.tiled = InspectTriState::Yes;
+            report.tiling.width = 256;
+            report.tiling.height = 256;
+            report.chroma_subsampling = "4:4:4";
         }
 
         void parse()

@@ -59,6 +59,15 @@ namespace
 
             return status;
         }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = m_parser.isLossless() ? InspectTriState::Yes : InspectTriState::No;
+            report.progressive = m_parser.isProgressive() ? InspectTriState::Yes : InspectTriState::No;
+            report.encoding = m_parser.encoding();
+            report.chroma_subsampling = m_parser.chromaSubsampling();
+            report.tiling.tiled = InspectTriState::No;
+        }
     };
 
     ImageDecodeInterface* createInterface(ConstMemory memory)

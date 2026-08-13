@@ -25,6 +25,7 @@ namespace mango::filesystem
 namespace mango::image
 {
     class Surface;
+    struct ImageInspect;
 
     /*
         These flags indicate when supercompressed blocks are stored in the image file.
@@ -63,6 +64,7 @@ namespace mango::image
         int     frames = 0;  // animation frame count: 0 = not animated, > 0 = animation (1 is a degenerate animation, aliases with 0)
         bool    premultiplied = false; // alpha is premultiplied
         bool    linear = false; // linear colorspace (non-linear is sRGB); mirrors color.isLinear()
+        bool    alpha = false; // encoded stream carries alpha/transparency (not decode padding)
 
         // Color space signalling (primaries, transfer function, exact chromaticities).
         // Defaults to sRGB: integer image formats are sRGB by near-universal convention,
@@ -129,6 +131,7 @@ namespace mango::image
 
         virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face);
         virtual ConstMemory memory(int level, int depth, int face);
+        virtual void populateInspect(ImageInspect& report) const;
 
         void clipAndDispatch(const Surface& dest, ImageDecodeRect rect);
     };
@@ -152,6 +155,7 @@ namespace mango::image
         ConstMemory memory(int level, int depth, int face);
         ConstMemory icc();
         ConstMemory exif();
+        ImageInspect inspect(ConstMemory memory = ConstMemory()) const;
 
         using CreateDecodeFunc = ImageDecodeInterface* (*)(ConstMemory memory);
 

@@ -572,6 +572,18 @@ namespace mango::image::jpeg
             return is_lossless;
         }
 
+        bool isProgressive() const noexcept
+        {
+            return is_progressive;
+        }
+
+        const std::string& encoding() const noexcept
+        {
+            return m_encoding;
+        }
+
+        std::string chromaSubsampling() const;
+
         bool cmykIccApplied() const
         {
             return m_cmyk_icc_applied;
@@ -623,6 +635,21 @@ namespace mango::image::jpeg
         bool isLossless() const
         {
             return m_base.isLossless();
+        }
+
+        bool isProgressive() const
+        {
+            return m_base.isProgressive();
+        }
+
+        const std::string& encoding() const
+        {
+            return m_base.encoding();
+        }
+
+        std::string chromaSubsampling() const
+        {
+            return m_base.chromaSubsampling();
         }
 
         bool cmykIccApplied() const

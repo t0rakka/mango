@@ -1,6 +1,6 @@
 {
     "name": "mango",
-    "version-string": "3.5.3",
+    "version-string": "3.5.4",
     "description": "Cross-platform C++ image processing and graphics library.",
     "license": "ZLIB",
     "builtin-baseline": "d92484ed3c5020c6679d095ad3e5add907887b62",

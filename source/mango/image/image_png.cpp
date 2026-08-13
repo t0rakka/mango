@@ -2220,9 +2220,18 @@ namespace
                             bits, bits, bits, bits, flags);
                         break;
                 }
+
+                m_header.alpha = (m_color_type == COLOR_TYPE_RGBA ||
+                                  m_color_type == COLOR_TYPE_IA ||
+                                  m_color_state.transparent_enable);
             }
 
             return m_header;
+        }
+
+        bool isInterlaced() const noexcept
+        {
+            return m_interlace != 0;
         }
 
         void setInterface(ImageDecodeInterface* interface)
@@ -4553,6 +4562,14 @@ namespace
             status = m_parser.decode(dest, options.multithread);
 
             return status;
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Yes;
+            report.progressive = m_parser.isInterlaced() ? InspectTriState::Yes : InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.chroma_subsampling = "4:4:4";
         }
     };
 

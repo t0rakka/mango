@@ -1,6 +1,7 @@
 
 add_executable(webp_test webp_test.cpp)
 add_executable(bulk_decode bulk_decode.cpp)
+add_executable(inspect inspect.cpp)
 add_executable(icc_p3_test icc/p3.cpp)
 add_executable(blitter blitter/blitter.cpp)
 add_executable(palette palette.cpp)
@@ -8,6 +9,7 @@ add_executable(async_decode async_decode.cpp)
 
 set_target_properties(webp_test PROPERTIES FOLDER "examples/image")
 set_target_properties(bulk_decode PROPERTIES FOLDER "examples/image")
+set_target_properties(inspect PROPERTIES FOLDER "examples/image")
 set_target_properties(icc_p3_test PROPERTIES FOLDER "examples/image")
 set_target_properties(blitter PROPERTIES FOLDER "examples/image")
 set_target_properties(palette PROPERTIES FOLDER "examples/image")
