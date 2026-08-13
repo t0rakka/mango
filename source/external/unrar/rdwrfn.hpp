@@ -1,13 +1,19 @@
 #ifndef _RAR_DATAIO_
 #define _RAR_DATAIO_
 
+class Archive;
 class CmdAdd;
 class Unpack;
+class ArcFileSearch;
 
 
 class ComprDataIO
 {
-  public:
+  private:
+    void ShowUnpRead(int64 ArcPos,int64 ArcSize);
+    void ShowUnpWrite();
+
+
     bool UnpackFromMemory;
     size_t UnpackFromMemorySize;
     byte *UnpackFromMemoryAddr;
@@ -16,27 +22,80 @@ class ComprDataIO
     size_t UnpackToMemorySize;
     byte *UnpackToMemoryAddr;
 
-    int64 UnpPackedSize;
+    size_t UnpWrSize;
+    byte *UnpWrAddr;
 
-    CryptData Crypt;
-    CryptData Decrypt;
+    int64 UnpPackedSize;
+    int64 UnpPackedLeft;
+
+    bool ShowProgress;
+    bool TestMode;
+    bool SkipUnpCRC;
+    bool NoFileHeader;
+
+    File *SrcFile;
+    File *DestFile;
+
+    CmdAdd *Command;
+
+    FileHeader *SubHead;
+    int64 *SubHeadPos;
+
+#ifndef RAR_NOCRYPT
+    CryptData *Crypt;
+    CryptData *Decrypt;
+#endif
+
+
+    int LastPercent;
+
+    wchar CurrentCommand;
 
   public:
     ComprDataIO();
+    ~ComprDataIO();
     void Init();
     int UnpRead(byte *Addr,size_t Count);
     void UnpWrite(byte *Addr,size_t Count);
-    void SetAV15Encryption();
+    void EnableShowProgress(bool Show) {ShowProgress=Show;}
+    void GetUnpackedData(byte **Data,size_t *Size);
+    void SetPackedSizeToRead(int64 Size) {UnpPackedSize=UnpPackedLeft=Size;}
+    void SetTestMode(bool Mode) {TestMode=Mode;}
+    void SetSkipUnpCRC(bool Skip) {SkipUnpCRC=Skip;}
+    void SetNoFileHeader(bool Mode) {NoFileHeader=Mode;}
+    void SetFiles(File *SrcFile,File *DestFile);
+    void SetCommand(CmdAdd *Cmd) {Command=Cmd;}
+    void SetSubHeader(FileHeader *hd,int64 *Pos) {SubHead=hd;SubHeadPos=Pos;}
+    bool SetEncryption(bool Encrypt,CRYPT_METHOD Method,SecPassword *Password,
+         const byte *Salt,const byte *InitV,uint Lg2Cnt,byte *HashKey,byte *PswCheck);
     void SetCmt13Encryption();
+    void SetUnpackToMemory(byte *Addr,uint Size);
+    void SetUnpackFromMemory(byte *Addr,uint Size);
+    void SetCurrentCommand(wchar Cmd) {CurrentCommand=Cmd;}
+    void AdjustTotalArcSize(Archive *Arc);
 
-    int64 TotalPackRead;
-    int64 UnpArcSize;
+
+    bool PackVolume;
+    bool UnpVolume;
+    bool NextVolumeMissing;
     int64 CurPackRead,CurPackWrite,CurUnpRead,CurUnpWrite;
 
-    uint PackFileCRC,UnpFileCRC,PackedCRC;
 
-    int Encryption;
-    int Decryption;
+    // Size of already processed archives.
+    // Used to calculate the total operation progress.
+    int64 ProcessedArcSize;
+
+    // Last extracted archive size up to QO or RR block.
+    int64 LastArcSize;
+
+    int64 TotalArcSize;
+
+    DataHash PackedDataHash; // Packed write and unpack read hash.
+    DataHash PackHash; // Pack read hash.
+    DataHash UnpHash;  // Unpack write hash.
+
+    bool Encryption;
+    bool Decryption;
 };
 
 #endif
