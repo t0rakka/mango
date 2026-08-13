@@ -899,20 +899,25 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     // synchronize
     q.wait();
 
+    BlockMeta folder_work;
+
     for (auto node : state.folders)
     {
         manager.files.push_back({ node.name, 0 });
-        work.append({ node.name, 0, 0 });
+        folder_work.append({ node.name, 0, 0 });
     }
 
-    work.written = true;
-    manager.flush(work);
+    if (!folder_work.sources.empty())
+    {
+        folder_work.written = true;
+        manager.flush(folder_work);
 
-    hbs::Block& folder_desc = manager.blocks.back();
-    folder_desc.method = Compressor::NONE;
-    folder_desc.offset = output.offset();
-    folder_desc.compressed = 0;
-    folder_desc.uncompressed = 0;
+        hbs::Block& folder_desc = manager.blocks.back();
+        folder_desc.method = Compressor::NONE;
+        folder_desc.offset = output.offset();
+        folder_desc.compressed = 0;
+        folder_desc.uncompressed = 0;
+    }
 
     compactBlocks(manager);
 

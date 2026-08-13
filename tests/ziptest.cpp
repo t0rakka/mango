@@ -21,60 +21,72 @@ with pyzipper.AESZipFile('aes128.zip', 'w',
 
 */
 
-int test(const std::string& pathname, const std::string& filename, u32 expected, const std::string& password)
+struct Test
 {
-    const std::string datapath = "data/ziptest/" + pathname + "/";
-
-    try
-    {
-        Path path(datapath, password);
-        File file(path, filename);
-
-        u32 checksum = crc32(0, file);
-
-        if (checksum == expected)
-        {
-            printLine("{:<16} : PASSED", pathname);
-            return 0;
-        }
-        else
-        {
-            printLine("{:<16} : FAILED {:#x}", pathname, checksum);
-            return 1;
-        }
-    }
-    catch (mango::Exception e)
-    {
-        printLine("Exception: {}", e.what());
-        return 1;
-    }
-
-    return 0;
-}
+    const std::string pathname;
+    const std::string filename;
+    const u32 expected;
+    const std::string password;
+};
 
 int main()
 {
+    const Test tests [] =
+    {
+        // zip tests
+        { "deflate.zip",      "test.png",           0xb77cd85d, "" },
+        { "deflate64.zip",    "test.png",           0xb77cd85d, "" },
+        { "bzip2.zip",        "test.png",           0xb77cd85d, "" },
+        { "lzma.zip",         "test.png",           0xb77cd85d, "" },
+        { "ppmd.zip",         "test.png",           0xb77cd85d, "" },
+        { "bzip2_crypto.zip", "test.png",           0xb77cd85d, "secret1234" },
+        { "bzip2_aes256.zip", "test.png",           0xb77cd85d, "secret1234" },
+        { "aes128.zip",       "test.png",           0xb77cd85d, "secret1234" },
+        { "aes192.zip",       "test.png",           0xb77cd85d, "secret1234" },
+        { "aes256.zip",       "test.png",           0xb77cd85d, "secret1234" },
+
+        // 7z tests
+        { "bzip2.7z",         "test.png",           0xb77cd85d, "" },
+        { "lzma.7z",          "test.png",           0xb77cd85d, "" },
+        { "ppmd.7z",          "test.png",           0xb77cd85d, "" },
+        { "lzma2.7z",         "logo-apple.png",     0xac7b9dcc, "" },
+        { "lzma2.7z",         "logo-archlinux.png", 0x02b0f3ea, "" },
+        { "lzma2.7z",         "logo-linux.png",     0x4a42e206, "" },
+
+        // hbs tests
+        { "test.hbs",         "lorem-1.txt",        0xe65308f5, "" },
+        { "test.hbs",         "lorem-2.txt",        0xe65308f5, "" },
+    };
+
     int failed_count = 0;
 
-    // zip tests
-    failed_count += test("deflate.zip",      "test.png",           0xb77cd85d, "");
-    failed_count += test("deflate64.zip",    "test.png",           0xb77cd85d, "");
-    failed_count += test("bzip2.zip",        "test.png",           0xb77cd85d, "");
-    failed_count += test("lzma.zip",         "test.png",           0xb77cd85d, "");
-    failed_count += test("ppmd.zip",         "test.png",           0xb77cd85d, "");
-    failed_count += test("bzip2_crypto.zip", "test.png",           0xb77cd85d, "secret1234");
-    failed_count += test("bzip2_aes256.zip", "test.png",           0xb77cd85d, "secret1234");
-    failed_count += test("aes128.zip",       "test.png",           0xb77cd85d, "secret1234");
-    failed_count += test("aes192.zip",       "test.png",           0xb77cd85d, "secret1234");
-    failed_count += test("aes256.zip",       "test.png",           0xb77cd85d, "secret1234");
+    for (const Test& test : tests)
+    {
+        const std::string datapath = "data/ziptest/" + test.pathname + "/";
 
-    // 7z tests
-    failed_count += test("bzip2.7z",         "test.png",           0xb77cd85d, "");
-    failed_count += test("lzma.7z",          "test.png",           0xb77cd85d, "");
-    failed_count += test("ppmd.7z",          "test.png",           0xb77cd85d, "");
-    failed_count += test("lzma2.7z",         "logo-apple.png",     0xac7b9dcc, "");
-    failed_count += test("lzma2.7z",         "logo-archlinux.png", 0x02b0f3ea, "");
-    failed_count += test("lzma2.7z",         "logo-linux.png",     0x4a42e206, "");
+        try
+        {
+            Path path(datapath, test.password);
+            File file(path, test.filename);
+    
+            u32 checksum = crc32(0, file);
+    
+            if (checksum == test.expected)
+            {
+                printLine("{:<16} : PASSED", test.pathname);
+            }
+            else
+            {
+                printLine("{:<16} : FAILED {:#x}", test.pathname, checksum);
+                ++failed_count;
+            }
+        }
+        catch (mango::Exception e)
+        {
+            printLine("Exception: {}", e.what());
+            ++failed_count;
+        }
+    }
 
-    return !!failed_count;
+    return failed_count;
 }
