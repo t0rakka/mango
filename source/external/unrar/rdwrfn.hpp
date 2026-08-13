@@ -69,8 +69,8 @@ class ComprDataIO
     bool SetEncryption(bool Encrypt,CRYPT_METHOD Method,SecPassword *Password,
          const byte *Salt,const byte *InitV,uint Lg2Cnt,byte *HashKey,byte *PswCheck);
     void SetCmt13Encryption();
-    void SetUnpackToMemory(byte *Addr,uint Size);
-    void SetUnpackFromMemory(byte *Addr,uint Size);
+    void SetUnpackToMemory(byte *Addr,size_t Size);
+    void SetUnpackFromMemory(byte *Addr,size_t Size);
     void SetCurrentCommand(wchar Cmd) {CurrentCommand=Cmd;}
     void AdjustTotalArcSize(Archive *Arc);
 

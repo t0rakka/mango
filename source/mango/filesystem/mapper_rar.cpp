@@ -92,8 +92,8 @@ namespace
     {
         io.Init();
         io.EnableShowProgress(false);
-        io.SetUnpackFromMemory(const_cast<byte*>(input), uint(packed_size));
-        io.SetUnpackToMemory(output, uint(unpacked_size));
+        io.SetUnpackFromMemory(const_cast<byte*>(input), size_t(packed_size));
+        io.SetUnpackToMemory(output, size_t(unpacked_size));
         io.SetPackedSizeToRead(packed_size);
 
         unpack.Init(win_size, solid);

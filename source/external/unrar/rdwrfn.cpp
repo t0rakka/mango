@@ -72,9 +72,18 @@ int ComprDataIO::UnpRead(byte *Addr,size_t Count)
 
     if (UnpackFromMemory)
     {
-      memcpy(Addr,UnpackFromMemoryAddr,UnpackFromMemorySize);
-      ReadSize=(int)UnpackFromMemorySize;
-      UnpackFromMemorySize=0;
+      size_t SizeToRead=UnpackFromMemorySize;
+      if ((int64)SizeToRead>UnpPackedLeft)
+        SizeToRead=(size_t)UnpPackedLeft;
+      if (SizeToRead>Count)
+        SizeToRead=Count;
+      if (SizeToRead>0)
+      {
+        memcpy(ReadAddr,UnpackFromMemoryAddr,SizeToRead);
+        UnpackFromMemoryAddr+=SizeToRead;
+        UnpackFromMemorySize-=SizeToRead;
+      }
+      ReadSize=(int)SizeToRead;
     }
     else
     {
@@ -279,7 +288,7 @@ void ComprDataIO::SetCmt13Encryption()
 
 
 
-void ComprDataIO::SetUnpackToMemory(byte *Addr,uint Size)
+void ComprDataIO::SetUnpackToMemory(byte *Addr,size_t Size)
 {
   UnpackToMemory=true;
   UnpackToMemoryAddr=Addr;
@@ -287,7 +296,7 @@ void ComprDataIO::SetUnpackToMemory(byte *Addr,uint Size)
 }
 
 
-void ComprDataIO::SetUnpackFromMemory(byte *Addr,uint Size)
+void ComprDataIO::SetUnpackFromMemory(byte *Addr,size_t Size)
 {
   UnpackFromMemory=true;
   UnpackFromMemoryAddr=Addr;
