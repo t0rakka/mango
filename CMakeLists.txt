@@ -687,6 +687,9 @@ set(MANGO_UNRAR_SOURCES
     unicode.cpp
     largepage.cpp
 )
+if (WIN32)
+    list(APPEND MANGO_UNRAR_SOURCES isnt.cpp)
+endif()
 set(EXTERNAL_UNRAR "")
 foreach(source ${MANGO_UNRAR_SOURCES})
     list(APPEND EXTERNAL_UNRAR "${EXTERNAL_SOURCE_DIR}/unrar/${source}")
