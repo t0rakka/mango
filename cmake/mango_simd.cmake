@@ -215,9 +215,30 @@ function (mango_report_isa_extensions simd_level)
         if (ENABLE_SHA)
             message("    SHA (2013)")
         endif ()
+
+        if (ENABLE_SSE2)
+            message("    SSE2 (2001)")
+        endif ()
+
+        if (ENABLE_SSE4)
+            message("    SSE4 (2006)")
+        endif ()
+
+        if (ENABLE_AVX)
+            message("    AVX (2008)")
+        endif ()
+
+        if (ENABLE_AVX2)
+            message("    AVX2 (2013)")
+        endif ()
+
+        if (ENABLE_AVX512)
+            message("    AVX-512 (2015)")
+        endif ()
     endif ()
 
-    message("    SIMD: " ${simd_level})
+    message("[SIMD]")
+    message("    " ${simd_level})
 endfunction()
 
 function (mango_configure_isa)

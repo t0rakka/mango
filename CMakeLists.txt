@@ -145,8 +145,7 @@ endif ()
 
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"          OFF)
-if (INTEL_DELUXE OR ENABLE_AVX512)
-    set(ENABLE_AVX2      ON)
+if (INTEL_DELUXE)
     set(ENABLE_PCLMUL    ON)
     set(ENABLE_POPCNT    ON)
     set(ENABLE_AES       ON)
