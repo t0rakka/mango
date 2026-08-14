@@ -414,8 +414,7 @@ namespace
 
     bool test_empty_roundtrip()
     {
-        const u8 empty[] = {};
-        ConstMemory source(empty, 0);
+        ConstMemory source;
 
         CHECK(roundtrip_block(nocompress::bound, nocompress::compress, nocompress::decompress, source));
         CHECK(roundtrip_block(zlib::bound, zlib::compress, zlib::decompress, source));
