@@ -581,6 +581,16 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = (m_rad_header.format == HeaderRAD::rad_rle_rgbe) ? "Radiance RGBE RLE" : "Radiance RGBE";
+            report.alpha = false;
+            syncHdrInspectFromHeader(report);
+        }
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(options);

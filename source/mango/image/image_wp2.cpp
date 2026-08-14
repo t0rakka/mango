@@ -24,13 +24,13 @@ namespace
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
+        WP2::BitstreamFeatures m_features;
+        bool m_features_valid = false;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
-            WP2::BitstreamFeatures features;
-
-            WP2Status s = features.Read(m_memory.address, m_memory.size);
+            WP2Status s = m_features.Read(m_memory.address, m_memory.size);
             if (s != WP2_STATUS_OK)
             {
                 const char* message = WP2GetStatusMessage(s);
@@ -38,16 +38,36 @@ namespace
                 return;
             }
 
+            m_features_valid = true;
+
             // MANGO TODO: support more output formats, including HDR (floating point)
 
-            header.width = features.raw_width;
-            header.height = features.raw_height;
-            header.premultiplied = features.is_premultiplied;
+            header.width = m_features.raw_width;
+            header.height = m_features.raw_height;
+            header.premultiplied = m_features.is_premultiplied;
             header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+
+            size_t num_frames = 1;
+            if (WP2::GetNumFrames(m_memory.address, m_memory.size, &num_frames) == WP2_STATUS_OK)
+                header.frames = int(num_frames);
         }
 
         ~Interface()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            if (!m_features_valid)
+                return;
+
+            report.lossless = InspectTriState::No;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::Unknown;
+            report.chroma_subsampling = "4:4:4";
+            report.encoding = m_features.is_animation ? "WebP2 animated" : "WebP2";
+            report.bit_depth = int(m_features.rgb_bit_depth);
+            report.alpha = !m_features.is_opaque;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

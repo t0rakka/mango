@@ -268,6 +268,11 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "MSX", false);
+        }
+
         ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);
@@ -813,6 +818,11 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "MSX G9B", false);
+        }
+
         // Palette: 3 bytes per entry, each a 5-bit channel. Reject if any
         // channel uses the top three bits.
         bool setG9bPalette(const u8* content, int colors)
@@ -1056,6 +1066,11 @@ namespace
 
         ~InterfaceMSXi()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "MSX interchange", false);
         }
 
         int originalWidth() const { return m_scale == DOUBLE_X ? (m_width >> 1) : m_width; }

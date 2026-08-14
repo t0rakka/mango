@@ -595,6 +595,9 @@ namespace
         PKPixelFormatGUID m_output_guid = GUID_PKPixelFormatDontCare;
         Format m_output_format;
         bool m_bitstream_has_alpha = false;
+        BITDEPTH_BITS m_jxr_bit_depth = BD_8;
+        bool m_jxr_spatial = true;
+        COLORFORMAT m_jxr_color_format = CF_RGB;
 
         Interface(ConstMemory memory)
         {
@@ -652,6 +655,10 @@ namespace
             source_info.pGUIDPixFmt = &source_guid;
             if (!check(PixelFormatLookup(&source_info, LOOKUP_FORWARD), "PixelFormatLookup", status))
                 return false;
+
+            m_jxr_bit_depth = source_info.bdBitDepth;
+            m_jxr_spatial = (m_decoder->WMP.wmiSCP.bfBitstreamFormat == SPATIAL);
+            m_jxr_color_format = m_decoder->WMP.wmiI.cfColorFormat;
 
             PKPixelInfo output_info;
             output_info.pGUIDPixFmt = &source_guid;
@@ -738,6 +745,45 @@ namespace
             m_decoder->WMP.wmiI.cPostProcStrength = 0;
 
             return true;
+        }
+
+        static int jxrBitDepth(BITDEPTH_BITS depth)
+        {
+            switch (depth)
+            {
+                case BD_1:   return 1;
+                case BD_8:   return 8;
+                case BD_16:  return 16;
+                case BD_16F: return 16;
+                case BD_32F: return 32;
+                default:     return 8;
+            }
+        }
+
+        static const char* jxrChromaSubsampling(COLORFORMAT format)
+        {
+            switch (format)
+            {
+                case YUV_444: return "4:4:4";
+                case YUV_422: return "4:2:2";
+                case YUV_420: return "4:2:0";
+                default: return nullptr;
+            }
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::No;
+            report.progressive = m_jxr_spatial ? InspectTriState::No : InspectTriState::Yes;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = m_jxr_spatial ? "JPEG XR spatial" : "JPEG XR frequency";
+            report.bit_depth = jxrBitDepth(m_jxr_bit_depth);
+            report.alpha = m_bitstream_has_alpha;
+            if (const char* chroma = jxrChromaSubsampling(m_jxr_color_format))
+                report.chroma_subsampling = chroma;
+
+            if (m_jxr_bit_depth == BD_16F || m_jxr_bit_depth == BD_32F)
+                syncHdrInspectFromHeader(report);
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

@@ -21,6 +21,9 @@ namespace
         heif_context* m_context = nullptr;
         heif_image_handle* m_image_handle = nullptr;
         Buffer m_icc;
+        int m_luma_bpp = 0;
+        int m_chroma_bpp = 0;
+        bool m_has_alpha = false;
 
         Interface(ConstMemory memory)
         {
@@ -78,6 +81,11 @@ namespace
             int bpp = heif_image_handle_get_luma_bits_per_pixel(m_image_handle);
             int cbpp = heif_image_handle_get_chroma_bits_per_pixel(m_image_handle);
             int alpha = heif_image_handle_has_alpha_channel(m_image_handle);
+
+            m_luma_bpp = bpp;
+            m_chroma_bpp = cbpp;
+            m_has_alpha = alpha != 0;
+
             int luma = heif_image_handle_get_luma_bits_per_pixel(m_image_handle);
 
             printLine(Print::Debug, "image: {} x {}, bits: {}, chroma: {}, alpha: {}, luma: {}", 
@@ -165,6 +173,29 @@ namespace
             }
 
             heif_deinit();
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            if (!m_image_handle)
+                return;
+
+            report.bit_depth = m_luma_bpp;
+            report.alpha = m_has_alpha;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::Unknown;
+            report.lossless = InspectTriState::Unknown;
+            report.encoding = "HEVC";
+
+            if (m_chroma_bpp > 0 && m_luma_bpp > 0)
+            {
+                if (m_chroma_bpp == m_luma_bpp)
+                    report.chroma_subsampling = "4:4:4";
+                else if (m_chroma_bpp + 1 == m_luma_bpp)
+                    report.chroma_subsampling = "4:2:2";
+                else
+                    report.chroma_subsampling = "4:2:0";
+            }
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

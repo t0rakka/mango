@@ -1996,6 +1996,71 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            auto compressionName = [](u16 compression) -> const char*
+            {
+                switch (Compression(compression))
+                {
+                    case Compression::NONE:         return "none";
+                    case Compression::CCITT_RLE:    return "CCITT RLE";
+                    case Compression::CCITT_GROUP3: return "CCITT Group 3";
+                    case Compression::CCITT_GROUP4: return "CCITT Group 4";
+                    case Compression::LZW:          return "LZW";
+                    case Compression::JPEG_LEGACY:  return "JPEG";
+                    case Compression::JPEG_MODERN:  return "JPEG (modern)";
+                    case Compression::ZIP:          return "ZIP";
+                    case Compression::PACKBITS:     return "PackBits";
+                    case Compression::DEFLATE:      return "Deflate";
+                    case Compression::WEBP:         return "WebP";
+                    case Compression::PIXARLOG:     return "PixarLog HDR";
+                    case Compression::SGILOG:       return "LogLuv HDR";
+                    case Compression::SGILOG24:     return "LogLuv24 HDR";
+                    default:                        return "unknown";
+                }
+            };
+
+            const bool jpeg = m_context.compression == u16(Compression::JPEG_LEGACY) ||
+                              m_context.compression == u16(Compression::JPEG_MODERN);
+
+            report.encoding = compressionName(m_context.compression);
+            report.bit_depth = int(m_context.sample_bits);
+
+            if (!m_context.sample_format.empty() &&
+                m_context.sample_format[0] == u64(SampleFormat::FLOAT))
+            {
+                report.bit_depth = m_context.sample_bits > 0 ? int(m_context.sample_bits) : 32;
+            }
+
+            if (m_context.photometric == u16(PhotometricInterpretation::LOGL) ||
+                m_context.photometric == u16(PhotometricInterpretation::LOGLUV))
+            {
+                report.encoding = (m_context.photometric == u16(PhotometricInterpretation::LOGL))
+                    ? "TIFF LogL HDR" : "TIFF LogLuv HDR";
+            }
+            report.lossless = jpeg ? InspectTriState::No : InspectTriState::Yes;
+            report.progressive = InspectTriState::Unknown;
+            report.tiling.tiled = (m_context.tile_width > 0 && m_context.tile_length > 0)
+                ? InspectTriState::Yes : InspectTriState::No;
+            if (report.tiling.tiled == InspectTriState::Yes)
+            {
+                report.tiling.width = int(m_context.tile_width);
+                report.tiling.height = int(m_context.tile_length);
+            }
+
+            report.alpha = false;
+            for (u64 sample : m_context.extra_samples)
+            {
+                if (sample == 1 || sample == 2)
+                {
+                    report.alpha = true;
+                    break;
+                }
+            }
+
+            syncHdrInspectFromHeader(report);
+        }
+
         bool is_tiled_via_strips() const
         {
             if (m_context.tile_width == 0 || m_context.tile_length == 0)

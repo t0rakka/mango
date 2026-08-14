@@ -1141,6 +1141,41 @@ namespace
         {
         }
 
+        const char* iffEncoding() const
+        {
+            if (m_anim)
+                return "IFF ANIM";
+
+            switch (m_signature)
+            {
+                case SIGNATURE_PBM:  return "IFF PBM";
+                case SIGNATURE_RGBN: return "IFF RGBN";
+                case SIGNATURE_RGB8: return "IFF RGB8";
+                case SIGNATURE_CIMG: return "IFF CIMG";
+                default:
+                    if (m_ham)
+                        return "IFF HAM";
+                    if (m_ehb)
+                        return "IFF EHB";
+                    if (m_hame)
+                        return "IFF HAM-E";
+                    if (m_sham)
+                        return "IFF SHAM";
+                    return "IFF ILBM";
+            }
+        }
+
+        bool iffHasAlpha() const
+        {
+            // BMHD masking: 1 = mask plane, 2 = transparent colour, 3 = lasso.
+            return m_bmhd.masking != 0;
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, iffEncoding(), iffHasAlpha());
+        }
+
         const u8* readSignature(const u8* data)
         {
             BigEndianConstPointer p = data;

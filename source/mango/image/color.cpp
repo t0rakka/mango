@@ -321,11 +321,36 @@ namespace mango::image
                 std::fabs(out[6]) < eps && std::fabs(out[7]) < eps && std::fabs(out[8] - 1) < eps;
         }
 
+        void fillChromaticitiesFromPrimariesImpl(ColorInfo& color, ColorPrimaries primaries)
+        {
+            ColorPoint w, r, g, b;
+            if (!standardPrimaries(primaries, w, r, g, b))
+                return;
+
+            color.has_chromaticities = true;
+            color.white = w;
+            color.red = r;
+            color.green = g;
+            color.blue = b;
+        }
+
     } // namespace
+
+    void fillChromaticitiesFromPrimaries(ColorInfo& color, ColorPrimaries primaries) noexcept
+    {
+        fillChromaticitiesFromPrimariesImpl(color, primaries);
+    }
+
+    LinearizeOptions resolveLinearizeOptions(const ColorInfo& color, const LinearizeOptions& options)
+    {
+        MANGO_UNREFERENCED(color);
+        return options;
+    }
 
     void linearize(const Surface& dest, const Surface& source, const ColorInfo& color,
                    const LinearizeOptions& options)
     {
+        const LinearizeOptions opts = resolveLinearizeOptions(color, options);
         if (dest.width != source.width || dest.height != source.height)
         {
             printLine(Print::Warning, "[linearize] dest and source dimensions differ.");
@@ -357,17 +382,22 @@ namespace mango::image
         float matrix[9];
         bool identity = true;
         if (!options.preserve_gamut)
-            buildPrimariesMatrix(color, srcPrim, options.target, matrix, identity);
+            buildPrimariesMatrix(color, srcPrim, opts.target, matrix, identity);
 
-        // PQ EOTF is absolute (1.0 == peak_nits). Scale into relative scene-linear
-        // (1.0 == sdr_white_nits) so the result matches UltraHDR / gain-map float
-        // and Vulkan SdrToHdrPQ. Other transfers are already relative.
+        // PQ EOTF is absolute (1.0 == peak_nits). HLG OETF inverse is relative to the
+        // BT.2100 reference peak (hlg_reference_nits). Scale both into relative
+        // scene-linear (1.0 == sdr_white_nits) for PBR / Vulkan SdrToHdrPQ.
         float scale = 1.0f;
-        if (transfer == TransferFunction::PQ &&
-            options.sdr_white_nits > 0.0f &&
-            options.peak_nits > 0.0f)
+        if (opts.sdr_white_nits > 0.0f)
         {
-            scale = options.peak_nits / options.sdr_white_nits;
+            if (transfer == TransferFunction::PQ && opts.peak_nits > 0.0f)
+            {
+                scale = opts.peak_nits / opts.sdr_white_nits;
+            }
+            else if (transfer == TransferFunction::HLG && opts.hlg_reference_nits > 0.0f)
+            {
+                scale = opts.hlg_reference_nits / opts.sdr_white_nits;
+            }
         }
 
         for (int y = 0; y < work.height; ++y)

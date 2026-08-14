@@ -101,6 +101,16 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Unknown;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = "Camera RAW";
+            report.alpha = false;
+            syncHdrInspectFromHeader(report);
+        }
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(options);

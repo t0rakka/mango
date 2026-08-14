@@ -131,6 +131,34 @@ namespace
         return (vp8x[0] & ANIMATION_FLAG) != 0;
     }
 
+    std::string webpChromaSubsampling(ConstMemory memory, bool lossless)
+    {
+        if (lossless)
+            return "4:4:4";
+
+        ConstMemory vp8 = webpFindChunk(memory, u32_mask_rev('V', 'P', '8', ' '));
+        if (vp8.size < 10)
+            return "4:2:0";
+
+        const u8* p = vp8.address;
+        if (p[0] & 0x01)
+            return "4:2:0"; // inter-coded frame
+
+        p += 3; // frame tag
+        if (vp8.size < 8)
+            return "4:2:0";
+
+        if (p[0] != 0x9d || p[1] != 0x01 || p[2] != 0x2a)
+            return "4:2:0";
+
+        p += 5; // start code + dimensions
+        if (p >= vp8.end())
+            return "4:2:0";
+
+        // VP8 keyframe: bit 0 of color-space byte — 0 = YCbCr (4:2:0), 1 = RGB (4:4:4)
+        return (p[0] & 0x01) ? "4:4:4" : "4:2:0";
+    }
+
     void webpCopyCanvas(const Surface& dest, const uint8_t* canvas)
     {
         const int width = dest.width;
@@ -155,6 +183,8 @@ namespace
     {
         ConstMemory m_memory;
         bool m_isAnimated = false;
+        bool m_lossless = false;
+        bool m_has_alpha = false;
         WebPAnimDecoder* m_animDecoder = nullptr;
         int m_frame_counter = 0;
         int m_frame_count = 0;
@@ -163,6 +193,20 @@ namespace
             : m_memory(memory)
         {
             m_isAnimated = webpIsAnimated(m_memory);
+
+            ConstMemory vp8l = webpFindChunk(m_memory, u32_mask_rev('V', 'P', '8', 'L'));
+            m_lossless = vp8l.size > 0;
+
+            ConstMemory vp8x = webpFindChunk(m_memory, u32_mask_rev('V', 'P', '8', 'X'));
+            if (vp8x.size > 0)
+            {
+                // VP8X feature flags (RFC 9649): alpha = bit 3
+                m_has_alpha = (vp8x[0] & 0x08) != 0;
+            }
+            else
+            {
+                m_has_alpha = m_lossless;
+            }
 
             int width = 0;
             int height = 0;
@@ -231,6 +275,27 @@ namespace
             {
                 WebPAnimDecoderDelete(m_animDecoder);
             }
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            WebPBitstreamFeatures features {};
+            if (WebPGetFeatures(m_memory.address, m_memory.size, &features) == VP8_STATUS_OK)
+            {
+                report.lossless = features.format == 2 ? InspectTriState::Yes : InspectTriState::No;
+                report.alpha = features.has_alpha != 0;
+            }
+            else
+            {
+                report.lossless = m_lossless ? InspectTriState::Yes : InspectTriState::No;
+                report.alpha = m_has_alpha;
+            }
+
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.chroma_subsampling = webpChromaSubsampling(m_memory, report.lossless == InspectTriState::Yes);
+            report.encoding = m_isAnimated ? "WebP animated" : (m_lossless ? "VP8L" : "VP8");
+            report.bit_depth = 8;
         }
 
         ImageDecodeStatus decodeAnimated(const Surface& dest, const WebPFormat& wpformat)

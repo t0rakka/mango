@@ -407,6 +407,11 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "Atari 8-bit", false);
+        }
+
         // Returns the HIP image height (rows) or 0 if the layout is not valid.
         static int hipHeight(const u8* data, size_t size)
         {
@@ -1706,6 +1711,11 @@ namespace
             header.width = m_decoder.Width;
             header.height = m_decoder.Height;
             header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "Atari 8-bit", false);
         }
 
         ConstMemory memory(int level, int depth, int face) override

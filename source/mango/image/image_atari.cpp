@@ -63,6 +63,11 @@ namespace
         }
 
         virtual void decodeImage(const Surface& dest) = 0;
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "Atari ST", false);
+        }
     };
 
     // ------------------------------------------------------------

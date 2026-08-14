@@ -188,7 +188,10 @@ namespace mango::image
         a file provides one (PNG gAMA); 0 means "not specified".
 
         'mastering_display' and 'content_light_level' carry optional HDR static
-        metadata (PNG mDCV / cLLI) for tone mapping; each is gated by its own flag.
+        metadata (PNG mDCV / cLLI) for tone mapping after linearize(); each is gated
+        by its own flag. They do not alter EOTF inversion — PQ always uses the ST 2084
+        system peak (10 000 cd/m²); MaxCLL / mDCV max luminance inform downstream
+        tone mapping only.
 
         An empty ColorInfo (all Unspecified) means the decoder reported no color
         signalling; clients should then assume sRGB for integer formats.
@@ -233,6 +236,12 @@ namespace mango::image
     ColorPrimaries colorPrimariesFromCICP(u8 code_point) noexcept;
     TransferFunction transferFunctionFromCICP(u8 code_point) noexcept;
 
+    // Fill exact CIE 1931 xy chromaticities for a named primaries set (ITU-T H.273
+    // values). No-op when 'primaries' is Unspecified or has no standard coordinates.
+    // Decoders call this after resolving cICP so linearize() can build an accurate
+    // primaries matrix without relying on a separate cHRM chunk.
+    void fillChromaticitiesFromPrimaries(ColorInfo& color, ColorPrimaries primaries) noexcept;
+
     // ------------------------------------------------------------------
     // linearize
     // ------------------------------------------------------------------
@@ -255,14 +264,37 @@ namespace mango::image
         SdrToHdrPQ). When sdr_white_nits > 0, PQ is scaled by peak_nits /
         sdr_white_nits so SDR white lands at ~1 and HDR highlights go above 1.
         Set sdr_white_nits to 0 to keep absolute PQ linear (1.0 == peak_nits).
+
+        HLG uses the same relative convention: after the OETF inverse, scene-linear
+        1.0 corresponds to hlg_reference_nits (BT.2100 nominal peak, 1000 cd/m²)
+        and is scaled into relative scene-linear (1.0 == sdr_white_nits) when
+        sdr_white_nits > 0.
+
+        peak_nits is the PQ system constant (ST 2084, 10 000 cd/m²), not the
+        content peak from cLLI MaxCLL. Content / mastering peaks remain in
+        ColorInfo::content_light_level and ColorInfo::mastering_display for
+        tone mapping after linearize().
+
+        linearize() calls resolveLinearizeOptions() internally; pass explicit
+        overrides here when you need a different working space or absolute PQ/HLG.
     */
     struct LinearizeOptions
     {
         ColorPrimaries target = ColorPrimaries::BT709;
         bool preserve_gamut = false;
-        float sdr_white_nits = 203.0f; // BT.2408; 0 = leave PQ absolute
-        float peak_nits = 10000.0f;    // PQ peak (ST 2084)
+        float sdr_white_nits = 203.0f;      // BT.2408; 0 = leave PQ/HLG absolute
+        float peak_nits = 10000.0f;         // PQ system peak (ST 2084)
+        float hlg_reference_nits = 1000.0f; // BT.2100 HLG nominal peak
     };
+
+    /*
+        Merge caller overrides with values implied by ColorInfo (PNG cICP / cLLI /
+        mDCV, AVIF CLLI, etc.). Currently a pass-through for transfer scaling
+        constants; HDR static metadata stays in ColorInfo for downstream tone
+        mapping. linearize() applies this before converting pixels.
+    */
+    LinearizeOptions resolveLinearizeOptions(const ColorInfo& color,
+                                             const LinearizeOptions& options = LinearizeOptions());
 
     /*
         Convert an image to scene-linear light using its color signalling (ColorInfo).
@@ -274,11 +306,16 @@ namespace mango::image
              (a no-op when they already match or when preserve_gamut is set).
 
         'source' may be any format: it is read as normalized float, so integer
-        samples map to [0,1]. PQ is then scaled into relative scene-linear
-        (1.0 == options.sdr_white_nits) unless sdr_white_nits is 0.
+        samples map to [0,1]. PQ and HLG are scaled into relative scene-linear
+        (1.0 == options.sdr_white_nits) unless sdr_white_nits is 0. 16-bit linear
+        PNG (cICP transfer = Linear) passes normalized code values through unchanged.
+
         'dest' should be a float (FLOAT16 or FLOAT32) RGBA surface, since wide-gamut
         and HDR conversions produce unbounded and negative values; 'dest' and
         'source' must have the same dimensions. Alpha is passed through unchanged.
+
+        Use ColorInfo::content_light_level (cLLI) and mastering_display (mDCV) after
+        linearize() for tone mapping; they are not consumed during EOTF inversion.
 
         The decoder pipeline never calls this: clients opt in, choosing when and to
         which working space to convert (or skipping it when ColorInfo already

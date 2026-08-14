@@ -81,6 +81,12 @@ namespace mango::image
     // Populate universal inspect fields from a parsed decoder interface.
     void populateImageInspect(ImageInspect& report, const ImageDecodeInterface& interface, ConstMemory memory);
 
+    // Vintage / platform-specific formats: lossless indexed or direct RGBA, sRGB, 8-bit.
+    void populateRetroInspect(ImageInspect& report, const char* encoding, bool alpha = false);
+
+    // Align transfer, primaries, and bit depth with header.linear / float HDR output.
+    void syncHdrInspectFromHeader(ImageInspect& report);
+
     std::string formatImageInspect(const ImageInspect& report);
 
     ImageInspect inspect(ConstMemory memory, const std::string& filename = "");

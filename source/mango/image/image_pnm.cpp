@@ -401,6 +401,35 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.chroma_subsampling = "4:4:4";
+            report.bit_depth = m_pnm_header.is_float ? 32 : m_pnm_header.maxvalue > 255 ? 16 : 8;
+            report.alpha = m_pnm_header.channels == 4 || m_pnm_header.channels == 2;
+
+            if (m_pnm_header.is_float)
+            {
+                report.encoding = m_pnm_header.channels >= 3 ? "PFM RGB" : "PFM grayscale";
+            }
+            else if (m_pnm_header.channels == 1)
+            {
+                report.encoding = m_pnm_header.is_ascii ? "PGM ASCII" : "PGM";
+            }
+            else if (m_pnm_header.channels == 3)
+            {
+                report.encoding = m_pnm_header.is_ascii ? "PPM ASCII" : "PPM";
+            }
+            else
+            {
+                report.encoding = "PAM";
+            }
+
+            syncHdrInspectFromHeader(report);
+        }
+
         bool decode_matching(const Surface& dest)
         {
             const char* p = m_pnm_header.data;

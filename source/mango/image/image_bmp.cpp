@@ -1373,6 +1373,100 @@ namespace
         return header;
     }
 
+    void mergeCodecInspect(ImageInspect& report, const ImageInspect& nested)
+    {
+        if (!nested.success)
+            return;
+
+        report.lossless = nested.lossless;
+        report.progressive = nested.progressive;
+        report.tiling = nested.tiling;
+        if (!nested.encoding.empty())
+            report.encoding = nested.encoding;
+        if (nested.bit_depth)
+            report.bit_depth = nested.bit_depth;
+        report.alpha = nested.alpha;
+        if (!nested.chroma_subsampling.empty())
+            report.chroma_subsampling = nested.chroma_subsampling;
+    }
+
+    // Pick the largest icon/pointer image block for nested inspect.
+    bool findIcoBestBlock(ConstMemory memory, ConstMemory& block, std::string& extension)
+    {
+        const u8* pend = memory.end();
+        if (memory.size < 6)
+            return false;
+
+        LittleEndianConstPointer p = memory.address;
+        u32 magic = p.read32();
+        int size = p.read16();
+
+        if (magic != 0x10000 && magic != 0x20000)
+            return false;
+
+        u32 bestScore = 0;
+        int bestOffset = 0;
+        int bestSize = 0;
+        int bestColors = 0;
+
+        for (int i = 0; i < size; ++i)
+        {
+            if ((const u8*)p + 16 > pend)
+                break;
+
+            int width = p[0];
+            int height = p[1];
+            int colors = p[2];
+            p += 4;
+
+            if (magic == 0x10000)
+            {
+                int planes = p.read16();
+                int bpp = p.read16();
+                if (planes < 0 || planes > 1)
+                    return false;
+                MANGO_UNREFERENCED(bpp);
+            }
+            else
+            {
+                p += 4;
+            }
+
+            int c_size = p.read32();
+            int c_offset = p.read32();
+
+            if (!width)
+                width = 256;
+            if (!height)
+                height = 256;
+
+            int bpp = colors ? u32_ceil_power_of_two(colors) : 32;
+            u32 score = u32(width) * u32(height) * u32(bpp + 4) * u32(bpp + 4);
+            if (score > bestScore)
+            {
+                bestScore = score;
+                bestOffset = c_offset;
+                bestSize = c_size;
+                bestColors = colors;
+            }
+        }
+
+        block = memory.slice(bestOffset, bestSize);
+        if (block.size < 4)
+            return false;
+
+        u32 headersize = littleEndian::uload32(block.address) & 0xffff;
+        if (headersize == 0x5089)
+            extension = ".png";
+        else if (headersize == 0x28)
+            extension = ".bmp";
+        else
+            extension.clear();
+
+        MANGO_UNREFERENCED(bestColors);
+        return true;
+    }
+
     void getImage(const Surface& surface, ConstMemory memory, std::string extension)
     {
         ImageDecoder decoder(memory, extension);
@@ -1558,6 +1652,9 @@ namespace
     {
         ConstMemory m_memory;
         FileHeader m_file_header;
+        int m_native_compression = -1;
+        ConstMemory m_nested_memory;
+        std::string m_nested_extension;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -1595,6 +1692,8 @@ namespace
                     header.faces   = 0;
                     header.format  = bmp_header.format;
                     header.compression = TextureCompression::NONE;
+                    m_native_compression = bmp_header.compression;
+                    header.alpha = bmp_header.alphaMask != 0 || header.format.size.a > 0;
 
                     printLine(Print::Debug, "[Header]");
                     printLine(Print::Debug, "  image: {} x {}, bits: {}",
@@ -1627,18 +1726,28 @@ namespace
                     {
                         header.setError(error);
                     }
+                    else
+                    {
+                        findIcoBestBlock(m_memory, m_nested_memory, m_nested_extension);
+                    }
                     break;
                 }
 
                 case 0x5089:
+                    m_nested_extension = ".png";
+                    m_nested_memory = m_memory;
                     header = getHeader(m_memory, ".png");
                     break;
 
                 case 0xd8ff:
+                    m_nested_extension = ".jpg";
+                    m_nested_memory = m_memory;
                     header = getHeader(m_memory, ".jpg");
                     break;
 
                 case 0x4947:
+                    m_nested_extension = ".gif";
+                    m_nested_memory = m_memory;
                     header = getHeader(m_memory, ".gif");
                     break;
 
@@ -1654,6 +1763,63 @@ namespace
 
         ~Interface()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            if (m_native_compression < 0)
+            {
+                if (!m_nested_extension.empty())
+                {
+                    mergeCodecInspect(report, inspect(m_nested_memory, m_nested_extension));
+                    if (m_file_header.magic == 0x0000)
+                    {
+                        if (report.encoding.empty())
+                            report.encoding = "ICO";
+                        else
+                            report.encoding = std::string("ICO (") + report.encoding + ")";
+                    }
+                }
+                else if (m_file_header.magic == 0x0000)
+                {
+                    report.encoding = "ICO";
+                    report.lossless = InspectTriState::Yes;
+                    report.progressive = InspectTriState::No;
+                    report.tiling.tiled = InspectTriState::No;
+                    report.alpha = header.alpha;
+                }
+                return;
+            }
+
+            auto compressionName = [](int compression) -> const char*
+            {
+                switch (compression)
+                {
+                    case BIC_RGB:            return "none";
+                    case BIC_RLE8:           return "RLE8";
+                    case BIC_RLE4:           return "RLE4";
+                    case BIC_BITFIELDS:      return "bitfields";
+                    case BIC_JPEG:           return "JPEG";
+                    case BIC_PNG:            return "PNG";
+                    case BIC_ALPHABITFIELDS: return "alpha bitfields";
+                    case BIC_CMYK:           return "CMYK";
+                    case BIC_CMYKRLE8:       return "CMYK RLE8";
+                    case BIC_CMYKRLE4:       return "CMYK RLE4";
+                    default:                 return "unknown";
+                }
+            };
+
+            const bool lossless_native = m_native_compression == BIC_RGB ||
+                                         m_native_compression == BIC_BITFIELDS ||
+                                         m_native_compression == BIC_ALPHABITFIELDS ||
+                                         m_native_compression == BIC_RLE8 ||
+                                         m_native_compression == BIC_RLE4;
+
+            report.lossless = lossless_native ? InspectTriState::Yes : InspectTriState::No;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = compressionName(m_native_compression);
+            report.alpha = header.alpha;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

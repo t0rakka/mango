@@ -143,6 +143,45 @@ namespace mango::image
         populateUniversal(report, interface, memory);
     }
 
+    void populateRetroInspect(ImageInspect& report, const char* encoding, bool alpha)
+    {
+        report.lossless = InspectTriState::Yes;
+        report.progressive = InspectTriState::No;
+        report.tiling.tiled = InspectTriState::No;
+        report.chroma_subsampling = "4:4:4";
+        report.encoding = encoding;
+        report.bit_depth = 8;
+        report.alpha = alpha;
+        report.primaries = toString(ColorPrimaries::BT709);
+        report.transfer = toString(TransferFunction::sRGB);
+    }
+
+    void syncHdrInspectFromHeader(ImageInspect& report)
+    {
+        const ImageHeader& h = report.header;
+
+        const bool hdr_transfer = h.linear ||
+            h.color.transfer == TransferFunction::Linear ||
+            h.color.transfer == TransferFunction::PQ ||
+            h.color.transfer == TransferFunction::HLG;
+
+        if (hdr_transfer)
+        {
+            report.transfer = formatTransferFunction(h.color);
+            if (h.color.primaries != ColorPrimaries::Unspecified)
+                report.primaries = toString(h.color.primaries);
+            else if (h.color.has_chromaticities)
+                report.primaries = "custom";
+        }
+
+        if (h.format.isFloat() || h.linear)
+        {
+            const int bits = formatBitDepth(h.format);
+            if (bits > 0)
+                report.bit_depth = bits;
+        }
+    }
+
     const char* toString(ColorPrimaries primaries) noexcept
     {
         switch (primaries)

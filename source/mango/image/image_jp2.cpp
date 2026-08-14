@@ -707,6 +707,19 @@ namespace
 
 #endif
 
+    const char* j2k_prog_order_name(OPJ_PROG_ORDER prg)
+    {
+        switch (prg)
+        {
+            case OPJ_LRCP: return "LRCP";
+            case OPJ_RLCP: return "RLCP";
+            case OPJ_RPCL: return "RPCL";
+            case OPJ_PCRL: return "PCRL";
+            case OPJ_CPRL: return "CPRL";
+            default: return nullptr;
+        }
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -720,6 +733,14 @@ namespace
         opj_codec_t* m_codec = nullptr;
         opj_stream_t* m_stream = nullptr;
         opj_image_t* m_image = nullptr;
+
+        bool m_codestream_inspected = false;
+        bool m_j2k_lossless = false;
+        bool m_j2k_tiled = false;
+        int m_tile_width = 0;
+        int m_tile_height = 0;
+        OPJ_UINT32 m_num_layers = 1;
+        OPJ_PROG_ORDER m_prog_order = OPJ_PROG_UNKNOWN;
 
         Interface(ConstMemory memory)
             : m_memory_reader(memory)
@@ -942,6 +963,35 @@ namespace
                 header.color.primaries = ColorPrimaries::Unspecified;
                 header.color.transfer = TransferFunction::Unspecified;
             }
+
+            if (opj_codestream_info_v2_t* cstr = opj_get_cstr_info(m_codec))
+            {
+                m_codestream_inspected = true;
+                m_tile_width = int(cstr->tdx);
+                m_tile_height = int(cstr->tdy);
+                m_j2k_tiled = cstr->tw > 1 || cstr->th > 1 ||
+                    (cstr->tdx > 0 && cstr->tdx < width) ||
+                    (cstr->tdy > 0 && cstr->tdy < height);
+
+                m_num_layers = cstr->m_default_tile_info.numlayers;
+                m_prog_order = cstr->m_default_tile_info.prg;
+
+                opj_tccp_info_t* tccp = cstr->m_default_tile_info.tccp_info;
+                if (tccp && cstr->nbcomps > 0)
+                {
+                    m_j2k_lossless = true;
+                    for (OPJ_UINT32 i = 0; i < cstr->nbcomps; ++i)
+                    {
+                        if (tccp[i].qmfbid != 1)
+                        {
+                            m_j2k_lossless = false;
+                            break;
+                        }
+                    }
+                }
+
+                opj_destroy_cstr_info(&cstr);
+            }
         }
 
         ~Interface()
@@ -955,6 +1005,60 @@ namespace
             {
                 opj_destroy_codec(m_codec);
             }
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            if (!m_image)
+                return;
+
+            report.encoding = "JPEG 2000";
+            if (m_codestream_inspected)
+            {
+                if (const char* prg = j2k_prog_order_name(m_prog_order))
+                {
+                    report.encoding += " (";
+                    report.encoding += prg;
+                    report.encoding += ")";
+                }
+
+                report.lossless = m_j2k_lossless ? InspectTriState::Yes : InspectTriState::No;
+                report.progressive = m_num_layers > 1 ? InspectTriState::Yes : InspectTriState::No;
+                report.tiling.tiled = m_j2k_tiled ? InspectTriState::Yes : InspectTriState::No;
+                if (m_j2k_tiled)
+                {
+                    report.tiling.width = m_tile_width;
+                    report.tiling.height = m_tile_height;
+                }
+            }
+
+            bool has_alpha = false;
+            int max_prec = 0;
+            int chroma_dx = 1;
+            int chroma_dy = 1;
+
+            for (u32 i = 0; i < m_image->numcomps; ++i)
+            {
+                const opj_image_comp_t& comp = m_image->comps[i];
+                max_prec = std::max(max_prec, int(comp.prec));
+                if (comp.alpha)
+                    has_alpha = true;
+                if (i > 0)
+                {
+                    chroma_dx = std::max(chroma_dx, int(comp.dx));
+                    chroma_dy = std::max(chroma_dy, int(comp.dy));
+                }
+            }
+
+            report.bit_depth = max_prec;
+            report.alpha = has_alpha;
+
+            if (chroma_dx == 1 && chroma_dy == 1)
+                report.chroma_subsampling = "4:4:4";
+            else if (chroma_dx == 2 && chroma_dy == 1)
+                report.chroma_subsampling = "4:2:2";
+            else if (chroma_dx == 2 && chroma_dy == 2)
+                report.chroma_subsampling = "4:2:0";
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

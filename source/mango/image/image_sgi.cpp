@@ -148,6 +148,17 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = m_sgi_header.encoding ? "SGI RLE" : "SGI";
+            report.bit_depth = m_sgi_header.bpc == 2 ? 16 : 8;
+            report.alpha = m_sgi_header.zsize == 2 || m_sgi_header.zsize == 4;
+            report.chroma_subsampling = m_sgi_header.zsize >= 3 ? "4:4:4" : "";
+        }
+
         // T is the channel sample type: u8 (bpc == 1) or u16 (bpc == 2). Samples are stored
         // big-endian; the destination surface holds them in host order, channel-interleaved.
         template <typename T>

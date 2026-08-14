@@ -614,6 +614,38 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            const bool block_compressed = header.compression != TextureCompression::NONE;
+            report.lossless = block_compressed ? InspectTriState::No : InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = block_compressed ? InspectTriState::Yes : InspectTriState::No;
+            if (block_compressed)
+            {
+                TextureCompression info(header.compression);
+                report.tiling.width = info.width;
+                report.tiling.height = info.height;
+                report.encoding = "PVR block compressed";
+            }
+            else
+            {
+                report.encoding = "PVR uncompressed";
+            }
+            report.alpha = header.format.size.a > 0;
+
+            if (header.compression == TextureCompression::BC6H_UF16 ||
+                header.compression == TextureCompression::BC6H_SF16 ||
+                header.compression == TextureCompression::BPTC_RGB_UNSIGNED_FLOAT ||
+                header.compression == TextureCompression::BPTC_RGB_SIGNED_FLOAT)
+            {
+                report.encoding = "BC6H HDR";
+            }
+            else if (header.format.isFloat())
+            {
+                syncHdrInspectFromHeader(report);
+            }
+        }
+
         ConstMemory memory(int level, int depth, int face) override
         {
             return m_pvr_header.getMemory(m_memory, level, depth, face);

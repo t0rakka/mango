@@ -433,6 +433,22 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            const bool rle = m_pcx_header.Encoding != 0;
+            const bool trueColor = (m_pcx_header.BitsPerPixel == 8 && (m_pcx_header.NPlanes == 3 || m_pcx_header.NPlanes == 4));
+            const bool indexed = m_pcx_header.isPaletteMarker ||
+                (!trueColor && m_pcx_header.BitsPerPixel <= 8);
+
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = rle ? "PCX RLE" : "PCX";
+            report.bit_depth = trueColor ? 8 : int(m_pcx_header.BitsPerPixel);
+            report.alpha = m_pcx_header.NPlanes == 4;
+            report.chroma_subsampling = indexed ? "" : "4:4:4";
+        }
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);

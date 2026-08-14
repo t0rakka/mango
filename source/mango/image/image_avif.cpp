@@ -296,6 +296,49 @@ namespace
             }
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            if (!m_decoder || !m_decoder->image)
+                return;
+
+            const avifImage* image = m_decoder->image;
+
+            report.bit_depth = int(image->depth);
+            report.alpha = m_decoder->alphaPresent != 0;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.lossless = InspectTriState::Unknown;
+            report.encoding = "AV1";
+
+            switch (image->yuvFormat)
+            {
+                case AVIF_PIXEL_FORMAT_YUV444:
+                    report.chroma_subsampling = "4:4:4";
+                    break;
+                case AVIF_PIXEL_FORMAT_YUV422:
+                    report.chroma_subsampling = "4:2:2";
+                    break;
+                case AVIF_PIXEL_FORMAT_YUV420:
+                    report.chroma_subsampling = "4:2:0";
+                    break;
+                case AVIF_PIXEL_FORMAT_YUV400:
+                    report.chroma_subsampling = "4:0:0";
+                    break;
+                default:
+                    break;
+            }
+
+#if MANGO_AVIF_GAINMAP
+            if (m_has_gain_map)
+            {
+                report.encoding = "AV1 HDR (gain map)";
+                report.bit_depth = 16;
+            }
+#endif
+
+            syncHdrInspectFromHeader(report);
+        }
+
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(options);

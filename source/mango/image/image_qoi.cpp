@@ -273,6 +273,7 @@ namespace
             int channels = p.read8();
             int colorspace = p.read8();
 
+            m_channels = channels;
             m_memory = ConstMemory(p, memory.size - QOI_HEADER_SIZE);
 
             if (magic != QOI_HEADER_MAGIC)
@@ -311,8 +312,21 @@ namespace
             header.compression = TextureCompression::NONE;
         }
 
+        int m_channels = 0;
+
         ~ImageDecoderQOI()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.chroma_subsampling = "4:4:4";
+            report.encoding = "QOI";
+            report.bit_depth = 8;
+            report.alpha = m_channels == 4;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

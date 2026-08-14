@@ -396,6 +396,21 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            const bool rle = m_targa_header.image_type == IMAGETYPE_RLE_PALETTE ||
+                             m_targa_header.image_type == IMAGETYPE_RLE_TRUECOLOR ||
+                             m_targa_header.image_type == IMAGETYPE_RLE_MONOCHROME;
+
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = rle ? "TGA RLE" : "TGA";
+            report.bit_depth = m_targa_header.pixel_size;
+            report.alpha = (m_targa_header.descriptor & DESCRIPTOR_ALPHA) != 0 ||
+                           m_targa_header.pixel_size == 32 || m_targa_header.pixel_size == 16;
+        }
+
         ImageDecodeStatus decode(const Surface& surface, const ImageDecodeOptions& options, int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);

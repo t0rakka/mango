@@ -2100,6 +2100,11 @@ namespace
         {
             ColorInfo& color = m_header.color;
 
+            // Reset fields that lower-precedence ancillary chunks may have populated
+            // while scanning; the chain below writes the authoritative values.
+            color.has_chromaticities = false;
+            color.gamma = 0.0f;
+
             // Precedence (per PNG color-chunk rules): cICP > iCCP > sRGB > cHRM/gAMA >
             // default. cICP is the modern authoritative HDR signalling; an ICC profile
             // otherwise defines the color space exactly.
@@ -2107,6 +2112,13 @@ namespace
             {
                 color.primaries = colorPrimariesFromCICP(m_cicp_primaries);
                 color.transfer = transferFunctionFromCICP(m_cicp_transfer);
+
+                // Exact xy for the named CICP primaries so linearize() can convert
+                // accurately without a companion cHRM chunk (PNG 3rd edition / HDR).
+                if (color.primaries != ColorPrimaries::Unspecified)
+                {
+                    fillChromaticitiesFromPrimaries(color, color.primaries);
+                }
             }
             else if (m_icc.size())
             {
@@ -4570,6 +4582,8 @@ namespace
             report.progressive = m_parser.isInterlaced() ? InspectTriState::Yes : InspectTriState::No;
             report.tiling.tiled = InspectTriState::No;
             report.chroma_subsampling = "4:4:4";
+            report.encoding = m_parser.isInterlaced() ? "PNG interlaced" : "PNG";
+            report.alpha = header.alpha;
         }
     };
 

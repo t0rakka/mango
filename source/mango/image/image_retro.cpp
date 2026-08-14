@@ -185,6 +185,11 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "MAKIchan", false);
+        }
+
         void parse(const u8* data, size_t size)
         {
             if (size < 8 || std::memcmp(data, "MAKI02  ", 8) != 0)
@@ -700,6 +705,11 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "Apple IIGS SHR", false);
+        }
+
         static bool isString(const u8* content, int offset, const char* s)
         {
             for ( ; *s; ++s, ++offset)
@@ -1105,6 +1115,11 @@ namespace
 
         ~InterfaceSCR()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "ZX Spectrum", false);
         }
 
         void setSize(int width, int height)

@@ -159,6 +159,34 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            auto compressionName = [](s16 type) -> const char*
+            {
+                switch (type)
+                {
+                    case 0: return "ETC1";
+                    case 1: return "ETC2 RGB";
+                    case 3: return "ETC2 RGBA";
+                    case 4: return "ETC2 RGB+A1";
+                    case 5: return "EAC R11";
+                    case 6: return "EAC RG11";
+                    case 7: return "EAC signed R11";
+                    case 8: return "EAC signed RG11";
+                    default: return "unknown";
+                }
+            };
+
+            report.lossless = InspectTriState::No;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::Yes;
+            TextureCompression info(header.compression);
+            report.tiling.width = info.width;
+            report.tiling.height = info.height;
+            report.encoding = compressionName(m_pkm_header.type);
+            report.alpha = m_pkm_header.type == 3 || m_pkm_header.type == 4;
+        }
+
         ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);

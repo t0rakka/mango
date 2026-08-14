@@ -315,12 +315,35 @@ namespace
 
         void populateInspect(ImageInspect& report) const override
         {
-            report.bit_depth = int(m_info.bits_per_sample);
+            report.bit_depth = isFloatingPoint(m_info) ? 32 : int(m_info.bits_per_sample);
+            report.alpha = hasAlphaChannel(m_info);
+            report.lossless = InspectTriState::Unknown;
             report.progressive = InspectTriState::Yes;
             report.tiling.tiled = InspectTriState::Yes;
             report.tiling.width = 256;
             report.tiling.height = 256;
             report.chroma_subsampling = "4:4:4";
+
+            if (isFloatingPoint(m_info))
+            {
+                report.encoding = m_info.uses_original_profile
+                    ? "JPEG XL float (JPEG recompression)"
+                    : "JPEG XL float HDR";
+            }
+            else if (header.color.transfer == TransferFunction::PQ)
+            {
+                report.encoding = "JPEG XL (PQ)";
+            }
+            else if (header.color.transfer == TransferFunction::HLG)
+            {
+                report.encoding = "JPEG XL (HLG)";
+            }
+            else
+            {
+                report.encoding = m_info.uses_original_profile ? "JPEG XL (JPEG recompression)" : "JPEG XL";
+            }
+
+            syncHdrInspectFromHeader(report);
         }
 
         void parse()

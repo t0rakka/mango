@@ -4291,6 +4291,76 @@ namespace
         {
             return m_context.decode(dest, options, level, depth, face);
         }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            const AttributeTable& attr = m_context.m_attributes;
+
+            auto compressionName = [](u8 compression) -> const char*
+            {
+                switch (compression)
+                {
+                    case NO_COMPRESSION:    return "none";
+                    case RLE_COMPRESSION:   return "RLE";
+                    case ZIPS_COMPRESSION:  return "ZIPS";
+                    case ZIP_COMPRESSION:   return "ZIP";
+                    case PIZ_COMPRESSION:   return "PIZ";
+                    case PXR24_COMPRESSION: return "PXR24";
+                    case B44_COMPRESSION:   return "B44";
+                    case B44A_COMPRESSION:  return "B44A";
+                    case DWAA_COMPRESSION:  return "DWAA";
+                    case DWAB_COMPRESSION:  return "DWAB";
+                    default:                return "unknown";
+                }
+            };
+
+            const bool lossy = attr.compression == B44_COMPRESSION ||
+                               attr.compression == B44A_COMPRESSION ||
+                               attr.compression == DWAA_COMPRESSION ||
+                               attr.compression == DWAB_COMPRESSION;
+
+            report.lossless = lossy ? InspectTriState::No : InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.encoding = compressionName(attr.compression);
+            report.tiling.tiled = m_context.is_single_tile ? InspectTriState::Yes : InspectTriState::No;
+            if (m_context.is_single_tile)
+            {
+                report.tiling.width = attr.tiledesc.xsize;
+                report.tiling.height = attr.tiledesc.ysize;
+            }
+
+            report.bit_depth = 16;
+            for (const Channel& channel : attr.chlist.channels)
+            {
+                if (channel.datatype == DataType::HALF)
+                {
+                    report.bit_depth = 16;
+                    break;
+                }
+                if (channel.datatype == DataType::FLOAT)
+                {
+                    report.bit_depth = 32;
+                    break;
+                }
+            }
+
+            report.alpha = false;
+            for (const Channel& channel : attr.chlist.channels)
+            {
+                if (channel.name == "A" || channel.name == "alpha")
+                {
+                    report.alpha = true;
+                    break;
+                }
+            }
+
+            if (report.encoding.empty() || report.encoding == "unknown")
+                report.encoding = "OpenEXR";
+            else
+                report.encoding = std::string("OpenEXR ") + report.encoding;
+
+            syncHdrInspectFromHeader(report);
+        }
     };
 
     ImageDecodeInterface* createInterface(ConstMemory memory)

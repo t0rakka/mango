@@ -116,6 +116,18 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::No;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::Yes;
+            report.tiling.width = m_astc_header.xblock;
+            report.tiling.height = m_astc_header.yblock;
+            report.encoding = std::to_string(m_astc_header.xblock) + "x" + std::to_string(m_astc_header.yblock);
+            report.encoding.insert(0, "ASTC ");
+            report.alpha = header.format.size.a > 0;
+        }
+
         ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);

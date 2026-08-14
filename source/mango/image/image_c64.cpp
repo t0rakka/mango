@@ -510,6 +510,11 @@ namespace
         }
 
         virtual const char* decodeImage(const Surface& dest) = 0;
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            populateRetroInspect(report, "Commodore 64", false);
+        }
     };
 
     struct GenericInterface : Interface

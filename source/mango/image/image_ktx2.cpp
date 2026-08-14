@@ -1004,6 +1004,9 @@ namespace
         bool m_orientation_y = false;
         bool m_orientation_z = false;
 
+        int m_texel_block_width = 0;
+        int m_texel_block_height = 0;
+
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
@@ -1255,6 +1258,9 @@ namespace
                     texelBlockDimension2 += !!texelBlockDimension2;
                     texelBlockDimension3 += !!texelBlockDimension3;
 
+                    m_texel_block_width = texelBlockDimension0;
+                    m_texel_block_height = texelBlockDimension1;
+
                     // Forward the data-format-descriptor color signalling.
                     header.color.primaries = khr_df_to_primaries(colorPrimaries);
 
@@ -1408,6 +1414,47 @@ namespace
 
         ~Interface()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            const bool block_compressed = header.compression != TextureCompression::NONE;
+            report.lossless = block_compressed ? InspectTriState::No : InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = block_compressed ? InspectTriState::Yes : InspectTriState::No;
+
+            if (block_compressed)
+            {
+                TextureCompression info(header.compression);
+                report.tiling.width = info.width;
+                report.tiling.height = info.height;
+            }
+            else if (m_texel_block_width > 1 || m_texel_block_height > 1)
+            {
+                report.tiling.width = m_texel_block_width;
+                report.tiling.height = m_texel_block_height;
+            }
+
+            if (m_is_etc1s)
+                report.encoding = "Basis ETC1S";
+            else if (m_is_uastc)
+                report.encoding = "Basis UASTC";
+            else if (block_compressed)
+                report.encoding = "block compressed";
+            else
+                report.encoding = "uncompressed";
+
+            report.alpha = header.format.size.a > 0;
+
+            if (header.compression == TextureCompression::BC6H_UF16 ||
+                header.compression == TextureCompression::BC6H_SF16 ||
+                header.compression == TextureCompression::BPTC_RGB_UNSIGNED_FLOAT ||
+                header.compression == TextureCompression::BPTC_RGB_SIGNED_FLOAT)
+            {
+                report.encoding = "BC6H HDR";
+            }
+
+            syncHdrInspectFromHeader(report);
         }
 
         ConstMemory memory(int level, int depth, int face) override

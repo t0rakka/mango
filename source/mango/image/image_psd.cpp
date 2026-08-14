@@ -577,6 +577,31 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            auto compressionName = [](Compression compression) -> const char*
+            {
+                switch (compression)
+                {
+                    case Compression::RAW:      return "RAW";
+                    case Compression::RLE:      return "RLE";
+                    case Compression::ZIP:      return "ZIP";
+                    case Compression::ZIP_PRED: return "ZIP prediction";
+                    default:                    return "unknown";
+                }
+            };
+
+            report.lossless = InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = compressionName(m_compression);
+            report.bit_depth = m_bits;
+            report.alpha = m_channels > 3;
+
+            if (m_bits >= 32)
+                syncHdrInspectFromHeader(report);
+        }
+
         ConstMemory memory(int level, int depth, int face) override
         {
             MANGO_UNREFERENCED(level);

@@ -1171,6 +1171,52 @@ namespace
         {
         }
 
+        void populateInspect(ImageInspect& report) const override
+        {
+            const bool block_compressed = header.compression != TextureCompression::NONE;
+            report.lossless = block_compressed ? InspectTriState::No : InspectTriState::Yes;
+            report.progressive = InspectTriState::No;
+            report.tiling.tiled = block_compressed ? InspectTriState::Yes : InspectTriState::No;
+            if (block_compressed)
+            {
+                TextureCompression info(header.compression);
+                report.tiling.width = info.width;
+                report.tiling.height = info.height;
+                if (m_dds_header.pixelFormat.fourCC)
+                {
+                    const u32 fourcc = m_dds_header.pixelFormat.fourCC;
+                    char label[5] = {
+                        char((fourcc >>  0) & 0xff),
+                        char((fourcc >>  8) & 0xff),
+                        char((fourcc >> 16) & 0xff),
+                        char((fourcc >> 24) & 0xff),
+                        '\0'
+                    };
+                    report.encoding = label;
+                }
+                else
+                {
+                    report.encoding = "block compressed";
+                }
+            }
+            else
+            {
+                report.encoding = "uncompressed";
+            }
+            report.alpha = (m_dds_header.pixelFormat.flags & 0x00000001) != 0 ||
+                           header.format.size.a > 0;
+
+            if (header.compression == TextureCompression::BC6H_UF16 ||
+                header.compression == TextureCompression::BC6H_SF16 ||
+                header.compression == TextureCompression::BPTC_RGB_UNSIGNED_FLOAT ||
+                header.compression == TextureCompression::BPTC_RGB_SIGNED_FLOAT)
+            {
+                report.encoding = "BC6H HDR";
+            }
+
+            syncHdrInspectFromHeader(report);
+        }
+
         ConstMemory memory(int level, int depth, int face) override
         {
             return m_dds_header.getMemory(level, depth, face);

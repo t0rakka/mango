@@ -803,10 +803,20 @@ namespace
     // walk used to decide the output format up front: single frame -> indexed (keep the
     // indices + palette), multiple frames -> rgba (frames may carry differing palettes
     // and must be composited in color space).
-    int count_images(const u8* data, const u8* end)
+    struct GifMetadata
     {
+        int frames = 0;
+        bool interlaced = false;
+        bool alpha = false;
+    };
+
+    // Walk the GIF data stream (post logical screen descriptor) and collect
+    // structural metadata without decoding LZW image data.
+    GifMetadata scan_gif_metadata(const u8* data, const u8* end)
+    {
+        GifMetadata info;
         const u8* p = data;
-        int count = 0;
+        bool gce_transparent = false;
 
         while (p < end)
         {
@@ -816,14 +826,26 @@ namespace
             {
                 if (p >= end)
                     break;
-                ++p; // label
 
-                // skip sub-blocks
+                u8 label = *p++;
+
                 while (p < end)
                 {
                     u8 size = *p++;
                     if (!size)
                         break;
+
+                    if (label == GRAPHICS_CONTROL_EXTENSION && size >= 1)
+                    {
+                        gce_transparent = (p[0] & 0x01) != 0;
+                    }
+
+                    if (p + size > end)
+                    {
+                        p = end;
+                        break;
+                    }
+
                     p += size;
                 }
             }
@@ -835,9 +857,20 @@ namespace
                 u8 field = p[8];
                 p += 9;
 
+                if (field & 0x40)
+                {
+                    info.interlaced = true;
+                }
+
+                if (gce_transparent)
+                {
+                    info.alpha = true;
+                }
+
+                gce_transparent = false;
+
                 if (field & 0x80)
                 {
-                    // local color table
                     p += (1 << ((field & 0x07) + 1)) * 3;
                 }
 
@@ -845,25 +878,33 @@ namespace
                     break;
                 ++p; // lzw minimum code size
 
-                // skip image data sub-blocks
                 while (p < end)
                 {
                     u8 size = *p++;
                     if (!size)
                         break;
+                    if (p + size > end)
+                    {
+                        p = end;
+                        break;
+                    }
                     p += size;
                 }
 
-                ++count;
+                ++info.frames;
             }
             else
             {
-                // GIF_TERMINATE or anything unexpected
                 break;
             }
         }
 
-        return count;
+        return info;
+    }
+
+    int count_images(const u8* data, const u8* end)
+    {
+        return scan_gif_metadata(data, end).frames;
     }
 
     // ------------------------------------------------------------
@@ -881,6 +922,8 @@ namespace
         const u8* m_end;
         const u8* m_data;
 
+        GifMetadata m_metadata;
+
         Interface(ConstMemory memory)
             : m_memory(memory)
         {
@@ -895,9 +938,11 @@ namespace
 
                 m_start = m_data;
 
+                m_metadata = scan_gif_metadata(m_start, m_end);
+
                 // Single-frame GIFs stay indexed (the indices + palette are preserved);
                 // animations resolve to rgba because frames may carry differing palettes.
-                int frames = count_images(m_start, m_end);
+                int frames = m_metadata.frames;
                 Format format = frames > 1
                     ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8)
                     : IndexedFormat(8);
@@ -915,6 +960,16 @@ namespace
 
         ~Interface()
         {
+        }
+
+        void populateInspect(ImageInspect& report) const override
+        {
+            report.lossless = InspectTriState::Yes;
+            report.progressive = m_metadata.interlaced ? InspectTriState::Yes : InspectTriState::No;
+            report.tiling.tiled = InspectTriState::No;
+            report.encoding = header.frames > 1 ? "GIF LZW (animated)" : "GIF LZW";
+            report.bit_depth = 8;
+            report.alpha = m_metadata.alpha;
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
