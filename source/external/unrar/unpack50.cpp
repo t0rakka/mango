@@ -643,7 +643,9 @@ bool Unpack::ReadTables(BitInput &Inp,UnpackBlockHeader &Header,UnpackBlockTable
 
   MakeDecodeTables(BitLength,&Tables.BD,BC);
 
-  byte Table[HUFF_TABLE_SIZEX];
+  // AVX-512 auto-vectorization of the fill loops below can emit a 64-byte
+  // store when fewer than 64 bytes remain; pad so that store cannot overflow.
+  byte Table[HUFF_TABLE_SIZEX + 64];
   const uint TableSize=ExtraDist ? HUFF_TABLE_SIZEX:HUFF_TABLE_SIZEB;
   for (uint I=0;I<TableSize;)
   {
