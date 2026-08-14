@@ -1538,21 +1538,21 @@ namespace isal
     {
         while (output.size > 0 && input.size > 0)
         {
-            int code = s8(*input.address++);
+            u8 byte = *input.address++;
             --input.size;
 
-            if (code == 128)
+            if (byte == 0x80)
             {
                 continue;
             }
+
+            int code = s8(byte);
 
             if (code >= 0)
             {
                 int length = 1 + code;
 
-                output.size -= length;
-                input.size -= length;
-                if (output.size < 0 || input.size < 0)
+                if (size_t(length) > output.size || size_t(length) > input.size)
                 {
                     return false;
                 }
@@ -1561,14 +1561,14 @@ namespace isal
 
                 output.address += length;
                 input.address += length;
+                output.size -= length;
+                input.size -= length;
             }
             else
             {
                 int length = 1 - code;
 
-                output.size -= length;
-                input.size -= 1;
-                if (output.size < 0 || input.size < 0)
+                if (size_t(length) > output.size || input.size < 1)
                 {
                     return false;
                 }
@@ -1576,10 +1576,12 @@ namespace isal
                 u8 value = *input.address++;
                 std::memset(output.address, value, length);
                 output.address += length;
+                input.size -= 1;
+                output.size -= length;
             }
         }
 
-        return true;
+        return output.size == 0;
     }
 
 } // namespace mango

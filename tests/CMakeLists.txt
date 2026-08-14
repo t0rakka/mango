@@ -17,6 +17,14 @@ set(MANGO_TESTS
     checksum
     aes
     ziptest
+    core_buffer
+    core_endian
+    core_slice
+    core_aligned
+    core_compress
+    core_half
+    core_string
+    core_checksum
 )
 
 foreach(test IN LISTS MANGO_TESTS)
