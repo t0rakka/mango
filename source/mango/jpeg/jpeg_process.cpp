@@ -1216,6 +1216,54 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     return dest;
 }
 
+void process_ycbcr_rgba_8x8_avx2_color(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+{
+    const __m256i s0 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
+    const __m256i s1 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
+    const __m256i s2 = JPEG_CONST_AVX2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
+    const __m256i rounding = _mm256_set1_epi32(1 << (JPEG_PREC - 1));
+    const __m256i tosigned = _mm256_set1_epi16(128);
+    const __m256i alpha = _mm256_set1_epi16(0x00ff);
+
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
+    {
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+
+        for (int y = 0; y < 2; ++y)
+        {
+            __m256i y0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 0));
+            __m256i cb = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 64));
+            __m256i cr = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 128));
+
+            y0 = _mm256_permute4x64_epi64(y0, _MM_SHUFFLE(3, 1, 2, 0));
+            cb = _mm256_permute4x64_epi64(cb, _MM_SHUFFLE(3, 1, 2, 0));
+            cr = _mm256_permute4x64_epi64(cr, _MM_SHUFFLE(3, 1, 2, 0));
+
+            __m256i zero = _mm256_setzero_si256();
+
+            __m256i cb0 = _mm256_unpacklo_epi8(cb, zero);
+            __m256i cr0 = _mm256_unpacklo_epi8(cr, zero);
+            __m256i cb1 = _mm256_unpackhi_epi8(cb, zero);
+            __m256i cr1 = _mm256_unpackhi_epi8(cr, zero);
+
+            cb0 = _mm256_sub_epi16(cb0, tosigned);
+            cr0 = _mm256_sub_epi16(cr0, tosigned);
+            cb1 = _mm256_sub_epi16(cb1, tosigned);
+            cr1 = _mm256_sub_epi16(cr1, tosigned);
+
+            dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, alpha, s0, s1, s2, rounding);
+            dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, alpha, s0, s1, s2, rounding);
+        }
+    }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+}
+
 void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
@@ -1224,42 +1272,7 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
     state->idct(result +  64, data +  64, state->block[1].qt); // Cb
     state->idct(result + 128, data + 128, state->block[2].qt); // Cr
 
-    // color conversion
-    const __m256i s0 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
-    const __m256i s1 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
-    const __m256i s2 = JPEG_CONST_AVX2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
-    const __m256i rounding = _mm256_set1_epi32(1 << (JPEG_PREC - 1));
-    const __m256i tosigned = _mm256_set1_epi16(128);
-    const __m256i alpha = _mm256_set1_epi16(0x00ff);
-
-    for (int y = 0; y < 2; ++y)
-    {
-        __m256i y0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 0));
-        __m256i cb = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 64));
-        __m256i cr = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 128));
-
-        y0 = _mm256_permute4x64_epi64(y0, _MM_SHUFFLE(3, 1, 2, 0));
-        cb = _mm256_permute4x64_epi64(cb, _MM_SHUFFLE(3, 1, 2, 0));
-        cr = _mm256_permute4x64_epi64(cr, _MM_SHUFFLE(3, 1, 2, 0));
-
-        __m256i zero = _mm256_setzero_si256();
-
-        __m256i cb0 = _mm256_unpacklo_epi8(cb, zero);
-        __m256i cr0 = _mm256_unpacklo_epi8(cr, zero);
-        __m256i cb1 = _mm256_unpackhi_epi8(cb, zero);
-        __m256i cr1 = _mm256_unpackhi_epi8(cr, zero);
-
-        cb0 = _mm256_sub_epi16(cb0, tosigned);
-        cr0 = _mm256_sub_epi16(cr0, tosigned);
-        cb1 = _mm256_sub_epi16(cb1, tosigned);
-        cr1 = _mm256_sub_epi16(cr1, tosigned);
-
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, alpha, s0, s1, s2, rounding);
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, alpha, s0, s1, s2, rounding);
-    }
-
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
+    process_ycbcr_rgba_8x8_avx2_color(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif // MANGO_ENABLE_AVX2

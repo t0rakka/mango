@@ -96,6 +96,40 @@ void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* st
 
 #ifdef FUNCTION_YCBCR_8x8
 
+void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+{
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
+    {
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+
+        for (int y = 0; y < 8; ++y)
+        {
+            const u8* s = result + y * 8;
+            u8* d = dest;
+
+            for (int x = 0; x < 8; ++x)
+            {
+                int y0 = s[x];
+                int cb = s[x + 64];
+                int cr = s[x + 128];
+                int r, g, b;
+                COMPUTE_CBCR(cb, cr);
+                WRITE_COLOR(d, y0, r, g, b);
+                d += XSTEP;
+            }
+
+            dest += stride;
+        }
+    }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+}
+
 void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
     u8 result[64 * 3];
@@ -104,35 +138,51 @@ void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* 
     state->idct(result + 64 * 1, data + 64 * 1, state->block[1].qt); // Cb
     state->idct(result + 64 * 2, data + 64 * 2, state->block[2].qt); // Cr
 
-    // color conversion
-    const u8* src = result;
-
-    for (int y = 0; y < 8; ++y)
-    {
-        const u8* s = src + y * 8;
-        u8* d = dest;
-
-        for (int x = 0; x < 8; ++x)
-        {
-            int y0 = s[x];
-            int cb = s[x + 64];
-            int cr = s[x + 128];
-            int r, g, b;
-            COMPUTE_CBCR(cb, cr);
-            WRITE_COLOR(d, y0, r, g, b);
-            d += XSTEP;
-        }
-
-        dest += stride;
-    }
-
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
+    JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
 
 #ifdef FUNCTION_YCBCR_8x16
+
+void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+{
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
+    {
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+
+        for (int y = 0; y < 8; ++y)
+        {
+            u8* d0 = dest;
+            u8* d1 = dest + stride;
+            const u8* s = result + y * 16;
+            const u8* c = result + y * 8 + 128;
+
+            for (int x = 0; x < 8; ++x)
+            {
+                int y0 = s[x + 0];
+                int y1 = s[x + 8];
+                int cb = c[x + 0];
+                int cr = c[x + 64];
+                int r, g, b;
+                COMPUTE_CBCR(cb, cr);
+                WRITE_COLOR(d0, y0, r, g, b);
+                WRITE_COLOR(d1, y1, r, g, b);
+                d0 += XSTEP;
+                d1 += XSTEP;
+            }
+
+            dest += stride * 2;
+        }
+    }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+}
 
 void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
@@ -143,38 +193,62 @@ void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState*
     state->idct(result + 128, data + 128, state->block[2].qt); // Cb
     state->idct(result + 192, data + 192, state->block[3].qt); // Cr
 
-    // color conversion
-    for (int y = 0; y < 8; ++y)
-    {
-        u8* d0 = dest;
-        u8* d1 = dest + stride;
-        const u8* s = result + y * 16;
-        const u8* c = result + y * 8 + 128;
-
-        for (int x = 0; x < 8; ++x)
-        {
-            int y0 = s[x + 0];
-            int y1 = s[x + 8];
-            int cb = c[x + 0];
-            int cr = c[x + 64];
-            int r, g, b;
-            COMPUTE_CBCR(cb, cr);
-            WRITE_COLOR(d0, y0, r, g, b);
-            WRITE_COLOR(d1, y1, r, g, b);
-            d0 += XSTEP;
-            d1 += XSTEP;
-        }
-
-        dest += stride * 2;
-    }
-
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
+    JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
 
 #ifdef FUNCTION_YCBCR_16x8
+
+void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+{
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
+    {
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+
+        for (int y = 0; y < 8; ++y)
+        {
+            u8* d = dest;
+            const u8* s = result + y * 8;
+            const u8* c = result + y * 8 + 128;
+
+            for (int x = 0; x < 4; ++x)
+            {
+                int y0 = s[x * 2 + 0];
+                int y1 = s[x * 2 + 1];
+                int cb = c[x + 0];
+                int cr = c[x + 64];
+                int r, g, b;
+                COMPUTE_CBCR(cb, cr);
+                WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
+                WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
+                d += 2 * XSTEP;
+            }
+
+            for (int x = 0; x < 4; ++x)
+            {
+                int y0 = s[x * 2 + 64];
+                int y1 = s[x * 2 + 65];
+                int cb = c[x + 4];
+                int cr = c[x + 68];
+                int r, g, b;
+                COMPUTE_CBCR(cb, cr);
+                WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
+                WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
+                d += 2 * XSTEP;
+            }
+
+            dest += stride;
+        }
+    }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+}
 
 void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
@@ -185,49 +259,66 @@ void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState*
     state->idct(result + 128, data + 128, state->block[2].qt); // Cb
     state->idct(result + 192, data + 192, state->block[3].qt); // Cr
 
-    // color conversion
-    for (int y = 0; y < 8; ++y)
-    {
-        u8* d = dest;
-        u8* s = result + y * 8;
-        u8* c = result + y * 8 + 128;
-
-        for (int x = 0; x < 4; ++x)
-        {
-            int y0 = s[x * 2 + 0];
-            int y1 = s[x * 2 + 1];
-            int cb = c[x + 0];
-            int cr = c[x + 64];
-            int r, g, b;
-            COMPUTE_CBCR(cb, cr);
-            WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
-            WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
-            d += 2 * XSTEP;
-        }
-
-        for (int x = 0; x < 4; ++x)
-        {
-            int y0 = s[x * 2 + 64];
-            int y1 = s[x * 2 + 65];
-            int cb = c[x + 4];
-            int cr = c[x + 68];
-            int r, g, b;
-            COMPUTE_CBCR(cb, cr);
-            WRITE_COLOR(d + 0 * XSTEP, y0, r, g, b);
-            WRITE_COLOR(d + 1 * XSTEP, y1, r, g, b);
-            d += 2 * XSTEP;
-        }
-
-        dest += stride;
-    }
-
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
+    JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
 
 #ifdef FUNCTION_YCBCR_16x16
+
+void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+{
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
+    {
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            int cbcr_offset = (i & 1) * 4 + (i >> 1) * 32;
+            int y_offset = i * 64;
+            size_t dest_offset = (i >> 1) * 8 * stride + (i & 1) * 8 * XSTEP;
+            const u8* ptr_cbcr = result + 256 + cbcr_offset;
+            const u8* ptr_y = result + y_offset;
+            u8* ptr_dest = dest + dest_offset;
+
+            for (int y = 0; y < 4; ++y)
+            {
+                u8* scan = ptr_dest;
+
+                for (int x = 0; x < 4; ++x)
+                {
+                    u8 y0 = ptr_y[x * 2 + 0];
+                    u8 y1 = ptr_y[x * 2 + 1];
+                    u8 y2 = ptr_y[x * 2 + 8];
+                    u8 y3 = ptr_y[x * 2 + 9];
+                    u8 cb = ptr_cbcr[x + 0];
+                    u8 cr = ptr_cbcr[x + 64];
+
+                    int r, g, b;
+                    COMPUTE_CBCR(cb, cr);
+                    WRITE_COLOR(scan + 0 * XSTEP, y0, r, g, b);
+                    WRITE_COLOR(scan + 1 * XSTEP, y1, r, g, b);
+
+                    u8* next = scan + stride;
+                    scan += 2 * XSTEP;
+                    WRITE_COLOR(next + 0 * XSTEP, y2, r, g, b);
+                    WRITE_COLOR(next + 1 * XSTEP, y3, r, g, b);
+                }
+
+                ptr_dest += stride * 2;
+                ptr_y += 8 * 2;
+                ptr_cbcr += 8;
+            }
+        }
+    }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
+}
 
 void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
 {
@@ -240,48 +331,7 @@ void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState
     state->idct(result + 256, data + 256, state->block[4].qt); // Cb
     state->idct(result + 320, data + 320, state->block[5].qt); // Cr
 
-    // color conversion
-    for (int i = 0; i < 4; ++i)
-    {
-        int cbcr_offset = (i & 1) * 4 + (i >> 1) * 32;
-        int y_offset = i * 64;
-        size_t dest_offset = (i >> 1) * 8 * stride + (i & 1) * 8 * XSTEP;
-        const u8* ptr_cbcr = result + 256 + cbcr_offset;
-        const u8* ptr_y = result + y_offset;
-        u8* ptr_dest = dest + dest_offset;
-
-        for (int y = 0; y < 4; ++y)
-        {
-            u8* scan = ptr_dest;
-
-            for (int x = 0; x < 4; ++x)
-            {
-                u8 y0 = ptr_y[x * 2 + 0];
-                u8 y1 = ptr_y[x * 2 + 1];
-                u8 y2 = ptr_y[x * 2 + 8];
-                u8 y3 = ptr_y[x * 2 + 9];
-                u8 cb = ptr_cbcr[x + 0];
-                u8 cr = ptr_cbcr[x + 64];
-
-                int r, g, b;
-                COMPUTE_CBCR(cb, cr);
-                WRITE_COLOR(scan + 0 * XSTEP, y0, r, g, b);
-                WRITE_COLOR(scan + 1 * XSTEP, y1, r, g, b);
-
-                u8* next = scan + stride;
-                scan += 2 * XSTEP;
-                WRITE_COLOR(next + 0 * XSTEP, y2, r, g, b);
-                WRITE_COLOR(next + 1 * XSTEP, y3, r, g, b);
-            }
-
-            ptr_dest += stride * 2;
-            ptr_y += 8 * 2;
-            ptr_cbcr += 8;
-        }
-    }
-
-    MANGO_UNREFERENCED(width);
-    MANGO_UNREFERENCED(height);
+    JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
