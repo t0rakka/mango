@@ -20,40 +20,74 @@ function (mango_apply_isa_to_target target)
         target_compile_options(${target} PUBLIC "/MP")
 
         if (X86 OR X86_64)
-            if (ENABLE_PCLMUL)
-                target_compile_definitions(${target} PUBLIC "__PCLMUL__")
+            # Optional post-SSE2 ISA extensions (F16C, POPCNT, ...) require an SSE2+
+            # SIMD tier to be enabled. Without that baseline, vendored astcenc can end
+            # up in a scalar path while __F16C__ is still defined and the build breaks.
+            # On x86-32, ENABLE_SSE2/ENABLE_SSE4 also selects /arch:SSE2 (SSE2 was
+            # common late in the 32-bit era; x86-64 always has it in hardware).
+            set(_mango_x86_simd_baseline FALSE)
+            if (ENABLE_SSE2 OR ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                set(_mango_x86_simd_baseline TRUE)
             endif ()
 
-            if (ENABLE_POPCNT)
-                target_compile_definitions(${target} PUBLIC "__POPCNT__")
+            if (_mango_x86_simd_baseline)
+                if (ENABLE_PCLMUL)
+                    target_compile_definitions(${target} PUBLIC "__PCLMUL__")
+                endif ()
+
+                if (ENABLE_POPCNT)
+                    target_compile_definitions(${target} PUBLIC "__POPCNT__")
+                endif ()
+
+                if (ENABLE_AES)
+                    target_compile_definitions(${target} PUBLIC "__AES__")
+                endif ()
+
+                if (ENABLE_F16C)
+                    target_compile_definitions(${target} PUBLIC "__F16C__")
+                endif ()
+
+                if (ENABLE_LZCNT)
+                    target_compile_definitions(${target} PUBLIC "__LZCNT__")
+                endif ()
+
+                if (ENABLE_BMI)
+                    target_compile_definitions(${target} PUBLIC "__BMI__")
+                endif ()
+
+                if (ENABLE_BMI2)
+                    target_compile_definitions(${target} PUBLIC "__BMI2__")
+                endif ()
+
+                if (ENABLE_FMA)
+                    target_compile_definitions(${target} PUBLIC "__FMA__")
+                endif ()
+
+                if (ENABLE_SHA)
+                    target_compile_definitions(${target} PUBLIC "__SHA__")
+                endif ()
             endif ()
 
-            if (ENABLE_AES)
-                target_compile_definitions(${target} PUBLIC "__AES__")
+            # MSVC does not predefine __SSE2__ / __SSE4_2__ / __AVX2__ the way GCC and
+            # Clang do via -msse* / -mavx*. Vendored astcenc (and similar third-party
+            # code that never includes mango/configure.hpp) selects its SIMD backend
+            # from these macros in astcenc_mathlib.h. Without them, astcenc falls
+            # back to the scalar path while optional ISA macros (__F16C__, etc.) may
+            # still be set, which breaks the build.
+            #
+            # mango/configure.hpp uses #ifndef guards for the same names, so defining
+            # them here does not conflict with mango headers.
+            if (ENABLE_SSE2 OR ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                target_compile_definitions(${target} PUBLIC "__SSE2__")
             endif ()
-
-            if (ENABLE_F16C)
-                target_compile_definitions(${target} PUBLIC "__F16C__")
+            if (ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                target_compile_definitions(${target} PUBLIC "__SSE4_1__" "__SSE4_2__")
             endif ()
-
-            if (ENABLE_LZCNT)
-                target_compile_definitions(${target} PUBLIC "__LZCNT__")
+            if (ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                target_compile_definitions(${target} PUBLIC "__AVX__")
             endif ()
-
-            if (ENABLE_BMI)
-                target_compile_definitions(${target} PUBLIC "__BMI__")
-            endif ()
-
-            if (ENABLE_BMI2)
-                target_compile_definitions(${target} PUBLIC "__BMI2__")
-            endif ()
-
-            if (ENABLE_FMA)
-                target_compile_definitions(${target} PUBLIC "__FMA__")
-            endif ()
-
-            if (ENABLE_SHA)
-                target_compile_definitions(${target} PUBLIC "__SHA__")
+            if (ENABLE_AVX2 OR ENABLE_AVX512)
+                target_compile_definitions(${target} PUBLIC "__AVX2__")
             endif ()
 
             # enable only one (the most recent) SIMD extension
@@ -87,40 +121,47 @@ function (mango_apply_isa_to_target target)
     endif ()
 
     if (X86 OR X86_64)
-        if (ENABLE_PCLMUL)
-            target_compile_options(${target} PUBLIC "-mpclmul")
+        set(_mango_x86_simd_baseline FALSE)
+        if (ENABLE_SSE2 OR ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+            set(_mango_x86_simd_baseline TRUE)
         endif ()
 
-        if (ENABLE_POPCNT)
-            target_compile_options(${target} PUBLIC "-mpopcnt")
-        endif ()
+        if (_mango_x86_simd_baseline)
+            if (ENABLE_PCLMUL)
+                target_compile_options(${target} PUBLIC "-mpclmul")
+            endif ()
 
-        if (ENABLE_AES)
-            target_compile_options(${target} PUBLIC "-maes")
-        endif ()
+            if (ENABLE_POPCNT)
+                target_compile_options(${target} PUBLIC "-mpopcnt")
+            endif ()
 
-        if (ENABLE_F16C)
-            target_compile_options(${target} PUBLIC "-mf16c")
-        endif ()
+            if (ENABLE_AES)
+                target_compile_options(${target} PUBLIC "-maes")
+            endif ()
 
-        if (ENABLE_LZCNT)
-            target_compile_options(${target} PUBLIC "-mlzcnt")
-        endif ()
+            if (ENABLE_F16C)
+                target_compile_options(${target} PUBLIC "-mf16c")
+            endif ()
 
-        if (ENABLE_BMI)
-            target_compile_options(${target} PUBLIC "-mbmi")
-        endif ()
+            if (ENABLE_LZCNT)
+                target_compile_options(${target} PUBLIC "-mlzcnt")
+            endif ()
 
-        if (ENABLE_BMI2)
-            target_compile_options(${target} PUBLIC "-mbmi2")
-        endif ()
+            if (ENABLE_BMI)
+                target_compile_options(${target} PUBLIC "-mbmi")
+            endif ()
 
-        if (ENABLE_FMA)
-            target_compile_options(${target} PUBLIC "-mfma")
-        endif ()
+            if (ENABLE_BMI2)
+                target_compile_options(${target} PUBLIC "-mbmi2")
+            endif ()
 
-        if (ENABLE_SHA)
-            target_compile_options(${target} PUBLIC "-msha")
+            if (ENABLE_FMA)
+                target_compile_options(${target} PUBLIC "-mfma")
+            endif ()
+
+            if (ENABLE_SHA)
+                target_compile_options(${target} PUBLIC "-msha")
+            endif ()
         endif ()
 
         # enable only one (the most recent) SIMD extension
@@ -180,40 +221,50 @@ function (mango_report_isa_extensions simd_level)
     message("[ISA Extensions]")
 
     if (X86 OR X86_64)
-        if (ENABLE_PCLMUL)
-            message("    PCLMUL (2008)")
+        set(_mango_x86_simd_baseline FALSE)
+        if (ENABLE_SSE2 OR ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+            set(_mango_x86_simd_baseline TRUE)
         endif ()
 
-        if (ENABLE_POPCNT)
-            message("    POPCNT (2008)")
-        endif ()
+        if (_mango_x86_simd_baseline)
+            if (ENABLE_PCLMUL)
+                message("    PCLMUL (2008)")
+            endif ()
 
-        if (ENABLE_AES)
-            message("    AES (2010)")
-        endif ()
+            if (ENABLE_POPCNT)
+                message("    POPCNT (2008)")
+            endif ()
 
-        if (ENABLE_F16C)
-            message("    F16C (2012)")
-        endif ()
+            if (ENABLE_AES)
+                message("    AES (2010)")
+            endif ()
 
-        if (ENABLE_LZCNT)
-            message("    LZCNT (2013)")
-        endif ()
+            if (ENABLE_F16C)
+                message("    F16C (2012)")
+            endif ()
 
-        if (ENABLE_BMI)
-            message("    BMI (2013)")
-        endif ()
+            if (ENABLE_LZCNT)
+                message("    LZCNT (2013)")
+            endif ()
 
-        if (ENABLE_BMI2)
-            message("    BMI2 (2013)")
-        endif ()
+            if (ENABLE_BMI)
+                message("    BMI (2013)")
+            endif ()
 
-        if (ENABLE_FMA)
-            message("    FMA (2013)")
-        endif ()
+            if (ENABLE_BMI2)
+                message("    BMI2 (2013)")
+            endif ()
 
-        if (ENABLE_SHA)
-            message("    SHA (2013)")
+            if (ENABLE_FMA)
+                message("    FMA (2013)")
+            endif ()
+
+            if (ENABLE_SHA)
+                message("    SHA (2013)")
+            endif ()
+        elseif (ENABLE_PCLMUL OR ENABLE_POPCNT OR ENABLE_AES OR ENABLE_F16C OR ENABLE_LZCNT
+                OR ENABLE_BMI OR ENABLE_BMI2 OR ENABLE_FMA OR ENABLE_SHA)
+            message("    (optional ISA extensions ignored: enable SSE2 or higher)")
         endif ()
 
         if (ENABLE_SSE2)
