@@ -87,7 +87,7 @@ int main()
                 ++failed_count;
             }
         }
-        catch (mango::Exception e)
+        catch (const mango::Exception& e)
         {
             printLine("Exception: {}", e.what());
             ++failed_count;
