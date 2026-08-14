@@ -391,22 +391,13 @@ void load_wuffs(const char* filename)
 
 int main(int argc, const char* argv[])
 {
-    if (argc < 2)
-    {
-        printLine("Too few arguments. usage: <filename.jpg>");
-        exit(1);
-    }
-
-    printLine(getSystemInfo());
-
-    const char* filename = argv[1];
-    warmup(filename);
-
+    const char* filename = nullptr;
     int test_count = 0;
     bool multithread = true;
     bool tracing = false;
+    bool mango_only = false;
 
-    for (int i = 2; i < argc; ++i)
+    for (int i = 1; i < argc; ++i)
     {
         if (!strcmp(argv[i], "--nomt"))
         {
@@ -425,11 +416,33 @@ int main(int argc, const char* argv[])
             // NOTE: reverse logic --save means DISABLE save testing
             g_enable_save = false;
         }
+        else if (!strcmp(argv[i], "--mango"))
+        {
+            mango_only = true;
+        }
+        else if (!strcmp(argv[i], "--count"))
+        {
+            if (i + 1 >= argc)
+            {
+                printLine("Missing value for --count");
+                exit(1);
+            }
+            test_count = std::atoi(argv[++i]);
+        }
         else
         {
-            test_count = std::atoi(argv[i]);
+            filename = argv[i];
         }
     }
+
+    if (!filename)
+    {
+        printLine("usage: jpeg_benchmark <filename.jpg> [--mango] [--nomt] [--debug] [--trace] [--save] [--count N]");
+        exit(1);
+    }
+
+    printLine(getSystemInfo());
+    warmup(filename);
 
     printLine("-----------------------------------------------------");
     printLine("           decode(ms)   encode(ms)   size(KB)        ");
@@ -439,6 +452,9 @@ int main(int argc, const char* argv[])
     u64 time1;
     u64 time2;
     size_t size;
+
+    if (!mango_only)
+    {
 
     // ------------------------------------------------------------------
 
@@ -523,6 +539,8 @@ int main(int argc, const char* argv[])
     ::print("wuffs:   ", time1 - time0, NOT_AVAILABLE, 0);
 
 #endif
+
+    } // !mango_only
 
     // ------------------------------------------------------------------
 
