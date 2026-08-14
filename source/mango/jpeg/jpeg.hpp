@@ -349,8 +349,7 @@ namespace mango::image::jpeg
 
     struct ProcessState;
 
-    using ProcessFunc = void (*)(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    using ColorFunc   = void (*)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride);
+    using ColorFunc = void (*)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride);
 
     struct ProcessState
     {
@@ -369,8 +368,7 @@ namespace mango::image::jpeg
         int idct_offset[JPEG_MAX_BLOCKS_IN_MCU];
 
         void (*idct) (u8* dest, const s16* data, const s16* qt);
-        void (*process) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-        ColorFunc color = nullptr; // specialized kernels only; reads ready spatial samples
+        ColorFunc color = nullptr; // spatial already filled by idctMCU
 
         void idctMCU(u8* spatial, const s16* data) const
         {
@@ -711,44 +709,47 @@ namespace mango::image::jpeg
     void idct8                          (u8* dest, const s16* data, const s16* qt);
     void idct12                         (u8* dest, const s16* data, const s16* qt);
 
-    void process_y_8bit                 (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_y_24bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_y_32bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_cmyk_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+#define JPEG_COLOR_KERNEL(name) \
+    void name(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+
+    JPEG_COLOR_KERNEL(process_y_8bit);
+    JPEG_COLOR_KERNEL(process_y_24bit);
+    JPEG_COLOR_KERNEL(process_y_32bit);
+    JPEG_COLOR_KERNEL(process_cmyk_rgba);
+    JPEG_COLOR_KERNEL(process_cmyk_store_rgba);
 
     // CMYK scanlines stored as C,M,Y,K in RGBA byte slots; converts in-place to display sRGB.
     bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc);
     void simple_cmyk_surface_to_rgba(Surface& surface);
-    void process_ycbcr_8bit             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_8bit);
 
-    void process_rgb_bgr               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_rgb_rgb               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_rgb_bgra              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_rgb_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_rgb_bgr);
+    JPEG_COLOR_KERNEL(process_rgb_rgb);
+    JPEG_COLOR_KERNEL(process_rgb_bgra);
+    JPEG_COLOR_KERNEL(process_rgb_rgba);
 
 #define JPEG_YCBCR_KERNEL(name) \
-    void name(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height); \
     void name##_color(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 
-    void process_ycbcr_bgr              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_bgr);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x16);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x16);
 
-    void process_ycbcr_rgb              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_rgb);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x16);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x16);
 
-    void process_ycbcr_bgra             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_bgra);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x16);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x16);
 
-    void process_ycbcr_rgba             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_rgba);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x16);
     JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x8);
@@ -817,6 +818,7 @@ namespace mango::image::jpeg
 #endif // MANGO_ENABLE_AVX2
 
 #undef JPEG_YCBCR_KERNEL
+#undef JPEG_COLOR_KERNEL
 
     SampleFormat getSampleFormat(const Format& format);
     ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);

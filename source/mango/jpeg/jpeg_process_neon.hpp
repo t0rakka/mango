@@ -40,17 +40,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(u8* dest, size_t stride, const u8* spat
     MANGO_UNREFERENCED(height);
 }
 
-void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 3];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y
-    state->idct(result +  64, data +  64, state->block[1].qt); // Cb
-    state->idct(result + 128, data + 128, state->block[2].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(dest, stride, result, state, width, height, 1, 0);
-}
-
 #endif
 
 #ifdef FUNCTION_YCBCR_8x16
@@ -93,18 +82,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(u8* dest, size_t stride, const u8* spa
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 4];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-    state->idct(result + 128, data + 128, state->block[2].qt); // Cb
-    state->idct(result + 192, data + 192, state->block[3].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
@@ -150,18 +127,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(u8* dest, size_t stride, const u8* spa
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 4];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-    state->idct(result + 128, data + 128, state->block[2].qt); // Cb
-    state->idct(result + 192, data + 192, state->block[3].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
@@ -215,20 +180,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(u8* dest, size_t stride, const u8* sp
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 6];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-    state->idct(result + 128, data +  64, state->block[1].qt); // Y1
-    state->idct(result +  64, data + 128, state->block[2].qt); // Y2
-    state->idct(result + 192, data + 192, state->block[3].qt); // Y3
-    state->idct(result + 256, data + 256, state->block[4].qt); // Cb
-    state->idct(result + 320, data + 320, state->block[5].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif

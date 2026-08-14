@@ -5,89 +5,87 @@
 
 #ifdef FUNCTION_GENERIC
 
-void FUNCTION_GENERIC(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void FUNCTION_GENERIC(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
-
-    for (int i = 0; i < state->blocks; ++i)
-    {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
-
-    // MCU dimension in blocks
     int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
     int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
 
-    u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 3];
+    u8* origin = dest;
 
-    // first pass: expand channel data
-    for (int channel = 0; channel < 3; ++channel)
+    for (int m = 0; m < count; ++m)
     {
-        int offset = state->frame[channel].offset * 64;
-        int hsf = state->frame[channel].hsf;
-        int vsf = state->frame[channel].vsf;
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
 
-        for (int yblock = 0; yblock < vsf; ++yblock)
+        u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 3];
+
+        // first pass: expand channel data
+        for (int channel = 0; channel < 3; ++channel)
         {
-            for (int xblock = 0; xblock < hsf; ++xblock)
+            int offset = state->frame[channel].offset * 64;
+            int hsf = state->frame[channel].hsf;
+            int vsf = state->frame[channel].vsf;
+
+            for (int yblock = 0; yblock < vsf; ++yblock)
             {
-                u8* source = result + offset + (yblock * hsf + xblock) * 64;
-                u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
-
-                if (hmax != hsf || vmax != vsf)
+                for (int xblock = 0; xblock < hsf; ++xblock)
                 {
-                    int xscale = hmax / hsf;
-                    int yscale = vmax / vsf;
+                    const u8* source = result + offset + (yblock * hsf + xblock) * 64;
+                    u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
-                    for (int y = 0; y < 8; ++y)
+                    if (hmax != hsf || vmax != vsf)
                     {
-                        for (int x = 0; x < 8; ++x)
+                        int xscale = hmax / hsf;
+                        int yscale = vmax / vsf;
+
+                        for (int y = 0; y < 8; ++y)
                         {
-                            u8 sample = *source++;
-                            std::memset(d + x * xscale, sample, xscale);
+                            for (int x = 0; x < 8; ++x)
+                            {
+                                u8 sample = *source++;
+                                std::memset(d + x * xscale, sample, xscale);
+                            }
+
+                            d += hmax * 8;
+
+                            for (int s = 1; s < yscale; ++s)
+                            {
+                                std::memcpy(d, d - hmax * 8, xscale * 8);
+                                d += hmax * 8;
+                            }
                         }
-
-                        d += hmax * 8;
-
-                        for (int s = 1; s < yscale; ++s)
+                    }
+                    else
+                    {
+                        for (int y = 0; y < 8; ++y)
                         {
-                            std::memcpy(d, d - hmax * 8, xscale * 8);
+                            std::memcpy(d, source, 8);
+                            source += 8;
                             d += hmax * 8;
                         }
                     }
                 }
-                else
-                {
-                    for (int y = 0; y < 8; ++y)
-                    {
-                        std::memcpy(d, source, 8);
-                        source += 8;
-                        d += hmax * 8;
-                    }
-                }
             }
         }
-    }
 
-    // second pass: resolve color
-    for (int y = 0; y < height; ++y)
-    {
-        u8* source0 = temp + 0 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
-        u8* source1 = temp + 1 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
-        u8* source2 = temp + 2 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
-        u8* d = dest + y * stride;
-
-        for (int x = 0; x < width; ++x)
+        // second pass: resolve color
+        for (int y = 0; y < height; ++y)
         {
-            u8 y0 = source0[x];
-            u8 cb = source1[x];
-            u8 cr = source2[x];
-            int r, g, b;
-            COMPUTE_CBCR(cb, cr);
-            WRITE_COLOR(d, y0, r, g, b);
-            d += XSTEP;
+            u8* source0 = temp + 0 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+            u8* source1 = temp + 1 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+            u8* source2 = temp + 2 * JPEG_MAX_SAMPLES_IN_MCU + (y * hmax * 8);
+            u8* d = dest + y * stride;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u8 y0 = source0[x];
+                u8 cb = source1[x];
+                u8 cr = source2[x];
+                int r, g, b;
+                COMPUTE_CBCR(cb, cr);
+                WRITE_COLOR(d, y0, r, g, b);
+                d += XSTEP;
+            }
         }
     }
 }
@@ -128,17 +126,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(u8* dest, size_t stride, const u8* spat
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_8x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 3];
-
-    state->idct(result + 64 * 0, data + 64 * 0, state->block[0].qt); // Y
-    state->idct(result + 64 * 1, data + 64 * 1, state->block[1].qt); // Cb
-    state->idct(result + 64 * 2, data + 64 * 2, state->block[2].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
@@ -182,18 +169,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(u8* dest, size_t stride, const u8* spa
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_8x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 4];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-    state->idct(result + 128, data + 128, state->block[2].qt); // Cb
-    state->idct(result + 192, data + 192, state->block[3].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
@@ -248,18 +223,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(u8* dest, size_t stride, const u8* spa
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_16x8(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 4];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-    state->idct(result + 128, data + 128, state->block[2].qt); // Cb
-    state->idct(result + 192, data + 192, state->block[3].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif
@@ -318,20 +281,6 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(u8* dest, size_t stride, const u8* sp
     MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
-}
-
-void FUNCTION_YCBCR_16x16(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64 * 6];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y0
-    state->idct(result +  64, data +  64, state->block[1].qt); // Y1
-    state->idct(result + 128, data + 128, state->block[2].qt); // Y2
-    state->idct(result + 192, data + 192, state->block[3].qt); // Y3
-    state->idct(result + 256, data + 256, state->block[4].qt); // Cb
-    state->idct(result + 320, data + 320, state->block[5].qt); // Cr
-
-    JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(dest, stride, result, state, width, height, 1, 0);
 }
 
 #endif

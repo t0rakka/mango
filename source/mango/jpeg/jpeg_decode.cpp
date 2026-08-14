@@ -16,8 +16,6 @@
 namespace mango::image::jpeg
 {
 
-    void process_cmyk_store_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-
     // ----------------------------------------------------------------------------
     // utilities
     // ----------------------------------------------------------------------------
@@ -2591,14 +2589,10 @@ namespace mango::image::jpeg
 
         // configure block processing
 
-        ProcessFunc process_y           = nullptr;
-        ProcessFunc process_cmyk        = process_cmyk_rgba;
-        ProcessFunc process_rgb         = nullptr;
-        ProcessFunc process_ycbcr       = nullptr;
-        ProcessFunc process_ycbcr_8x8   = nullptr;
-        ProcessFunc process_ycbcr_8x16  = nullptr;
-        ProcessFunc process_ycbcr_16x8  = nullptr;
-        ProcessFunc process_ycbcr_16x16 = nullptr;
+        ColorFunc color_y     = nullptr;
+        ColorFunc color_cmyk  = process_cmyk_rgba;
+        ColorFunc color_rgb   = nullptr;
+        ColorFunc color_ycbcr = nullptr;
 
         ColorFunc color_ycbcr_8x8   = nullptr;
         ColorFunc color_ycbcr_8x16  = nullptr;
@@ -2607,46 +2601,46 @@ namespace mango::image::jpeg
         bool simd_16x16_shuffle = false;
 
 #define BIND_YCBCR(size, func) \
-        do { process_ycbcr_##size = (func); color_ycbcr_##size = (func##_color); } while (0)
+        do { color_ycbcr_##size = (func##_color); } while (0)
 
         switch (sample)
         {
             case SampleType::U8_Y:
-                process_y           = process_y_8bit;
-                process_rgb         = nullptr; // could support if compute luminance from RGB
-                process_ycbcr       = process_ycbcr_8bit;
+                color_y     = process_y_8bit;
+                color_rgb   = nullptr; // could support if compute luminance from RGB
+                color_ycbcr = process_ycbcr_8bit;
                 break;
             case SampleType::U8_BGR:
-                process_y           = process_y_24bit;
-                process_rgb         = process_rgb_bgr;
-                process_ycbcr       = process_ycbcr_bgr;
+                color_y     = process_y_24bit;
+                color_rgb   = process_rgb_bgr;
+                color_ycbcr = process_ycbcr_bgr;
                 BIND_YCBCR(8x8,   process_ycbcr_bgr_8x8);
                 BIND_YCBCR(8x16,  process_ycbcr_bgr_8x16);
                 BIND_YCBCR(16x8,  process_ycbcr_bgr_16x8);
                 BIND_YCBCR(16x16, process_ycbcr_bgr_16x16);
                 break;
             case SampleType::U8_RGB:
-                process_y           = process_y_24bit;
-                process_rgb         = process_rgb_rgb;
-                process_ycbcr       = process_ycbcr_rgb;
+                color_y     = process_y_24bit;
+                color_rgb   = process_rgb_rgb;
+                color_ycbcr = process_ycbcr_rgb;
                 BIND_YCBCR(8x8,   process_ycbcr_rgb_8x8);
                 BIND_YCBCR(8x16,  process_ycbcr_rgb_8x16);
                 BIND_YCBCR(16x8,  process_ycbcr_rgb_16x8);
                 BIND_YCBCR(16x16, process_ycbcr_rgb_16x16);
                 break;
             case SampleType::U8_BGRA:
-                process_y           = process_y_32bit;
-                process_rgb         = process_rgb_bgra;
-                process_ycbcr       = process_ycbcr_bgra;
+                color_y     = process_y_32bit;
+                color_rgb   = process_rgb_bgra;
+                color_ycbcr = process_ycbcr_bgra;
                 BIND_YCBCR(8x8,   process_ycbcr_bgra_8x8);
                 BIND_YCBCR(8x16,  process_ycbcr_bgra_8x16);
                 BIND_YCBCR(16x8,  process_ycbcr_bgra_16x8);
                 BIND_YCBCR(16x16, process_ycbcr_bgra_16x16);
                 break;
             case SampleType::U8_RGBA:
-                process_y           = process_y_32bit;
-                process_rgb         = process_rgb_rgba;
-                process_ycbcr       = process_ycbcr_rgba;
+                color_y     = process_y_32bit;
+                color_rgb   = process_rgb_rgba;
+                color_ycbcr = process_ycbcr_rgba;
                 BIND_YCBCR(8x8,   process_ycbcr_rgba_8x8);
                 BIND_YCBCR(8x16,  process_ycbcr_rgba_8x16);
                 BIND_YCBCR(16x8,  process_ycbcr_rgba_16x8);
@@ -2829,12 +2823,12 @@ namespace mango::image::jpeg
         switch (m_components)
         {
             case 1:
-                processState.process = process_y;
+                processState.color = color_y;
                 id = "Y";
                 break;
 
             case 3:
-                processState.process = process_ycbcr;
+                processState.color = color_ycbcr;
                 id = "YCbCr";
 
                 // detect optimized cases
@@ -2842,9 +2836,8 @@ namespace mango::image::jpeg
                 {
                     if (xblock == 8 && yblock == 8)
                     {
-                        if (process_ycbcr_8x8)
+                        if (color_ycbcr_8x8)
                         {
-                            processState.process = process_ycbcr_8x8;
                             processState.color = color_ycbcr_8x8;
                             id = fmt::format("YCbCr 8x8 {}", simd_8x8);
                         }
@@ -2852,9 +2845,8 @@ namespace mango::image::jpeg
 
                     if (xblock == 8 && yblock == 16)
                     {
-                        if (process_ycbcr_8x16)
+                        if (color_ycbcr_8x16)
                         {
-                            processState.process = process_ycbcr_8x16;
                             processState.color = color_ycbcr_8x16;
                             id = fmt::format("YCbCr 8x16 {}", simd_8x16);
                         }
@@ -2862,9 +2854,8 @@ namespace mango::image::jpeg
 
                     if (xblock == 16 && yblock == 8)
                     {
-                        if (process_ycbcr_16x8)
+                        if (color_ycbcr_16x8)
                         {
-                            processState.process = process_ycbcr_16x8;
                             processState.color = color_ycbcr_16x8;
                             id = fmt::format("YCbCr 16x8 {}", simd_16x8);
                         }
@@ -2872,9 +2863,8 @@ namespace mango::image::jpeg
 
                     if (xblock == 16 && yblock == 16)
                     {
-                        if (process_ycbcr_16x16)
+                        if (color_ycbcr_16x16)
                         {
-                            processState.process = process_ycbcr_16x16;
                             processState.color = color_ycbcr_16x16;
                             id = fmt::format("YCbCr 16x16 {}", simd_16x16);
 
@@ -2892,12 +2882,12 @@ namespace mango::image::jpeg
             case 4:
                 if (getCmykIcc().size)
                 {
-                    processState.process = process_cmyk_store_rgba;
+                    processState.color = process_cmyk_store_rgba;
                     m_cmyk_store_mode = true;
                 }
                 else
                 {
-                    processState.process = process_cmyk;
+                    processState.color = color_cmyk;
                     m_cmyk_store_mode = false;
                 }
                 id = "CMYK";
@@ -2906,8 +2896,7 @@ namespace mango::image::jpeg
 
         if (m_rgb_colorspace || options.jpeg_colorspace_rgb)
         {
-            processState.process = process_rgb;
-            processState.color = nullptr;
+            processState.color = color_rgb;
             id = "RGB";
         }
 
@@ -4067,17 +4056,6 @@ namespace mango::image::jpeg
         const int mcu_data_size = blocks_in_mcu * 64;
         const size_t xstride = m_sink.surface->format.bytes() * xblock;
 
-        if (!processState.color)
-        {
-            for (int i = 0; i < count; ++i)
-            {
-                process_and_clip(dest, stride, data, width, height);
-                data += mcu_data_size;
-                dest += xstride;
-            }
-            return;
-        }
-
         alignas(64) u8 slab[JPEG_MCU_TILE * JPEG_MAX_SAMPLES_IN_MCU];
 
         int remaining = count;
@@ -4111,37 +4089,9 @@ namespace mango::image::jpeg
 
     void StreamDecoder::process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height)
     {
-        if (processState.color)
-        {
-            alignas(64) u8 spatial[JPEG_MAX_SAMPLES_IN_MCU];
-            processState.idctMCU(spatial, data);
-            color_and_clip(dest, stride, spatial, width, height);
-            return;
-        }
-
-        if (xblock != width || yblock != height)
-        {
-            u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
-
-            const int bytes_per_scan = width * m_sink.surface->format.bytes();
-            const int block_stride = xblock * 4;
-            u8* src = temp;
-
-            processState.process(temp, block_stride, data, &processState, width, height);
-
-            // clipping
-            for (int y = 0; y < height; ++y)
-            {
-                std::memcpy(dest, src, bytes_per_scan);
-                src += block_stride;
-                dest += stride;
-            }
-        }
-        else
-        {
-            // fast-path (no clipping required)
-            processState.process(dest, stride, data, &processState, width, height);
-        }
+        alignas(64) u8 spatial[JPEG_MAX_SAMPLES_IN_MCU];
+        processState.idctMCU(spatial, data);
+        color_and_clip(dest, stride, spatial, width, height);
     }
 
     void StreamDecoder::blit_and_update(const ImageDecodeRect& rect)
