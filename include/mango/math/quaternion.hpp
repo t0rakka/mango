@@ -4,6 +4,7 @@
 */
 #pragma once
 
+#include <cmath>
 #include <mango/math/vector.hpp>
 #include <mango/math/matrix.hpp>
 #include <mango/math/spline.hpp>
@@ -339,5 +340,100 @@ namespace mango::math
     Quaternion slerp(const Quaternion& a, const Quaternion& b, float time);
     Quaternion slerp(const Quaternion& a, const Quaternion& b, int spin, float time);
     Quaternion squad(const Quaternion& p, const Quaternion& a, const Quaternion& b, const Quaternion& q, float time);
+
+    // ------------------------------------------------------------------
+    // Quaternion packing (32 bit)
+    //
+    // Smallest-three encoding: store index of largest component (2 bits)
+    // and quantize the other three (10 bits each). The omitted component
+    // is recovered from unit length. Works well for normals and rotations
+    // on the wire; components are approximate after round-trip.
+    //
+    //   31 30 | 29 ........ 20 | 19 ........ 10 | 9 ......... 0
+    //   index |  component 0     |  component 1     |  component 2
+    // ------------------------------------------------------------------
+
+    inline
+    int quantizeQuaternionComponent(float value)
+    {
+        const int x = int(std::floor(0.5f * (value + 1.0f) * 1023.0f + 0.5f));
+        return x < 0 ? 0 : (x > 1023 ? 1023 : x);
+    }
+
+    inline
+    float dequantizeQuaternionComponent(int value)
+    {
+        return float((value - 512) * (2.0f / 1023.0f));
+    }
+
+    inline
+    u32 packQuaternion(Quaternion q)
+    {
+        int index = 0;
+        float largest = q[0];
+        float abs_largest = std::abs(largest);
+
+        for (int i = 1; i < 4; ++i)
+        {
+            const float value = q[i];
+            const float abs_value = std::abs(value);
+
+            if (abs_value > abs_largest)
+            {
+                largest = value;
+                abs_largest = abs_value;
+                index = i;
+            }
+        }
+
+        if (largest < 0.0f)
+        {
+            q.x = -q.x;
+            q.y = -q.y;
+            q.z = -q.z;
+            q.w = -q.w;
+        }
+
+        u32 packed = u32(index);
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if (index != i)
+            {
+                packed = (packed << 10) | u32(quantizeQuaternionComponent(q[i]));
+            }
+        }
+
+        return packed;
+    }
+
+    inline
+    Quaternion unpackQuaternion(u32 packed)
+    {
+        const float value[3] =
+        {
+            dequantizeQuaternionComponent(int((packed >> 20) & 1023)),
+            dequantizeQuaternionComponent(int((packed >> 10) & 1023)),
+            dequantizeQuaternionComponent(int((packed >>  0) & 1023)),
+        };
+
+        const int index = int(packed >> 30);
+        if (index > 3)
+        {
+            return Quaternion::identity();
+        }
+
+        const float sum = value[0] * value[0] + value[1] * value[1] + value[2] * value[2];
+        const float largest = std::sqrt(std::max(0.0f, 1.0f - sum));
+
+        Quaternion q;
+
+        for (int i = 0; i < 4; ++i)
+        {
+            q[i] = (i == index) ? largest : value[i - (index < i)];
+        }
+
+        return q;
+    }
 
 } // namespace mango::math
