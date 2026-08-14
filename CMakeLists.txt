@@ -117,7 +117,17 @@ if (LIBRARY_DISABLE)
     set(LIBRARY_HARFBUZZ      OFF)
 endif ()
 
-# option to only build essentials
+# Option to build everything
+option(BUILD_ALL,           "Build everything"                         OFF)
+if (BUILD_ALL)
+    set(BUILD_OPENGL     ON)
+    set(BUILD_VULKAN     ON)
+    set(BUILD_IMPORT3D   ON)
+    set(BUILD_EXAMPLES   ON)
+    set(BUILD_TESTS      ON)
+endif ()
+
+# Option to build only essentials
 option(BUILD_MINIMAL,       "Minimal build"                            OFF)
 if (BUILD_MINIMAL)
     set(BUILD_OPENGL     OFF)
