@@ -522,14 +522,14 @@ namespace mango::image::jpeg
             const __m128i* q0 = reinterpret_cast<const __m128i *>(qt[idx + 0]);
             const __m128i* q1 = reinterpret_cast<const __m128i *>(qt[idx + 1]);
 
-            __m256i v0 = _mm256_mullo_epi16(_mm256_set_m128i(data1[0], data0[0]), _mm256_set_m128i(q1[0], q0[0]));
-            __m256i v1 = _mm256_mullo_epi16(_mm256_set_m128i(data1[1], data0[1]), _mm256_set_m128i(q1[1], q0[1]));
-            __m256i v2 = _mm256_mullo_epi16(_mm256_set_m128i(data1[2], data0[2]), _mm256_set_m128i(q1[2], q0[2]));
-            __m256i v3 = _mm256_mullo_epi16(_mm256_set_m128i(data1[3], data0[3]), _mm256_set_m128i(q1[3], q0[3]));
-            __m256i v4 = _mm256_mullo_epi16(_mm256_set_m128i(data1[4], data0[4]), _mm256_set_m128i(q1[4], q0[4]));
-            __m256i v5 = _mm256_mullo_epi16(_mm256_set_m128i(data1[5], data0[5]), _mm256_set_m128i(q1[5], q0[5]));
-            __m256i v6 = _mm256_mullo_epi16(_mm256_set_m128i(data1[6], data0[6]), _mm256_set_m128i(q1[6], q0[6]));
-            __m256i v7 = _mm256_mullo_epi16(_mm256_set_m128i(data1[7], data0[7]), _mm256_set_m128i(q1[7], q0[7]));
+            __m256i v0 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[0], &data0[0]), _mm256_loadu2_m128i(&q1[0], &q0[0]));
+            __m256i v1 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[1], &data0[1]), _mm256_loadu2_m128i(&q1[1], &q0[1]));
+            __m256i v2 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[2], &data0[2]), _mm256_loadu2_m128i(&q1[2], &q0[2]));
+            __m256i v3 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[3], &data0[3]), _mm256_loadu2_m128i(&q1[3], &q0[3]));
+            __m256i v4 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[4], &data0[4]), _mm256_loadu2_m128i(&q1[4], &q0[4]));
+            __m256i v5 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[5], &data0[5]), _mm256_loadu2_m128i(&q1[5], &q0[5]));
+            __m256i v6 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[6], &data0[6]), _mm256_loadu2_m128i(&q1[6], &q0[6]));
+            __m256i v7 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[7], &data0[7]), _mm256_loadu2_m128i(&q1[7], &q0[7]));
 
             __m256i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
             __m256i row0, row1, row2, row3, row4, row5, row6, row7;
@@ -775,14 +775,11 @@ namespace mango::image::jpeg
             __m256i s2 = _mm256_packus_epi16(r4, r5);
             __m256i s3 = _mm256_packus_epi16(r6, r7);
 
-            _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest + 64) + 0,
-                                 reinterpret_cast<__m128i *>(dest) + 0, s0);
-            _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest + 64) + 1,
-                                 reinterpret_cast<__m128i *>(dest) + 1, s1);
-            _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest + 64) + 2,
-                                 reinterpret_cast<__m128i *>(dest) + 2, s2);
-            _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest + 64) + 3,
-                                 reinterpret_cast<__m128i *>(dest) + 3, s3);
+            __m128i* d = reinterpret_cast<__m128i*>(dest);
+            _mm256_storeu2_m128i(d + 4, d + 0, s0);
+            _mm256_storeu2_m128i(d + 5, d + 1, s1);
+            _mm256_storeu2_m128i(d + 6, d + 2, s2);
+            _mm256_storeu2_m128i(d + 7, d + 3, s3);
 
             dest += 128;
             src += 128;
