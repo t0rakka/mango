@@ -165,7 +165,7 @@ namespace mango::image::jpeg
     //
 
     // Table for rows 0,4 - constants are multiplied on cos_4_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_04 [] =
     {
         16384, 21407, 16384, 8867, 16384, -8867, 16384, -21407,
@@ -175,7 +175,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 1,7 - constants are multiplied on cos_1_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_17 [] =
     {
         22725, 29692, 22725, 12299, 22725, -12299, 22725, -29692,
@@ -185,7 +185,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 2,6 - constants are multiplied on cos_2_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_26 [] =
     {
         21407, 27969, 21407, 11585, 21407, -11585, 21407, -27969,
@@ -195,7 +195,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 3,5 - constants are multiplied on cos_3_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_35 [] =
     {
         19266, 25172, 19266, 10426, 19266, -10426, 19266, -25172,
@@ -813,16 +813,17 @@ namespace mango::image::jpeg
     // Linear quad 8x8 iDCT: consecutive blocks in 128-bit lanes, fused dequant.
     void idct_avx512(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count)
     {
-        const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
-        const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
-        const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
-        const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
         const __m512i round_inv_row = _mm512_set1_epi32(2048);
         const __m512i tg = _mm512_broadcast_i32x4(_mm_set_epi16(-19195, -19195, -21746, -21746, 27146, 27146, 13036, 13036));
         const __m512i one = _mm512_set1_epi16(1);
         const s16 bias = 128 << 5;
         const __m512i round_inv_col = _mm512_set1_epi16(16 + bias);
         const __m512i round_inv_corr = _mm512_sub_epi16(round_inv_col, one);
+
+        const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
+        const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
+        const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
+        const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
 
         for (int n = 0; n < count; n += 4)
         {
@@ -1139,7 +1140,7 @@ namespace mango::image::jpeg
     // ------------------------------------------------------------------------------------------------
 
     // Table for rows 0,4 - constants are multiplied on cos_4_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_04 [] =
     {
         16384, 21407, 16384, 8867, 16384, -8867, 16384, -21407,
@@ -1149,7 +1150,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 1,7 - constants are multiplied on cos_1_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_17 [] =
     {
         22725, 29692, 22725, 12299, 22725, -12299, 22725, -29692,
@@ -1159,7 +1160,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 2,6 - constants are multiplied on cos_2_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_26 [] =
     {
         21407, 27969, 21407, 11585, 21407, -11585, 21407, -27969,
@@ -1169,7 +1170,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 3,5 - constants are multiplied on cos_3_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_35 [] =
     {
         19266, 25172, 19266, 10426, 19266, -10426, 19266, -25172,
