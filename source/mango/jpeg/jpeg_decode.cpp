@@ -2562,6 +2562,7 @@ namespace mango::image::jpeg
         // configure idct
 
         processState.idct = idct8;
+        processState.idct1 = nullptr;
         processState.idct2 = nullptr;
         processState.idct4 = nullptr;
 
@@ -2579,6 +2580,7 @@ namespace mango::image::jpeg
         if (flags & INTEL_SSE2)
         {
             processState.idct = idct_sse2;
+            processState.idct1 = idct_sse2_n;
             m_idct_name = "SSE2";
         }
 #endif
@@ -2604,6 +2606,7 @@ namespace mango::image::jpeg
             // Force 12 bit idct
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
             processState.idct = idct12;
+            processState.idct1 = nullptr;
             processState.idct2 = nullptr;
             processState.idct4 = nullptr;
             m_idct_name = "scalar (12 bit)";
@@ -4058,6 +4061,7 @@ namespace mango::image::jpeg
     {
         const int mcu_data_size = blocks_in_mcu * 64;
         const size_t xstride = m_sink.surface->format.bytes() * xblock;
+        const size_t spatial_stride = processState.spatialMCUBytes();
 
         alignas(64) u8 slab[JPEG_MCU_TILE * JPEG_MAX_SAMPLES_IN_MCU];
 
@@ -4066,37 +4070,7 @@ namespace mango::image::jpeg
         {
             const int n = std::min(remaining, JPEG_MCU_TILE);
 
-            int i = 0;
-            if (processState.idct4)
-            {
-                for (; i + 3 < n; i += 4)
-                {
-                    processState.idctMCU4(
-                        slab + (i + 0) * JPEG_MAX_SAMPLES_IN_MCU,
-                        slab + (i + 1) * JPEG_MAX_SAMPLES_IN_MCU,
-                        slab + (i + 2) * JPEG_MAX_SAMPLES_IN_MCU,
-                        slab + (i + 3) * JPEG_MAX_SAMPLES_IN_MCU,
-                        data + (i + 0) * mcu_data_size,
-                        data + (i + 1) * mcu_data_size,
-                        data + (i + 2) * mcu_data_size,
-                        data + (i + 3) * mcu_data_size);
-                }
-            }
-            if (processState.idct2)
-            {
-                for (; i + 1 < n; i += 2)
-                {
-                    processState.idctMCU2(
-                        slab + i * JPEG_MAX_SAMPLES_IN_MCU,
-                        slab + (i + 1) * JPEG_MAX_SAMPLES_IN_MCU,
-                        data + i * mcu_data_size,
-                        data + (i + 1) * mcu_data_size);
-                }
-            }
-            for (; i < n; ++i)
-            {
-                processState.idctMCU(slab + i * JPEG_MAX_SAMPLES_IN_MCU, data + i * mcu_data_size);
-            }
+            processState.idctSpan(slab, data, n * processState.blocks);
 
             if (width == xblock && height == yblock)
             {
@@ -4107,7 +4081,7 @@ namespace mango::image::jpeg
             {
                 for (int i = 0; i < n; ++i)
                 {
-                    color_and_clip(dest, stride, slab + i * JPEG_MAX_SAMPLES_IN_MCU, width, height);
+                    color_and_clip(dest, stride, slab + i * spatial_stride, width, height);
                     dest += xstride;
                 }
             }

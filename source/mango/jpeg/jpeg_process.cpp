@@ -46,7 +46,7 @@ void process_y_8bit(u8* dest, size_t stride, const u8* spatial, ProcessState* st
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < height; ++y)
         {
@@ -65,7 +65,7 @@ void process_y_24bit(u8* dest, size_t stride, const u8* spatial, ProcessState* s
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < height; ++y)
         {
@@ -95,7 +95,7 @@ void process_y_32bit(u8* dest, size_t stride, const u8* spatial, ProcessState* s
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < height; ++y)
         {
@@ -122,7 +122,7 @@ void process_cmyk_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState*
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         // MCU dimension in blocks
     int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
@@ -250,7 +250,7 @@ void process_cmyk_store_rgba(u8* dest, size_t stride, const u8* spatial, Process
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
     int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
@@ -458,7 +458,7 @@ void process_ycbcr_8bit(u8* dest, size_t stride, const u8* spatial, ProcessState
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         // MCU size in blocks
         int xsize = (width + 7) / 8;
@@ -498,7 +498,7 @@ void process_rgb_bgr(u8* dest, size_t stride, const u8* spatial, ProcessState* s
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -529,7 +529,7 @@ void process_rgb_rgb(u8* dest, size_t stride, const u8* spatial, ProcessState* s
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -560,7 +560,7 @@ void process_rgb_bgra(u8* dest, size_t stride, const u8* spatial, ProcessState* 
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -592,7 +592,7 @@ void process_rgb_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState* 
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -1259,7 +1259,7 @@ void process_ycbcr_rgba_8x8_avx2_color(u8* dest, size_t stride, const u8* spatia
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 2; ++y)
         {

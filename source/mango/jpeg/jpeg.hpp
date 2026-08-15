@@ -363,10 +363,16 @@ namespace mango::image::jpeg
         ColorSpace colorspace = ColorSpace::CMYK; // default
 
         void (*idct) (u8* dest, const s16* data, const s16* qt);
-        void (*idct2)(u8* dest0, u8* dest1, const s16* data0, const s16* data1, const s16* qt) = nullptr;
-        void (*idct4)(u8* dest0, u8* dest1, u8* dest2, u8* dest3,
-                      const s16* data0, const s16* data1, const s16* data2, const s16* data3, const s16* qt) = nullptr;
-        ColorFunc color = nullptr; // spatial already filled by idctMCU
+        // Counted linear 8x8s: dest/src step 64 samples, qt[idx + k] (table duplicated to 2*blocks).
+        void (*idct1)(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count) = nullptr;
+        void (*idct2)(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count) = nullptr;
+        void (*idct4)(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count) = nullptr;
+        ColorFunc color = nullptr; // spatial already filled by idctMCU / idctSpan
+
+        size_t spatialMCUBytes() const
+        {
+            return size_t(blocks) * 64;
+        }
 
         void idctMCU(u8* spatial, const s16* data) const
         {
@@ -376,22 +382,70 @@ namespace mango::image::jpeg
             }
         }
 
-        void idctMCU2(u8* spatial0, u8* spatial1, const s16* data0, const s16* data1) const
+        void idctSpan(u8* dest, const s16* data, int count) const
         {
+            // idx stays in [0, blocks). AVX-512 reads qt[idx + 0 .. +3], so keep
+            // three wraparound slots after the MCU pattern (Y-only is blocks==1).
+            const s16* qt[JPEG_MAX_BLOCKS_IN_MCU + 3];
             for (int i = 0; i < blocks; ++i)
             {
-                idct2(spatial0 + i * 64, spatial1 + i * 64,
-                      data0 + i * 64, data1 + i * 64, block[i].qt);
+                qt[i] = block[i].qt;
             }
-        }
-
-        void idctMCU4(u8* spatial0, u8* spatial1, u8* spatial2, u8* spatial3,
-                      const s16* data0, const s16* data1, const s16* data2, const s16* data3) const
-        {
-            for (int i = 0; i < blocks; ++i)
+            for (int i = 0; i < 3; ++i)
             {
-                idct4(spatial0 + i * 64, spatial1 + i * 64, spatial2 + i * 64, spatial3 + i * 64,
-                      data0 + i * 64, data1 + i * 64, data2 + i * 64, data3 + i * 64, block[i].qt);
+                qt[blocks + i] = qt[i];
+            }
+
+            int done = 0;
+            int idx = 0;
+
+            if (idct4)
+            {
+                const int n4 = count & ~3;
+                if (n4)
+                {
+                    idct4(dest, data, qt, blocks, idx, n4);
+                    dest += n4 * 64;
+                    data += n4 * 64;
+                    done += n4;
+                    idx += n4;
+                    while (idx >= blocks)
+                        idx -= blocks;
+                }
+            }
+
+            if (idct2)
+            {
+                const int n2 = (count - done) & ~1;
+                if (n2)
+                {
+                    idct2(dest, data, qt, blocks, idx, n2);
+                    dest += n2 * 64;
+                    data += n2 * 64;
+                    done += n2;
+                    idx += n2;
+                    while (idx >= blocks)
+                        idx -= blocks;
+                }
+            }
+
+            const int rest = count - done;
+            if (rest <= 0)
+                return;
+
+            if (idct1)
+            {
+                idct1(dest, data, qt, blocks, idx, rest);
+                return;
+            }
+
+            for (int i = 0; i < rest; ++i)
+            {
+                idct(dest, data, qt[idx]);
+                dest += 64;
+                data += 64;
+                if (++idx == blocks)
+                    idx = 0;
             }
         }
     };
@@ -801,6 +855,7 @@ namespace mango::image::jpeg
 #if defined(MANGO_ENABLE_SSE2)
 
     void idct_sse2                      (u8* dest, const s16* data, const s16* qt);
+    void idct_sse2_n                    (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
 
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x8_sse2);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x16_sse2);
@@ -830,7 +885,7 @@ namespace mango::image::jpeg
 
 #if defined(MANGO_ENABLE_AVX2)
 
-    void idct_avx2                      (u8* dest0, u8* dest1, const s16* data0, const s16* data1, const s16* qt);
+    void idct_avx2                      (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
 
     JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8_avx2);
 
@@ -838,8 +893,7 @@ namespace mango::image::jpeg
 
 #if defined(MANGO_ENABLE_AVX512)
 
-    void idct_avx512                    (u8* dest0, u8* dest1, u8* dest2, u8* dest3,
-                                         const s16* data0, const s16* data1, const s16* data2, const s16* data3, const s16* qt);
+    void idct_avx512                    (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
 
 #endif // MANGO_ENABLE_AVX512
 

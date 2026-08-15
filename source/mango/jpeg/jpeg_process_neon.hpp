@@ -18,7 +18,7 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x8)(u8* dest, size_t stride, const u8* spat
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -57,7 +57,7 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_8x16)(u8* dest, size_t stride, const u8* spa
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -101,7 +101,7 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x8)(u8* dest, size_t stride, const u8* spa
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
@@ -146,7 +146,7 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(u8* dest, size_t stride, const u8* sp
     for (int m = 0; m < count; ++m)
     {
         dest = origin + m * xstride;
-        const u8* result = spatial + m * JPEG_MAX_SAMPLES_IN_MCU;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
         for (int y = 0; y < 8; ++y)
         {
