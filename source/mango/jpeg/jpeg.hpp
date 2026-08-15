@@ -134,6 +134,15 @@ namespace mango::image::jpeg
 
     static constexpr int JPEG_MAX_BLOCKS_IN_MCU  = 10;  // Maximum # of blocks per MCU in the JPEG specification
     static constexpr int JPEG_MAX_SAMPLES_IN_MCU = 64 * JPEG_MAX_BLOCKS_IN_MCU;
+
+    // Spatial decode tile: K MCU slots of chunky 8x8 blocks (64 contiguous samples each).
+    // Sized for L1, not a full scan row (a 16000-pixel image is 1000 16-pixel MCUs wide).
+    static constexpr int JPEG_MCU_TILE = 16;
+
+    #define JPEG_COLOR_CAT2(a, b) a##b
+    #define JPEG_COLOR_CAT(a, b) JPEG_COLOR_CAT2(a, b)
+    #define JPEG_COLOR_FUNC(name) JPEG_COLOR_CAT(name, _color)
+
     static constexpr int JPEG_MAX_COMPS_IN_SCAN  = 4;   // JPEG limit on # of components in one scan
     static constexpr int JPEG_NUM_ARITH_TBLS     = 16;  // Arith-coding tables are numbered 0..15
     static constexpr int JPEG_DC_STAT_BINS       = 64;  // ...
@@ -338,6 +347,10 @@ namespace mango::image::jpeg
         s16* qt;
     };
 
+    struct ProcessState;
+
+    using ColorFunc = void (*)(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride);
+
     struct ProcessState
     {
         // NOTE: this is just quantization tables
@@ -350,7 +363,91 @@ namespace mango::image::jpeg
         ColorSpace colorspace = ColorSpace::CMYK; // default
 
         void (*idct) (u8* dest, const s16* data, const s16* qt);
-        void (*process) (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+        // Counted linear 8x8s: dest/src step 64 samples, qt[idx + k] (table duplicated to 2*blocks).
+        void (*idct1)(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count) = nullptr;
+        void (*idct2)(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count) = nullptr;
+        void (*idct4)(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count) = nullptr;
+        ColorFunc color = nullptr; // spatial already filled by idctMCU / idctSpan
+
+        size_t spatialMCUBytes() const
+        {
+            return size_t(blocks) * 64;
+        }
+
+        void idctMCU(u8* spatial, const s16* data) const
+        {
+            for (int i = 0; i < blocks; ++i)
+            {
+                idct(spatial + i * 64, data + i * 64, block[i].qt);
+            }
+        }
+
+        void idctSpan(u8* dest, const s16* data, int count) const
+        {
+            // idx stays in [0, blocks). AVX-512 reads qt[idx + 0 .. +3], so keep
+            // three wraparound slots after the MCU pattern (Y-only is blocks==1).
+            const s16* qt[JPEG_MAX_BLOCKS_IN_MCU + 3];
+            for (int i = 0; i < blocks; ++i)
+            {
+                qt[i] = block[i].qt;
+            }
+            for (int i = 0; i < 3; ++i)
+            {
+                qt[blocks + i] = qt[i];
+            }
+
+            int done = 0;
+            int idx = 0;
+
+            if (idct4)
+            {
+                const int n4 = count & ~3;
+                if (n4)
+                {
+                    idct4(dest, data, qt, blocks, idx, n4);
+                    dest += n4 * 64;
+                    data += n4 * 64;
+                    done += n4;
+                    idx += n4;
+                    while (idx >= blocks)
+                        idx -= blocks;
+                }
+            }
+
+            if (idct2)
+            {
+                const int n2 = (count - done) & ~1;
+                if (n2)
+                {
+                    idct2(dest, data, qt, blocks, idx, n2);
+                    dest += n2 * 64;
+                    data += n2 * 64;
+                    done += n2;
+                    idx += n2;
+                    while (idx >= blocks)
+                        idx -= blocks;
+                }
+            }
+
+            const int rest = count - done;
+            if (rest <= 0)
+                return;
+
+            if (idct1)
+            {
+                idct1(dest, data, qt, blocks, idx, rest);
+                return;
+            }
+
+            for (int i = 0; i < rest; ++i)
+            {
+                idct(dest, data, qt[idx]);
+                dest += 64;
+                data += 64;
+                if (++idx == blocks)
+                    idx = 0;
+            }
+        }
     };
 
     // ----------------------------------------------------------------------------
@@ -544,6 +641,8 @@ namespace mango::image::jpeg
 
         void process_range(int y0, int y1, const s16* data);
         void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
+        void color_and_clip(u8* dest, size_t stride, const u8* spatial, int width, int height);
+        void process_span(u8* dest, size_t stride, const s16* data, int count, int width, int height);
         void blit_and_update(const ImageDecodeRect& rect);
 
         int getTaskSize(int count) const;
@@ -587,6 +686,11 @@ namespace mango::image::jpeg
         bool cmykIccApplied() const
         {
             return m_cmyk_icc_applied;
+        }
+
+        int components() const
+        {
+            return m_components;
         }
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
@@ -657,6 +761,11 @@ namespace mango::image::jpeg
             return m_base.cmykIccApplied();
         }
 
+        int components() const
+        {
+            return m_base.components();
+        }
+
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
 
@@ -681,106 +790,126 @@ namespace mango::image::jpeg
     void idct8                          (u8* dest, const s16* data, const s16* qt);
     void idct12                         (u8* dest, const s16* data, const s16* qt);
 
-    void process_y_8bit                 (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_y_24bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_y_32bit                (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_cmyk_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+#define JPEG_COLOR_KERNEL(name) \
+    void name(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+
+    JPEG_COLOR_KERNEL(process_y_8bit);
+    JPEG_COLOR_KERNEL(process_y_24bit);
+    JPEG_COLOR_KERNEL(process_y_32bit);
+    JPEG_COLOR_KERNEL(process_cmyk_rgba);
+    JPEG_COLOR_KERNEL(process_cmyk_store_rgba);
 
     // CMYK scanlines stored as C,M,Y,K in RGBA byte slots; converts in-place to display sRGB.
-    bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc);
+    // invert_adobe: true for raw CMYK JPEG (Adobe stores 0 = 100% ink); false after YCCK decode.
+    bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc, bool invert_adobe = true);
     void simple_cmyk_surface_to_rgba(Surface& surface);
-    void process_ycbcr_8bit             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_8bit);
 
-    void process_rgb_bgr               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_rgb_rgb               (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_rgb_bgra              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_rgb_rgba              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_rgb_bgr);
+    JPEG_COLOR_KERNEL(process_rgb_rgb);
+    JPEG_COLOR_KERNEL(process_rgb_bgra);
+    JPEG_COLOR_KERNEL(process_rgb_rgba);
 
-    void process_ycbcr_bgr              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x8          (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+#define JPEG_YCBCR_KERNEL(name) \
+    void name##_color(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 
-    void process_ycbcr_rgb              (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x8          (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_bgr);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x16);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x16);
 
-    void process_ycbcr_bgra             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x8        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x16       (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_rgb);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x16);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x16);
 
-    void process_ycbcr_rgba             (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x8         (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x16        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x8        (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x16       (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_COLOR_KERNEL(process_ycbcr_bgra);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x16);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x16);
+
+    JPEG_COLOR_KERNEL(process_ycbcr_rgba);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x16);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x8);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x16);
 
 #if defined(MANGO_ENABLE_NEON)
 
     void idct_neon                      (u8* dest, const s16* data, const s16* qt);
 
-    void process_ycbcr_bgra_8x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x8_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x16_neon  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x16_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x16_neon);
 
-    void process_ycbcr_rgba_8x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x8_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x16_neon  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x16_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x16_neon);
 
-    void process_ycbcr_bgr_8x8_neon     (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x16_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x16_neon);
 
-    void process_ycbcr_rgb_8x8_neon     (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8_neon    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16_neon   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x16_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x8_neon);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x16_neon);
 
 #endif // MANGO_ENABLE_NEON
 
 #if defined(MANGO_ENABLE_SSE2)
 
     void idct_sse2                      (u8* dest, const s16* data, const s16* qt);
+    void idct_sse2_n                    (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
 
-    void process_ycbcr_bgra_8x8_sse2    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_8x16_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x8_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgra_16x16_sse2  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x8_sse2);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x16_sse2);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x8_sse2);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgra_16x16_sse2);
 
-    void process_ycbcr_rgba_8x8_sse2    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_8x16_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x8_sse2   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgba_16x16_sse2  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8_sse2);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x16_sse2);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x8_sse2);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_16x16_sse2);
 
 #endif // MANGO_ENABLE_SSE2
 
 #if defined(MANGO_ENABLE_SSE4_1)
 
-    void process_ycbcr_bgr_8x8_sse41    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_8x16_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x8_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_bgr_16x16_sse41  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x8_sse41);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_8x16_sse41);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x8_sse41);
+    JPEG_YCBCR_KERNEL(process_ycbcr_bgr_16x16_sse41);
 
-    void process_ycbcr_rgb_8x8_sse41    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_8x16_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x8_sse41   (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
-    void process_ycbcr_rgb_16x16_sse41  (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x8_sse41);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_8x16_sse41);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x8_sse41);
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgb_16x16_sse41);
 
 #endif // MANGO_ENABLE_SSE4_1
 
 #if defined(MANGO_ENABLE_AVX2)
 
-    void process_ycbcr_rgba_8x8_avx2    (u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height);
+    void idct_avx2                      (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
+
+    JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8_avx2);
 
 #endif // MANGO_ENABLE_AVX2
+
+#if defined(MANGO_ENABLE_AVX512)
+
+    void idct_avx512                    (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
+
+#endif // MANGO_ENABLE_AVX512
+
+#undef JPEG_YCBCR_KERNEL
+#undef JPEG_COLOR_KERNEL
 
     SampleFormat getSampleFormat(const Format& format);
     ImageEncodeStatus encodeImage(Stream& stream, const Surface& surface, const ImageEncodeOptions& options);

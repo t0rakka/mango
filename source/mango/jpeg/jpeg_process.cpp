@@ -39,72 +39,108 @@ namespace mango::image::jpeg
 // Generic C++ implementation
 // ----------------------------------------------------------------------------
 
-void process_y_8bit(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_y_8bit(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[64];
-    state->idct(result, data, state->block[0].qt); // Y
+    u8* origin = dest;
 
-    for (int y = 0; y < height; ++y)
+    for (int m = 0; m < count; ++m)
     {
-        std::memcpy(dest, result + y * 8, width);
-        dest += stride;
-    }
-}
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-void process_y_24bit(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
-{
-    u8 result[64];
-    state->idct(result, data, state->block[0].qt); // Y
-
-    stride -= width * 3;
-
-    for (int y = 0; y < height; ++y)
-    {
-        const u8* s = result + y * 8;
-        for (int x = 0; x < width; ++x)
+        for (int y = 0; y < height; ++y)
         {
-            u8 v = s[x];
-            dest[0] = v;
-            dest[1] = v;
-            dest[2] = v;
-            dest += 3;
+            std::memcpy(dest, result + y * 8, width);
+            dest += stride;
         }
-        dest += stride;
     }
+
+    MANGO_UNREFERENCED(state);
 }
 
-void process_y_32bit(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_y_24bit(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[64];
-    state->idct(result, data, state->block[0].qt); // Y
+    u8* origin = dest;
 
-    for (int y = 0; y < height; ++y)
+    for (int m = 0; m < count; ++m)
     {
-        const u8* s = result + y * 8;
-        u32* d = reinterpret_cast<u32*>(dest);
-        for (int x = 0; x < width; ++x)
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
+
+        for (int y = 0; y < height; ++y)
         {
-            u32 v = s[x];
-            d[x] = 0xff000000 | (v << 16) | (v << 8) | v;
+            const u8* s = result + y * 8;
+            u8* d = dest;
+
+            for (int x = 0; x < width; ++x)
+            {
+                u8 v = s[x];
+                d[0] = v;
+                d[1] = v;
+                d[2] = v;
+                d += 3;
+            }
+
+            dest += stride;
         }
-        dest += stride;
+    }
+
+    MANGO_UNREFERENCED(state);
+}
+
+void process_y_32bit(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
+{
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
+    {
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* s = result + y * 8;
+            u32* d = reinterpret_cast<u32*>(dest);
+
+            for (int x = 0; x < width; ++x)
+            {
+                u32 v = s[x];
+                d[x] = 0xff000000 | (v << 16) | (v << 8) | v;
+            }
+
+            dest += stride;
+        }
+    }
+
+    MANGO_UNREFERENCED(state);
+}
+
+static
+void get_cmyk_mcu_extent(const ProcessState* state, int& hmax, int& vmax)
+{
+    hmax = 1;
+    vmax = 1;
+
+    for (int i = 0; i < state->frames; ++i)
+    {
+        hmax = std::max(hmax, state->frame[i].hsf);
+        vmax = std::max(vmax, state->frame[i].vsf);
     }
 }
 
-void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_cmyk_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    for (int i = 0; i < state->blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    // MCU dimension in blocks
-    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
-    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+        // MCU dimension in blocks
+        int hmax;
+        int vmax;
+        get_cmyk_mcu_extent(state, hmax, vmax);
 
     u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
@@ -119,7 +155,7 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
         {
             for (int xblock = 0; xblock < hsf; ++xblock)
             {
-                u8* source = result + offset + (yblock * hsf + xblock) * 64;
+                const u8* source = result + offset + (yblock * hsf + xblock) * 64;
                 u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
                 if (hmax != hsf || vmax != vsf)
@@ -218,21 +254,21 @@ void process_cmyk_rgba(u8* dest, size_t stride, const s16* data, ProcessState* s
             d[x] = image::makeRGBA(r, g, b, 0xff);
         }
     }
+    }
 }
 
-void process_cmyk_store_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_cmyk_store_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    for (int i = 0; i < state->blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
-    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+        int hmax;
+        int vmax;
+        get_cmyk_mcu_extent(state, hmax, vmax);
 
     u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
@@ -246,7 +282,7 @@ void process_cmyk_store_rgba(u8* dest, size_t stride, const s16* data, ProcessSt
         {
             for (int xblock = 0; xblock < hsf; ++xblock)
             {
-                u8* source = result + offset + (yblock * hsf + xblock) * 64;
+                const u8* source = result + offset + (yblock * hsf + xblock) * 64;
                 u8* d = temp + channel * JPEG_MAX_SAMPLES_IN_MCU + yblock * 8 * (hmax * 8) + xblock * 8;
 
                 if (hmax != hsf || vmax != vsf)
@@ -332,9 +368,10 @@ void process_cmyk_store_rgba(u8* dest, size_t stride, const s16* data, ProcessSt
             d[x] = image::makeRGBA(u8(C), u8(M), u8(Y), u8(K));
         }
     }
+    }
 }
 
-bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc)
+bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc, bool invert_adobe)
 {
     const Format rgba_u8(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
@@ -377,6 +414,22 @@ bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc)
     for (int y = 0; y < surface.height; ++y)
     {
         u8* row = surface.image + y * surface.stride;
+
+        // Adobe CMYK JPEG stores inverted components (0 = 100% ink). LittleCMS
+        // expects standard polarity (0 = no ink). YCCK is converted to CMYK first
+        // and does not use Adobe's inverted encoding.
+        if (invert_adobe)
+        {
+            for (int x = 0; x < surface.width; ++x)
+            {
+                u8* p = row + x * 4;
+                p[0] = 255 - p[0];
+                p[1] = 255 - p[1];
+                p[2] = 255 - p[2];
+                p[3] = 255 - p[3];
+            }
+        }
+
         cmsDoTransform(transform, row, row, width);
     }
 
@@ -429,163 +482,170 @@ void simple_cmyk_surface_to_rgba(Surface& surface)
     }
 }
 
-void process_ycbcr_8bit(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_ycbcr_8bit(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    const int luma_blocks = state->blocks - 2; // don't idct two last blocks (Cb, Cr)
-    for (int i = 0; i < luma_blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    // MCU size in blocks
-    int xsize = (width + 7) / 8;
-    int ysize = (height + 7) / 8;
+        // MCU size in blocks
+        int xsize = (width + 7) / 8;
+        int ysize = (height + 7) / 8;
 
-    // process MCU
-    for (int yb = 0; yb < ysize; ++yb)
-    {
-        // vertical clipping limit for current block
-        const int ymax = std::min(8, height - yb * 8);
-
-        for (int xb = 0; xb < xsize; ++xb)
+        for (int yb = 0; yb < ysize; ++yb)
         {
-            u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u8);
-            u8* y_block = result + (yb * xsize + xb) * 64;
+            const int ymax = std::min(8, height - yb * 8);
 
-            // horizontal clipping limit for current block
-            const int xmax = std::min(8, width - xb * 8);
-
-            // process 8x8 block
-            for (int y = 0; y < ymax; ++y)
+            for (int xb = 0; xb < xsize; ++xb)
             {
-                std::memcpy(dest_block, y_block, xmax);
-                dest_block += stride;
-                y_block += 8;
+                u8* dest_block = dest + yb * 8 * stride + xb * 8 * sizeof(u8);
+                const u8* y_block = result + (yb * xsize + xb) * 64;
+                const int xmax = std::min(8, width - xb * 8);
+
+                for (int y = 0; y < ymax; ++y)
+                {
+                    std::memcpy(dest_block, y_block, xmax);
+                    dest_block += stride;
+                    y_block += 8;
+                }
             }
         }
     }
+
+    MANGO_UNREFERENCED(state);
 }
 
 // ------------------------------------------------------------------------------------------------
 // RGB
 // ------------------------------------------------------------------------------------------------
 
-void process_rgb_bgr(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_rgb_bgr(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    for (int i = 0; i < state->blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    for (int y = 0; y < 8; ++y)
-    {
-        u8* d = dest + y * stride;
-        const u8* s = result + y * 8;
-
-        for (int x = 0; x < 8; ++x)
+        for (int y = 0; y < 8; ++y)
         {
-            u8 r = s[x];
-            u8 g = s[x + 64];
-            u8 b = s[x + 128];
-            d[x * 3 + 0] = b;
-            d[x * 3 + 1] = g;
-            d[x * 3 + 2] = r;
+            u8* d = dest + y * stride;
+            const u8* s = result + y * 8;
+
+            for (int x = 0; x < 8; ++x)
+            {
+                u8 r = s[x];
+                u8 g = s[x + 64];
+                u8 b = s[x + 128];
+                d[x * 3 + 0] = b;
+                d[x * 3 + 1] = g;
+                d[x * 3 + 2] = r;
+            }
         }
     }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 
-void process_rgb_rgb(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_rgb_rgb(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    for (int i = 0; i < state->blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    for (int y = 0; y < 8; ++y)
-    {
-        u8* d = dest + y * stride;
-        const u8* s = result + y * 8;
-
-        for (int x = 0; x < 8; ++x)
+        for (int y = 0; y < 8; ++y)
         {
-            u8 r = s[x];
-            u8 g = s[x + 64];
-            u8 b = s[x + 128];
-            d[x * 3 + 0] = r;
-            d[x * 3 + 1] = g;
-            d[x * 3 + 2] = b;
+            u8* d = dest + y * stride;
+            const u8* s = result + y * 8;
+
+            for (int x = 0; x < 8; ++x)
+            {
+                u8 r = s[x];
+                u8 g = s[x + 64];
+                u8 b = s[x + 128];
+                d[x * 3 + 0] = r;
+                d[x * 3 + 1] = g;
+                d[x * 3 + 2] = b;
+            }
         }
     }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 
-void process_rgb_bgra(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_rgb_bgra(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    for (int i = 0; i < state->blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    for (int y = 0; y < 8; ++y)
-    {
-        u8* d = dest + y * stride;
-        const u8* s = result + y * 8;
-
-        for (int x = 0; x < 8; ++x)
+        for (int y = 0; y < 8; ++y)
         {
-            u8 r = s[x];
-            u8 g = s[x + 64];
-            u8 b = s[x + 128];
-            d[x * 4 + 0] = b;
-            d[x * 4 + 1] = g;
-            d[x * 4 + 2] = r;
-            d[x * 4 + 3] = 0xff;
+            u8* d = dest + y * stride;
+            const u8* s = result + y * 8;
+
+            for (int x = 0; x < 8; ++x)
+            {
+                u8 r = s[x];
+                u8 g = s[x + 64];
+                u8 b = s[x + 128];
+                d[x * 4 + 0] = b;
+                d[x * 4 + 1] = g;
+                d[x * 4 + 2] = r;
+                d[x * 4 + 3] = 0xff;
+            }
         }
     }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 
-void process_rgb_rgba(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_rgb_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[JPEG_MAX_SAMPLES_IN_MCU];
+    u8* origin = dest;
 
-    for (int i = 0; i < state->blocks; ++i)
+    for (int m = 0; m < count; ++m)
     {
-        Block& block = state->block[i];
-        state->idct(result + i * 64, data, block.qt);
-        data += 64;
-    }
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-    for (int y = 0; y < 8; ++y)
-    {
-        u8* d = dest + y * stride;
-        const u8* s = result + y * 8;
-
-        for (int x = 0; x < 8; ++x)
+        for (int y = 0; y < 8; ++y)
         {
-            u8 r = s[x];
-            u8 g = s[x + 64];
-            u8 b = s[x + 128];
-            d[x * 4 + 0] = r;
-            d[x * 4 + 1] = g;
-            d[x * 4 + 2] = b;
-            d[x * 4 + 3] = 0xff;
+            u8* d = dest + y * stride;
+            const u8* s = result + y * 8;
+
+            for (int x = 0; x < 8; ++x)
+            {
+                u8 r = s[x];
+                u8 g = s[x + 64];
+                u8 b = s[x + 128];
+                d[x * 4 + 0] = r;
+                d[x * 4 + 1] = g;
+                d[x * 4 + 2] = b;
+                d[x * 4 + 3] = 0xff;
+            }
         }
     }
+
+    MANGO_UNREFERENCED(state);
+    MANGO_UNREFERENCED(width);
+    MANGO_UNREFERENCED(height);
 }
 
 // ------------------------------------------------------------------------------------------------
@@ -1216,15 +1276,8 @@ u8* convert_ycbcr_rgba_8x2_avx2(u8* dest, size_t stride, __m256i y, __m256i cb, 
     return dest;
 }
 
-void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, ProcessState* state, int width, int height)
+void process_ycbcr_rgba_8x8_avx2_color(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
-    u8 result[64 * 3];
-
-    state->idct(result +   0, data +   0, state->block[0].qt); // Y
-    state->idct(result +  64, data +  64, state->block[1].qt); // Cb
-    state->idct(result + 128, data + 128, state->block[2].qt); // Cr
-
-    // color conversion
     const __m256i s0 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.40200));
     const __m256i s1 = JPEG_CONST_AVX2(JPEG_FIXED( 1.00000), JPEG_FIXED( 1.77200));
     const __m256i s2 = JPEG_CONST_AVX2(JPEG_FIXED(-0.34414), JPEG_FIXED(-0.71414));
@@ -1232,32 +1285,41 @@ void process_ycbcr_rgba_8x8_avx2(u8* dest, size_t stride, const s16* data, Proce
     const __m256i tosigned = _mm256_set1_epi16(128);
     const __m256i alpha = _mm256_set1_epi16(0x00ff);
 
-    for (int y = 0; y < 2; ++y)
+    u8* origin = dest;
+
+    for (int m = 0; m < count; ++m)
     {
-        __m256i y0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 0));
-        __m256i cb = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 64));
-        __m256i cr = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 128));
+        dest = origin + m * xstride;
+        const u8* result = spatial + m * state->spatialMCUBytes();
 
-        y0 = _mm256_permute4x64_epi64(y0, _MM_SHUFFLE(3, 1, 2, 0));
-        cb = _mm256_permute4x64_epi64(cb, _MM_SHUFFLE(3, 1, 2, 0));
-        cr = _mm256_permute4x64_epi64(cr, _MM_SHUFFLE(3, 1, 2, 0));
+        for (int y = 0; y < 2; ++y)
+        {
+            __m256i y0 = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 0));
+            __m256i cb = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 64));
+            __m256i cr = _mm256_loadu_si256(reinterpret_cast<const __m256i *>(result + y * 32 + 128));
 
-        __m256i zero = _mm256_setzero_si256();
+            y0 = _mm256_permute4x64_epi64(y0, _MM_SHUFFLE(3, 1, 2, 0));
+            cb = _mm256_permute4x64_epi64(cb, _MM_SHUFFLE(3, 1, 2, 0));
+            cr = _mm256_permute4x64_epi64(cr, _MM_SHUFFLE(3, 1, 2, 0));
 
-        __m256i cb0 = _mm256_unpacklo_epi8(cb, zero);
-        __m256i cr0 = _mm256_unpacklo_epi8(cr, zero);
-        __m256i cb1 = _mm256_unpackhi_epi8(cb, zero);
-        __m256i cr1 = _mm256_unpackhi_epi8(cr, zero);
+            __m256i zero = _mm256_setzero_si256();
 
-        cb0 = _mm256_sub_epi16(cb0, tosigned);
-        cr0 = _mm256_sub_epi16(cr0, tosigned);
-        cb1 = _mm256_sub_epi16(cb1, tosigned);
-        cr1 = _mm256_sub_epi16(cr1, tosigned);
+            __m256i cb0 = _mm256_unpacklo_epi8(cb, zero);
+            __m256i cr0 = _mm256_unpacklo_epi8(cr, zero);
+            __m256i cb1 = _mm256_unpackhi_epi8(cb, zero);
+            __m256i cr1 = _mm256_unpackhi_epi8(cr, zero);
 
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, alpha, s0, s1, s2, rounding);
-        dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, alpha, s0, s1, s2, rounding);
+            cb0 = _mm256_sub_epi16(cb0, tosigned);
+            cr0 = _mm256_sub_epi16(cr0, tosigned);
+            cb1 = _mm256_sub_epi16(cb1, tosigned);
+            cr1 = _mm256_sub_epi16(cr1, tosigned);
+
+            dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpacklo_epi8(y0, zero), cb0, cr0, alpha, s0, s1, s2, rounding);
+            dest = convert_ycbcr_rgba_8x2_avx2(dest, stride, _mm256_unpackhi_epi8(y0, zero), cb1, cr1, alpha, s0, s1, s2, rounding);
+        }
     }
 
+    MANGO_UNREFERENCED(state);
     MANGO_UNREFERENCED(width);
     MANGO_UNREFERENCED(height);
 }

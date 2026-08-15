@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -165,7 +165,7 @@ namespace mango::image::jpeg
     //
 
     // Table for rows 0,4 - constants are multiplied on cos_4_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_04 [] =
     {
         16384, 21407, 16384, 8867, 16384, -8867, 16384, -21407,
@@ -175,7 +175,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 1,7 - constants are multiplied on cos_1_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_17 [] =
     {
         22725, 29692, 22725, 12299, 22725, -12299, 22725, -29692,
@@ -185,7 +185,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 2,6 - constants are multiplied on cos_2_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_26 [] =
     {
         21407, 27969, 21407, 11585, 21407, -11585, 21407, -27969,
@@ -195,7 +195,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 3,5 - constants are multiplied on cos_3_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_35 [] =
     {
         19266, 25172, 19266, 10426, 19266, -10426, 19266, -25172,
@@ -204,287 +204,929 @@ namespace mango::image::jpeg
         15137, 5315, -26722, -15137, 5315, 22654, 22654, -26722
     };
 
-    void idct_sse2(u8* dest, const s16* src, const s16* qt)
+    void idct_sse2_n(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count)
     {
-        const __m128i* data = reinterpret_cast<const __m128i *>(src);
-        const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
-
-        // Load and dequantize
-        __m128i v0 = _mm_mullo_epi16(data[0], qtable[0]);
-        __m128i v1 = _mm_mullo_epi16(data[1], qtable[1]);
-        __m128i v2 = _mm_mullo_epi16(data[2], qtable[2]);
-        __m128i v3 = _mm_mullo_epi16(data[3], qtable[3]);
-        __m128i v4 = _mm_mullo_epi16(data[4], qtable[4]);
-        __m128i v5 = _mm_mullo_epi16(data[5], qtable[5]);
-        __m128i v6 = _mm_mullo_epi16(data[6], qtable[6]);
-        __m128i v7 = _mm_mullo_epi16(data[7], qtable[7]);
-
-        __m128i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
-        __m128i row0, row1, row2, row3, row4, row5, row6, row7;
-
-        // row 1 and Row 3
-
         const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
         const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
-
-        r_xmm0 = _mm_shufflelo_epi16(v0, 0xd8);
-        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
-        r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
-        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
-        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
-        r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
-        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
-        r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
-
-        const __m128i round_inv_row = _mm_set1_epi32(2048);
-
-        r_xmm4 = _mm_shufflehi_epi16(v2, 0xd8);
-        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
-        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
-        r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
-        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
-        r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
-        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
-        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
-        r_xmm6 = _mm_madd_epi16(r_xmm6, table26[1]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
-        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
-        r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
-        r_xmm7 = _mm_madd_epi16(r_xmm7, table26[2]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
-        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
-        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
-        r_xmm4 = _mm_madd_epi16(r_xmm4, table26[3]);
-        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
-        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
-        row0 = _mm_packs_epi32(r_xmm0, r_xmm2);
-
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
-        r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
-        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
-        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
-        row2 = _mm_packs_epi32(r_xmm4, r_xmm6);
-
-        // row 5 and row 7
-
-        r_xmm0 = _mm_shufflelo_epi16(v4, 0xd8);
-        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
-        r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
-        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
-        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
-        r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
-        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
-        r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
-        r_xmm4 = _mm_shufflehi_epi16(v6, 0xd8);
-        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
-        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
-        r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
-        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
-        r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
-        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
-        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
-        r_xmm6 = _mm_madd_epi16(r_xmm6, table26[1]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
-        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
-        r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
-        r_xmm7 = _mm_madd_epi16(r_xmm7, table26[2]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
-        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
-        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
-        r_xmm4 = _mm_madd_epi16(r_xmm4, table26[3]);
-        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
-        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
-        row4 = _mm_packs_epi32(r_xmm0, r_xmm2);
-
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
-        r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
-        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
-        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
-        row6 = _mm_packs_epi32(r_xmm4, r_xmm6);
-
-        // row 4 and row 2
-
         const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
         const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
-
-        r_xmm0 = _mm_shufflelo_epi16(v3, 0xd8);
-        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
-        r_xmm1 = _mm_madd_epi16(r_xmm1, table35[0]);
-        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
-        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
-        r_xmm3 = _mm_madd_epi16(r_xmm3, table35[2]);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
-        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
-        r_xmm2 = _mm_madd_epi16(r_xmm2, table35[1]);
-        r_xmm4 = _mm_shufflehi_epi16(v1, 0xd8);
-        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
-        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
-        r_xmm0 = _mm_madd_epi16(r_xmm0, table35[3]);
-        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
-        r_xmm5 = _mm_madd_epi16(r_xmm5, table17[0]);
-        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
-        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
-        r_xmm6 = _mm_madd_epi16(r_xmm6, table17[1]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
-        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
-        r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
-        r_xmm7 = _mm_madd_epi16(r_xmm7, table17[2]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
-        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
-        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
-        r_xmm4 = _mm_madd_epi16(r_xmm4, table17[3]);
-        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
-        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
-        row3 = _mm_packs_epi32(r_xmm0, r_xmm2);
-
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
-        r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
-        r_xmm4 = _mm_add_epi32(r_xmm5, r_xmm4);
-        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
-        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
-        row1 = _mm_packs_epi32(r_xmm4, r_xmm6);
-
-        // row 6 and row 8
-
-        r_xmm0 = _mm_shufflelo_epi16(v5, 0xd8);
-        r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
-        r_xmm1 = _mm_madd_epi16(r_xmm1, table35[0]);
-        r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
-        r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
-        r_xmm3 = _mm_madd_epi16(r_xmm3, table35[2]);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
-        r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
-        r_xmm2 = _mm_madd_epi16(r_xmm2, table35[1]);
-        r_xmm4 = _mm_shufflehi_epi16(v7, 0xd8);
-        r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
-        r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
-        r_xmm0 = _mm_madd_epi16(r_xmm0, table35[3]);
-        r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
-        r_xmm5 = _mm_madd_epi16(r_xmm5, table17[0]);
-        r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
-        r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
-        r_xmm6 = _mm_madd_epi16(r_xmm6, table17[1]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
-        r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
-        r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
-        r_xmm7 = _mm_madd_epi16(r_xmm7, table17[2]);
-        r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
-        r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
-        r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
-        r_xmm4 = _mm_madd_epi16(r_xmm4, table17[3]);
-        r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
-        r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
-        r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
-        row5 = _mm_packs_epi32(r_xmm0, r_xmm2);
-
-        r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
-        r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
-        r_xmm4 = _mm_add_epi32(r_xmm5, r_xmm4);
-        r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
-        r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
-        r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
-        row7 = _mm_packs_epi32(r_xmm4, r_xmm6);
-
+        const __m128i round_inv_row = _mm_set1_epi32(2048);
         const __m128i tg = _mm_set_epi16(-19195, -19195, -21746, -21746, 27146, 27146, 13036, 13036);
         const __m128i one = _mm_set1_epi16(1);
-
-        r_xmm1 = _mm_shuffle_epi32(tg, 0xaa);
-        r_xmm0 = _mm_mulhi_epi16(r_xmm1, row5);
-        r_xmm1 = _mm_mulhi_epi16(r_xmm1, row3);
-        r_xmm5 = _mm_shuffle_epi32(tg, 0x00);
-        r_xmm4 = _mm_mulhi_epi16(r_xmm5, row7);
-        r_xmm5 = _mm_mulhi_epi16(r_xmm5, row1);
-        r_xmm0 = _mm_adds_epi16(r_xmm0, row5);
-        r_xmm1 = _mm_adds_epi16(r_xmm1, row3);
-        r_xmm0 = _mm_adds_epi16(r_xmm0, row3);
-        r_xmm3 = _mm_shuffle_epi32(tg, 0x55);
-        r_xmm7 = _mm_mulhi_epi16(r_xmm3, row6);
-        r_xmm3 = _mm_mulhi_epi16(r_xmm3, row2);
-        r_xmm5 = _mm_subs_epi16(r_xmm5, row7);
-        r_xmm4 = _mm_adds_epi16(r_xmm4, row1);
-        r_xmm2 = _mm_subs_epi16(r_xmm2, r_xmm1);
-        r_xmm1 = _mm_adds_epi16(r_xmm0, r_xmm4);
-        r_xmm1 = _mm_adds_epi16(r_xmm1, one);
-        r_xmm4 = _mm_subs_epi16(r_xmm4, r_xmm0);
-        r_xmm6 = _mm_adds_epi16(r_xmm5, r_xmm2);
-        r_xmm5 = _mm_subs_epi16(r_xmm5, r_xmm2);
-        r_xmm5 = _mm_adds_epi16(r_xmm5, one);
-
-        __m128i temp7 = r_xmm1;
-        __m128i temp3 = r_xmm6;
-
-        r_xmm0 = _mm_shuffle_epi32(tg, 0xff);
-        r_xmm1 = _mm_subs_epi16(r_xmm4, r_xmm5);
-        r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm5);
-        r_xmm2 = _mm_mulhi_epi16(r_xmm0, r_xmm4);
-        r_xmm7 = _mm_adds_epi16(r_xmm7, row2);
-        r_xmm3 = _mm_subs_epi16(r_xmm3, row6);
-        r_xmm0 = _mm_mulhi_epi16(r_xmm0, r_xmm1);
-        r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm1);
-        r_xmm5 = _mm_adds_epi16(row0, row4);
-        r_xmm6 = _mm_subs_epi16(row0, row4);
-        r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm2);
-
-        r_xmm4 = _mm_or_si128(r_xmm4, one);
-        r_xmm0 = _mm_or_si128(r_xmm0, one);
-
         const s16 bias = 128 << 5;
         const __m128i round_inv_col = _mm_set1_epi16(16 + bias);
         const __m128i round_inv_corr = _mm_sub_epi16(round_inv_col, one);
 
-        r_xmm1 = _mm_subs_epi16(r_xmm6, r_xmm3);
-        r_xmm1 = _mm_adds_epi16(r_xmm1, round_inv_corr);
-        r_xmm2 = _mm_subs_epi16(r_xmm5, r_xmm7);
-        r_xmm2 = _mm_adds_epi16(r_xmm2, round_inv_corr);
-        r_xmm5 = _mm_adds_epi16(r_xmm5, r_xmm7);
-        r_xmm5 = _mm_adds_epi16(r_xmm5, round_inv_col);
-        r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm3);
-        r_xmm6 = _mm_adds_epi16(r_xmm6, round_inv_col);
+        for (int n = 0; n < count; ++n)
+        {
+            const __m128i* data = reinterpret_cast<const __m128i *>(src);
+            const __m128i* qtable = reinterpret_cast<const __m128i *>(qt[idx]);
 
-        __m128i r0 = _mm_adds_epi16(r_xmm5, temp7);
-        __m128i r1 = _mm_adds_epi16(r_xmm6, r_xmm4);
-        __m128i r2 = _mm_adds_epi16(r_xmm1, r_xmm0);
-        __m128i r3 = _mm_adds_epi16(r_xmm2, temp3);
-        __m128i r4 = _mm_subs_epi16(r_xmm2, temp3);
-        __m128i r5 = _mm_subs_epi16(r_xmm1, r_xmm0);
-        __m128i r6 = _mm_subs_epi16(r_xmm6, r_xmm4);
-        __m128i r7 = _mm_subs_epi16(r_xmm5, temp7);
+            // Load and dequantize
+            __m128i v0 = _mm_mullo_epi16(data[0], qtable[0]);
+            __m128i v1 = _mm_mullo_epi16(data[1], qtable[1]);
+            __m128i v2 = _mm_mullo_epi16(data[2], qtable[2]);
+            __m128i v3 = _mm_mullo_epi16(data[3], qtable[3]);
+            __m128i v4 = _mm_mullo_epi16(data[4], qtable[4]);
+            __m128i v5 = _mm_mullo_epi16(data[5], qtable[5]);
+            __m128i v6 = _mm_mullo_epi16(data[6], qtable[6]);
+            __m128i v7 = _mm_mullo_epi16(data[7], qtable[7]);
 
-        r0 = _mm_srai_epi16(r0, 5);
-        r1 = _mm_srai_epi16(r1, 5);
-        r2 = _mm_srai_epi16(r2, 5);
-        r3 = _mm_srai_epi16(r3, 5);
-        r4 = _mm_srai_epi16(r4, 5);
-        r5 = _mm_srai_epi16(r5, 5);
-        r6 = _mm_srai_epi16(r6, 5);
-        r7 = _mm_srai_epi16(r7, 5);
+            __m128i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
+            __m128i row0, row1, row2, row3, row4, row5, row6, row7;
 
-        __m128i s0 = _mm_packus_epi16(r0, r1);
-        __m128i s1 = _mm_packus_epi16(r2, r3);
-        __m128i s2 = _mm_packus_epi16(r4, r5);
-        __m128i s3 = _mm_packus_epi16(r6, r7);
+            // row 1 and Row 3
 
-        // store
-        __m128i* d = reinterpret_cast<__m128i *>(dest);
-        _mm_storeu_si128(d + 0, s0);
-        _mm_storeu_si128(d + 1, s1);
-        _mm_storeu_si128(d + 2, s2);
-        _mm_storeu_si128(d + 3, s3);
+            r_xmm0 = _mm_shufflelo_epi16(v0, 0xd8);
+            r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
+            r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
+
+            r_xmm4 = _mm_shufflehi_epi16(v2, 0xd8);
+            r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
+            r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
+            r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm_madd_epi16(r_xmm6, table26[1]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm_madd_epi16(r_xmm7, table26[2]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm_madd_epi16(r_xmm4, table26[3]);
+            r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+            row0 = _mm_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+            r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+            row2 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 5 and row 7
+
+            r_xmm0 = _mm_shufflelo_epi16(v4, 0xd8);
+            r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm_madd_epi16(r_xmm1, table04[0]);
+            r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm_madd_epi16(r_xmm3, table04[2]);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm_madd_epi16(r_xmm2, table04[1]);
+            r_xmm4 = _mm_shufflehi_epi16(v6, 0xd8);
+            r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm_madd_epi16(r_xmm0, table04[3]);
+            r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm_madd_epi16(r_xmm5, table26[0]);
+            r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm_madd_epi16(r_xmm6, table26[1]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm_madd_epi16(r_xmm7, table26[2]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm_madd_epi16(r_xmm4, table26[3]);
+            r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+            row4 = _mm_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm5);
+            r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+            row6 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 4 and row 2
+
+            r_xmm0 = _mm_shufflelo_epi16(v3, 0xd8);
+            r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm_madd_epi16(r_xmm1, table35[0]);
+            r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm_madd_epi16(r_xmm3, table35[2]);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm_madd_epi16(r_xmm2, table35[1]);
+            r_xmm4 = _mm_shufflehi_epi16(v1, 0xd8);
+            r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm_madd_epi16(r_xmm0, table35[3]);
+            r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm_madd_epi16(r_xmm5, table17[0]);
+            r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm_madd_epi16(r_xmm6, table17[1]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm_madd_epi16(r_xmm7, table17[2]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm_madd_epi16(r_xmm4, table17[3]);
+            r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+            row3 = _mm_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm_add_epi32(r_xmm5, r_xmm4);
+            r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+            row1 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 6 and row 8
+
+            r_xmm0 = _mm_shufflelo_epi16(v5, 0xd8);
+            r_xmm1 = _mm_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm_madd_epi16(r_xmm1, table35[0]);
+            r_xmm3 = _mm_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm_madd_epi16(r_xmm3, table35[2]);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm_madd_epi16(r_xmm2, table35[1]);
+            r_xmm4 = _mm_shufflehi_epi16(v7, 0xd8);
+            r_xmm1 = _mm_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm_madd_epi16(r_xmm0, table35[3]);
+            r_xmm5 = _mm_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm_madd_epi16(r_xmm5, table17[0]);
+            r_xmm1 = _mm_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm_madd_epi16(r_xmm6, table17[1]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm_madd_epi16(r_xmm7, table17[2]);
+            r_xmm0 = _mm_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm_madd_epi16(r_xmm4, table17[3]);
+            r_xmm5 = _mm_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm_shuffle_epi32(r_xmm2, 0x1b);
+            row5 = _mm_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm_add_epi32(r_xmm5, r_xmm4);
+            r_xmm6 = _mm_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm_shuffle_epi32(r_xmm6, 0x1b);
+            row7 = _mm_packs_epi32(r_xmm4, r_xmm6);
+
+            r_xmm1 = _mm_shuffle_epi32(tg, 0xaa);
+            r_xmm0 = _mm_mulhi_epi16(r_xmm1, row5);
+            r_xmm1 = _mm_mulhi_epi16(r_xmm1, row3);
+            r_xmm5 = _mm_shuffle_epi32(tg, 0x00);
+            r_xmm4 = _mm_mulhi_epi16(r_xmm5, row7);
+            r_xmm5 = _mm_mulhi_epi16(r_xmm5, row1);
+            r_xmm0 = _mm_adds_epi16(r_xmm0, row5);
+            r_xmm1 = _mm_adds_epi16(r_xmm1, row3);
+            r_xmm0 = _mm_adds_epi16(r_xmm0, row3);
+            r_xmm3 = _mm_shuffle_epi32(tg, 0x55);
+            r_xmm7 = _mm_mulhi_epi16(r_xmm3, row6);
+            r_xmm3 = _mm_mulhi_epi16(r_xmm3, row2);
+            r_xmm5 = _mm_subs_epi16(r_xmm5, row7);
+            r_xmm4 = _mm_adds_epi16(r_xmm4, row1);
+            r_xmm2 = _mm_subs_epi16(r_xmm2, r_xmm1);
+            r_xmm1 = _mm_adds_epi16(r_xmm0, r_xmm4);
+            r_xmm1 = _mm_adds_epi16(r_xmm1, one);
+            r_xmm4 = _mm_subs_epi16(r_xmm4, r_xmm0);
+            r_xmm6 = _mm_adds_epi16(r_xmm5, r_xmm2);
+            r_xmm5 = _mm_subs_epi16(r_xmm5, r_xmm2);
+            r_xmm5 = _mm_adds_epi16(r_xmm5, one);
+
+            __m128i temp7 = r_xmm1;
+            __m128i temp3 = r_xmm6;
+
+            r_xmm0 = _mm_shuffle_epi32(tg, 0xff);
+            r_xmm1 = _mm_subs_epi16(r_xmm4, r_xmm5);
+            r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm5);
+            r_xmm2 = _mm_mulhi_epi16(r_xmm0, r_xmm4);
+            r_xmm7 = _mm_adds_epi16(r_xmm7, row2);
+            r_xmm3 = _mm_subs_epi16(r_xmm3, row6);
+            r_xmm0 = _mm_mulhi_epi16(r_xmm0, r_xmm1);
+            r_xmm0 = _mm_adds_epi16(r_xmm0, r_xmm1);
+            r_xmm5 = _mm_adds_epi16(row0, row4);
+            r_xmm6 = _mm_subs_epi16(row0, row4);
+            r_xmm4 = _mm_adds_epi16(r_xmm4, r_xmm2);
+
+            r_xmm4 = _mm_or_si128(r_xmm4, one);
+            r_xmm0 = _mm_or_si128(r_xmm0, one);
+
+            r_xmm1 = _mm_subs_epi16(r_xmm6, r_xmm3);
+            r_xmm1 = _mm_adds_epi16(r_xmm1, round_inv_corr);
+            r_xmm2 = _mm_subs_epi16(r_xmm5, r_xmm7);
+            r_xmm2 = _mm_adds_epi16(r_xmm2, round_inv_corr);
+            r_xmm5 = _mm_adds_epi16(r_xmm5, r_xmm7);
+            r_xmm5 = _mm_adds_epi16(r_xmm5, round_inv_col);
+            r_xmm6 = _mm_adds_epi16(r_xmm6, r_xmm3);
+            r_xmm6 = _mm_adds_epi16(r_xmm6, round_inv_col);
+
+            __m128i r0 = _mm_adds_epi16(r_xmm5, temp7);
+            __m128i r1 = _mm_adds_epi16(r_xmm6, r_xmm4);
+            __m128i r2 = _mm_adds_epi16(r_xmm1, r_xmm0);
+            __m128i r3 = _mm_adds_epi16(r_xmm2, temp3);
+            __m128i r4 = _mm_subs_epi16(r_xmm2, temp3);
+            __m128i r5 = _mm_subs_epi16(r_xmm1, r_xmm0);
+            __m128i r6 = _mm_subs_epi16(r_xmm6, r_xmm4);
+            __m128i r7 = _mm_subs_epi16(r_xmm5, temp7);
+
+            r0 = _mm_srai_epi16(r0, 5);
+            r1 = _mm_srai_epi16(r1, 5);
+            r2 = _mm_srai_epi16(r2, 5);
+            r3 = _mm_srai_epi16(r3, 5);
+            r4 = _mm_srai_epi16(r4, 5);
+            r5 = _mm_srai_epi16(r5, 5);
+            r6 = _mm_srai_epi16(r6, 5);
+            r7 = _mm_srai_epi16(r7, 5);
+
+            __m128i s0 = _mm_packus_epi16(r0, r1);
+            __m128i s1 = _mm_packus_epi16(r2, r3);
+            __m128i s2 = _mm_packus_epi16(r4, r5);
+            __m128i s3 = _mm_packus_epi16(r6, r7);
+
+            // store
+            __m128i* d = reinterpret_cast<__m128i *>(dest);
+            _mm_storeu_si128(d + 0, s0);
+            _mm_storeu_si128(d + 1, s1);
+            _mm_storeu_si128(d + 2, s2);
+            _mm_storeu_si128(d + 3, s3);
+
+            dest += 64;
+            src += 64;
+
+            if (++idx == blocks)
+            {
+                idx = 0;
+            }
+        }
     }
+
+    void idct_sse2(u8* dest, const s16* src, const s16* qt)
+    {
+        const s16* q[2] = { qt, qt };
+        idct_sse2_n(dest, src, q, 1, 0, 1);
+    }
+
+#if defined(MANGO_ENABLE_AVX2)
+
+    // Linear dual 8x8 iDCT: consecutive blocks in 128-bit lanes, fused dequant.
+    void idct_avx2(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count)
+    {
+        const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
+        const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
+        const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
+        const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
+        const __m256i round_inv_row = _mm256_set1_epi32(2048);
+        const __m256i tg = _mm256_broadcastsi128_si256(_mm_set_epi16(-19195, -19195, -21746, -21746, 27146, 27146, 13036, 13036));
+        const __m256i one = _mm256_set1_epi16(1);
+        const s16 bias = 128 << 5;
+        const __m256i round_inv_col = _mm256_set1_epi16(16 + bias);
+        const __m256i round_inv_corr = _mm256_sub_epi16(round_inv_col, one);
+
+        for (int n = 0; n < count; n += 2)
+        {
+            const __m128i* data0 = reinterpret_cast<const __m128i *>(src + 0);
+            const __m128i* data1 = reinterpret_cast<const __m128i *>(src + 64);
+            const __m128i* q0 = reinterpret_cast<const __m128i *>(qt[idx + 0]);
+            const __m128i* q1 = reinterpret_cast<const __m128i *>(qt[idx + 1]);
+
+            __m256i v0 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[0], &data0[0]), _mm256_loadu2_m128i(&q1[0], &q0[0]));
+            __m256i v1 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[1], &data0[1]), _mm256_loadu2_m128i(&q1[1], &q0[1]));
+            __m256i v2 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[2], &data0[2]), _mm256_loadu2_m128i(&q1[2], &q0[2]));
+            __m256i v3 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[3], &data0[3]), _mm256_loadu2_m128i(&q1[3], &q0[3]));
+            __m256i v4 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[4], &data0[4]), _mm256_loadu2_m128i(&q1[4], &q0[4]));
+            __m256i v5 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[5], &data0[5]), _mm256_loadu2_m128i(&q1[5], &q0[5]));
+            __m256i v6 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[6], &data0[6]), _mm256_loadu2_m128i(&q1[6], &q0[6]));
+            __m256i v7 = _mm256_mullo_epi16(_mm256_loadu2_m128i(&data1[7], &data0[7]), _mm256_loadu2_m128i(&q1[7], &q0[7]));
+
+            __m256i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
+            __m256i row0, row1, row2, row3, row4, row5, row6, row7;
+
+            // row 1 and Row 3
+
+            r_xmm0 = _mm256_shufflelo_epi16(v0, 0xd8);
+            r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table04[0]));
+            r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table04[2]));
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table04[1]));
+
+            r_xmm4 = _mm256_shufflehi_epi16(v2, 0xd8);
+            r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table04[3]));
+            r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table26[0]));
+            r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table26[1]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table26[2]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table26[3]));
+            r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+            row0 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm5);
+            r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+            row2 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 5 and row 7
+
+            r_xmm0 = _mm256_shufflelo_epi16(v4, 0xd8);
+            r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table04[0]));
+            r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table04[2]));
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table04[1]));
+            r_xmm4 = _mm256_shufflehi_epi16(v6, 0xd8);
+            r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table04[3]));
+            r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table26[0]));
+            r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table26[1]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table26[2]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table26[3]));
+            r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+            row4 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm5);
+            r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+            row6 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 4 and row 2
+
+            r_xmm0 = _mm256_shufflelo_epi16(v3, 0xd8);
+            r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table35[0]));
+            r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table35[2]));
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table35[1]));
+            r_xmm4 = _mm256_shufflehi_epi16(v1, 0xd8);
+            r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table35[3]));
+            r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table17[0]));
+            r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table17[1]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table17[2]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table17[3]));
+            r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+            row3 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm256_add_epi32(r_xmm5, r_xmm4);
+            r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+            row1 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 6 and row 8
+
+            r_xmm0 = _mm256_shufflelo_epi16(v5, 0xd8);
+            r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+            r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table35[0]));
+            r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+            r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table35[2]));
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+            r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+            r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table35[1]));
+            r_xmm4 = _mm256_shufflehi_epi16(v7, 0xd8);
+            r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table35[3]));
+            r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+            r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table17[0]));
+            r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+            r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table17[1]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+            r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table17[2]));
+            r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table17[3]));
+            r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+            row5 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm256_add_epi32(r_xmm5, r_xmm4);
+            r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+            row7 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+            r_xmm1 = _mm256_shuffle_epi32(tg, 0xaa);
+            r_xmm0 = _mm256_mulhi_epi16(r_xmm1, row5);
+            r_xmm1 = _mm256_mulhi_epi16(r_xmm1, row3);
+            r_xmm5 = _mm256_shuffle_epi32(tg, 0x00);
+            r_xmm4 = _mm256_mulhi_epi16(r_xmm5, row7);
+            r_xmm5 = _mm256_mulhi_epi16(r_xmm5, row1);
+            r_xmm0 = _mm256_adds_epi16(r_xmm0, row5);
+            r_xmm1 = _mm256_adds_epi16(r_xmm1, row3);
+            r_xmm0 = _mm256_adds_epi16(r_xmm0, row3);
+            r_xmm3 = _mm256_shuffle_epi32(tg, 0x55);
+            r_xmm7 = _mm256_mulhi_epi16(r_xmm3, row6);
+            r_xmm3 = _mm256_mulhi_epi16(r_xmm3, row2);
+            r_xmm5 = _mm256_subs_epi16(r_xmm5, row7);
+            r_xmm4 = _mm256_adds_epi16(r_xmm4, row1);
+            r_xmm2 = _mm256_subs_epi16(r_xmm2, r_xmm1);
+            r_xmm1 = _mm256_adds_epi16(r_xmm0, r_xmm4);
+            r_xmm1 = _mm256_adds_epi16(r_xmm1, one);
+            r_xmm4 = _mm256_subs_epi16(r_xmm4, r_xmm0);
+            r_xmm6 = _mm256_adds_epi16(r_xmm5, r_xmm2);
+            r_xmm5 = _mm256_subs_epi16(r_xmm5, r_xmm2);
+            r_xmm5 = _mm256_adds_epi16(r_xmm5, one);
+
+            __m256i temp7 = r_xmm1;
+            __m256i temp3 = r_xmm6;
+
+            r_xmm0 = _mm256_shuffle_epi32(tg, 0xff);
+            r_xmm1 = _mm256_subs_epi16(r_xmm4, r_xmm5);
+            r_xmm4 = _mm256_adds_epi16(r_xmm4, r_xmm5);
+            r_xmm2 = _mm256_mulhi_epi16(r_xmm0, r_xmm4);
+            r_xmm7 = _mm256_adds_epi16(r_xmm7, row2);
+            r_xmm3 = _mm256_subs_epi16(r_xmm3, row6);
+            r_xmm0 = _mm256_mulhi_epi16(r_xmm0, r_xmm1);
+            r_xmm0 = _mm256_adds_epi16(r_xmm0, r_xmm1);
+            r_xmm5 = _mm256_adds_epi16(row0, row4);
+            r_xmm6 = _mm256_subs_epi16(row0, row4);
+            r_xmm4 = _mm256_adds_epi16(r_xmm4, r_xmm2);
+
+            r_xmm4 = _mm256_or_si256(r_xmm4, one);
+            r_xmm0 = _mm256_or_si256(r_xmm0, one);
+
+            r_xmm1 = _mm256_subs_epi16(r_xmm6, r_xmm3);
+            r_xmm1 = _mm256_adds_epi16(r_xmm1, round_inv_corr);
+            r_xmm2 = _mm256_subs_epi16(r_xmm5, r_xmm7);
+            r_xmm2 = _mm256_adds_epi16(r_xmm2, round_inv_corr);
+            r_xmm5 = _mm256_adds_epi16(r_xmm5, r_xmm7);
+            r_xmm5 = _mm256_adds_epi16(r_xmm5, round_inv_col);
+            r_xmm6 = _mm256_adds_epi16(r_xmm6, r_xmm3);
+            r_xmm6 = _mm256_adds_epi16(r_xmm6, round_inv_col);
+
+            __m256i r0 = _mm256_adds_epi16(r_xmm5, temp7);
+            __m256i r1 = _mm256_adds_epi16(r_xmm6, r_xmm4);
+            __m256i r2 = _mm256_adds_epi16(r_xmm1, r_xmm0);
+            __m256i r3 = _mm256_adds_epi16(r_xmm2, temp3);
+            __m256i r4 = _mm256_subs_epi16(r_xmm2, temp3);
+            __m256i r5 = _mm256_subs_epi16(r_xmm1, r_xmm0);
+            __m256i r6 = _mm256_subs_epi16(r_xmm6, r_xmm4);
+            __m256i r7 = _mm256_subs_epi16(r_xmm5, temp7);
+
+            r0 = _mm256_srai_epi16(r0, 5);
+            r1 = _mm256_srai_epi16(r1, 5);
+            r2 = _mm256_srai_epi16(r2, 5);
+            r3 = _mm256_srai_epi16(r3, 5);
+            r4 = _mm256_srai_epi16(r4, 5);
+            r5 = _mm256_srai_epi16(r5, 5);
+            r6 = _mm256_srai_epi16(r6, 5);
+            r7 = _mm256_srai_epi16(r7, 5);
+
+            __m256i s0 = _mm256_packus_epi16(r0, r1);
+            __m256i s1 = _mm256_packus_epi16(r2, r3);
+            __m256i s2 = _mm256_packus_epi16(r4, r5);
+            __m256i s3 = _mm256_packus_epi16(r6, r7);
+
+            __m128i* d = reinterpret_cast<__m128i*>(dest);
+            _mm256_storeu2_m128i(d + 4, d + 0, s0);
+            _mm256_storeu2_m128i(d + 5, d + 1, s1);
+            _mm256_storeu2_m128i(d + 6, d + 2, s2);
+            _mm256_storeu2_m128i(d + 7, d + 3, s3);
+
+            dest += 128;
+            src += 128;
+
+            idx += 2;
+            while (idx >= blocks)
+            {
+                idx -= blocks;
+            }
+        }
+    }
+
+#endif // MANGO_ENABLE_AVX2
+
+#if defined(MANGO_ENABLE_AVX512)
+
+    #define transpose4x128(s0, s1, s2, s3) do { \
+        __m512i t0 = _mm512_shuffle_i32x4(s0, s1, 0x44); \
+        __m512i t1 = _mm512_shuffle_i32x4(s0, s1, 0xEE); \
+        __m512i t2 = _mm512_shuffle_i32x4(s2, s3, 0x44); \
+        __m512i t3 = _mm512_shuffle_i32x4(s2, s3, 0xEE); \
+        s0 = _mm512_shuffle_i32x4(t0, t2, 0x88); \
+        s1 = _mm512_shuffle_i32x4(t0, t2, 0xDD); \
+        s2 = _mm512_shuffle_i32x4(t1, t3, 0x88); \
+        s3 = _mm512_shuffle_i32x4(t1, t3, 0xDD); \
+    } while (0)
+
+    // Linear quad 8x8 iDCT: consecutive blocks in 128-bit lanes, fused dequant.
+    void idct_avx512(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count)
+    {
+        const __m512i round_inv_row = _mm512_set1_epi32(2048);
+        const __m512i tg = _mm512_broadcast_i32x4(_mm_set_epi16(-19195, -19195, -21746, -21746, 27146, 27146, 13036, 13036));
+        const __m512i one = _mm512_set1_epi16(1);
+        const s16 bias = 128 << 5;
+        const __m512i round_inv_col = _mm512_set1_epi16(16 + bias);
+        const __m512i round_inv_corr = _mm512_sub_epi16(round_inv_col, one);
+
+        const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
+        const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
+        const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
+        const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
+
+        for (int n = 0; n < count; n += 4)
+        {
+            const s16* qtable0 = qt[idx + 0];
+            const s16* qtable1 = qt[idx + 1];
+            const s16* qtable2 = qt[idx + 2];
+            const s16* qtable3 = qt[idx + 3];
+
+            __m512i s0 = _mm512_loadu_si512(src + 0);
+            __m512i s1 = _mm512_loadu_si512(src + 64);
+            __m512i s2 = _mm512_loadu_si512(src + 128);
+            __m512i s3 = _mm512_loadu_si512(src + 192);
+            transpose4x128(s0, s1, s2, s3);
+
+            __m512i q0 = _mm512_loadu_si512(qtable0 + 0);
+            __m512i q1 = _mm512_loadu_si512(qtable1 + 0);
+            __m512i q2 = _mm512_loadu_si512(qtable2 + 0);
+            __m512i q3 = _mm512_loadu_si512(qtable3 + 0);
+            transpose4x128(q0, q1, q2, q3);
+
+            __m512i v0 = _mm512_mullo_epi16(s0, q0);
+            __m512i v1 = _mm512_mullo_epi16(s1, q1);
+            __m512i v2 = _mm512_mullo_epi16(s2, q2);
+            __m512i v3 = _mm512_mullo_epi16(s3, q3);
+
+            __m512i s4 = _mm512_loadu_si512(src + 32);
+            __m512i s5 = _mm512_loadu_si512(src + 96);
+            __m512i s6 = _mm512_loadu_si512(src + 160);
+            __m512i s7 = _mm512_loadu_si512(src + 224);
+            transpose4x128(s4, s5, s6, s7);
+
+            __m512i q4 = _mm512_loadu_si512(qtable0 + 32);
+            __m512i q5 = _mm512_loadu_si512(qtable1 + 32);
+            __m512i q6 = _mm512_loadu_si512(qtable2 + 32);
+            __m512i q7 = _mm512_loadu_si512(qtable3 + 32);
+            transpose4x128(q4, q5, q6, q7);
+
+            __m512i v4 = _mm512_mullo_epi16(s4, q4);
+            __m512i v5 = _mm512_mullo_epi16(s5, q5);
+            __m512i v6 = _mm512_mullo_epi16(s6, q6);
+            __m512i v7 = _mm512_mullo_epi16(s7, q7);
+
+            __m512i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
+            __m512i row0, row1, row2, row3, row4, row5, row6, row7;
+
+            // row 1 and Row 3
+
+            r_xmm0 = _mm512_shufflelo_epi16(v0, 0xd8);
+            r_xmm1 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x00));
+            r_xmm1 = _mm512_madd_epi16(r_xmm1, _mm512_broadcast_i32x4(table04[0]));
+            r_xmm3 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x55));
+            r_xmm0 = _mm512_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm512_madd_epi16(r_xmm3, _mm512_broadcast_i32x4(table04[2]));
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xaa));
+            r_xmm0 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_madd_epi16(r_xmm2, _mm512_broadcast_i32x4(table04[1]));
+
+            r_xmm4 = _mm512_shufflehi_epi16(v2, 0xd8);
+            r_xmm1 = _mm512_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm512_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm512_madd_epi16(r_xmm0, _mm512_broadcast_i32x4(table04[3]));
+            r_xmm5 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x00));
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xaa));
+            r_xmm5 = _mm512_madd_epi16(r_xmm5, _mm512_broadcast_i32x4(table26[0]));
+            r_xmm1 = _mm512_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x55));
+            r_xmm6 = _mm512_madd_epi16(r_xmm6, _mm512_broadcast_i32x4(table26[1]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm512_madd_epi16(r_xmm7, _mm512_broadcast_i32x4(table26[2]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm512_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm512_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm512_madd_epi16(r_xmm4, _mm512_broadcast_i32x4(table26[3]));
+            r_xmm5 = _mm512_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm512_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm2, (_MM_PERM_ENUM)(0x1b));
+            row0 = _mm512_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm512_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm512_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm512_add_epi32(r_xmm4, r_xmm5);
+            r_xmm6 = _mm512_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm512_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm6, (_MM_PERM_ENUM)(0x1b));
+            row2 = _mm512_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 5 and row 7
+
+            r_xmm0 = _mm512_shufflelo_epi16(v4, 0xd8);
+            r_xmm1 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x00));
+            r_xmm1 = _mm512_madd_epi16(r_xmm1, _mm512_broadcast_i32x4(table04[0]));
+            r_xmm3 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x55));
+            r_xmm0 = _mm512_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm512_madd_epi16(r_xmm3, _mm512_broadcast_i32x4(table04[2]));
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xaa));
+            r_xmm0 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_madd_epi16(r_xmm2, _mm512_broadcast_i32x4(table04[1]));
+            r_xmm4 = _mm512_shufflehi_epi16(v6, 0xd8);
+            r_xmm1 = _mm512_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm512_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm512_madd_epi16(r_xmm0, _mm512_broadcast_i32x4(table04[3]));
+            r_xmm5 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x00));
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xaa));
+            r_xmm5 = _mm512_madd_epi16(r_xmm5, _mm512_broadcast_i32x4(table26[0]));
+            r_xmm1 = _mm512_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x55));
+            r_xmm6 = _mm512_madd_epi16(r_xmm6, _mm512_broadcast_i32x4(table26[1]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm512_madd_epi16(r_xmm7, _mm512_broadcast_i32x4(table26[2]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm512_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm512_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm512_madd_epi16(r_xmm4, _mm512_broadcast_i32x4(table26[3]));
+            r_xmm5 = _mm512_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm512_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm2, (_MM_PERM_ENUM)(0x1b));
+            row4 = _mm512_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm512_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm512_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm512_add_epi32(r_xmm4, r_xmm5);
+            r_xmm6 = _mm512_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm512_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm6, (_MM_PERM_ENUM)(0x1b));
+            row6 = _mm512_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 4 and row 2
+
+            r_xmm0 = _mm512_shufflelo_epi16(v3, 0xd8);
+            r_xmm1 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x00));
+            r_xmm1 = _mm512_madd_epi16(r_xmm1, _mm512_broadcast_i32x4(table35[0]));
+            r_xmm3 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x55));
+            r_xmm0 = _mm512_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm512_madd_epi16(r_xmm3, _mm512_broadcast_i32x4(table35[2]));
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xaa));
+            r_xmm0 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_madd_epi16(r_xmm2, _mm512_broadcast_i32x4(table35[1]));
+            r_xmm4 = _mm512_shufflehi_epi16(v1, 0xd8);
+            r_xmm1 = _mm512_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm512_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm512_madd_epi16(r_xmm0, _mm512_broadcast_i32x4(table35[3]));
+            r_xmm5 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x00));
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xaa));
+            r_xmm5 = _mm512_madd_epi16(r_xmm5, _mm512_broadcast_i32x4(table17[0]));
+            r_xmm1 = _mm512_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x55));
+            r_xmm6 = _mm512_madd_epi16(r_xmm6, _mm512_broadcast_i32x4(table17[1]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm512_madd_epi16(r_xmm7, _mm512_broadcast_i32x4(table17[2]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm512_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm512_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm512_madd_epi16(r_xmm4, _mm512_broadcast_i32x4(table17[3]));
+            r_xmm5 = _mm512_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm512_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm2, (_MM_PERM_ENUM)(0x1b));
+            row3 = _mm512_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm512_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm512_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm512_add_epi32(r_xmm5, r_xmm4);
+            r_xmm6 = _mm512_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm512_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm6, (_MM_PERM_ENUM)(0x1b));
+            row1 = _mm512_packs_epi32(r_xmm4, r_xmm6);
+
+            // row 6 and row 8
+
+            r_xmm0 = _mm512_shufflelo_epi16(v5, 0xd8);
+            r_xmm1 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x00));
+            r_xmm1 = _mm512_madd_epi16(r_xmm1, _mm512_broadcast_i32x4(table35[0]));
+            r_xmm3 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0x55));
+            r_xmm0 = _mm512_shufflehi_epi16(r_xmm0, 0xd8);
+            r_xmm3 = _mm512_madd_epi16(r_xmm3, _mm512_broadcast_i32x4(table35[2]));
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xaa));
+            r_xmm0 = _mm512_shuffle_epi32(r_xmm0, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_madd_epi16(r_xmm2, _mm512_broadcast_i32x4(table35[1]));
+            r_xmm4 = _mm512_shufflehi_epi16(v7, 0xd8);
+            r_xmm1 = _mm512_add_epi32(r_xmm1, round_inv_row);
+            r_xmm4 = _mm512_shufflelo_epi16(r_xmm4, 0xd8);
+            r_xmm0 = _mm512_madd_epi16(r_xmm0, _mm512_broadcast_i32x4(table35[3]));
+            r_xmm5 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x00));
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xaa));
+            r_xmm5 = _mm512_madd_epi16(r_xmm5, _mm512_broadcast_i32x4(table17[0]));
+            r_xmm1 = _mm512_add_epi32(r_xmm1, r_xmm2);
+            r_xmm7 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0x55));
+            r_xmm6 = _mm512_madd_epi16(r_xmm6, _mm512_broadcast_i32x4(table17[1]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm3);
+            r_xmm4 = _mm512_shuffle_epi32(r_xmm4, (_MM_PERM_ENUM)(0xff));
+            r_xmm2 = _mm512_sub_epi32(r_xmm1, r_xmm0);
+            r_xmm7 = _mm512_madd_epi16(r_xmm7, _mm512_broadcast_i32x4(table17[2]));
+            r_xmm0 = _mm512_add_epi32(r_xmm0, r_xmm1);
+            r_xmm2 = _mm512_srai_epi32(r_xmm2, 12);
+            r_xmm5 = _mm512_add_epi32(r_xmm5, round_inv_row);
+            r_xmm4 = _mm512_madd_epi16(r_xmm4, _mm512_broadcast_i32x4(table17[3]));
+            r_xmm5 = _mm512_add_epi32(r_xmm5, r_xmm6);
+            r_xmm0 = _mm512_srai_epi32(r_xmm0, 12);
+            r_xmm2 = _mm512_shuffle_epi32(r_xmm2, (_MM_PERM_ENUM)(0x1b));
+            row5 = _mm512_packs_epi32(r_xmm0, r_xmm2);
+
+            r_xmm4 = _mm512_add_epi32(r_xmm4, r_xmm7);
+            r_xmm6 = _mm512_sub_epi32(r_xmm5, r_xmm4);
+            r_xmm4 = _mm512_add_epi32(r_xmm5, r_xmm4);
+            r_xmm6 = _mm512_srai_epi32(r_xmm6, 12);
+            r_xmm4 = _mm512_srai_epi32(r_xmm4, 12);
+            r_xmm6 = _mm512_shuffle_epi32(r_xmm6, (_MM_PERM_ENUM)(0x1b));
+            row7 = _mm512_packs_epi32(r_xmm4, r_xmm6);
+
+            r_xmm1 = _mm512_shuffle_epi32(tg, (_MM_PERM_ENUM)(0xaa));
+            r_xmm0 = _mm512_mulhi_epi16(r_xmm1, row5);
+            r_xmm1 = _mm512_mulhi_epi16(r_xmm1, row3);
+            r_xmm5 = _mm512_shuffle_epi32(tg, (_MM_PERM_ENUM)(0x00));
+            r_xmm4 = _mm512_mulhi_epi16(r_xmm5, row7);
+            r_xmm5 = _mm512_mulhi_epi16(r_xmm5, row1);
+            r_xmm0 = _mm512_adds_epi16(r_xmm0, row5);
+            r_xmm1 = _mm512_adds_epi16(r_xmm1, row3);
+            r_xmm0 = _mm512_adds_epi16(r_xmm0, row3);
+            r_xmm3 = _mm512_shuffle_epi32(tg, (_MM_PERM_ENUM)(0x55));
+            r_xmm7 = _mm512_mulhi_epi16(r_xmm3, row6);
+            r_xmm3 = _mm512_mulhi_epi16(r_xmm3, row2);
+            r_xmm5 = _mm512_subs_epi16(r_xmm5, row7);
+            r_xmm4 = _mm512_adds_epi16(r_xmm4, row1);
+            r_xmm2 = _mm512_subs_epi16(r_xmm2, r_xmm1);
+            r_xmm1 = _mm512_adds_epi16(r_xmm0, r_xmm4);
+            r_xmm1 = _mm512_adds_epi16(r_xmm1, one);
+            r_xmm4 = _mm512_subs_epi16(r_xmm4, r_xmm0);
+            r_xmm6 = _mm512_adds_epi16(r_xmm5, r_xmm2);
+            r_xmm5 = _mm512_subs_epi16(r_xmm5, r_xmm2);
+            r_xmm5 = _mm512_adds_epi16(r_xmm5, one);
+
+            __m512i temp7 = r_xmm1;
+            __m512i temp3 = r_xmm6;
+
+            r_xmm0 = _mm512_shuffle_epi32(tg, (_MM_PERM_ENUM)(0xff));
+            r_xmm1 = _mm512_subs_epi16(r_xmm4, r_xmm5);
+            r_xmm4 = _mm512_adds_epi16(r_xmm4, r_xmm5);
+            r_xmm2 = _mm512_mulhi_epi16(r_xmm0, r_xmm4);
+            r_xmm7 = _mm512_adds_epi16(r_xmm7, row2);
+            r_xmm3 = _mm512_subs_epi16(r_xmm3, row6);
+            r_xmm0 = _mm512_mulhi_epi16(r_xmm0, r_xmm1);
+            r_xmm0 = _mm512_adds_epi16(r_xmm0, r_xmm1);
+            r_xmm5 = _mm512_adds_epi16(row0, row4);
+            r_xmm6 = _mm512_subs_epi16(row0, row4);
+            r_xmm4 = _mm512_adds_epi16(r_xmm4, r_xmm2);
+
+            r_xmm4 = _mm512_or_si512(r_xmm4, one);
+            r_xmm0 = _mm512_or_si512(r_xmm0, one);
+
+            r_xmm1 = _mm512_subs_epi16(r_xmm6, r_xmm3);
+            r_xmm1 = _mm512_adds_epi16(r_xmm1, round_inv_corr);
+            r_xmm2 = _mm512_subs_epi16(r_xmm5, r_xmm7);
+            r_xmm2 = _mm512_adds_epi16(r_xmm2, round_inv_corr);
+            r_xmm5 = _mm512_adds_epi16(r_xmm5, r_xmm7);
+            r_xmm5 = _mm512_adds_epi16(r_xmm5, round_inv_col);
+            r_xmm6 = _mm512_adds_epi16(r_xmm6, r_xmm3);
+            r_xmm6 = _mm512_adds_epi16(r_xmm6, round_inv_col);
+
+            __m512i r0 = _mm512_adds_epi16(r_xmm5, temp7);
+            __m512i r1 = _mm512_adds_epi16(r_xmm6, r_xmm4);
+            __m512i r2 = _mm512_adds_epi16(r_xmm1, r_xmm0);
+            __m512i r3 = _mm512_adds_epi16(r_xmm2, temp3);
+            __m512i r4 = _mm512_subs_epi16(r_xmm2, temp3);
+            __m512i r5 = _mm512_subs_epi16(r_xmm1, r_xmm0);
+            __m512i r6 = _mm512_subs_epi16(r_xmm6, r_xmm4);
+            __m512i r7 = _mm512_subs_epi16(r_xmm5, temp7);
+
+            r0 = _mm512_srai_epi16(r0, 5);
+            r1 = _mm512_srai_epi16(r1, 5);
+            r2 = _mm512_srai_epi16(r2, 5);
+            r3 = _mm512_srai_epi16(r3, 5);
+            r4 = _mm512_srai_epi16(r4, 5);
+            r5 = _mm512_srai_epi16(r5, 5);
+            r6 = _mm512_srai_epi16(r6, 5);
+            r7 = _mm512_srai_epi16(r7, 5);
+
+            __m512i c0 = _mm512_packus_epi16(r0, r1);
+            __m512i c1 = _mm512_packus_epi16(r2, r3);
+            __m512i c2 = _mm512_packus_epi16(r4, r5);
+            __m512i c3 = _mm512_packus_epi16(r6, r7);
+            transpose4x128(c0, c1, c2, c3);
+
+            // store
+            _mm512_storeu_si512(dest +   0, c0);
+            _mm512_storeu_si512(dest +  64, c1);
+            _mm512_storeu_si512(dest + 128, c2);
+            _mm512_storeu_si512(dest + 192, c3);
+
+            dest += 256;
+            src += 256;
+            idx += 4;
+
+            while (idx >= blocks)
+            {
+                idx -= blocks;
+            }
+        }
+    }
+
+
+#endif // MANGO_ENABLE_AVX512
 
 #endif // MANGO_ENABLE_SSE2
 
@@ -495,7 +1137,7 @@ namespace mango::image::jpeg
     // ------------------------------------------------------------------------------------------------
 
     // Table for rows 0,4 - constants are multiplied on cos_4_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_04 [] =
     {
         16384, 21407, 16384, 8867, 16384, -8867, 16384, -21407,
@@ -505,7 +1147,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 1,7 - constants are multiplied on cos_1_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_17 [] =
     {
         22725, 29692, 22725, 12299, 22725, -12299, 22725, -29692,
@@ -515,7 +1157,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 2,6 - constants are multiplied on cos_2_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_26 [] =
     {
         21407, 27969, 21407, 11585, 21407, -11585, 21407, -27969,
@@ -525,7 +1167,7 @@ namespace mango::image::jpeg
     };
 
     // Table for rows 3,5 - constants are multiplied on cos_3_16
-    alignas(16) static
+    alignas(64) static
     s16 shortM128_tab_i_35 [] =
     {
         19266, 25172, 19266, 10426, 19266, -10426, 19266, -25172,

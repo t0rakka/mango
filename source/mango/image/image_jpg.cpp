@@ -52,9 +52,14 @@ namespace
 
             ImageDecodeStatus status = m_parser.decode(dest, options);
 
-            if (m_parser.cmykIccApplied())
+            // Four-component JPEG output is always display-ready sRGB RGBA. Drop the
+            // embedded CMYK ICC so clients (imageview, ifap) do not run a generic RGBA
+            // ICC transform on top of the decoder's CMYK/YCCK handling.
+            if (status && m_parser.components() == 4)
             {
                 icc = ConstMemory();
+                header.color.primaries = ColorPrimaries::BT709;
+                header.color.transfer = TransferFunction::sRGB;
             }
 
             return status;
