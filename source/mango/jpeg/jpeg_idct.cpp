@@ -799,6 +799,17 @@ namespace mango::image::jpeg
 
 #if defined(MANGO_ENABLE_AVX512)
 
+    #define transpose4x128(s0, s1, s2, s3) do { \
+        __m512i t0 = _mm512_shuffle_i32x4(s0, s1, 0x44); \
+        __m512i t1 = _mm512_shuffle_i32x4(s0, s1, 0xEE); \
+        __m512i t2 = _mm512_shuffle_i32x4(s2, s3, 0x44); \
+        __m512i t3 = _mm512_shuffle_i32x4(s2, s3, 0xEE); \
+        s0 = _mm512_shuffle_i32x4(t0, t2, 0x88); \
+        s1 = _mm512_shuffle_i32x4(t0, t2, 0xDD); \
+        s2 = _mm512_shuffle_i32x4(t1, t3, 0x88); \
+        s3 = _mm512_shuffle_i32x4(t1, t3, 0xDD); \
+    } while (0)
+
     // Linear quad 8x8 iDCT: consecutive blocks in 128-bit lanes, fused dequant.
     void idct_avx512(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count)
     {
@@ -813,34 +824,46 @@ namespace mango::image::jpeg
         const __m512i round_inv_col = _mm512_set1_epi16(16 + bias);
         const __m512i round_inv_corr = _mm512_sub_epi16(round_inv_col, one);
 
-        auto load4 = [](const __m128i* a, const __m128i* b, const __m128i* c, const __m128i* d, int i) -> __m512i
-        {
-            return _mm512_inserti32x4(
-                _mm512_inserti32x4(
-                    _mm512_inserti32x4(_mm512_castsi128_si512(a[i]), b[i], 1),
-                    c[i], 2),
-                d[i], 3);
-        };
-
         for (int n = 0; n < count; n += 4)
         {
-            const __m128i* data0 = reinterpret_cast<const __m128i *>(src + 0);
-            const __m128i* data1 = reinterpret_cast<const __m128i *>(src + 64);
-            const __m128i* data2 = reinterpret_cast<const __m128i *>(src + 128);
-            const __m128i* data3 = reinterpret_cast<const __m128i *>(src + 192);
-            const __m128i* q0 = reinterpret_cast<const __m128i *>(qt[idx + 0]);
-            const __m128i* q1 = reinterpret_cast<const __m128i *>(qt[idx + 1]);
-            const __m128i* q2 = reinterpret_cast<const __m128i *>(qt[idx + 2]);
-            const __m128i* q3 = reinterpret_cast<const __m128i *>(qt[idx + 3]);
+            const s16* qtable0 = qt[idx + 0];
+            const s16* qtable1 = qt[idx + 1];
+            const s16* qtable2 = qt[idx + 2];
+            const s16* qtable3 = qt[idx + 3];
 
-            __m512i v0 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 0), load4(q0, q1, q2, q3, 0));
-            __m512i v1 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 1), load4(q0, q1, q2, q3, 1));
-            __m512i v2 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 2), load4(q0, q1, q2, q3, 2));
-            __m512i v3 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 3), load4(q0, q1, q2, q3, 3));
-            __m512i v4 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 4), load4(q0, q1, q2, q3, 4));
-            __m512i v5 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 5), load4(q0, q1, q2, q3, 5));
-            __m512i v6 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 6), load4(q0, q1, q2, q3, 6));
-            __m512i v7 = _mm512_mullo_epi16(load4(data0, data1, data2, data3, 7), load4(q0, q1, q2, q3, 7));
+            __m512i s0 = _mm512_loadu_si512(src + 0);
+            __m512i s1 = _mm512_loadu_si512(src + 64);
+            __m512i s2 = _mm512_loadu_si512(src + 128);
+            __m512i s3 = _mm512_loadu_si512(src + 192);
+            transpose4x128(s0, s1, s2, s3);
+
+            __m512i q0 = _mm512_loadu_si512(qtable0 + 0);
+            __m512i q1 = _mm512_loadu_si512(qtable1 + 0);
+            __m512i q2 = _mm512_loadu_si512(qtable2 + 0);
+            __m512i q3 = _mm512_loadu_si512(qtable3 + 0);
+            transpose4x128(q0, q1, q2, q3);
+
+            __m512i v0 = _mm512_mullo_epi16(s0, q0);
+            __m512i v1 = _mm512_mullo_epi16(s1, q1);
+            __m512i v2 = _mm512_mullo_epi16(s2, q2);
+            __m512i v3 = _mm512_mullo_epi16(s3, q3);
+
+            __m512i s4 = _mm512_loadu_si512(src + 32);
+            __m512i s5 = _mm512_loadu_si512(src + 96);
+            __m512i s6 = _mm512_loadu_si512(src + 160);
+            __m512i s7 = _mm512_loadu_si512(src + 224);
+            transpose4x128(s4, s5, s6, s7);
+
+            __m512i q4 = _mm512_loadu_si512(qtable0 + 32);
+            __m512i q5 = _mm512_loadu_si512(qtable1 + 32);
+            __m512i q6 = _mm512_loadu_si512(qtable2 + 32);
+            __m512i q7 = _mm512_loadu_si512(qtable3 + 32);
+            transpose4x128(q4, q5, q6, q7);
+
+            __m512i v4 = _mm512_mullo_epi16(s4, q4);
+            __m512i v5 = _mm512_mullo_epi16(s5, q5);
+            __m512i v6 = _mm512_mullo_epi16(s6, q6);
+            __m512i v7 = _mm512_mullo_epi16(s7, q7);
 
             __m512i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
             __m512i row0, row1, row2, row3, row4, row5, row6, row7;
@@ -1081,67 +1104,17 @@ namespace mango::image::jpeg
             r6 = _mm512_srai_epi16(r6, 5);
             r7 = _mm512_srai_epi16(r7, 5);
 
-            __m512i s0 = _mm512_packus_epi16(r0, r1);
-            __m512i s1 = _mm512_packus_epi16(r2, r3);
-            __m512i s2 = _mm512_packus_epi16(r4, r5);
-            __m512i s3 = _mm512_packus_epi16(r6, r7);
+            __m512i c0 = _mm512_packus_epi16(r0, r1);
+            __m512i c1 = _mm512_packus_epi16(r2, r3);
+            __m512i c2 = _mm512_packus_epi16(r4, r5);
+            __m512i c3 = _mm512_packus_epi16(r6, r7);
+            transpose4x128(c0, c1, c2, c3);
 
-            /*
-            auto store4 = [&](__m512i s, int i)
-            {
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +   0) + i, _mm512_extracti32x4_epi32(s, 0));
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest +  64) + i, _mm512_extracti32x4_epi32(s, 1));
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 128) + i, _mm512_extracti32x4_epi32(s, 2));
-                _mm_storeu_si128(reinterpret_cast<__m128i *>(dest + 192) + i, _mm512_extracti32x4_epi32(s, 3));
-            };
-
-            store4(s0, 0);
-            store4(s1, 1);
-            store4(s2, 2);
-            store4(s3, 3);
-
-            __m512i s0 = _mm512_packus_epi16(r0, r1);
-            __m512i s1 = _mm512_packus_epi16(r2, r3);
-            __m512i s2 = _mm512_packus_epi16(r4, r5);
-            __m512i s3 = _mm512_packus_epi16(r6, r7);
-            */
-
-            /*
-            auto pack4 = [] (__m512i a, __m512i b, __m512i c, __m512i d, int lane)
-            {
-                __m128i x0 = _mm512_extracti32x4_epi32(a, lane);
-                __m128i x1 = _mm512_extracti32x4_epi32(b, lane);
-                __m128i x2 = _mm512_extracti32x4_epi32(c, lane);
-                __m128i x3 = _mm512_extracti32x4_epi32(d, lane);
-                __m512i r = _mm512_castsi128_si512(x0);
-                r = _mm512_inserti32x4(r, x1, 1);
-                r = _mm512_inserti32x4(r, x2, 2);
-                r = _mm512_inserti32x4(r, x3, 3);
-                return r;
-            };
-
-            __m512i* d = reinterpret_cast<__m512i*>(dest);
-            d[0] = pack4(s0, s1, s2, s3, 0);
-            d[1] = pack4(s0, s1, s2, s3, 1);
-            d[2] = pack4(s0, s1, s2, s3, 2);
-            d[3] = pack4(s0, s1, s2, s3, 3);
-            */
-
-            // s0 = A0 A1 A2 A3, s1 = B0 B1 B2 B3, ...
-            __m512i t0 = _mm512_shuffle_i32x4(s0, s1, 0x44); // A0 A1 B0 B1
-            __m512i t1 = _mm512_shuffle_i32x4(s0, s1, 0xEE); // A2 A3 B2 B3
-            __m512i t2 = _mm512_shuffle_i32x4(s2, s3, 0x44); // C0 C1 D0 D1
-            __m512i t3 = _mm512_shuffle_i32x4(s2, s3, 0xEE); // C2 C3 D2 D3
-
-            __m512i d0 = _mm512_shuffle_i32x4(t0, t2, 0x88); // A0 B0 C0 D0
-            __m512i d1 = _mm512_shuffle_i32x4(t0, t2, 0xDD); // A1 B1 C1 D1
-            __m512i d2 = _mm512_shuffle_i32x4(t1, t3, 0x88); // A2 B2 C2 D2
-            __m512i d3 = _mm512_shuffle_i32x4(t1, t3, 0xDD); // A3 B3 C3 D3
-
-            _mm512_storeu_si512(dest +   0, d0);
-            _mm512_storeu_si512(dest +  64, d1);
-            _mm512_storeu_si512(dest + 128, d2);
-            _mm512_storeu_si512(dest + 192, d3);
+            // store
+            _mm512_storeu_si512(dest +   0, c0);
+            _mm512_storeu_si512(dest +  64, c1);
+            _mm512_storeu_si512(dest + 128, c2);
+            _mm512_storeu_si512(dest + 192, c3);
 
             dest += 256;
             src += 256;
