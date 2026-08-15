@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include "jpeg.hpp"
 
@@ -485,6 +485,298 @@ namespace mango::image::jpeg
         _mm_storeu_si128(d + 2, s2);
         _mm_storeu_si128(d + 3, s3);
     }
+
+#if defined(MANGO_ENABLE_AVX2)
+
+    // Dual 8x8 iDCT: block A in the low 128-bit lane, block B in the high lane.
+    // Both blocks share the same quantization table (same block index in adjacent MCUs).
+    void idct_avx2(u8* dest0, u8* dest1, const s16* src0, const s16* src1, const s16* qt)
+    {
+        const __m128i* data0 = reinterpret_cast<const __m128i *>(src0);
+        const __m128i* data1 = reinterpret_cast<const __m128i *>(src1);
+        const __m128i* qtable = reinterpret_cast<const __m128i *>(qt);
+
+        __m256i v0 = _mm256_mullo_epi16(_mm256_set_m128i(data1[0], data0[0]), _mm256_broadcastsi128_si256(qtable[0]));
+        __m256i v1 = _mm256_mullo_epi16(_mm256_set_m128i(data1[1], data0[1]), _mm256_broadcastsi128_si256(qtable[1]));
+        __m256i v2 = _mm256_mullo_epi16(_mm256_set_m128i(data1[2], data0[2]), _mm256_broadcastsi128_si256(qtable[2]));
+        __m256i v3 = _mm256_mullo_epi16(_mm256_set_m128i(data1[3], data0[3]), _mm256_broadcastsi128_si256(qtable[3]));
+        __m256i v4 = _mm256_mullo_epi16(_mm256_set_m128i(data1[4], data0[4]), _mm256_broadcastsi128_si256(qtable[4]));
+        __m256i v5 = _mm256_mullo_epi16(_mm256_set_m128i(data1[5], data0[5]), _mm256_broadcastsi128_si256(qtable[5]));
+        __m256i v6 = _mm256_mullo_epi16(_mm256_set_m128i(data1[6], data0[6]), _mm256_broadcastsi128_si256(qtable[6]));
+        __m256i v7 = _mm256_mullo_epi16(_mm256_set_m128i(data1[7], data0[7]), _mm256_broadcastsi128_si256(qtable[7]));
+
+        __m256i r_xmm0, r_xmm1, r_xmm2, r_xmm3, r_xmm4, r_xmm5, r_xmm6, r_xmm7;
+        __m256i row0, row1, row2, row3, row4, row5, row6, row7;
+
+        // row 1 and Row 3
+
+        const __m128i* table04 = reinterpret_cast<const __m128i*>(shortM128_tab_i_04);
+        const __m128i* table26 = reinterpret_cast<const __m128i*>(shortM128_tab_i_26);
+
+        r_xmm0 = _mm256_shufflelo_epi16(v0, 0xd8);
+        r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+        r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table04[0]));
+        r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table04[2]));
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table04[1]));
+
+        const __m256i round_inv_row = _mm256_set1_epi32(2048);
+
+        r_xmm4 = _mm256_shufflehi_epi16(v2, 0xd8);
+        r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table04[3]));
+        r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table26[0]));
+        r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+        r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table26[1]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+        r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table26[2]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table26[3]));
+        r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+        r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+        row0 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+        r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+        r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm5);
+        r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+        row2 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+        // row 5 and row 7
+
+        r_xmm0 = _mm256_shufflelo_epi16(v4, 0xd8);
+        r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+        r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table04[0]));
+        r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table04[2]));
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table04[1]));
+        r_xmm4 = _mm256_shufflehi_epi16(v6, 0xd8);
+        r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table04[3]));
+        r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table26[0]));
+        r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+        r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table26[1]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+        r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table26[2]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table26[3]));
+        r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+        r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+        row4 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+        r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+        r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm5);
+        r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+        row6 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+        // row 4 and row 2
+
+        const __m128i* table35 = reinterpret_cast<const __m128i*>(shortM128_tab_i_35);
+        const __m128i* table17 = reinterpret_cast<const __m128i*>(shortM128_tab_i_17);
+
+        r_xmm0 = _mm256_shufflelo_epi16(v3, 0xd8);
+        r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+        r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table35[0]));
+        r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table35[2]));
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table35[1]));
+        r_xmm4 = _mm256_shufflehi_epi16(v1, 0xd8);
+        r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table35[3]));
+        r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table17[0]));
+        r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+        r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table17[1]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+        r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table17[2]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table17[3]));
+        r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+        r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+        row3 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+        r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+        r_xmm4 = _mm256_add_epi32(r_xmm5, r_xmm4);
+        r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+        row1 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+        // row 6 and row 8
+
+        r_xmm0 = _mm256_shufflelo_epi16(v5, 0xd8);
+        r_xmm1 = _mm256_shuffle_epi32(r_xmm0, 0x00);
+        r_xmm1 = _mm256_madd_epi16(r_xmm1, _mm256_broadcastsi128_si256(table35[0]));
+        r_xmm3 = _mm256_shuffle_epi32(r_xmm0, 0x55);
+        r_xmm0 = _mm256_shufflehi_epi16(r_xmm0, 0xd8);
+        r_xmm3 = _mm256_madd_epi16(r_xmm3, _mm256_broadcastsi128_si256(table35[2]));
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm0, 0xaa);
+        r_xmm0 = _mm256_shuffle_epi32(r_xmm0, 0xff);
+        r_xmm2 = _mm256_madd_epi16(r_xmm2, _mm256_broadcastsi128_si256(table35[1]));
+        r_xmm4 = _mm256_shufflehi_epi16(v7, 0xd8);
+        r_xmm1 = _mm256_add_epi32(r_xmm1, round_inv_row);
+        r_xmm4 = _mm256_shufflelo_epi16(r_xmm4, 0xd8);
+        r_xmm0 = _mm256_madd_epi16(r_xmm0, _mm256_broadcastsi128_si256(table35[3]));
+        r_xmm5 = _mm256_shuffle_epi32(r_xmm4, 0x00);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm4, 0xaa);
+        r_xmm5 = _mm256_madd_epi16(r_xmm5, _mm256_broadcastsi128_si256(table17[0]));
+        r_xmm1 = _mm256_add_epi32(r_xmm1, r_xmm2);
+        r_xmm7 = _mm256_shuffle_epi32(r_xmm4, 0x55);
+        r_xmm6 = _mm256_madd_epi16(r_xmm6, _mm256_broadcastsi128_si256(table17[1]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm3);
+        r_xmm4 = _mm256_shuffle_epi32(r_xmm4, 0xff);
+        r_xmm2 = _mm256_sub_epi32(r_xmm1, r_xmm0);
+        r_xmm7 = _mm256_madd_epi16(r_xmm7, _mm256_broadcastsi128_si256(table17[2]));
+        r_xmm0 = _mm256_add_epi32(r_xmm0, r_xmm1);
+        r_xmm2 = _mm256_srai_epi32(r_xmm2, 12);
+        r_xmm5 = _mm256_add_epi32(r_xmm5, round_inv_row);
+        r_xmm4 = _mm256_madd_epi16(r_xmm4, _mm256_broadcastsi128_si256(table17[3]));
+        r_xmm5 = _mm256_add_epi32(r_xmm5, r_xmm6);
+        r_xmm0 = _mm256_srai_epi32(r_xmm0, 12);
+        r_xmm2 = _mm256_shuffle_epi32(r_xmm2, 0x1b);
+        row5 = _mm256_packs_epi32(r_xmm0, r_xmm2);
+
+        r_xmm4 = _mm256_add_epi32(r_xmm4, r_xmm7);
+        r_xmm6 = _mm256_sub_epi32(r_xmm5, r_xmm4);
+        r_xmm4 = _mm256_add_epi32(r_xmm5, r_xmm4);
+        r_xmm6 = _mm256_srai_epi32(r_xmm6, 12);
+        r_xmm4 = _mm256_srai_epi32(r_xmm4, 12);
+        r_xmm6 = _mm256_shuffle_epi32(r_xmm6, 0x1b);
+        row7 = _mm256_packs_epi32(r_xmm4, r_xmm6);
+
+        const __m256i tg = _mm256_broadcastsi128_si256(_mm_set_epi16(-19195, -19195, -21746, -21746, 27146, 27146, 13036, 13036));
+        const __m256i one = _mm256_set1_epi16(1);
+
+        r_xmm1 = _mm256_shuffle_epi32(tg, 0xaa);
+        r_xmm0 = _mm256_mulhi_epi16(r_xmm1, row5);
+        r_xmm1 = _mm256_mulhi_epi16(r_xmm1, row3);
+        r_xmm5 = _mm256_shuffle_epi32(tg, 0x00);
+        r_xmm4 = _mm256_mulhi_epi16(r_xmm5, row7);
+        r_xmm5 = _mm256_mulhi_epi16(r_xmm5, row1);
+        r_xmm0 = _mm256_adds_epi16(r_xmm0, row5);
+        r_xmm1 = _mm256_adds_epi16(r_xmm1, row3);
+        r_xmm0 = _mm256_adds_epi16(r_xmm0, row3);
+        r_xmm3 = _mm256_shuffle_epi32(tg, 0x55);
+        r_xmm7 = _mm256_mulhi_epi16(r_xmm3, row6);
+        r_xmm3 = _mm256_mulhi_epi16(r_xmm3, row2);
+        r_xmm5 = _mm256_subs_epi16(r_xmm5, row7);
+        r_xmm4 = _mm256_adds_epi16(r_xmm4, row1);
+        r_xmm2 = _mm256_subs_epi16(r_xmm2, r_xmm1);
+        r_xmm1 = _mm256_adds_epi16(r_xmm0, r_xmm4);
+        r_xmm1 = _mm256_adds_epi16(r_xmm1, one);
+        r_xmm4 = _mm256_subs_epi16(r_xmm4, r_xmm0);
+        r_xmm6 = _mm256_adds_epi16(r_xmm5, r_xmm2);
+        r_xmm5 = _mm256_subs_epi16(r_xmm5, r_xmm2);
+        r_xmm5 = _mm256_adds_epi16(r_xmm5, one);
+
+        __m256i temp7 = r_xmm1;
+        __m256i temp3 = r_xmm6;
+
+        r_xmm0 = _mm256_shuffle_epi32(tg, 0xff);
+        r_xmm1 = _mm256_subs_epi16(r_xmm4, r_xmm5);
+        r_xmm4 = _mm256_adds_epi16(r_xmm4, r_xmm5);
+        r_xmm2 = _mm256_mulhi_epi16(r_xmm0, r_xmm4);
+        r_xmm7 = _mm256_adds_epi16(r_xmm7, row2);
+        r_xmm3 = _mm256_subs_epi16(r_xmm3, row6);
+        r_xmm0 = _mm256_mulhi_epi16(r_xmm0, r_xmm1);
+        r_xmm0 = _mm256_adds_epi16(r_xmm0, r_xmm1);
+        r_xmm5 = _mm256_adds_epi16(row0, row4);
+        r_xmm6 = _mm256_subs_epi16(row0, row4);
+        r_xmm4 = _mm256_adds_epi16(r_xmm4, r_xmm2);
+
+        r_xmm4 = _mm256_or_si256(r_xmm4, one);
+        r_xmm0 = _mm256_or_si256(r_xmm0, one);
+
+        const s16 bias = 128 << 5;
+        const __m256i round_inv_col = _mm256_set1_epi16(16 + bias);
+        const __m256i round_inv_corr = _mm256_sub_epi16(round_inv_col, one);
+
+        r_xmm1 = _mm256_subs_epi16(r_xmm6, r_xmm3);
+        r_xmm1 = _mm256_adds_epi16(r_xmm1, round_inv_corr);
+        r_xmm2 = _mm256_subs_epi16(r_xmm5, r_xmm7);
+        r_xmm2 = _mm256_adds_epi16(r_xmm2, round_inv_corr);
+        r_xmm5 = _mm256_adds_epi16(r_xmm5, r_xmm7);
+        r_xmm5 = _mm256_adds_epi16(r_xmm5, round_inv_col);
+        r_xmm6 = _mm256_adds_epi16(r_xmm6, r_xmm3);
+        r_xmm6 = _mm256_adds_epi16(r_xmm6, round_inv_col);
+
+        __m256i r0 = _mm256_adds_epi16(r_xmm5, temp7);
+        __m256i r1 = _mm256_adds_epi16(r_xmm6, r_xmm4);
+        __m256i r2 = _mm256_adds_epi16(r_xmm1, r_xmm0);
+        __m256i r3 = _mm256_adds_epi16(r_xmm2, temp3);
+        __m256i r4 = _mm256_subs_epi16(r_xmm2, temp3);
+        __m256i r5 = _mm256_subs_epi16(r_xmm1, r_xmm0);
+        __m256i r6 = _mm256_subs_epi16(r_xmm6, r_xmm4);
+        __m256i r7 = _mm256_subs_epi16(r_xmm5, temp7);
+
+        r0 = _mm256_srai_epi16(r0, 5);
+        r1 = _mm256_srai_epi16(r1, 5);
+        r2 = _mm256_srai_epi16(r2, 5);
+        r3 = _mm256_srai_epi16(r3, 5);
+        r4 = _mm256_srai_epi16(r4, 5);
+        r5 = _mm256_srai_epi16(r5, 5);
+        r6 = _mm256_srai_epi16(r6, 5);
+        r7 = _mm256_srai_epi16(r7, 5);
+
+        __m256i s0 = _mm256_packus_epi16(r0, r1);
+        __m256i s1 = _mm256_packus_epi16(r2, r3);
+        __m256i s2 = _mm256_packus_epi16(r4, r5);
+        __m256i s3 = _mm256_packus_epi16(r6, r7);
+
+
+        // store: low lane -> dest0, high lane -> dest1
+        _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest1) + 0,
+                             reinterpret_cast<__m128i *>(dest0) + 0, s0);
+        _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest1) + 1,
+                             reinterpret_cast<__m128i *>(dest0) + 1, s1);
+        _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest1) + 2,
+                             reinterpret_cast<__m128i *>(dest0) + 2, s2);
+        _mm256_storeu2_m128i(reinterpret_cast<__m128i *>(dest1) + 3,
+                             reinterpret_cast<__m128i *>(dest0) + 3, s3);
+    }
+
+#endif // MANGO_ENABLE_AVX2
 
 #endif // MANGO_ENABLE_SSE2
 

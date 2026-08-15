@@ -2562,6 +2562,7 @@ namespace mango::image::jpeg
         // configure idct
 
         processState.idct = idct8;
+        processState.idct2 = nullptr;
 
 #if defined(MANGO_ENABLE_NEON)
         if (flags & ARM_NEON)
@@ -2579,11 +2580,20 @@ namespace mango::image::jpeg
         }
 #endif
 
+#if defined(MANGO_ENABLE_AVX2)
+        if (flags & INTEL_AVX2)
+        {
+            processState.idct2 = idct_avx2;
+            m_idct_name = "iDCT: AVX2";
+        }
+#endif
+
         if (m_precision == 12)
         {
             // Force 12 bit idct
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
             processState.idct = idct12;
+            processState.idct2 = nullptr;
             m_idct_name = "iDCT: 12 bit";
         }
 
@@ -2598,7 +2608,6 @@ namespace mango::image::jpeg
         ColorFunc color_ycbcr_8x16  = nullptr;
         ColorFunc color_ycbcr_16x8  = nullptr;
         ColorFunc color_ycbcr_16x16 = nullptr;
-        bool simd_16x16_shuffle = false;
 
 #define BIND_YCBCR(size, func) \
         do { color_ycbcr_##size = (func##_color); } while (0)
@@ -2670,7 +2679,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "NEON";
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
-                    simd_16x16_shuffle = true;
                     break;
                 case SampleType::U8_RGB:
                     BIND_YCBCR(8x8,   process_ycbcr_rgb_8x8_neon);
@@ -2681,7 +2689,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "NEON";
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
-                    simd_16x16_shuffle = true;
                     break;
                 case SampleType::U8_BGRA:
                     BIND_YCBCR(8x8,   process_ycbcr_bgra_8x8_neon);
@@ -2692,7 +2699,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "NEON";
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
-                    simd_16x16_shuffle = true;
                     break;
                 case SampleType::U8_RGBA:
                     BIND_YCBCR(8x8,   process_ycbcr_rgba_8x8_neon);
@@ -2703,7 +2709,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "NEON";
                     simd_16x8  = "NEON";
                     simd_16x16 = "NEON";
-                    simd_16x16_shuffle = true;
                     break;
             }
         }
@@ -2731,7 +2736,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "SSE2";
                     simd_16x8  = "SSE2";
                     simd_16x16 = "SSE2";
-                    simd_16x16_shuffle = true;
                     break;
                 case SampleType::U8_RGBA:
                     BIND_YCBCR(8x8,   process_ycbcr_rgba_8x8_sse2);
@@ -2742,7 +2746,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "SSE2";
                     simd_16x8  = "SSE2";
                     simd_16x16 = "SSE2";
-                    simd_16x16_shuffle = true;
                     break;
             }
         }
@@ -2766,7 +2769,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "SSE4.1";
                     simd_16x8  = "SSE4.1";
                     simd_16x16 = "SSE4.1";
-                    simd_16x16_shuffle = true;
                     break;
                 case SampleType::U8_RGB:
                     BIND_YCBCR(8x8,   process_ycbcr_rgb_8x8_sse41);
@@ -2777,7 +2779,6 @@ namespace mango::image::jpeg
                     simd_8x16  = "SSE4.1";
                     simd_16x8  = "SSE4.1";
                     simd_16x16 = "SSE4.1";
-                    simd_16x16_shuffle = true;
                     break;
                 case SampleType::U8_BGRA:
                     break;
@@ -2814,10 +2815,6 @@ namespace mango::image::jpeg
         std::string id;
 
         processState.color = nullptr;
-        for (int i = 0; i < JPEG_MAX_BLOCKS_IN_MCU; ++i)
-        {
-            processState.idct_offset[i] = i * 64;
-        }
 
         // determine jpeg type -> select innerloops
         switch (m_components)
@@ -2867,13 +2864,6 @@ namespace mango::image::jpeg
                         {
                             processState.color = color_ycbcr_16x16;
                             id = fmt::format("YCbCr 16x16 {}", simd_16x16);
-
-                            if (simd_16x16_shuffle)
-                            {
-                                // Huffman Y0,Y1,Y2,Y3,Cb,Cr → spatial Y0,Y2,Y1,Y3,Cb,Cr
-                                processState.idct_offset[1] = 128;
-                                processState.idct_offset[2] = 64;
-                            }
                         }
                     }
                 }
@@ -4063,7 +4053,19 @@ namespace mango::image::jpeg
         {
             const int n = std::min(remaining, JPEG_MCU_TILE);
 
-            for (int i = 0; i < n; ++i)
+            int i = 0;
+            if (processState.idct2)
+            {
+                for (; i + 1 < n; i += 2)
+                {
+                    processState.idctMCU2(
+                        slab + i * JPEG_MAX_SAMPLES_IN_MCU,
+                        slab + (i + 1) * JPEG_MAX_SAMPLES_IN_MCU,
+                        data + i * mcu_data_size,
+                        data + (i + 1) * mcu_data_size);
+                }
+            }
+            for (; i < n; ++i)
             {
                 processState.idctMCU(slab + i * JPEG_MAX_SAMPLES_IN_MCU, data + i * mcu_data_size);
             }

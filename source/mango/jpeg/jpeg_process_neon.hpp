@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #ifdef FUNCTION_YCBCR_8x8
@@ -150,10 +150,11 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(u8* dest, size_t stride, const u8* sp
 
         for (int y = 0; y < 8; ++y)
         {
-            uint8x8_t u_y0 = vld1_u8(result + y * 16 + 0);
-            uint8x8_t u_y1 = vld1_u8(result + y * 16 + 128);
-            uint8x8_t u_y2 = vld1_u8(result + y * 16 + 8);
-            uint8x8_t u_y3 = vld1_u8(result + y * 16 + 136);
+            const int y_base = (y >> 2) * 128 + (y & 3) * 16;
+            uint8x8_t u_y0 = vld1_u8(result + y_base + 0);
+            uint8x8_t u_y1 = vld1_u8(result + y_base + 64);
+            uint8x8_t u_y2 = vld1_u8(result + y_base + 8);
+            uint8x8_t u_y3 = vld1_u8(result + y_base + 72);
             uint8x8_t u_cb = vld1_u8(result + y * 8 + 256);
             uint8x8_t u_cr = vld1_u8(result + y * 8 + 320);
 

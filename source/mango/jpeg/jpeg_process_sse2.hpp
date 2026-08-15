@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2023 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 
 #ifdef FUNCTION_YCBCR_8x8
@@ -206,10 +206,11 @@ void JPEG_COLOR_FUNC(FUNCTION_YCBCR_16x16)(u8* dest, size_t stride, const u8* sp
 
         for (int y = 0; y < 4; ++y)
         {
-            __m128i y0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 0));
-            __m128i y1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 128));
-            __m128i y2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 16));
-            __m128i y3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 32 + 144));
+            const int y_base = (y >> 1) * 128 + (y & 1) * 32;
+            __m128i y0 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y_base + 0));
+            __m128i y1 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y_base + 64));
+            __m128i y2 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y_base + 16));
+            __m128i y3 = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y_base + 80));
             __m128i cb = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 256));
             __m128i cr = _mm_loadu_si128(reinterpret_cast<const __m128i *>(result + y * 16 + 320));
 

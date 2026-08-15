@@ -362,19 +362,24 @@ namespace mango::image::jpeg
 
         ColorSpace colorspace = ColorSpace::CMYK; // default
 
-        // Byte offset in the per-MCU spatial slot for Huffman block i.
-        // Sequential (i * 64) except SIMD 16x16, which shuffles Y1/Y2 so color
-        // can load a vertical pair with a 32-byte stride (Y0@0, Y2@64, Y1@128, Y3@192).
-        int idct_offset[JPEG_MAX_BLOCKS_IN_MCU];
-
         void (*idct) (u8* dest, const s16* data, const s16* qt);
+        void (*idct2)(u8* dest0, u8* dest1, const s16* data0, const s16* data1, const s16* qt) = nullptr;
         ColorFunc color = nullptr; // spatial already filled by idctMCU
 
         void idctMCU(u8* spatial, const s16* data) const
         {
             for (int i = 0; i < blocks; ++i)
             {
-                idct(spatial + idct_offset[i], data + i * 64, block[i].qt);
+                idct(spatial + i * 64, data + i * 64, block[i].qt);
+            }
+        }
+
+        void idctMCU2(u8* spatial0, u8* spatial1, const s16* data0, const s16* data1) const
+        {
+            for (int i = 0; i < blocks; ++i)
+            {
+                idct2(spatial0 + i * 64, spatial1 + i * 64,
+                      data0 + i * 64, data1 + i * 64, block[i].qt);
             }
         }
     };
@@ -812,6 +817,8 @@ namespace mango::image::jpeg
 #endif // MANGO_ENABLE_SSE4_1
 
 #if defined(MANGO_ENABLE_AVX2)
+
+    void idct_avx2                      (u8* dest0, u8* dest1, const s16* data0, const s16* data1, const s16* qt);
 
     JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8_avx2);
 
