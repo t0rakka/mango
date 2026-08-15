@@ -1759,11 +1759,15 @@ namespace mango::image::jpeg
 
         if (components != processState.frames && !is_progressive)
         {
-            is_multiscan = true;
+            if (!is_multiscan)
+            {
+                is_multiscan = true;
 
-            // allocate blocks
-            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
-            blockVector.resize(num_blocks * 64);
+                // allocate blocks (zeroed once; each SOS scan adds its components)
+                size_t num_blocks = size_t(mcus) * blocks_in_mcu;
+                blockVector.resize(num_blocks * 64);
+                std::memset(blockVector, 0, blockVector.size() * sizeof(s16));
+            }
         }
 
         decodeState.comps_in_scan = components;
@@ -2885,13 +2889,15 @@ namespace mango::image::jpeg
                 break;
 
             case 4:
-                if (getCmykIcc().size)
+                if (getCmykIcc().size && processState.colorspace == ColorSpace::CMYK)
                 {
+                    // Raw CMYK + ICC: store plates, invert Adobe encoding, LittleCMS to sRGB.
                     processState.color = process_cmyk_store_rgba;
                     m_cmyk_store_mode = true;
                 }
                 else
                 {
+                    // YCCK (and CMYK without ICC): convert in the MCU kernel.
                     processState.color = color_cmyk;
                     m_cmyk_store_mode = false;
                 }
@@ -2930,9 +2936,10 @@ namespace mango::image::jpeg
         // determine if we need a full-surface temporary storage
         if (is_progressive || is_multiscan)
         {
-            // allocate blocks
+            // allocate blocks (zeroed: multiscan fills components across separate SOS scans)
             size_t num_blocks = size_t(mcus) * blocks_in_mcu;
             blockVector.resize(num_blocks * 64);
+            std::memset(blockVector, 0, blockVector.size() * sizeof(s16));
         }
 
         // find best matching format
@@ -2944,9 +2951,9 @@ namespace mango::image::jpeg
         // configure multithreading
         m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
 
-        if (m_components == 4 && getCmykIcc().size)
+        if (m_components == 4)
         {
-            // CMYK ICC path stores plates in the surface before a single-pass color transform.
+            // CMYK / YCCK is the slow path; keep entropy + finish serial for correctness.
             m_hardware_concurrency = 1;
         }
 
@@ -3001,12 +3008,26 @@ namespace mango::image::jpeg
             m_sink.surface = temp.get();
         }
 
+        // ICC CMYK stores raw plates during MCU assembly; band callbacks would upload
+        // pre-transform data (ifap tiles) and leave a mix of wrong/correct pixels.
+        ImageDecodeCallback saved_callback;
+        const bool suppress_cmyk_callbacks = m_cmyk_store_mode && m_interface;
+        if (suppress_cmyk_callbacks)
+        {
+            saved_callback = m_interface->callback;
+            m_interface->callback = nullptr;
+        }
+
         // decoding
         parse(scan_memory, true);
 
         if (!header)
         {
             blockVector.resize(0);
+            if (suppress_cmyk_callbacks)
+            {
+                m_interface->callback = saved_callback;
+            }
             m_decode_status.setError(header.info);
             return m_decode_status;
         }
@@ -3014,6 +3035,10 @@ namespace mango::image::jpeg
         if (m_interface->cancelled)
         {
             blockVector.resize(0);
+            if (suppress_cmyk_callbacks)
+            {
+                m_interface->callback = saved_callback;
+            }
             m_decode_status.info = getInfo();
             return m_decode_status;
         }
@@ -3036,7 +3061,7 @@ namespace mango::image::jpeg
                 ? Surface(*m_sink.surface, 0, 0, m_width, m_height)
                 : Surface(*m_sink.surface, 0, 0, m_width, m_height);
 
-            if (profile.size && transform_cmyk_surface_to_srgb(surface, profile))
+            if (profile.size && transform_cmyk_surface_to_srgb(surface, profile, processState.colorspace == ColorSpace::CMYK))
             {
                 m_cmyk_icc_applied = true;
                 icc_buffer.reset();
@@ -3055,6 +3080,26 @@ namespace mango::image::jpeg
                 {
                     m_sink.target->blit(0, 0, surface);
                 }
+            }
+        }
+
+        if (suppress_cmyk_callbacks)
+        {
+            m_interface->callback = saved_callback;
+
+            // Async decoders rely on band callbacks; ICC CMYK suppressed them during
+            // assembly. ImageDecoder::launch() does not dispatch when async=true.
+            if (saved_callback && !m_interface->cancelled)
+            {
+                ImageDecodeRect rect;
+
+                rect.x = 0;
+                rect.y = 0;
+                rect.width = m_width;
+                rect.height = m_height;
+                rect.progress = 1.0f;
+
+                m_interface->clipAndDispatch(*m_sink.target, rect);
             }
         }
 

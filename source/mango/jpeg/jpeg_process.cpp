@@ -115,6 +115,19 @@ void process_y_32bit(u8* dest, size_t stride, const u8* spatial, ProcessState* s
     MANGO_UNREFERENCED(state);
 }
 
+static
+void get_cmyk_mcu_extent(const ProcessState* state, int& hmax, int& vmax)
+{
+    hmax = 1;
+    vmax = 1;
+
+    for (int i = 0; i < state->frames; ++i)
+    {
+        hmax = std::max(hmax, state->frame[i].hsf);
+        vmax = std::max(vmax, state->frame[i].vsf);
+    }
+}
+
 void process_cmyk_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState* state, int width, int height, int count, size_t xstride)
 {
     u8* origin = dest;
@@ -125,8 +138,9 @@ void process_cmyk_rgba(u8* dest, size_t stride, const u8* spatial, ProcessState*
         const u8* result = spatial + m * state->spatialMCUBytes();
 
         // MCU dimension in blocks
-    int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
-    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+        int hmax;
+        int vmax;
+        get_cmyk_mcu_extent(state, hmax, vmax);
 
     u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
@@ -252,8 +266,9 @@ void process_cmyk_store_rgba(u8* dest, size_t stride, const u8* spatial, Process
         dest = origin + m * xstride;
         const u8* result = spatial + m * state->spatialMCUBytes();
 
-        int hmax = std::max(std::max(state->frame[0].hsf, state->frame[1].hsf), state->frame[2].hsf);
-    int vmax = std::max(std::max(state->frame[0].vsf, state->frame[1].vsf), state->frame[2].vsf);
+        int hmax;
+        int vmax;
+        get_cmyk_mcu_extent(state, hmax, vmax);
 
     u8 temp[JPEG_MAX_SAMPLES_IN_MCU * 4];
 
@@ -356,7 +371,7 @@ void process_cmyk_store_rgba(u8* dest, size_t stride, const u8* spatial, Process
     }
 }
 
-bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc)
+bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc, bool invert_adobe)
 {
     const Format rgba_u8(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
 
@@ -399,6 +414,22 @@ bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc)
     for (int y = 0; y < surface.height; ++y)
     {
         u8* row = surface.image + y * surface.stride;
+
+        // Adobe CMYK JPEG stores inverted components (0 = 100% ink). LittleCMS
+        // expects standard polarity (0 = no ink). YCCK is converted to CMYK first
+        // and does not use Adobe's inverted encoding.
+        if (invert_adobe)
+        {
+            for (int x = 0; x < surface.width; ++x)
+            {
+                u8* p = row + x * 4;
+                p[0] = 255 - p[0];
+                p[1] = 255 - p[1];
+                p[2] = 255 - p[2];
+                p[3] = 255 - p[3];
+            }
+        }
+
         cmsDoTransform(transform, row, row, width);
     }
 

@@ -688,6 +688,11 @@ namespace mango::image::jpeg
             return m_cmyk_icc_applied;
         }
 
+        int components() const
+        {
+            return m_components;
+        }
+
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
 
@@ -756,6 +761,11 @@ namespace mango::image::jpeg
             return m_base.cmykIccApplied();
         }
 
+        int components() const
+        {
+            return m_base.components();
+        }
+
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
 
@@ -790,7 +800,8 @@ namespace mango::image::jpeg
     JPEG_COLOR_KERNEL(process_cmyk_store_rgba);
 
     // CMYK scanlines stored as C,M,Y,K in RGBA byte slots; converts in-place to display sRGB.
-    bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc);
+    // invert_adobe: true for raw CMYK JPEG (Adobe stores 0 = 100% ink); false after YCCK decode.
+    bool transform_cmyk_surface_to_srgb(Surface& surface, ConstMemory icc, bool invert_adobe = true);
     void simple_cmyk_surface_to_rgba(Surface& surface);
     JPEG_COLOR_KERNEL(process_ycbcr_8bit);
 
