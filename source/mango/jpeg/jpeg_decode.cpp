@@ -2563,12 +2563,15 @@ namespace mango::image::jpeg
 
         processState.idct = idct8;
         processState.idct2 = nullptr;
+        processState.idct4 = nullptr;
+
+        m_idct_name = "scalar (8 bit)";
 
 #if defined(MANGO_ENABLE_NEON)
         if (flags & ARM_NEON)
         {
             processState.idct = idct_neon;
-            m_idct_name = "iDCT: NEON";
+            m_idct_name = "NEON";
         }
 #endif
 
@@ -2576,7 +2579,7 @@ namespace mango::image::jpeg
         if (flags & INTEL_SSE2)
         {
             processState.idct = idct_sse2;
-            m_idct_name = "iDCT: SSE2";
+            m_idct_name = "SSE2";
         }
 #endif
 
@@ -2584,7 +2587,15 @@ namespace mango::image::jpeg
         if (flags & INTEL_AVX2)
         {
             processState.idct2 = idct_avx2;
-            m_idct_name = "iDCT: AVX2";
+            m_idct_name = "AVX2";
+        }
+#endif
+
+#if defined(MANGO_ENABLE_AVX512)
+        if ((flags & INTEL_AVX512F) && (flags & INTEL_AVX512BW))
+        {
+            processState.idct4 = idct_avx512;
+            m_idct_name = "AVX-512";
         }
 #endif
 
@@ -2594,7 +2605,8 @@ namespace mango::image::jpeg
             // This will round down to 8 bit precision until we have a 12 bit capable color conversion
             processState.idct = idct12;
             processState.idct2 = nullptr;
-            m_idct_name = "iDCT: 12 bit";
+            processState.idct4 = nullptr;
+            m_idct_name = "scalar (12 bit)";
         }
 
         // configure block processing
@@ -2895,7 +2907,8 @@ namespace mango::image::jpeg
         m_ycbcr_name = id;
 
         printLine(Print::Debug, "[ConfigureCPU]");
-        printLine(Print::Debug, "  Decoder: {}", id);
+        printLine(Print::Debug, "  Color: {}", id);
+        printLine(Print::Debug, "  iDCT: {}", m_idct_name);
         printLine(Print::Debug, "");
     }
 
@@ -3072,7 +3085,7 @@ namespace mango::image::jpeg
 
         if (!m_idct_name.empty())
         {
-            info += ", ";
+            info += ", iDCT: ";
             info += m_idct_name;
         }
 
@@ -4054,6 +4067,21 @@ namespace mango::image::jpeg
             const int n = std::min(remaining, JPEG_MCU_TILE);
 
             int i = 0;
+            if (processState.idct4)
+            {
+                for (; i + 3 < n; i += 4)
+                {
+                    processState.idctMCU4(
+                        slab + (i + 0) * JPEG_MAX_SAMPLES_IN_MCU,
+                        slab + (i + 1) * JPEG_MAX_SAMPLES_IN_MCU,
+                        slab + (i + 2) * JPEG_MAX_SAMPLES_IN_MCU,
+                        slab + (i + 3) * JPEG_MAX_SAMPLES_IN_MCU,
+                        data + (i + 0) * mcu_data_size,
+                        data + (i + 1) * mcu_data_size,
+                        data + (i + 2) * mcu_data_size,
+                        data + (i + 3) * mcu_data_size);
+                }
+            }
             if (processState.idct2)
             {
                 for (; i + 1 < n; i += 2)

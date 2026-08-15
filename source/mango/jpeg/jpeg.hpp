@@ -364,6 +364,8 @@ namespace mango::image::jpeg
 
         void (*idct) (u8* dest, const s16* data, const s16* qt);
         void (*idct2)(u8* dest0, u8* dest1, const s16* data0, const s16* data1, const s16* qt) = nullptr;
+        void (*idct4)(u8* dest0, u8* dest1, u8* dest2, u8* dest3,
+                      const s16* data0, const s16* data1, const s16* data2, const s16* data3, const s16* qt) = nullptr;
         ColorFunc color = nullptr; // spatial already filled by idctMCU
 
         void idctMCU(u8* spatial, const s16* data) const
@@ -380,6 +382,16 @@ namespace mango::image::jpeg
             {
                 idct2(spatial0 + i * 64, spatial1 + i * 64,
                       data0 + i * 64, data1 + i * 64, block[i].qt);
+            }
+        }
+
+        void idctMCU4(u8* spatial0, u8* spatial1, u8* spatial2, u8* spatial3,
+                      const s16* data0, const s16* data1, const s16* data2, const s16* data3) const
+        {
+            for (int i = 0; i < blocks; ++i)
+            {
+                idct4(spatial0 + i * 64, spatial1 + i * 64, spatial2 + i * 64, spatial3 + i * 64,
+                      data0 + i * 64, data1 + i * 64, data2 + i * 64, data3 + i * 64, block[i].qt);
             }
         }
     };
@@ -823,6 +835,13 @@ namespace mango::image::jpeg
     JPEG_YCBCR_KERNEL(process_ycbcr_rgba_8x8_avx2);
 
 #endif // MANGO_ENABLE_AVX2
+
+#if defined(MANGO_ENABLE_AVX512)
+
+    void idct_avx512                    (u8* dest0, u8* dest1, u8* dest2, u8* dest3,
+                                         const s16* data0, const s16* data1, const s16* data2, const s16* data3, const s16* qt);
+
+#endif // MANGO_ENABLE_AVX512
 
 #undef JPEG_YCBCR_KERNEL
 #undef JPEG_COLOR_KERNEL
