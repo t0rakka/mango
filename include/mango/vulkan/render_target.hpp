@@ -23,8 +23,9 @@ namespace mango::vulkan
         Float16,  // R16G16B16A16_SFLOAT — scene-linear HDR
     };
 
-    // Swapchain-sized color image. The application fills it each frame, then calls
-    // resolve() to copy/encode into the acquired swapchain image.
+    // Working-buffer color image (often swapchain-sized; may be smaller for
+    // render-scale / fixed framebuffer). The application fills it each frame,
+    // then calls resolve() to sample/encode into the acquired swapchain image.
     //
     // Two supported write paths — pick one per frame; do not mix layout helpers from
     // both paths on the same image in one command buffer:
@@ -105,7 +106,7 @@ namespace mango::vulkan
         void beginRendering(VkCommandBuffer commandBuffer) { beginColorAttachment(commandBuffer); }
         void endRendering(VkCommandBuffer commandBuffer) { endColorAttachment(commandBuffer); }
 
-        // 1:1 resolve to the swapchain image; handles swapchain layout transitions.
+        // Resolve into the full swapchain image (linear upscale when extents differ).
         // Float16: color nullptr uses defaultOutputOptions(swapchain surface format).
         // Tonemap in options applies only for SDR surfaces; HDR encode ignores it.
         void resolve(VkCommandBuffer commandBuffer, Swapchain& swapchain, u32 imageIndex,

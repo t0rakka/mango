@@ -51,8 +51,8 @@ layout(set = 0, binding = 0) uniform sampler2D uTexture;
 
 void main()
 {
-    ivec2 pixel = ivec2(gl_FragCoord.xy);
-    outColor = texelFetch(uTexture, pixel, 0);
+    // Sample with UVs so RT extent may differ from the swapchain (upscale/downscale).
+    outColor = texture(uTexture, vTexcoord);
 }
 )";
 
@@ -67,8 +67,7 @@ layout(set = 0, binding = 0) uniform sampler2D uTexture;
 
 void main()
 {
-    ivec2 pixel = ivec2(gl_FragCoord.xy);
-    vec4 src = texelFetch(uTexture, pixel, 0);
+    vec4 src = texture(uTexture, vTexcoord);
     outColor = encodeOutput(src);
 }
 )";
@@ -507,11 +506,13 @@ void main()
 
             vkAllocateDescriptorSets(device, &allocInfo, &resolveDescriptorSet);
 
+            // Linear: upscales when RT != swapchain. When sizes match, fullscreen UVs
+            // land on texel centers so bilinear degenerates to a single texel (≡ nearest).
             VkSamplerCreateInfo samplerInfo =
             {
                 .sType = VK_STRUCTURE_TYPE_SAMPLER_CREATE_INFO,
-                .magFilter = VK_FILTER_NEAREST,
-                .minFilter = VK_FILTER_NEAREST,
+                .magFilter = VK_FILTER_LINEAR,
+                .minFilter = VK_FILTER_LINEAR,
                 .addressModeU = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                 .addressModeV = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
                 .addressModeW = VK_SAMPLER_ADDRESS_MODE_CLAMP_TO_EDGE,
@@ -659,11 +660,9 @@ void main()
             }
 
             const VkExtent2D swapchainExtent = swapchain.getExtent();
-            if (swapchainExtent.width != extent.width || swapchainExtent.height != extent.height)
+            if (swapchainExtent.width == 0 || swapchainExtent.height == 0)
             {
-                printLine(Print::Warning,
-                    "RenderTarget: extent {}x{} does not match swapchain {}x{}",
-                    extent.width, extent.height, swapchainExtent.width, swapchainExtent.height);
+                return;
             }
 
             ensureResolvePipeline(swapchain, colorOptions);
@@ -700,7 +699,8 @@ void main()
                 .storeOp = VK_ATTACHMENT_STORE_OP_STORE,
             };
 
-            VkRect2D renderArea = { .extent = extent };
+            // Draw full swapchain; sample the (possibly smaller) RT with linear filtering.
+            VkRect2D renderArea = { .extent = swapchainExtent };
 
             VkRenderingInfo renderingInfo =
             {
@@ -718,8 +718,8 @@ void main()
             {
                 .x = 0.0f,
                 .y = 0.0f,
-                .width = float(extent.width),
-                .height = float(extent.height),
+                .width = float(swapchainExtent.width),
+                .height = float(swapchainExtent.height),
                 .minDepth = 0.0f,
                 .maxDepth = 1.0f,
             };
