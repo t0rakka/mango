@@ -1,9 +1,10 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/system.hpp>
 #include <mango/core/cpuinfo.hpp>
+#include <mango/core/exception.hpp>
 #include <mango/core/thread.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/simd/simd.hpp>
@@ -501,6 +502,285 @@ namespace mango
                 });
             }
         }
+    }
+
+    // ----------------------------------------------------------------------------
+    // CommandLineParser
+    // ----------------------------------------------------------------------------
+
+    CommandLineParser& CommandLineParser::flag(std::string_view name, Action action)
+    {
+        return flag(name, {}, std::move(action));
+    }
+
+    CommandLineParser& CommandLineParser::flag(std::string_view name, std::string_view help, Action action)
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = false;
+        handler.action = std::move(action);
+        registerHandler(std::move(handler));
+        return *this;
+    }
+
+    CommandLineParser& CommandLineParser::option(std::string_view name, ValueAction action)
+    {
+        return option(name, {}, std::move(action));
+    }
+
+    CommandLineParser& CommandLineParser::option(std::string_view name, std::string_view help, ValueAction action)
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueAction = std::move(action);
+        registerHandler(std::move(handler));
+        return *this;
+    }
+
+    CommandLineParser& CommandLineParser::positional(ValueAction action)
+    {
+        if (!action)
+        {
+            MANGO_EXCEPTION("CommandLineParser: positional handler must not be empty.");
+        }
+
+        m_positional = std::move(action);
+        return *this;
+    }
+
+    CommandLineParser& CommandLineParser::requirePositional(std::string_view name)
+    {
+        m_requiredPositionals.emplace_back(name);
+        return *this;
+    }
+
+    CommandLineParser& CommandLineParser::usage(std::string_view text)
+    {
+        m_usage = std::string(text);
+        return *this;
+    }
+
+    CommandLineParser::Handler* CommandLineParser::findHandler(std::string_view name)
+    {
+        for (Handler& handler : m_handlers)
+        {
+            if (handler.name == name)
+            {
+                return &handler;
+            }
+        }
+
+        return nullptr;
+    }
+
+    void CommandLineParser::registerHandler(Handler handler)
+    {
+        if (handler.name.size() < 2 || handler.name[0] != '-' || handler.name[1] != '-')
+        {
+            MANGO_EXCEPTION("CommandLineParser: '{}' must start with '--'.", handler.name);
+        }
+
+        if (findHandler(handler.name))
+        {
+            MANGO_EXCEPTION("CommandLineParser: duplicate option '{}'.", handler.name);
+        }
+
+        if (handler.takesValue)
+        {
+            if (!handler.valueAction)
+            {
+                MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+            }
+        }
+        else if (!handler.action)
+        {
+            MANGO_EXCEPTION("CommandLineParser: flag '{}' has no handler.", handler.name);
+        }
+
+        m_handlers.push_back(std::move(handler));
+    }
+
+    void CommandLineParser::addPositional(std::string_view token)
+    {
+        m_positionals.push_back(token);
+
+        if (m_positional)
+        {
+            m_positional(token);
+        }
+    }
+
+    void CommandLineParser::printHelp() const
+    {
+        if (!m_programName.empty() || !m_usage.empty())
+        {
+            if (!m_programName.empty() && !m_usage.empty())
+            {
+                printLine("Usage: {} {}", m_programName, m_usage);
+            }
+            else if (!m_programName.empty())
+            {
+                printLine("Usage: {}", m_programName);
+            }
+            else
+            {
+                printLine("Usage: {}", m_usage);
+            }
+            printLine("");
+        }
+
+        if (!m_requiredPositionals.empty())
+        {
+            printLine("Arguments:");
+            for (const std::string& name : m_requiredPositionals)
+            {
+                printLine("  <{}>  (required)", name);
+            }
+            printLine("");
+        }
+
+        printLine("Options:");
+
+        size_t nameWidth = sizeof("--help") - 1;
+        for (const Handler& handler : m_handlers)
+        {
+            size_t width = handler.name.size();
+            if (handler.takesValue)
+            {
+                width += 12; // " [=<value>]"
+            }
+            if (width > nameWidth)
+            {
+                nameWidth = width;
+            }
+        }
+
+        auto printEntry = [&](std::string_view name, std::string_view help)
+        {
+            if (help.empty())
+            {
+                printLine("  {}", name);
+            }
+            else
+            {
+                printLine("  {:<{}}  {}", name, nameWidth, help);
+            }
+        };
+
+        for (const Handler& handler : m_handlers)
+        {
+            std::string name = handler.name;
+            if (handler.takesValue)
+            {
+                name += " [=<value>]";
+            }
+            printEntry(name, handler.help);
+        }
+
+        printEntry("--help", "Show this help and exit");
+    }
+
+    bool CommandLineParser::parse(const CommandLine& commands)
+    {
+        m_positionals.clear();
+        m_programName = commands.empty() ? std::string{} : std::string(commands[0]);
+
+        for (size_t i = 1; i < commands.size(); ++i)
+        {
+            const std::string_view arg = commands[i];
+
+            if (arg == "--")
+            {
+                for (++i; i < commands.size(); ++i)
+                {
+                    addPositional(commands[i]);
+                }
+                break;
+            }
+
+            if (arg == "--help")
+            {
+                printHelp();
+                return false;
+            }
+
+            if (!arg.starts_with("--"))
+            {
+                if (arg.size() > 1 && arg[0] == '-')
+                {
+                    printLine("Unknown option: {}", arg);
+                    printLine("Try '--help'.");
+                    return false;
+                }
+
+                addPositional(arg);
+                continue;
+            }
+
+            const size_t eq = arg.find('=');
+            const bool hasInlineValue = (eq != std::string_view::npos);
+            const std::string_view name = hasInlineValue ? arg.substr(0, eq) : arg;
+
+            Handler* handler = findHandler(name);
+            if (!handler)
+            {
+                printLine("Unknown option: {}", arg);
+                printLine("Try '--help'.");
+                return false;
+            }
+
+            if (handler->takesValue)
+            {
+                std::string_view value;
+
+                if (hasInlineValue)
+                {
+                    value = arg.substr(eq + 1);
+                }
+                else
+                {
+                    if (i + 1 >= commands.size())
+                    {
+                        printLine("Missing value for option: {}", name);
+                        printLine("Try '--help'.");
+                        return false;
+                    }
+
+                    ++i;
+                    value = commands[i];
+                }
+
+                handler->valueAction(value);
+            }
+            else
+            {
+                if (hasInlineValue)
+                {
+                    printLine("Option '{}' does not take a value.", name);
+                    return false;
+                }
+
+                handler->action();
+            }
+        }
+
+        if (m_positionals.size() < m_requiredPositionals.size())
+        {
+            printLine("Missing required argument: {}",
+                m_requiredPositionals[m_positionals.size()]);
+            return false;
+        }
+
+        return true;
+    }
+
+    bool CommandLineParser::parse(int argc, const char** argv)
+    {
+        mango::CommandLine commands(argv + 0, argv + argc);
+        return parse(commands);
     }
 
     // ----------------------------------------------------------------------------

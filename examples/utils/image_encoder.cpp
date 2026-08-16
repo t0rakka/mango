@@ -7,190 +7,216 @@
 using namespace mango;
 using namespace mango::image;
 
-void printHelp(std::string_view program)
+namespace
 {
-    printLine("Usage: {} <options> <inputs>", program);
-    printLine("  Options:");
-    printLine("    --format <.extension>");
-    printLine("    --astc <width> <height>");
-    printLine("    --output <filename>");
-    printLine("    --compression <level:0..10>");
-    printLine("    --quality <level:0..100>");
-    printLine("    --lossless");
-    printLine("    --luminance");
-    printLine("    --linear");
-    printLine("    --info");
-}
 
-int main(int argc, const char* argv[])
-{
-    std::string_view program = argv[0];
-
-    if (argc < 2)
+    struct ImageEncoderArgs
     {
-        printHelp(program);
-        return 0;
+        ImageEncodeOptions options;
+        std::string output_filename;
+        std::string request_format;
+        std::vector<std::string> filenames;
+
+        bool luminance = false;
+        bool linear = false;
+        bool lossless = false;
+
+        std::string error;
+    };
+
+    bool parseAstcBlockSize(std::string_view value, int& width, int& height)
+    {
+        const size_t sep = value.find_first_of("xX,");
+        if (sep == std::string_view::npos)
+        {
+            return false;
+        }
+
+        width = std::atoi(value.substr(0, sep).data());
+        height = std::atoi(value.substr(sep + 1).data());
+
+        return width > 0 && height > 0;
     }
 
-    std::string request_format;
-
-    ImageEncodeOptions options;
-    options.compression = 8;
-
-    std::string output_filename;
-    bool luminance = false;
-    bool linear = false;
-    bool lossless = false;
-
-    int index = 1;
-
-    std::vector<std::string> filenames;
-
-    while (index < argc)
+    std::string normalizeFormatExtension(std::string_view value)
     {
-        if (std::string_view(argv[index]) == "--output")
+        if (value.empty())
         {
-            if (++index < argc)
-            {
-                output_filename = argv[index++];
-            }
-            else
-            {
-                printHelp(program);
-                return 0;
-            }
+            return {};
         }
-        else if (std::string_view(argv[index]) == "--format")
-        {
-            if (++index < argc)
-            {
-                std::string extension(argv[index++]);
-                if (isImageEncoder(extension))
-                {
-                    printLine("Active output format: {}", extension);
-                    request_format = extension;
-                }
-                else
-                {
-                    printLine("Unsupported output format: {}", extension);
-                    return 1;
-                }
-            }
-            else
-            {
-                printHelp(program);
-                return 0;
-            }
-        }
-        else if (std::string_view(argv[index]) == "--compression")
-        {
-            if (++index < argc)
-            {
-                int level = std::atoi(argv[index++]);
-                options.compression = level;
-            }
-            else
-            {
-                printHelp(program);
-                return 0;
-            }
-        }
-        else if (std::string_view(argv[index]) == "--quality")
-        {
-            if (++index < argc)
-            {
-                int quality = std::atoi(argv[index++]);
-                options.quality = quality / 100.0f;
-            }
-            else
-            {
-                printHelp(program);
-                return 0;
-            }
-        }
-        else if (std::string_view(argv[index]) == "--astc")
-        {
-            ++index;
 
-            if (index + 2 > argc)
-            {
-                printHelp(program);
-                return 0;
-            }
+        std::string extension(value);
+        if (extension.front() != '.')
+        {
+            extension.insert(extension.begin(), '.');
+        }
 
-            options.astc_block_width = std::atoi(argv[index++]);
-            options.astc_block_height = std::atoi(argv[index++]);
-        }
-        else if (std::string_view(argv[index]) == "--luminance")
-        {
-            ++index;
-            luminance = true;
-        }
-        else if (std::string_view(argv[index]) == "--lossless")
-        {
-            ++index;
-            lossless = true;
-        }
-        else if (std::string_view(argv[index]) == "--linear")
-        {
-            ++index;
-            linear = true;
-        }
-        else if (std::string_view(argv[index]) == "--info")
-        {
-            ++index;
-            printEnable(Print::Debug, true); // image decoder/encoder format dumps
-        }
-        else
-        {
-            std::string filename = argv[index++];
-            if (isImageDecoder(filename))
-            {
-                filenames.push_back(filename);
-            }
-        }
+        return toLower(extension);
     }
 
-    ConcurrentQueue q;
-
-    for (auto filename : filenames)
+    void configureParser(CommandLineParser& parser, ImageEncoderArgs& args)
     {
-        std::string output = filesystem::removePath(filename);
-        if (!output_filename.empty() && filenames.size() == 1)
-        {
-            output = output_filename;
-        }
-        else if (!request_format.empty())
-        {
-            output = filesystem::removeExtension(output) + request_format;
-        }
+        args.options.compression = 8;
 
-        printLine("Processing: \"{}\" --> \"{}\"", filename, output);
+        parser.usage("[options] <inputs...>");
 
-        q.enqueue([=]
-        {
-            std::unique_ptr<Bitmap> bitmap;
-            ImageEncodeOptions encode_options = options;
-            encode_options.lossless = lossless;
-
-            if (luminance)
+        parser.option("--format", "output format (png, .png, ...)",
+            [&](std::string_view value)
             {
-                Bitmap temp(filename);
-                bitmap = std::make_unique<LuminanceBitmap>(temp, false, linear);
-            }
-            else
-            {
-                bitmap = std::make_unique<Bitmap>(filename);
+                const std::string extension = normalizeFormatExtension(value);
 
-                if (linear && !bitmap->format.isLinear())
+                if (!isImageEncoder(extension))
                 {
-                    srgbToLinear(*bitmap);
+                    args.error = fmt::format("Unsupported output format: {}", value);
+                    return;
                 }
-            }
 
-            bitmap->save(output, encode_options);
+                printLine("Active output format: {}", extension);
+                args.request_format = extension;
+            });
+
+        parser.option("--output", "output filename (single input only)",
+            [&](std::string_view value)
+            {
+                args.output_filename = value;
+            });
+
+        parser.option("--compression", "compression level (0..10)",
+            [&](std::string_view value)
+            {
+                args.options.compression = std::atoi(value.data());
+            });
+
+        parser.option("--quality", "quality level (0..100)",
+            [&](std::string_view value)
+            {
+                args.options.quality = std::atoi(value.data()) / 100.0f;
+            });
+
+        parser.option("--astc", "ASTC block size (e.g. 4x4)",
+            [&](std::string_view value)
+            {
+                int width = 0;
+                int height = 0;
+
+                if (!parseAstcBlockSize(value, width, height))
+                {
+                    args.error = fmt::format("Invalid ASTC block size: {}", value);
+                    return;
+                }
+
+                args.options.astc_block_width = width;
+                args.options.astc_block_height = height;
+            });
+
+        parser.flag("--luminance", "encode as luminance",
+            [&]()
+            {
+                args.luminance = true;
+            });
+
+        parser.flag("--lossless", "lossless encoding",
+            [&]()
+            {
+                args.lossless = true;
+            });
+
+        parser.flag("--linear", "treat input as sRGB and convert to linear",
+            [&]()
+            {
+                args.linear = true;
+            });
+
+        parser.flag("--info", "enable decoder/encoder diagnostic output",
+            [&]()
+            {
+                printEnable(Print::Debug, true);
+            });
+
+        parser.positional([&](std::string_view token)
+        {
+            if (isImageDecoder(std::string(token)))
+            {
+                args.filenames.emplace_back(token);
+            }
         });
     }
 
-    q.wait();
+    void runEncoder(const ImageEncoderArgs& args)
+    {
+        ConcurrentQueue q;
+
+        for (const auto& filename : args.filenames)
+        {
+            std::string output = filesystem::removePath(filename);
+
+            if (!args.output_filename.empty() && args.filenames.size() == 1)
+            {
+                output = args.output_filename;
+            }
+            else if (!args.request_format.empty())
+            {
+                output = filesystem::removeExtension(output) + args.request_format;
+            }
+
+            printLine("Processing: \"{}\" --> \"{}\"", filename, output);
+
+            q.enqueue([=]
+            {
+                std::unique_ptr<Bitmap> bitmap;
+                ImageEncodeOptions encode_options = args.options;
+                encode_options.lossless = args.lossless;
+
+                if (args.luminance)
+                {
+                    Bitmap temp(filename);
+                    bitmap = std::make_unique<LuminanceBitmap>(temp, false, args.linear);
+                }
+                else
+                {
+                    bitmap = std::make_unique<Bitmap>(filename);
+
+                    if (args.linear && !bitmap->format.isLinear())
+                    {
+                        srgbToLinear(*bitmap);
+                    }
+                }
+
+                bitmap->save(output, encode_options);
+            });
+        }
+
+        q.wait();
+    }
+
+} // namespace
+
+int main(int argc, const char* argv[])
+{
+    if (argc < 2)
+    {
+        CommandLineParser parser;
+        ImageEncoderArgs args;
+        configureParser(parser, args);
+        parser.printHelp();
+        return 0;
+    }
+
+    ImageEncoderArgs args;
+    CommandLineParser parser;
+    configureParser(parser, args);
+
+    if (!parser.parse(argc, argv))
+    {
+        return 1;
+    }
+
+    if (!args.error.empty())
+    {
+        printLine("{}", args.error);
+        return 1;
+    }
+
+    runEncoder(args);
+    return 0;
 }

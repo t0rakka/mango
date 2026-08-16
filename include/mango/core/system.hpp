@@ -1,12 +1,13 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
 #include <string>
 #include <vector>
 #include <string_view>
+#include <functional>
 #include <mango/core/configure.hpp>
 #include <mango/core/thread.hpp>
 #include <mango/core/timer.hpp>
@@ -88,7 +89,73 @@ namespace mango
     void startTrace(Stream* stream);
     void stopTrace();
 
+    // ------------------------------------------------------------------------------
+    // CommandLineParser
+    // ------------------------------------------------------------------------------
+
     using CommandLine = std::vector<std::string_view>;
+
+    class CommandLineParser
+    {
+    public:
+        using Action = std::function<void()>;
+        using ValueAction = std::function<void(std::string_view)>;
+
+        // Boolean / switch flag: --name
+        CommandLineParser& flag(std::string_view name, Action action);
+        CommandLineParser& flag(std::string_view name, std::string_view help, Action action);
+
+        // Option that consumes the next argument: --name value  (or --name=value)
+        CommandLineParser& option(std::string_view name, ValueAction action);
+        CommandLineParser& option(std::string_view name, std::string_view help, ValueAction action);
+
+        // Called for each non-option token (and for tokens after bare "--").
+        // Only tokens starting with "--" are treated as options. A lone "-" is positional.
+        // Other tokens starting with "-" are rejected (likely a mistyped option); pass
+        // literal paths like "-file.png" after "--".
+        // Tokens are always collected in positionals() as well.
+        CommandLineParser& positional(ValueAction action);
+
+        // Declare a required positional (order matters). Example:
+        //   parser.requirePositional("filename");
+        // parse() fails if fewer positionals were given; --help lists them.
+        CommandLineParser& requirePositional(std::string_view name);
+
+        // Optional usage suffix printed after argv[0] (commands[0]) by --help.
+        // Example: parser.usage("[options]");
+        CommandLineParser& usage(std::string_view text);
+
+        // Walk commands[1..). Returns true on success.
+        // --help / errors print unconditionally and return false.
+        bool parse(const CommandLine& commands);
+        bool parse(int argc, const char** argv);
+
+        void printHelp() const;
+
+        const std::vector<std::string_view>& positionals() const { return m_positionals; }
+
+    private:
+        struct Handler
+        {
+            std::string name;
+            std::string help;
+            bool takesValue = false;
+            Action action;
+            ValueAction valueAction;
+        };
+
+        Handler* findHandler(std::string_view name);
+        void registerHandler(Handler handler);
+        void addPositional(std::string_view token);
+
+        std::vector<Handler> m_handlers;
+        std::vector<std::string> m_requiredPositionals;
+        ValueAction m_positional;
+        std::string m_usage;
+        std::string m_programName;
+
+        std::vector<std::string_view> m_positionals;
+    };
 
 } // namespace mango
 
