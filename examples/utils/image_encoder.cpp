@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
@@ -193,18 +193,16 @@ namespace
 
 int main(int argc, const char* argv[])
 {
+    ImageEncoderArgs args;
+
+    CommandLineParser parser;
+    configureParser(parser, args);
+
     if (argc < 2)
     {
-        CommandLineParser parser;
-        ImageEncoderArgs args;
-        configureParser(parser, args);
         parser.printHelp();
         return 0;
     }
-
-    ImageEncoderArgs args;
-    CommandLineParser parser;
-    configureParser(parser, args);
 
     if (!parser.parse(argc, argv))
     {
