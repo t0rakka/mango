@@ -558,16 +558,8 @@ vec3 tonemapReinhard(vec3 color)
         OutputTransformOptions options;
         options.exposure = exposure;
         options.sdrWhiteNits = defaultSdrWhiteNits(surfaceFormat.colorSpace);
-
-        if (isHDR(surfaceFormat))
-        {
-            options.tonemap = TonemapMode::None;
-        }
-        else
-        {
-            options.tonemap = TonemapMode::Reinhard;
-        }
-
+        // SDR-only; HDR encode paths ignore this (see getOutputTransformGLSL).
+        options.tonemap = TonemapMode::Reinhard;
         return options;
     }
 
@@ -596,7 +588,11 @@ vec3 tonemapReinhard(vec3 color)
         OutputTransform transform = selectOutputTransform(surfaceFormat);
         OutputRecipe recipe = buildRecipe(transform, options);
 
-        std::string source = buildTonemapGlsl(options.tonemap, options.exposure);
+        // Tonemap compresses to display range for SDR only. HDR surfaces keep
+        // scene-linear values and encode (PQ/HLG/scRGB); options.tonemap is ignored.
+        const TonemapMode tonemap = isHDR(surfaceFormat) ? TonemapMode::None : options.tonemap;
+
+        std::string source = buildTonemapGlsl(tonemap, options.exposure);
         source += recipe.helpers;
 
         source += R"(
@@ -605,9 +601,9 @@ vec4 encodeOutput(vec4 color)
     color.rgb = max(color.rgb, vec3(0.0));
 )";
 
-        if (options.tonemap != TonemapMode::None)
+        if (tonemap != TonemapMode::None)
         {
-            if (const char* tonemapFn = tonemapFunctionName(options.tonemap))
+            if (const char* tonemapFn = tonemapFunctionName(tonemap))
             {
                 source += "    color.rgb = ";
                 source += tonemapFn;

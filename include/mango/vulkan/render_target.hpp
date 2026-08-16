@@ -107,6 +107,7 @@ namespace mango::vulkan
 
         // 1:1 resolve to the swapchain image; handles swapchain layout transitions.
         // Float16: color nullptr uses defaultOutputOptions(swapchain surface format).
+        // Tonemap in options applies only for SDR surfaces; HDR encode ignores it.
         void resolve(VkCommandBuffer commandBuffer, Swapchain& swapchain, u32 imageIndex,
                      const OutputTransformOptions* color = nullptr);
 

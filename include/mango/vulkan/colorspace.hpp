@@ -29,6 +29,10 @@ namespace mango::vulkan
         InputColorSpace input = InputColorSpace::BT709_LINEAR;
         float sdrWhiteNits = 203.0f;
         float peakNits = 10000.0f;
+
+        // Preferred SDR tonemap operator. Ignored for HDR surfaces (scene-linear
+        // values are encoded to PQ/HLG/scRGB as-is). Set freely without checking
+        // isHDR(); getOutputTransformGLSL() applies it only on SDR output.
         TonemapMode tonemap = TonemapMode::None;
         float exposure = 1.0f;
     };
@@ -38,6 +42,8 @@ namespace mango::vulkan
     bool isHDR(VkSurfaceFormatKHR surfaceFormat);
     bool isSDR(VkSurfaceFormatKHR surfaceFormat);
 
+    // Scene-linear HDR workflow defaults: Reinhard tonemap preference (used only
+    // when the swapchain is SDR) and surface-appropriate nits.
     OutputTransformOptions defaultOutputOptions(VkSurfaceFormatKHR surfaceFormat,
                                                 float exposure = 1.0f);
 
