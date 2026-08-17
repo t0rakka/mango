@@ -52,5 +52,6 @@ namespace mango
     size_t stringLength(const char* s, size_t maxlen) noexcept;
     float parseFloat(std::string_view str) noexcept;
     int parseInt(std::string_view str) noexcept;
+    bool parseSize2D(std::string_view str, int& width, int& height) noexcept;
 
 } // namespace mango

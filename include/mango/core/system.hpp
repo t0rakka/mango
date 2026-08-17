@@ -100,6 +100,7 @@ namespace mango
     public:
         using Action = std::function<void()>;
         using ValueAction = std::function<void(std::string_view)>;
+        using Size2DAction = std::function<void(int width, int height)>;
 
         // Boolean / switch flag: --name
         CommandLineParser& flag(std::string_view name, Action action);
@@ -108,6 +109,10 @@ namespace mango
         // Option that consumes the next argument: --name value  (or --name=value)
         CommandLineParser& option(std::string_view name, ValueAction action);
         CommandLineParser& option(std::string_view name, std::string_view help, ValueAction action);
+
+        // Option with WxH value: --name 4x4  (or --name=4x4, 4,4)
+        CommandLineParser& option2D(std::string_view name, Size2DAction action);
+        CommandLineParser& option2D(std::string_view name, std::string_view help, Size2DAction action);
 
         // Called for each non-option token (and for tokens after bare "--").
         // Only tokens starting with "--" are treated as options. A lone "-" is positional.
@@ -140,8 +145,10 @@ namespace mango
             std::string name;
             std::string help;
             bool takesValue = false;
+            bool takesSize2D = false;
             Action action;
             ValueAction valueAction;
+            Size2DAction size2DAction;
         };
 
         Handler* findHandler(std::string_view name);

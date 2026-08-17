@@ -25,20 +25,6 @@ namespace
         std::string error;
     };
 
-    bool parseAstcBlockSize(std::string_view value, int& width, int& height)
-    {
-        const size_t sep = value.find_first_of("xX,");
-        if (sep == std::string_view::npos)
-        {
-            return false;
-        }
-
-        width = std::atoi(value.substr(0, sep).data());
-        height = std::atoi(value.substr(sep + 1).data());
-
-        return width > 0 && height > 0;
-    }
-
     std::string normalizeFormatExtension(std::string_view value)
     {
         if (value.empty())
@@ -140,18 +126,9 @@ namespace
                 args.options.quality = std::atoi(value.data()) / 100.0f;
             });
 
-        parser.option("--astc", "ASTC block size (e.g. 4x4)",
-            [&](std::string_view value)
+        parser.option2D("--astc", "ASTC block size (e.g. 4x4)",
+            [&](int width, int height)
             {
-                int width = 0;
-                int height = 0;
-
-                if (!parseAstcBlockSize(value, width, height))
-                {
-                    args.error = fmt::format("Invalid ASTC block size: {}", value);
-                    return;
-                }
-
                 args.options.astc_block_width = width;
                 args.options.astc_block_height = height;
             });

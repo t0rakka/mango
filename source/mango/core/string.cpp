@@ -806,4 +806,18 @@ namespace mango
         return value;
     }
 
+    bool parseSize2D(std::string_view str, int& width, int& height) noexcept
+    {
+        const size_t sep = str.find_first_of("xX,");
+        if (sep == std::string_view::npos)
+        {
+            return false;
+        }
+
+        width = parseInt(str.substr(0, sep));
+        height = parseInt(str.substr(sep + 1));
+
+        return width > 0 && height > 0;
+    }
+
 } // namespace mango

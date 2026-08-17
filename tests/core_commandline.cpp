@@ -200,6 +200,72 @@ namespace
         return true;
     }
 
+    bool test_option2D_inline_value()
+    {
+        std::vector<std::string> storage;
+        int width = 0;
+        int height = 0;
+
+        CommandLineParser parser;
+        parser.option2D("--astc", [&](int w, int h) { width = w; height = h; });
+
+        CommandLine commands = make_commands({ "tool", "--astc=5x5" }, storage);
+        CHECK(parser.parse(commands));
+        CHECK(width == 5);
+        CHECK(height == 5);
+
+        return true;
+    }
+
+    bool test_option2D_separate_value()
+    {
+        std::vector<std::string> storage;
+        int width = 0;
+        int height = 0;
+
+        CommandLineParser parser;
+        parser.option2D("--astc", [&](int w, int h) { width = w; height = h; });
+
+        CommandLine commands = make_commands({ "tool", "--astc", "8X8" }, storage);
+        CHECK(parser.parse(commands));
+        CHECK(width == 8);
+        CHECK(height == 8);
+
+        return true;
+    }
+
+    bool test_option2D_comma_separator()
+    {
+        std::vector<std::string> storage;
+        int width = 0;
+        int height = 0;
+
+        CommandLineParser parser;
+        parser.option2D("--size", [&](int w, int h) { width = w; height = h; });
+
+        CommandLine commands = make_commands({ "tool", "--size=12,10" }, storage);
+        CHECK(parser.parse(commands));
+        CHECK(width == 12);
+        CHECK(height == 10);
+
+        return true;
+    }
+
+    bool test_option2D_invalid_value()
+    {
+        std::vector<std::string> storage;
+        bool called = false;
+
+        CommandLineParser parser;
+        parser.option2D("--astc", [&](int, int) { called = true; });
+
+        CommandLine commands = make_commands({ "tool", "--astc=bad" }, storage);
+        CHECK(!parser.parse(commands));
+        CHECK(!called);
+
+        return true;
+    }
+
     const Case g_cases [] =
     {
         { "flag and positional",           test_flag_and_positional },
@@ -213,6 +279,10 @@ namespace
         { "help returns false",            test_help_returns_false },
         { "required positional",           test_required_positional },
         { "flag inline value rejected",    test_flag_with_inline_value_rejected },
+        { "option2D inline value",         test_option2D_inline_value },
+        { "option2D separate value",       test_option2D_separate_value },
+        { "option2D comma separator",      test_option2D_comma_separator },
+        { "option2D invalid value",        test_option2D_invalid_value },
     };
 
 } // namespace

@@ -540,6 +540,23 @@ namespace mango
         return *this;
     }
 
+    CommandLineParser& CommandLineParser::option2D(std::string_view name, Size2DAction action)
+    {
+        return option2D(name, {}, std::move(action));
+    }
+
+    CommandLineParser& CommandLineParser::option2D(std::string_view name, std::string_view help, Size2DAction action)
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.takesSize2D = true;
+        handler.size2DAction = std::move(action);
+        registerHandler(std::move(handler));
+        return *this;
+    }
+
     CommandLineParser& CommandLineParser::positional(ValueAction action)
     {
         if (!action)
@@ -590,7 +607,14 @@ namespace mango
 
         if (handler.takesValue)
         {
-            if (!handler.valueAction)
+            if (handler.takesSize2D)
+            {
+                if (!handler.size2DAction)
+                {
+                    MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                }
+            }
+            else if (!handler.valueAction)
             {
                 MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
             }
@@ -650,7 +674,7 @@ namespace mango
             size_t width = handler.name.size();
             if (handler.takesValue)
             {
-                width += 12; // " [=<value>]"
+                width += handler.takesSize2D ? 10 : 12; // " [=<WxH>]" / " [=<value>]"
             }
             if (width > nameWidth)
             {
@@ -675,7 +699,7 @@ namespace mango
             std::string name = handler.name;
             if (handler.takesValue)
             {
-                name += " [=<value>]";
+                name += handler.takesSize2D ? " [=<WxH>]" : " [=<value>]";
             }
             printEntry(name, handler.help);
         }
@@ -753,7 +777,24 @@ namespace mango
                     value = commands[i];
                 }
 
-                handler->valueAction(value);
+                if (handler->takesSize2D)
+                {
+                    int width = 0;
+                    int height = 0;
+
+                    if (!parseSize2D(value, width, height))
+                    {
+                        printLine("Invalid value for option: {} (expected WxH)", name);
+                        printLine("Try '--help'.");
+                        return false;
+                    }
+
+                    handler->size2DAction(width, height);
+                }
+                else
+                {
+                    handler->valueAction(value);
+                }
             }
             else
             {
