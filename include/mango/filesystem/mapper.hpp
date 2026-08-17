@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <mango/core/configure.hpp>
 #include <mango/core/memory.hpp>
@@ -92,6 +93,10 @@ namespace mango::filesystem
         {
             return files.end();
         }
+
+        // Match files in this index against a glob pattern (* and ?).
+        // Returns entry names for files only (directories are skipped).
+        std::vector<std::string> matchFilenames(std::string_view pattern, bool case_sensitive = false) const;
     };
 
     class AbstractMapper : protected NonCopyable

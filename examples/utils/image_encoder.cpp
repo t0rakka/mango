@@ -72,41 +72,32 @@ namespace
         }
 
         // Windows (and some shells) do not expand globs into argv; do it here.
-        const std::string text(token);
-        std::string directory(getPath(text));
+        std::string directory(getPath(token));
         if (directory.empty())
         {
             directory = "./";
         }
 
-        const std::string pattern_lower = toLower(removePath(text));
+        Path path(directory);
+        const FileIndex& index = path;
+        auto filenames = index.matchFilenames(removePath(token));
+
         size_t matches = 0;
 
-        Path path(directory);
-        for (const FileInfo& info : path)
+        for (const std::string& name : filenames)
         {
-            if (!info.isFile())
+            if (!isImageDecoder(name))
             {
                 continue;
             }
 
-            if (!isMatch(toLower(info.name), pattern_lower))
-            {
-                continue;
-            }
-
-            if (!isImageDecoder(info.name))
-            {
-                continue;
-            }
-
-            args.filenames.emplace_back(directory + info.name);
+            args.filenames.emplace_back(directory + name);
             ++matches;
         }
 
         if (!matches)
         {
-            printLine("No files matched: \"{}\"", text);
+            printLine("No files matched: \"{}\"", token);
         }
     }
 

@@ -50,6 +50,11 @@ namespace mango::filesystem
             return m_index;
         }
 
+        operator const FileIndex&() const
+        {
+            return getIndex();
+        }
+
         const std::string& pathname() const
         {
             return m_mapper->pathname();

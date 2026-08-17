@@ -164,6 +164,47 @@ namespace mango::filesystem
         files.emplace_back(name, size, flags);
     }
 
+    std::vector<std::string> FileIndex::matchFilenames(std::string_view pattern, bool case_sensitive) const
+    {
+        std::vector<std::string> matched;
+        matched.reserve(files.size());
+
+        std::string pattern_storage;
+
+        if (!case_sensitive)
+        {
+            pattern_storage = toLower(pattern);
+            pattern = pattern_storage;
+        }
+
+        for (const FileInfo& info : files)
+        {
+            if (!info.isFile())
+            {
+                continue;
+            }
+
+            if (case_sensitive)
+            {
+                if (!isMatch(info.name, pattern))
+                {
+                    continue;
+                }
+            }
+            else
+            {
+                if (!isMatch(toLower(info.name), pattern))
+                {
+                    continue;
+                }
+            }
+
+            matched.push_back(info.name);
+        }
+
+        return matched;
+    }
+
     // -----------------------------------------------------------------
     // Mapper
     // -----------------------------------------------------------------
