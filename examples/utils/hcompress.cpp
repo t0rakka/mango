@@ -5,8 +5,10 @@
 #include <algorithm>
 #include <array>
 #include <atomic>
+#include <filesystem>
 #include <memory>
 #include <mutex>
+#include <unordered_map>
 #include <mango/mango.hpp>
 
 using namespace mango;
@@ -94,6 +96,7 @@ struct State
     bool verbose { false };
     size_t total_bytes = 0;
     std::vector<FileInfo> files;
+    std::vector<std::string> sources;
     std::vector<FileInfo> folders;
 };
 
@@ -144,7 +147,47 @@ void enumerate(const Path& path, const std::string& prefix, State& state, int de
             }
 
             state.files.emplace_back(filename, node.size, 0);
+            state.sources.push_back(path.pathname() + node.name);
             state.total_bytes += node.size;
+        }
+    }
+}
+
+void addFile(State& state, const std::string& filename)
+{
+    const u64 size = getFileSize(filename);
+    const std::string name(removePath(filename));
+
+    state.files.emplace_back(name, size, 0);
+    state.sources.push_back(filename);
+    state.total_bytes += size;
+}
+
+void gatherInputs(State& state, const std::vector<std::string>& inputs)
+{
+    namespace fs = std::filesystem;
+
+    for (const std::string& input : inputs)
+    {
+        const fs::path path(input);
+
+        if (fs::is_directory(path))
+        {
+            std::string folder = input;
+            if (!folder.empty() && folder.back() != '/')
+            {
+                folder += '/';
+            }
+
+            enumerate(Path(folder), folder, state, 0);
+        }
+        else if (fs::is_regular_file(path))
+        {
+            addFile(state, input);
+        }
+        else
+        {
+            MANGO_EXCEPTION("Not a file or directory: \"{}\".", input);
         }
     }
 }
@@ -243,13 +286,19 @@ struct FileGroup
 };
 
 static
-void readBlockSource(const BlockMeta& work, const Path& path, Buffer& source)
+void readBlockSource(const BlockMeta& work, const std::unordered_map<std::string, std::string>& sources, Buffer& dest)
 {
-    u8* ptr = source.data();
+    u8* ptr = dest.data();
 
-    for (auto segment : work.sources)
+    for (const auto& segment : work.sources)
     {
-        File file(path, segment.filename);
+        const auto iter = sources.find(segment.filename);
+        if (iter == sources.end())
+        {
+            MANGO_EXCEPTION("Missing source for \"{}\".", segment.filename);
+        }
+
+        File file(iter->second);
         ConstMemory memory = ConstMemory(file).slice(segment.offset, segment.size);
         std::memcpy(ptr, memory.address, memory.size);
         ptr += memory.size;
@@ -504,16 +553,22 @@ void compactBlocks(BlockManager& manager)
 }
 
 static
-void writeStoreNoCompression(const BlockMeta& work, const Path& path, Stream& output)
+void writeStoreNoCompression(const BlockMeta& work, const std::unordered_map<std::string, std::string>& sources, Stream& output)
 {
-    for (const auto& source : work.sources)
+    for (const auto& segment : work.sources)
     {
-        File file(path, source.filename);
-        output.write(file.data() + source.offset, source.size);
+        const auto iter = sources.find(segment.filename);
+        if (iter == sources.end())
+        {
+            MANGO_EXCEPTION("Missing source for \"{}\".", segment.filename);
+        }
+
+        File file(iter->second);
+        output.write(file.data() + segment.offset, segment.size);
     }
 }
 
-void compress(State& state, const std::string& folder, const std::string& archive, const std::string& compression, int level, size_t store_threshold, bool developer)
+void compress(State& state, const std::vector<std::string>& inputs, const std::string& archive, const std::string& compression, int level, size_t store_threshold, bool developer)
 {
     Compressor compressor = getCompressor(compression);
 
@@ -527,8 +582,15 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
     u64 scan_time0 = Time::ms();
 
-    Path path(folder);
-    enumerate(path, folder, state, 0);
+    gatherInputs(state, inputs);
+
+    std::unordered_map<std::string, std::string> sources;
+    sources.reserve(state.files.size());
+
+    for (size_t i = 0; i < state.files.size(); ++i)
+    {
+        sources.emplace(state.files[i].name, state.sources[i]);
+    }
 
     u64 scan_dt = Time::ms() - scan_time0;
 
@@ -668,7 +730,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         q.enqueue([&, i] ()
         {
             auto& node = manager.files[i];
-            File file(path, node.filename);
+            File file(sources.at(node.filename));
             node.checksum = crc32c(0, file);
             counterBytes += node.size;
         });
@@ -735,7 +797,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
         desc.uncompressed = block.bytes;
         desc.compressed = block.bytes;
         desc.method = Compressor::NONE;
-        writeStoreNoCompression(block, path, output);
+        writeStoreNoCompression(block, sources, output);
         block.written = true;
 
         print("{}", glyph);
@@ -771,7 +833,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
 
             for (u32 i = 0; i < group.part_count; ++i)
             {
-                writeStoreNoCompression(manager.meta[group.first_block_index + i], path, output);
+                writeStoreNoCompression(manager.meta[group.first_block_index + i], sources, output);
                 print("s");
                 std::fflush(stdout);
             }
@@ -808,7 +870,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
                 desc.compressed = block.bytes;
                 desc.method = Compressor::NONE;
 
-                writeStoreNoCompression(block, path, output);
+                writeStoreNoCompression(block, sources, output);
                 block.written = true;
 
                 print("s");
@@ -817,7 +879,7 @@ void compress(State& state, const std::string& folder, const std::string& archiv
             else
             {
                 auto data = std::make_unique<Buffer>(block.bytes);
-                readBlockSource(block, path, *data);
+                readBlockSource(block, sources, *data);
 
                 Memory uncompressed = *data;
 
@@ -952,95 +1014,127 @@ void compress(State& state, const std::string& folder, const std::string& archiv
     hbs::writeIndex(str, block_data_offset, file_data_offset);
 }
 
-void printHelp(const CommandLine& commands)
-{
-    std::string program = removePath(std::string(commands[0]));
-
-    printLine("");
-    printLine("HBS Compression Tool version 0.5.5");
-    printLine("Copyright (C) 2018-2026 Fapware, inc. All rights reserved.");
-    printLine("");
-    printLine("Usage: {} [input folder] [compression] [level:0..10] (options)", program);
-    printLine("");
-
-    printLine("Compression methods: ");
-    print("  ");
-    const char* separator = "";
-    auto compressors = getCompressors();
-    for (auto compressor : compressors)
+    struct CompressArgs
     {
-        print("{}{}", separator, compressor.name);
-        separator = " ";
-    }
-    printLine("");
+        std::vector<std::string> inputs;
+        std::string output = "result.hbs";
+        std::string method = "zstd";
+        int level = 6;
+        size_t store_threshold = store_threshold_default;
+        bool developer = false;
+        bool verbose = false;
+    };
 
-    printLine("");
-    printLine("Options:");
-    printLine("  --output <filename>");
-    printLine("  --store");
-    printLine("  --verbose");
-    printLine("  --developer");
-    printLine("");
-}
+    void printBanner()
+    {
+        printLine("");
+        printLine("HBS Compression Tool version 0.5.6");
+        printLine("Copyright (C) 2018-2026 Fapware, inc. All rights reserved.");
+        printLine("");
+    }
+
+    void printCompressors()
+    {
+        printLine("Compression methods:");
+        print("  ");
+        const char* separator = "";
+        for (const Compressor& compressor : getCompressors())
+        {
+            print("{}{}", separator, compressor.name);
+            separator = " ";
+        }
+        printLine("");
+        printLine("");
+    }
+
+    void configureParser(CommandLineParser& parser, CompressArgs& args)
+    {
+        parser.usage("[options] <files...>");
+
+        parser.option("--output", "output archive filename",
+            [&](std::string_view value)
+            {
+                args.output = value;
+            });
+
+        parser.option("--method", "compression method (default: zstd)",
+            [&](std::string_view value)
+            {
+                args.method = value;
+            });
+
+        parser.option("--level", "compression level 0..10 (default: 6)",
+            [&](std::string_view value)
+            {
+                args.level = std::atoi(value.data());
+            });
+
+        parser.flag("--store", "store incompressible data uncompressed",
+            [&]()
+            {
+                args.store_threshold = 0;
+            });
+
+        parser.flag("--verbose", "verbose output",
+            [&]()
+            {
+                args.verbose = true;
+            });
+
+        parser.flag("--developer", "print layout diagnostics and exit",
+            [&]()
+            {
+                args.developer = true;
+            });
+
+        parser.positional([&](std::string_view token)
+        {
+            args.inputs.emplace_back(token);
+        });
+    }
 
 // ------------------------------------------------------------------------------------------
 // main
 // ------------------------------------------------------------------------------------------
 
-int main(int argc, char* argv[])
+int main(int argc, const char* argv[])
 {
-    CommandLine commands(argv + 0, argv + argc);
+    CompressArgs args;
 
-    if (commands.size() < 4)
+    CommandLineParser parser;
+    configureParser(parser, args);
+
+    if (argc < 2)
     {
-        printHelp(commands);
+        printBanner();
+        parser.printHelp();
+        printCompressors();
         return 0;
     }
 
-    State state;
-
-    std::string folder = std::string(commands[1]);
-    std::string output = "result.hbs";
-    std::string compression = std::string(commands[2]);
-
-    int level = std::stoi(commands[3].data());
-    size_t store_threshold = store_threshold_default;
-    bool developer = false;
-
-    for (size_t i = 4; i < commands.size(); ++i)
+    if (!parser.parse(argc, argv))
     {
-        if (commands[i] == "--store")
-        {
-            store_threshold = 0;
-        }
-        else if (commands[i] == "--developer")
-        {
-            developer = true;
-        }
-        else if (commands[i] == "--verbose")
-        {
-            state.verbose = true;
-        }
-        else if (commands[i] == "--output")
-        {
-            if (++i < commands.size())
-            {
-                output = std::string(commands[i]);
-            }
-            else
-            {
-                printLine("Output filename missing.");
-                return 0;
-            }
-        }
+        return 1;
     }
+
+    if (args.inputs.empty())
+    {
+        printLine("No input files or folders.");
+        return 1;
+    }
+
+    State state;
+    state.verbose = args.verbose;
 
     try
     {
-        compress(state, folder, output, compression, level, store_threshold, developer);
+        compress(state, args.inputs, args.output, args.method, args.level, args.store_threshold, args.developer);
     }
     catch (Exception& e)
     {
         printLine("{}", e.what());
+        return 1;
     }
+
+    return 0;
 }

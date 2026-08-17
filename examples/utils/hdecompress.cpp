@@ -315,6 +315,16 @@ struct State
     u32 verify_errors { 0 };
 };
 
+struct DecompressArgs
+{
+    std::string archive;
+    std::string destination;
+    bool print_list = false;
+    bool print_tree = false;
+    bool verify = false;
+    std::string error;
+};
+
 struct ListEntry
 {
     std::string name;
@@ -820,193 +830,238 @@ namespace
         }
     }
 
-} // namespace
-
-int main(int argc, char* argv[])
-{
-    std::string program_name(removePath(std::string_view(argv[0])));
-
-    if (argc < 2)
+    void printBanner()
     {
         printLine("");
         printLine("HBS Decompression Tool version 0.4");
         printLine("Copyright (C) 2026 Twilight 3D Finland, Oy. All rights reserved.");
-        printLine("Usage: {} [archive] [destination]", program_name);
-        printLine("       {} [archive] --list", program_name);
-        printLine("       {} [archive] --tree", program_name);
-        printLine("       {} [archive] [destination] [--verify]", program_name);
-        return 0;
+        printLine("");
     }
 
-    std::string filename = argv[1];
-    std::string destination;
-
-    State state;
-
-    for (int i = 2; i < argc; ++i)
+    void configureParser(CommandLineParser& parser, DecompressArgs& args)
     {
-        std::string arg = argv[i];
+        parser.usage("[options] <archive> [destination]");
 
-        if (arg == "--verify")
-        {
-            state.verify = true;
-        }
-        else if (arg == "--list")
-        {
-            state.print_list = true;
-        }
-        else if (arg == "--tree")
-        {
-            state.print_tree = true;
-        }
-        else if (!arg.empty() && arg[0] == '-')
-        {
-            printLine(Print::Error, "Unknown option: {}", arg);
-            return 1;
-        }
-        else if (!arg.empty())
-        {
-            if (!destination.empty())
+        parser.flag("--list", "list archive contents",
+            [&]()
             {
-                printLine(Print::Error, "Multiple destinations specified.");
-                return 1;
+                args.print_list = true;
+            });
+
+        parser.flag("--tree", "print archive as a directory tree",
+            [&]()
+            {
+                args.print_tree = true;
+            });
+
+        parser.flag("--verify", "verify checksums without extracting",
+            [&]()
+            {
+                args.verify = true;
+            });
+
+        parser.positional([&](std::string_view token)
+        {
+            if (args.archive.empty())
+            {
+                args.archive = token;
             }
-
-            destination = arg;
-        }
-    }
-
-    if (state.print_list && state.print_tree)
-    {
-        printLine(Print::Error, "Use --list or --tree, not both.");
-        return 1;
-    }
-
-    if (!destination.empty() && (state.print_list || state.print_tree))
-    {
-        printLine(Print::Error, "Cannot combine extract with --list or --tree.");
-        return 1;
-    }
-
-    if (destination.empty() && !state.verify && !state.print_list && !state.print_tree)
-    {
-        printLine(Print::Error, "No mode selected. Use --list, --tree, --verify, or a destination folder.");
-        return 1;
-    }
-
-    if (!destination.empty())
-    {
-        state.decompress = true;
-        destination += "/";
-    }
-
-    File archive_file(filename);
-
-    try
-    {
-        if (state.print_list || state.print_tree)
-        {
-            Path path(archive_file, ".hbs");
-            std::string prefix = path.pathname();
-
-            if (state.print_list)
+            else if (args.destination.empty())
             {
-                u64 list_time0 = Time::ms();
-
-                std::vector<ListEntry> entries;
-                collectList(path, prefix, entries);
-                printList(entries);
-
-                state.file_count = entries.size();
-                state.total_bytes = 0;
-
-                for (const auto& entry : entries)
-                {
-                    state.total_bytes += entry.size;
-                }
-
-                u64 list_time1 = Time::ms();
-
-                printLine("");
-                printLine("List: {} files ({:0.1f} MB) in {:0.2f} seconds",
-                    state.file_count,
-                    state.total_bytes / double(MB),
-                    (list_time1 - list_time0) / 1000.0);
-                printLine("");
+                args.destination = token;
             }
             else
             {
-                u64 tree_time0 = Time::ms();
-
-                enumerate(path, state, destination, prefix, 0);
-
-                u64 tree_time1 = Time::ms();
-
-                printLine("");
-                printLine("Tree: {} files ({:0.1f} MB) in {:0.2f} seconds",
-                    state.file_count,
-                    state.total_bytes / double(MB),
-                    (tree_time1 - tree_time0) / 1000.0);
-                printLine("");
+                args.error = "Too many positional arguments.";
             }
+        });
+    }
+
+    bool validateArgs(DecompressArgs& args)
+    {
+        if (args.archive.empty())
+        {
+            args.error = "Missing archive.";
+            return false;
         }
 
-        if (state.decompress || state.verify)
+        if (args.print_list && args.print_tree)
         {
-            if (state.verify)
+            args.error = "Use --list or --tree, not both.";
+            return false;
+        }
+
+        if (!args.destination.empty() && (args.print_list || args.print_tree))
+        {
+            args.error = "Cannot combine extract with --list or --tree.";
+            return false;
+        }
+
+        if (args.destination.empty() && !args.verify && !args.print_list && !args.print_tree)
+        {
+            args.error = "No mode selected. Use --list, --tree, --verify, or a destination folder.";
+            return false;
+        }
+
+        return true;
+    }
+
+    int runDecompress(const DecompressArgs& args)
+    {
+        State state;
+        state.print_list = args.print_list;
+        state.print_tree = args.print_tree;
+        state.verify = args.verify;
+
+        std::string destination = args.destination;
+        if (!destination.empty())
+        {
+            state.decompress = true;
+            destination += "/";
+        }
+
+        File archive_file(args.archive);
+
+        try
+        {
+            if (state.print_list || state.print_tree)
             {
-                state.file_count = 0;
-                state.total_bytes = 0;
+                Path path(archive_file, ".hbs");
+                std::string prefix = path.pathname();
 
-                bool do_extract = false;
-                bool do_checksum = true;
-                processArchive(archive_file, destination, do_extract, do_checksum, state);
-
-                if (state.verify_errors > 0)
+                if (state.print_list)
                 {
-                    printLine("Status: FAILED (count: {})", state.verify_errors);
+                    u64 list_time0 = Time::ms();
+
+                    std::vector<ListEntry> entries;
+                    collectList(path, prefix, entries);
+                    printList(entries);
+
+                    state.file_count = entries.size();
+                    state.total_bytes = 0;
+
+                    for (const auto& entry : entries)
+                    {
+                        state.total_bytes += entry.size;
+                    }
+
+                    u64 list_time1 = Time::ms();
+
+                    printLine("");
+                    printLine("List: {} files ({:0.1f} MB) in {:0.2f} seconds",
+                        state.file_count,
+                        state.total_bytes / double(MB),
+                        (list_time1 - list_time0) / 1000.0);
+                    printLine("");
                 }
                 else
                 {
-                    printLine("Status: PASSED");
+                    u64 tree_time0 = Time::ms();
 
-                    if (state.decompress)
-                    {
-                        printLine("");
+                    enumerate(path, state, destination, prefix, 0);
 
-                        state.file_count = 0;
-                        state.total_bytes = 0;
+                    u64 tree_time1 = Time::ms();
 
-                        // Archive already verified on main; extract write-only.
-                        bool do_extract = true;
-                        bool do_checksum = false;
-                        processArchive(archive_file, destination, do_extract, do_checksum, state);
-                        printLine("");
-                    }
+                    printLine("");
+                    printLine("Tree: {} files ({:0.1f} MB) in {:0.2f} seconds",
+                        state.file_count,
+                        state.total_bytes / double(MB),
+                        (tree_time1 - tree_time0) / 1000.0);
+                    printLine("");
                 }
             }
-            else
-            {
-                state.file_count = 0;
-                state.total_bytes = 0;
 
-                bool do_extract = true;
-                bool do_checksum = true;
-                processArchive(archive_file, destination, do_extract, do_checksum, state);
-                printLine("");
+            if (state.decompress || state.verify)
+            {
+                if (state.verify)
+                {
+                    state.file_count = 0;
+                    state.total_bytes = 0;
+
+                    bool do_extract = false;
+                    bool do_checksum = true;
+                    processArchive(archive_file, destination, do_extract, do_checksum, state);
+
+                    if (state.verify_errors > 0)
+                    {
+                        printLine("Status: FAILED (count: {})", state.verify_errors);
+                    }
+                    else
+                    {
+                        printLine("Status: PASSED");
+
+                        if (state.decompress)
+                        {
+                            printLine("");
+
+                            state.file_count = 0;
+                            state.total_bytes = 0;
+
+                            bool do_extract = true;
+                            bool do_checksum = false;
+                            processArchive(archive_file, destination, do_extract, do_checksum, state);
+                            printLine("");
+                        }
+                    }
+                }
+                else
+                {
+                    state.file_count = 0;
+                    state.total_bytes = 0;
+
+                    bool do_extract = true;
+                    bool do_checksum = true;
+                    processArchive(archive_file, destination, do_extract, do_checksum, state);
+                    printLine("");
+                }
             }
         }
+        catch (Exception& e)
+        {
+            printLine(Print::Error, "{}", e.what());
+            return 1;
+        }
+
+        if (state.verify_errors > 0)
+        {
+            return 1;
+        }
+
+        return 0;
     }
-    catch (Exception& e)
+
+} // namespace
+
+int main(int argc, const char* argv[])
+{
+    DecompressArgs args;
+
+    CommandLineParser parser;
+    configureParser(parser, args);
+
+    if (argc < 2)
     {
-        printLine(Print::Error, "{}", e.what());
+        printBanner();
+        parser.printHelp();
+        return 0;
+    }
+
+    if (!parser.parse(argc, argv))
+    {
         return 1;
     }
 
-    if (state.verify_errors > 0)
+    if (!args.error.empty())
     {
+        printLine(Print::Error, "{}", args.error);
         return 1;
     }
 
-    return 0;
+    if (!validateArgs(args))
+    {
+        printLine(Print::Error, "{}", args.error);
+        return 1;
+    }
+
+    return runDecompress(args);
 }
