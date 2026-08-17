@@ -152,20 +152,30 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string filename = "data/dude.gif"; // default filename
+    struct Args
+    {
+        std::string filename = "data/dude.gif";
+    } args;
 
-    if (commands.size() < 2)
+    CommandLineParser parser;
+    parser.usage("[filename]");
+    parser.positional([&](std::string_view token)
+    {
+        args.filename = token;
+    });
+
+    if (!parser.parse(commands))
+    {
+        return 1;
+    }
+
+    if (parser.positionals().empty())
     {
         printLine("Too few arguments. Usage: {} <filename>", commands[0]);
         printLine("We play the default animation for your convenience.");
     }
-    else
-    {
-        // overide from command line
-        filename = commands[1];
-    }
 
-    ImageAnimation animation(filename);
+    ImageAnimation animation(args.filename);
     DemoWindow demo(animation);
 
     EventLoopConfig config;

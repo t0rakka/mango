@@ -870,48 +870,75 @@ void test_folder(Path& path)
 // main()
 // ----------------------------------------------------------------------
 
+namespace
+{
+
+    void configureParser(CommandLineParser& parser)
+    {
+        parser.usage("[options] <file.png | folder/>");
+
+        parser.flag("--nomt", "disable multi-threaded codec",
+            []()
+            {
+                g_option_multithread = false;
+            });
+
+        parser.option("--compression", "zlib compression level (0-9)",
+            [](std::string_view value)
+            {
+                g_option_compression = std::atoi(value.data());
+            });
+
+        parser.flag("--debug", "enable debug output",
+            []()
+            {
+                printEnable(Print::Debug, true);
+            });
+
+        parser.flag("--trace", "enable tracing",
+            []()
+            {
+                g_option_tracing = true;
+            });
+
+        parser.flag("--save", "disable save testing",
+            []()
+            {
+                g_option_save = false;
+            });
+    }
+
+} // namespace
+
 int main(int argc, const char* argv[])
 {
+    CommandLineParser parser;
+    configureParser(parser);
+
     if (argc < 2)
     {
-        printLine("Too few arguments. Usage: <filename.png>");
-        printLine("                   Usage: <pathname>");
-        return 0;
+        parser.printHelp();
+        return 1;
+    }
+
+    if (!parser.parse(argc, argv))
+    {
+        return 1;
+    }
+
+    const auto& positionals = parser.positionals();
+    if (positionals.empty())
+    {
+        printLine("Missing file or folder.");
+        return 1;
     }
 
     printLine(getSystemInfo());
 
-    std::string filename = argv[1];
+    std::string filename = std::string(positionals.front());
     if (filename.empty())
     {
-        // Impossible since then it can't be argv[1] now can it...
-        // ...but we check anyway because we are too cool to fail
-        return 0;
-    }
-
-    for (int i = 2; i < argc; ++i)
-    {
-        if (!strcmp(argv[i], "--nomt"))
-        {
-            g_option_multithread = false;
-        }
-        else if (!strcmp(argv[i], "-compression") && i <= (argc - 2))
-        {
-            g_option_compression = std::atoi(argv[++i]);
-        }
-        else if (!strcmp(argv[i], "--debug"))
-        {
-            printEnable(Print::Debug, true);
-        }
-        else if (!strcmp(argv[i], "--trace"))
-        {
-            g_option_tracing = true;
-        }
-        else if (!strcmp(argv[i], "--save"))
-        {
-            // NOTE: reverse condition --save means DISABLE save testing
-            g_option_save = false;
-        }
+        return 1;
     }
 
     // high-tech logic to determine which test to run

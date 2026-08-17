@@ -17,6 +17,7 @@
 #include <mango/vulkan/allocator.hpp>
 #include <mango/vulkan/font.hpp>
 #include <mango/vulkan/render_target.hpp>
+#include "../demo_cli.hpp"
 
 using namespace mango;
 using namespace mango::math;
@@ -429,26 +430,26 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string bodyFontPath = "data/fonts/GreatVibes-Regular.ttf";
-
-    std::vector<const char*> enabledLayers;
-
-    for (size_t i = 1; i < commands.size(); ++i)
+    struct Args : demo::VulkanDemoArgs
     {
-        std::string arg = std::string(commands[i]);
-        if (arg[0] != '-')
-        {
-            bodyFontPath = arg;
-        }
-        else if (arg == "--info")
-        {
-            printEnable(Print::Info, true);
-        }
-        else if (arg == "--validate")
-        {
-            enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
-        }
+        std::string bodyFontPath = "data/fonts/GreatVibes-Regular.ttf";
+    } args;
+
+    CommandLineParser parser;
+    demo::configureVulkanDemoParser(parser, args);
+    parser.usage("[options] [font.ttf]");
+    parser.positional([&](std::string_view token)
+    {
+        args.bodyFontPath = token;
+    });
+
+    if (!parser.parse(commands))
+    {
+        return 1;
     }
+
+    demo::applyVulkanDemoArgs(args);
+    std::vector<const char*> enabledLayers = demo::vulkanEnabledLayers(args);
 
     std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
 
@@ -471,7 +472,7 @@ int mangoMain(const mango::CommandLine& commands)
     Instance instance(applicationInfo, enabledLayers, enabledExtensions);
 
     VulkanContext ctx(instance);
-    FontWindow window(ctx, 1280, 720, 0, bodyFontPath);
+    FontWindow window(ctx, 1280, 720, 0, args.bodyFontPath);
     window.setTitle("Scanline Sweeper Font (Vulkan)");
 
     EventLoopConfig config;

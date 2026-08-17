@@ -121,30 +121,43 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
+    struct Args
+    {
+        bool hdr = false;
+        bool srgb = false;
+    } args;
+
+    CommandLineParser parser;
+    parser.usage("[options]");
+    parser.flag("--hdr", "request 16-bit framebuffer",
+        [&]()
+        {
+            args.hdr = true;
+        });
+    parser.flag("--srgb", "enable sRGB framebuffer",
+        [&]()
+        {
+            args.srgb = true;
+        });
+
+    if (!parser.parse(commands))
+    {
+        return 1;
+    }
+
     OpenGLWindow::Config config;
 
-    bool sRGB = false;
-
-    if (commands.size() == 2)
+    if (args.hdr)
     {
-        std::string_view p1 = commands[1];
-
-        if (p1 == "--hdr")
-        {
-            config.red = 16;
-            config.green = 16;
-            config.blue = 16;
-            config.alpha = 16;
-        }
-        else if (p1 == "--srgb")
-        {
-            sRGB = true;
-        }
+        config.red = 16;
+        config.green = 16;
+        config.blue = 16;
+        config.alpha = 16;
     }
 
     printEnable(Print::Info, true);
 
-    TestWindow window(config, sRGB);
+    TestWindow window(config, args.srgb);
 
     EventLoop loop;
     loop.attach(window);

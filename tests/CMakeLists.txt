@@ -25,6 +25,7 @@ set(MANGO_TESTS
     core_half
     core_string
     core_checksum
+    core_commandline
 )
 
 foreach(test IN LISTS MANGO_TESTS)

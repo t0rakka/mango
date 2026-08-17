@@ -5,6 +5,7 @@
 #define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
 #include <mango/vulkan/framebuffer.hpp>
+#include "../demo_cli.hpp"
 
 #include <cmath>
 #include <vector>
@@ -348,20 +349,18 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::vector<const char*> enabledLayers;
+    demo::VulkanDemoArgs args;
 
-    for (size_t i = 1; i < commands.size(); ++i)
+    CommandLineParser parser;
+    demo::configureVulkanDemoParser(parser, args);
+
+    if (!parser.parse(commands))
     {
-        std::string arg = std::string(commands[i]);
-        if (arg == "--info")
-        {
-            printEnable(Print::Info, true);
-        }
-        else if (arg == "--validate")
-        {
-            enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
-        }
+        return 1;
     }
+
+    demo::applyVulkanDemoArgs(args);
+    std::vector<const char*> enabledLayers = demo::vulkanEnabledLayers(args);
 
     std::vector<const char*> enabledExtensions = requiredSurfaceExtensions();
 

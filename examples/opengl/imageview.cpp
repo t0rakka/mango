@@ -84,10 +84,21 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string filename = "data/hanselun.png";
-    if (commands.size() == 2)
+    struct Args
     {
-        filename = commands[1];
+        std::string filename = "data/hanselun.png";
+    } args;
+
+    CommandLineParser parser;
+    parser.usage("[filename]");
+    parser.positional([&](std::string_view token)
+    {
+        args.filename = token;
+    });
+
+    if (!parser.parse(commands))
+    {
+        return 1;
     }
 
     printEnable(Print::Debug, true); // image decoder format dumps
@@ -98,8 +109,8 @@ int mangoMain(const mango::CommandLine& commands)
 
     std::unique_ptr<Bitmap> bitmap;
 
-    filesystem::File file(filename);
-    ImageDecoder decoder(file, filename);
+    filesystem::File file(args.filename);
+    ImageDecoder decoder(file, args.filename);
     if (decoder.isDecoder())
     {
         ImageHeader header = decoder.header();

@@ -78,14 +78,24 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    std::string filename = "data/tech_helmet_2005.jpg";
-
-    if (commands.size() == 2)
+    struct Args
     {
-        filename = commands[1];
+        std::string filename = "data/tech_helmet_2005.jpg";
+    } args;
+
+    CommandLineParser parser;
+    parser.usage("[filename]");
+    parser.positional([&](std::string_view token)
+    {
+        args.filename = token;
+    });
+
+    if (!parser.parse(commands))
+    {
+        return 1;
     }
 
-    Bitmap bitmap(filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+    Bitmap bitmap(args.filename, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
     TestWindow window(bitmap);
 

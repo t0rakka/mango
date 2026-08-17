@@ -8,26 +8,50 @@
 using namespace mango;
 using namespace mango::image;
 
+namespace
+{
+
+    void configureParser(CommandLineParser& parser)
+    {
+        parser.usage("<image> [...]");
+    }
+
+} // namespace
+
 int main(int argc, const char* argv[])
 {
+    CommandLineParser parser;
+    configureParser(parser);
+
     if (argc < 2)
     {
-        std::cout << "Usage: inspect <image> [...]\n";
+        parser.printHelp();
+        return 1;
+    }
+
+    if (!parser.parse(argc, argv))
+    {
+        return 1;
+    }
+
+    const auto& filenames = parser.positionals();
+    if (filenames.empty())
+    {
+        parser.printHelp();
         return 1;
     }
 
     int status = 0;
 
-    for (int i = 1; i < argc; ++i)
+    for (std::string_view filename : filenames)
     {
-        const std::string filename = argv[i];
-
         try
         {
-            filesystem::File file(filename);
-            ImageInspect report = inspect(ConstMemory(file), filename);
+            const std::string path(filename);
+            filesystem::File input(path);
+            ImageInspect report = inspect(ConstMemory(input), path);
 
-            if (argc > 2)
+            if (filenames.size() > 1)
                 std::cout << filename << ":\n";
 
             std::cout << formatImageInspect(report) << "\n";

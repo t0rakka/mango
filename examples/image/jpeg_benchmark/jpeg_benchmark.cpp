@@ -389,57 +389,95 @@ void load_wuffs(const char* filename)
 // main()
 // ----------------------------------------------------------------------
 
+namespace
+{
+
+    struct JpegBenchmarkArgs
+    {
+        std::string filename;
+        int test_count = 0;
+        bool multithread = true;
+        bool tracing = false;
+        bool mango_only = false;
+    };
+
+    void configureParser(CommandLineParser& parser, JpegBenchmarkArgs& args)
+    {
+        parser.usage("[options] <filename.jpg>");
+
+        parser.flag("--nomt", "disable multi-threaded codec",
+            [&]()
+            {
+                args.multithread = false;
+            });
+
+        parser.flag("--debug", "enable debug output",
+            [&]()
+            {
+                printEnable(Print::Debug, true);
+            });
+
+        parser.flag("--trace", "enable tracing",
+            [&]()
+            {
+                args.tracing = true;
+            });
+
+        parser.flag("--save", "disable save testing",
+            [&]()
+            {
+                g_enable_save = false;
+            });
+
+        parser.flag("--mango", "benchmark mango codec only",
+            [&]()
+            {
+                args.mango_only = true;
+            });
+
+        parser.option("--count", "repeat mango benchmark N times",
+            [&](std::string_view value)
+            {
+                args.test_count = std::atoi(value.data());
+            });
+
+        parser.positional([&](std::string_view token)
+        {
+            args.filename = token;
+        });
+    }
+
+} // namespace
+
 int main(int argc, const char* argv[])
 {
-    const char* filename = nullptr;
-    int test_count = 0;
-    bool multithread = true;
-    bool tracing = false;
-    bool mango_only = false;
+    JpegBenchmarkArgs args;
 
-    for (int i = 1; i < argc; ++i)
+    CommandLineParser parser;
+    configureParser(parser, args);
+
+    if (argc < 2)
     {
-        if (!strcmp(argv[i], "--nomt"))
-        {
-            multithread = false;
-        }
-        else if (!strcmp(argv[i], "--debug"))
-        {
-            printEnable(Print::Debug, true);
-        }
-        else if (!strcmp(argv[i], "--trace"))
-        {
-            tracing = true;
-        }
-        else if (!strcmp(argv[i], "--save"))
-        {
-            // NOTE: reverse logic --save means DISABLE save testing
-            g_enable_save = false;
-        }
-        else if (!strcmp(argv[i], "--mango"))
-        {
-            mango_only = true;
-        }
-        else if (!strcmp(argv[i], "--count"))
-        {
-            if (i + 1 >= argc)
-            {
-                printLine("Missing value for --count");
-                exit(1);
-            }
-            test_count = std::atoi(argv[++i]);
-        }
-        else
-        {
-            filename = argv[i];
-        }
+        parser.printHelp();
+        return 1;
     }
 
-    if (!filename)
+    if (!parser.parse(argc, argv))
     {
-        printLine("usage: jpeg_benchmark <filename.jpg> [--mango] [--nomt] [--debug] [--trace] [--save] [--count N]");
-        exit(1);
+        return 1;
     }
+
+    if (args.filename.empty())
+    {
+        printLine("Missing filename.");
+        return 1;
+    }
+
+    const char* filename = args.filename.c_str();
+    const int test_count = args.test_count;
+    const bool multithread = args.multithread;
+    const bool tracing = args.tracing;
+    const bool mango_only = args.mango_only;
 
     printLine(getSystemInfo());
     warmup(filename);

@@ -173,72 +173,95 @@ void test(const std::string& folder, const std::string& format, bool mmap, bool 
 // main
 // -----------------------------------------------------------------
 
+namespace
+{
+
+    struct BulkDecodeArgs
+    {
+        std::string pathname;
+        std::string format;
+        bool mmap = false;
+        bool multithread = false;
+        bool tracing = false;
+    };
+
+    void configureParser(CommandLineParser& parser, BulkDecodeArgs& args)
+    {
+        parser.usage("[options] <folder>");
+
+        parser.option("--format", "select specific format extension",
+            [&](std::string_view value)
+            {
+                args.format = value;
+            });
+
+        parser.flag("--trace", "enable tracing",
+            [&]()
+            {
+                args.tracing = true;
+            });
+
+        parser.flag("--info", "enable decoding diagnostic information",
+            [&]()
+            {
+                printEnable(Print::Debug, true);
+            });
+
+        parser.flag("--mmap", "enable memory mapping",
+            [&]()
+            {
+                args.mmap = true;
+            });
+
+        parser.flag("--mt", "enable multi-threaded decoding",
+            [&]()
+            {
+                args.multithread = true;
+            });
+
+        parser.positional([&](std::string_view token)
+        {
+            args.pathname = token;
+        });
+    }
+
+} // namespace
+
 int main(int argc, const char* argv[])
 {
+    BulkDecodeArgs args;
+
+    CommandLineParser parser;
+    configureParser(parser, args);
+
     if (argc < 2)
     {
-        printLine("Usage: {} <folder>", argv[0]);
-        printLine("Options:");
-        printLine("    --format <extension> : select specific format");
-        printLine("    --trace              : enable tracing");
-        printLine("    --info               : enable decoding diagnostic information");
-        printLine("    --mmap               : enable memory mapping");
-        printLine("    --mt                 : enable multi-threaded decoding");
+        parser.printHelp();
         return 1;
     }
 
-    std::string pathname = argv[1];
-
-    // defaults
-    std::string format;
-    bool mmap = false;
-    bool multithread = false;
-    bool tracing = false;
-
-    for (int i = 2; i < argc; ++i)
+    if (!parser.parse(argc, argv))
     {
-        if (!strcmp(argv[i], "--mmap"))
-        {
-            mmap = true;
-        }
-        else if (!strcmp(argv[i], "--mt"))
-        {
-            multithread = true;
-        }
-        else if (!strcmp(argv[i], "--info"))
-        {
-            printEnable(Print::Debug, true);
-        }
-        else if (!strcmp(argv[i], "--trace"))
-        {
-            tracing = true;
-        }
-        else if (!strcmp(argv[i], "--format"))
-        {
-            ++i;
-            if (i < argc)
-            {
-                format = argv[i];
-            }
-            else
-            {
-                printLine("ERROR: missing extension parameter.");
-                return 0;
-            }
-        }
+        return 1;
+    }
+
+    if (args.pathname.empty())
+    {
+        printLine("Missing folder.");
+        return 1;
     }
 
     std::unique_ptr<filesystem::OutputFileStream> output;
 
-    if (tracing)
+    if (args.tracing)
     {
         output = std::make_unique<filesystem::OutputFileStream>("result.trace");
         startTrace(output.get());
     }
 
-    test(pathname, format, mmap, multithread);
+    test(args.pathname, args.format, args.mmap, args.multithread);
 
-    if (tracing)
+    if (args.tracing)
     {
         stopTrace();
     }
