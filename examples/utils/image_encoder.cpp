@@ -62,26 +62,24 @@ namespace
 
     void addInputFilename(ImageEncoderArgs& args, std::string_view token)
     {
-        const std::string text(token);
-
-        if (!hasWildcard(text))
+        if (!hasWildcard(token))
         {
-            if (isImageDecoder(text))
+            if (isImageDecoder(std::string(token)))
             {
-                args.filenames.emplace_back(text);
+                args.filenames.emplace_back(token);
             }
             return;
         }
 
         // Windows (and some shells) do not expand globs into argv; do it here.
-        std::string directory = getPath(text);
-        const std::string pattern = removePath(text);
+        const std::string text(token);
+        std::string directory(getPath(text));
         if (directory.empty())
         {
             directory = "./";
         }
 
-        const std::string pattern_lower = toLower(pattern);
+        const std::string pattern_lower = toLower(removePath(text));
         size_t matches = 0;
 
         Path path(directory);
@@ -203,7 +201,7 @@ namespace
 
         for (const auto& filename : args.filenames)
         {
-            std::string output = removePath(filename);
+            std::string output(removePath(filename));
 
             if (!args.output_filename.empty() && args.filenames.size() == 1)
             {
@@ -211,7 +209,7 @@ namespace
             }
             else if (!args.request_format.empty())
             {
-                output = removeExtension(output) + args.request_format;
+                output = std::string(removeExtension(output)) + args.request_format;
             }
 
             printLine("Processing: \"{}\" --> \"{}\"", filename, output);

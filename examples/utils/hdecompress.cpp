@@ -824,7 +824,7 @@ namespace
 
 int main(int argc, char* argv[])
 {
-    std::string program_name = removePath(argv[0]);
+    std::string program_name(removePath(std::string_view(argv[0])));
 
     if (argc < 2)
     {

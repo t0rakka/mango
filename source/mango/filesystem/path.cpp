@@ -74,39 +74,64 @@ namespace mango::filesystem
 #endif
     }
 
+    std::string_view getPath(std::string_view filename)
+    {
+        const size_t n = getPathSeparatorIndex(filename);
+        if (n != std::string_view::npos)
+        {
+            return filename.substr(0, n + 1);
+        }
+        return {};
+    }
+
+    std::string_view removePath(std::string_view filename)
+    {
+        const size_t n = getPathSeparatorIndex(filename);
+        if (n != std::string_view::npos)
+        {
+            return filename.substr(n + 1);
+        }
+        return filename;
+    }
+
+    std::string_view getExtension(std::string_view filename)
+    {
+        const size_t n = filename.find_last_of('.');
+        if (n != std::string_view::npos)
+        {
+            return filename.substr(n);
+        }
+        return {};
+    }
+
+    std::string_view removeExtension(std::string_view filename)
+    {
+        const size_t n = filename.find_last_of('.');
+        return filename.substr(0, n);
+    }
+
     std::string getPath(const std::string& filename)
     {
-        size_t n = getPathSeparatorIndex(filename);
-        std::string s;
-        if (n != std::string::npos)
-            s = filename.substr(0, n + 1);
-        return s;
+        std::string_view view = std::string_view(filename);
+        return std::string(getPath(view));
     }
 
     std::string removePath(const std::string& filename)
     {
-        size_t n = getPathSeparatorIndex(filename);
-        std::string s;
-        if (n != std::string::npos)
-            s = filename.substr(n + 1);
-        else
-            s = filename;
-        return s;
+        std::string_view view = std::string_view(filename);
+        return std::string(removePath(view));
     }
 
     std::string getExtension(const std::string& filename)
     {
-        size_t n = filename.find_last_of('.');
-        std::string s;
-        if (n != std::string::npos)
-            s = filename.substr(n);
-        return s;
+        std::string_view view = std::string_view(filename);
+        return std::string(getExtension(view));
     }
 
     std::string removeExtension(const std::string& filename)
     {
-        size_t n = filename.find_last_of('.');
-        return filename.substr(0, n);
+        std::string_view view = std::string_view(filename);
+        return std::string(removeExtension(view));
     }
 
 } // namespace mango::filesystem

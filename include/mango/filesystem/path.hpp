@@ -5,6 +5,7 @@
 #pragma once
 
 #include <string>
+#include <string_view>
 #include <vector>
 #include <mango/core/configure.hpp>
 #include <mango/filesystem/mapper.hpp>
@@ -92,9 +93,14 @@ namespace mango::filesystem
     size_t getPathSeparatorIndex(std::string_view filename);
 
     // example: "foo/bar/readme.txt"
-    std::string getPath(const std::string& filename);           // "foo/bar/"
-    std::string removePath(const std::string& filename);        // "readme.txt"
-    std::string getExtension(const std::string& filename);      // ".txt"
-    std::string removeExtension(const std::string& filename);   // "foo/bar/readme"
+    std::string_view getPath(std::string_view filename);           // "foo/bar/"
+    std::string_view removePath(std::string_view filename);        // "readme.txt"
+    std::string_view getExtension(std::string_view filename);      // ".txt"
+    std::string_view removeExtension(std::string_view filename);   // "foo/bar/readme"
+
+    std::string getPath(const std::string& filename);
+    std::string removePath(const std::string& filename);
+    std::string getExtension(const std::string& filename);
+    std::string removeExtension(const std::string& filename);
 
 } // namespace mango::filesystem
