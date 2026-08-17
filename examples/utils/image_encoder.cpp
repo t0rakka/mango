@@ -5,6 +5,7 @@
 #include <mango/mango.hpp>
 
 using namespace mango;
+using namespace mango::filesystem;
 using namespace mango::image;
 
 namespace
@@ -52,6 +53,63 @@ namespace
         }
 
         return toLower(extension);
+    }
+
+    bool hasWildcard(std::string_view value)
+    {
+        return value.find_first_of("*?") != std::string_view::npos;
+    }
+
+    void addInputFilename(ImageEncoderArgs& args, std::string_view token)
+    {
+        const std::string text(token);
+
+        if (!hasWildcard(text))
+        {
+            if (isImageDecoder(text))
+            {
+                args.filenames.emplace_back(text);
+            }
+            return;
+        }
+
+        // Windows (and some shells) do not expand globs into argv; do it here.
+        std::string directory = getPath(text);
+        const std::string pattern = removePath(text);
+        if (directory.empty())
+        {
+            directory = "./";
+        }
+
+        const std::string pattern_lower = toLower(pattern);
+        size_t matches = 0;
+
+        Path path(directory);
+        for (const FileInfo& info : path)
+        {
+            if (!info.isFile())
+            {
+                continue;
+            }
+
+            if (!isMatch(toLower(info.name), pattern_lower))
+            {
+                continue;
+            }
+
+            if (!isImageDecoder(info.name))
+            {
+                continue;
+            }
+
+            args.filenames.emplace_back(directory + info.name);
+            ++matches;
+        }
+
+        if (!matches)
+        {
+            printLine("No files matched: \"{}\"", text);
+        }
     }
 
     void configureParser(CommandLineParser& parser, ImageEncoderArgs& args)
@@ -135,10 +193,7 @@ namespace
 
         parser.positional([&](std::string_view token)
         {
-            if (isImageDecoder(std::string(token)))
-            {
-                args.filenames.emplace_back(token);
-            }
+            addInputFilename(args, token);
         });
     }
 
@@ -148,7 +203,7 @@ namespace
 
         for (const auto& filename : args.filenames)
         {
-            std::string output = filesystem::removePath(filename);
+            std::string output = removePath(filename);
 
             if (!args.output_filename.empty() && args.filenames.size() == 1)
             {
@@ -156,7 +211,7 @@ namespace
             }
             else if (!args.request_format.empty())
             {
-                output = filesystem::removeExtension(output) + args.request_format;
+                output = removeExtension(output) + args.request_format;
             }
 
             printLine("Processing: \"{}\" --> \"{}\"", filename, output);
