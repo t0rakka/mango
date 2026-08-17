@@ -806,6 +806,28 @@ namespace mango
         return value;
     }
 
+    bool tryParseInt(std::string_view str, int& value) noexcept
+    {
+        if (str.empty())
+        {
+            return false;
+        }
+
+        const auto result = std::from_chars(str.data(), str.data() + str.size(), value);
+        return result.ec == std::errc() && result.ptr == str.data() + str.size();
+    }
+
+    bool tryParseFloat(std::string_view str, float& value) noexcept
+    {
+        if (str.empty())
+        {
+            return false;
+        }
+
+        const auto result = fast_float::from_chars(str.data(), str.data() + str.size(), value);
+        return result.ec == std::errc() && result.ptr == str.data() + str.size();
+    }
+
     bool parseSize2D(std::string_view str, int& width, int& height) noexcept
     {
         const size_t sep = str.find_first_of("xX,");
@@ -814,8 +836,15 @@ namespace mango
             return false;
         }
 
-        width = parseInt(str.substr(0, sep));
-        height = parseInt(str.substr(sep + 1));
+        if (!tryParseInt(str.substr(0, sep), width))
+        {
+            return false;
+        }
+
+        if (!tryParseInt(str.substr(sep + 1), height))
+        {
+            return false;
+        }
 
         return width > 0 && height > 0;
     }

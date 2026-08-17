@@ -100,6 +100,8 @@ namespace mango
     public:
         using Action = std::function<void()>;
         using ValueAction = std::function<void(std::string_view)>;
+        using IntAction = std::function<void(int value)>;
+        using FloatAction = std::function<void(float value)>;
         using Size2DAction = std::function<void(int width, int height)>;
 
         // Boolean / switch flag: --name
@@ -109,6 +111,12 @@ namespace mango
         // Option that consumes the next argument: --name value  (or --name=value)
         CommandLineParser& option(std::string_view name, ValueAction action);
         CommandLineParser& option(std::string_view name, std::string_view help, ValueAction action);
+
+        CommandLineParser& optionInt(std::string_view name, IntAction action);
+        CommandLineParser& optionInt(std::string_view name, std::string_view help, IntAction action);
+
+        CommandLineParser& optionFloat(std::string_view name, FloatAction action);
+        CommandLineParser& optionFloat(std::string_view name, std::string_view help, FloatAction action);
 
         // Option with WxH value: --name 4x4  (or --name=4x4, 4,4)
         CommandLineParser& option2D(std::string_view name, Size2DAction action);
@@ -140,14 +148,24 @@ namespace mango
         const std::vector<std::string_view>& positionals() const { return m_positionals; }
 
     private:
+        enum class ValueType
+        {
+            String,
+            Int,
+            Float,
+            Size2D,
+        };
+
         struct Handler
         {
             std::string name;
             std::string help;
             bool takesValue = false;
-            bool takesSize2D = false;
+            ValueType valueType = ValueType::String;
             Action action;
             ValueAction valueAction;
+            IntAction intAction;
+            FloatAction floatAction;
             Size2DAction size2DAction;
         };
 

@@ -62,7 +62,7 @@ namespace
         int level = 0;
 
         CommandLineParser parser;
-        parser.option("--level", [&](std::string_view value) { level = std::atoi(value.data()); });
+        parser.optionInt("--level", [&](int value) { level = value; });
 
         CommandLine commands = make_commands({ "tool", "--level", "9" }, storage);
         CHECK(parser.parse(commands));
@@ -266,6 +266,66 @@ namespace
         return true;
     }
 
+    bool test_optionInt_inline_value()
+    {
+        std::vector<std::string> storage;
+        int level = 0;
+
+        CommandLineParser parser;
+        parser.optionInt("--level", [&](int value) { level = value; });
+
+        CommandLine commands = make_commands({ "tool", "--level=9" }, storage);
+        CHECK(parser.parse(commands));
+        CHECK(level == 9);
+
+        return true;
+    }
+
+    bool test_optionInt_invalid_value()
+    {
+        std::vector<std::string> storage;
+        bool called = false;
+
+        CommandLineParser parser;
+        parser.optionInt("--level", [&](int) { called = true; });
+
+        CommandLine commands = make_commands({ "tool", "--level=fast" }, storage);
+        CHECK(!parser.parse(commands));
+        CHECK(!called);
+
+        return true;
+    }
+
+    bool test_optionFloat_inline_value()
+    {
+        std::vector<std::string> storage;
+        float quality = 0.0f;
+
+        CommandLineParser parser;
+        parser.optionFloat("--quality", [&](float value) { quality = value; });
+
+        CommandLine commands = make_commands({ "tool", "--quality=0.85" }, storage);
+        CHECK(parser.parse(commands));
+        CHECK(quality > 0.84f && quality < 0.86f);
+
+        return true;
+    }
+
+    bool test_optionFloat_invalid_value()
+    {
+        std::vector<std::string> storage;
+        bool called = false;
+
+        CommandLineParser parser;
+        parser.optionFloat("--quality", [&](float) { called = true; });
+
+        CommandLine commands = make_commands({ "tool", "--quality=high" }, storage);
+        CHECK(!parser.parse(commands));
+        CHECK(!called);
+
+        return true;
+    }
+
     const Case g_cases [] =
     {
         { "flag and positional",           test_flag_and_positional },
@@ -283,6 +343,10 @@ namespace
         { "option2D separate value",       test_option2D_separate_value },
         { "option2D comma separator",      test_option2D_comma_separator },
         { "option2D invalid value",        test_option2D_invalid_value },
+        { "optionInt inline value",        test_optionInt_inline_value },
+        { "optionInt invalid value",       test_optionInt_invalid_value },
+        { "optionFloat inline value",      test_optionFloat_inline_value },
+        { "optionFloat invalid value",     test_optionFloat_invalid_value },
     };
 
 } // namespace

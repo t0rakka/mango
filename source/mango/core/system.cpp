@@ -535,7 +535,42 @@ namespace mango
         handler.name = std::string(name);
         handler.help = std::string(help);
         handler.takesValue = true;
+        handler.valueType = ValueType::String;
         handler.valueAction = std::move(action);
+        registerHandler(std::move(handler));
+        return *this;
+    }
+
+    CommandLineParser& CommandLineParser::optionInt(std::string_view name, IntAction action)
+    {
+        return optionInt(name, {}, std::move(action));
+    }
+
+    CommandLineParser& CommandLineParser::optionInt(std::string_view name, std::string_view help, IntAction action)
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueType = ValueType::Int;
+        handler.intAction = std::move(action);
+        registerHandler(std::move(handler));
+        return *this;
+    }
+
+    CommandLineParser& CommandLineParser::optionFloat(std::string_view name, FloatAction action)
+    {
+        return optionFloat(name, {}, std::move(action));
+    }
+
+    CommandLineParser& CommandLineParser::optionFloat(std::string_view name, std::string_view help, FloatAction action)
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueType = ValueType::Float;
+        handler.floatAction = std::move(action);
         registerHandler(std::move(handler));
         return *this;
     }
@@ -551,7 +586,7 @@ namespace mango
         handler.name = std::string(name);
         handler.help = std::string(help);
         handler.takesValue = true;
-        handler.takesSize2D = true;
+        handler.valueType = ValueType::Size2D;
         handler.size2DAction = std::move(action);
         registerHandler(std::move(handler));
         return *this;
@@ -607,16 +642,35 @@ namespace mango
 
         if (handler.takesValue)
         {
-            if (handler.takesSize2D)
+            switch (handler.valueType)
             {
-                if (!handler.size2DAction)
-                {
-                    MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
-                }
-            }
-            else if (!handler.valueAction)
-            {
-                MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                case ValueType::String:
+                    if (!handler.valueAction)
+                    {
+                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                    }
+                    break;
+
+                case ValueType::Int:
+                    if (!handler.intAction)
+                    {
+                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                    }
+                    break;
+
+                case ValueType::Float:
+                    if (!handler.floatAction)
+                    {
+                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                    }
+                    break;
+
+                case ValueType::Size2D:
+                    if (!handler.size2DAction)
+                    {
+                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                    }
+                    break;
             }
         }
         else if (!handler.action)
@@ -668,13 +722,30 @@ namespace mango
 
         printLine("Options:");
 
+        auto optionValueSuffix = [](ValueType type) -> std::string_view
+        {
+            switch (type)
+            {
+                case ValueType::Int:
+                    return " [=<integer>]";
+                case ValueType::Float:
+                    return " [=<number>]";
+                case ValueType::Size2D:
+                    return " [=<WxH>]";
+                case ValueType::String:
+                    break;
+            }
+
+            return " [=<value>]";
+        };
+
         size_t nameWidth = sizeof("--help") - 1;
         for (const Handler& handler : m_handlers)
         {
             size_t width = handler.name.size();
             if (handler.takesValue)
             {
-                width += handler.takesSize2D ? 10 : 12; // " [=<WxH>]" / " [=<value>]"
+                width += optionValueSuffix(handler.valueType).size();
             }
             if (width > nameWidth)
             {
@@ -699,7 +770,7 @@ namespace mango
             std::string name = handler.name;
             if (handler.takesValue)
             {
-                name += handler.takesSize2D ? " [=<WxH>]" : " [=<value>]";
+                name += optionValueSuffix(handler.valueType);
             }
             printEntry(name, handler.help);
         }
@@ -777,23 +848,57 @@ namespace mango
                     value = commands[i];
                 }
 
-                if (handler->takesSize2D)
+                switch (handler->valueType)
                 {
-                    int width = 0;
-                    int height = 0;
-
-                    if (!parseSize2D(value, width, height))
+                    case ValueType::Int:
                     {
-                        printLine("Invalid value for option: {} (expected WxH)", name);
-                        printLine("Try '--help'.");
-                        return false;
+                        int parsed = 0;
+
+                        if (!tryParseInt(value, parsed))
+                        {
+                            printLine("Invalid value for option: {} (expected integer)", name);
+                            printLine("Try '--help'.");
+                            return false;
+                        }
+
+                        handler->intAction(parsed);
+                        break;
                     }
 
-                    handler->size2DAction(width, height);
-                }
-                else
-                {
-                    handler->valueAction(value);
+                    case ValueType::Float:
+                    {
+                        float parsed = 0.0f;
+
+                        if (!tryParseFloat(value, parsed))
+                        {
+                            printLine("Invalid value for option: {} (expected number)", name);
+                            printLine("Try '--help'.");
+                            return false;
+                        }
+
+                        handler->floatAction(parsed);
+                        break;
+                    }
+
+                    case ValueType::Size2D:
+                    {
+                        int width = 0;
+                        int height = 0;
+
+                        if (!parseSize2D(value, width, height))
+                        {
+                            printLine("Invalid value for option: {} (expected WxH)", name);
+                            printLine("Try '--help'.");
+                            return false;
+                        }
+
+                        handler->size2DAction(width, height);
+                        break;
+                    }
+
+                    case ValueType::String:
+                        handler->valueAction(value);
+                        break;
                 }
             }
             else

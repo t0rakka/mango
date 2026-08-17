@@ -114,16 +114,16 @@ namespace
                 args.output_filename = value;
             });
 
-        parser.option("--compression", "compression level (0..10)",
-            [&](std::string_view value)
+        parser.optionInt("--compression", "compression level (0..10)",
+            [&](int value)
             {
-                args.options.compression = std::atoi(value.data());
+                args.options.compression = value;
             });
 
-        parser.option("--quality", "quality level (0..100)",
-            [&](std::string_view value)
+        parser.optionInt("--quality", "quality level (0..100)",
+            [&](int value)
             {
-                args.options.quality = std::atoi(value.data()) / 100.0f;
+                args.options.quality = value / 100.0f;
             });
 
         parser.option2D("--astc", "ASTC block size (e.g. 4x4)",

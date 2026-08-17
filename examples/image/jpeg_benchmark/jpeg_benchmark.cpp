@@ -435,10 +435,10 @@ namespace
                 args.mango_only = true;
             });
 
-        parser.option("--count", "repeat mango benchmark N times",
-            [&](std::string_view value)
+        parser.optionInt("--count", "repeat mango benchmark N times",
+            [&](int value)
             {
-                args.test_count = std::atoi(value.data());
+                args.test_count = value;
             });
 
         parser.positional([&](std::string_view token)

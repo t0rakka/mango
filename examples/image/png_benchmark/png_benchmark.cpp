@@ -883,10 +883,10 @@ namespace
                 g_option_multithread = false;
             });
 
-        parser.option("--compression", "zlib compression level (0-9)",
-            [](std::string_view value)
+        parser.optionInt("--compression", "zlib compression level (0-9)",
+            [](int value)
             {
-                g_option_compression = std::atoi(value.data());
+                g_option_compression = value;
             });
 
         parser.flag("--debug", "enable debug output",

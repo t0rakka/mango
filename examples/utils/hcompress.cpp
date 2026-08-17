@@ -1063,10 +1063,10 @@ void compress(State& state, const std::vector<std::string>& inputs, const std::s
                 args.method = value;
             });
 
-        parser.option("--level", "compression level 0..10 (default: 6)",
-            [&](std::string_view value)
+        parser.optionInt("--level", "compression level 0..10 (default: 6)",
+            [&](int value)
             {
-                args.level = std::atoi(value.data());
+                args.level = value;
             });
 
         parser.flag("--store", "store incompressible data uncompressed",
