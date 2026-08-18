@@ -1048,10 +1048,6 @@ namespace mango
         wl_display_roundtrip(display);
         wl_display_roundtrip(display);
 
-#if defined(MANGO_HAS_LIBDECOR)
-        libdecor_context = libdecor_new(display, &s_libdecor_interface);
-#endif
-
         if (!createWaylandWindow(width, height, "Mango Window"))
         {
             MANGO_EXCEPTION("[Window] Failed to create Wayland window.");
@@ -1171,13 +1167,7 @@ namespace mango
 
     bool WaylandBackend::createWaylandWindow(int width, int height, const char* title)
     {
-#if defined(MANGO_HAS_LIBDECOR)
-        const bool use_libdecor = libdecor_context != nullptr;
-#else
-        const bool use_libdecor = false;
-#endif
-
-        if (!compositor || (!use_libdecor && !xdg_wm_base))
+        if (!compositor)
         {
             return false;
         }
@@ -1194,22 +1184,40 @@ namespace mango
             size[1] = height;
         }
 
+        bool used_libdecor = false;
+
 #if defined(MANGO_HAS_LIBDECOR)
-        if (use_libdecor)
+        // CSD only when the compositor does not offer server-side decorations.
+        // Loading libdecor pulls in GTK on typical distros; skip that on Hyprland/KWin/Sway.
+        if (!decoration_manager)
         {
-            libdecor_frame = libdecor_decorate(libdecor_context, surface, &s_libdecor_frame_interface, this);
-            if (!libdecor_frame)
+            libdecor_context = libdecor_new(display, &s_libdecor_interface);
+            if (libdecor_context)
+            {
+                libdecor_frame = libdecor_decorate(libdecor_context, surface, &s_libdecor_frame_interface, this);
+                if (libdecor_frame)
+                {
+                    libdecor_frame_set_app_id(libdecor_frame, "mango");
+                    libdecor_frame_set_title(libdecor_frame, title);
+                    libdecor_frame_map(libdecor_frame);
+                    used_libdecor = true;
+                }
+                else
+                {
+                    libdecor_unref(libdecor_context);
+                    libdecor_context = nullptr;
+                }
+            }
+        }
+#endif
+
+        if (!used_libdecor)
+        {
+            if (!xdg_wm_base)
             {
                 return false;
             }
 
-            libdecor_frame_set_app_id(libdecor_frame, "mango");
-            libdecor_frame_set_title(libdecor_frame, title);
-            libdecor_frame_map(libdecor_frame);
-        }
-        else
-#endif
-        {
             xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, surface);
             if (!xdg_surface)
             {
