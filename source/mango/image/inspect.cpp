@@ -379,6 +379,10 @@ namespace mango::image
         out << "  Full decode: " << formatBytes(report.decode_bytes) << "\n";
 
         out << "\nFeatures:\n";
+        if (report.palette_colors > 0)
+            out << "  Palette: " << report.palette_colors << " colors\n";
+        else
+            out << "  Palette: no\n";
         out << "  Progressive: " << toString(report.progressive) << "\n";
         out << "  Tiled: " << formatTiling(report.tiling) << "\n";
         out << "  Alpha: " << (report.alpha ? "yes" : "no") << "\n";

@@ -447,6 +447,28 @@ namespace
             report.bit_depth = trueColor ? 8 : int(m_pcx_header.BitsPerPixel);
             report.alpha = m_pcx_header.NPlanes == 4;
             report.chroma_subsampling = indexed ? "" : "4:4:4";
+
+            if (header.format.isIndexed())
+            {
+                if (m_pcx_header.isPaletteMarker ||
+                    (m_pcx_header.BitsPerPixel == 8 && m_pcx_header.NPlanes == 1))
+                {
+                    report.palette_colors = 256;
+                }
+                else if (m_pcx_header.BitsPerPixel == 4 && m_pcx_header.NPlanes == 1)
+                {
+                    report.palette_colors = 16;
+                }
+                else if (m_pcx_header.BitsPerPixel == 2 && m_pcx_header.NPlanes == 1)
+                {
+                    report.palette_colors = 4;
+                }
+                else if (m_pcx_header.BitsPerPixel == 1 &&
+                         (m_pcx_header.NPlanes == 3 || m_pcx_header.NPlanes == 4))
+                {
+                    report.palette_colors = 4;
+                }
+            }
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

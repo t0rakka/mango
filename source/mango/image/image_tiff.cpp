@@ -2059,6 +2059,11 @@ namespace
             }
 
             syncHdrInspectFromHeader(report);
+
+            if (header.format.isIndexed() && m_context.palette.size > 0)
+            {
+                report.palette_colors = int(m_context.palette.size);
+            }
         }
 
         bool is_tiled_via_strips() const

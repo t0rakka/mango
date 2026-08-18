@@ -2246,6 +2246,11 @@ namespace
             return m_interlace != 0;
         }
 
+        u32 paletteSize() const noexcept
+        {
+            return m_palette.size;
+        }
+
         void setInterface(ImageDecodeInterface* interface)
         {
             m_interface = interface;
@@ -4584,6 +4589,11 @@ namespace
             report.chroma_subsampling = "4:4:4";
             report.encoding = m_parser.isInterlaced() ? "PNG interlaced" : "PNG";
             report.alpha = header.alpha;
+
+            if (header.format.isIndexed())
+            {
+                report.palette_colors = int(m_parser.paletteSize());
+            }
         }
     };
 

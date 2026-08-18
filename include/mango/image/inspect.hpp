@@ -63,6 +63,9 @@ namespace mango::image
         // Features
         InspectTriState progressive = InspectTriState::Unknown;
         ImageTileInfo tiling;
+
+        // Accessible palette entry count (0 = none exposed to client on decode).
+        int palette_colors = 0;
     };
 
     // Recognize container format from file signature (empty when unknown).

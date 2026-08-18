@@ -970,6 +970,13 @@ namespace
             report.encoding = header.frames > 1 ? "GIF LZW (animated)" : "GIF LZW";
             report.bit_depth = 8;
             report.alpha = m_metadata.alpha;
+
+            if (header.format.isIndexed() &&
+                m_state.screen_desc.color_table_flag() &&
+                m_state.screen_desc.palette)
+            {
+                report.palette_colors = m_state.screen_desc.color_table_size();
+            }
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override

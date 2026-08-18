@@ -1174,6 +1174,11 @@ namespace
         void populateInspect(ImageInspect& report) const override
         {
             populateRetroInspect(report, iffEncoding(), iffHasAlpha());
+
+            if (header.format.isIndexed() && m_palette.size > 0)
+            {
+                report.palette_colors = int(m_palette.size);
+            }
         }
 
         const u8* readSignature(const u8* data)
