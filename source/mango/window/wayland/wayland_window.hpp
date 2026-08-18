@@ -16,6 +16,13 @@
 struct xdg_wm_base;
 struct xdg_surface;
 struct xdg_toplevel;
+struct zxdg_decoration_manager_v1;
+struct zxdg_toplevel_decoration_v1;
+
+#if defined(MANGO_HAS_LIBDECOR)
+struct libdecor;
+struct libdecor_frame;
+#endif
 
 namespace mango
 {
@@ -30,6 +37,13 @@ namespace mango
         struct xdg_wm_base* xdg_wm_base = nullptr;
         struct xdg_surface* xdg_surface = nullptr;
         struct xdg_toplevel* xdg_toplevel = nullptr;
+        struct zxdg_decoration_manager_v1* decoration_manager = nullptr;
+        struct zxdg_toplevel_decoration_v1* toplevel_decoration = nullptr;
+
+#if defined(MANGO_HAS_LIBDECOR)
+        struct libdecor* libdecor_context = nullptr;
+        struct libdecor_frame* libdecor_frame = nullptr;
+#endif
 
         struct wl_seat* seat = nullptr;
         struct wl_pointer* pointer = nullptr;
@@ -54,6 +68,7 @@ namespace mango
         int32_t cursor[2] = { 0, 0 };
         uint32_t mouse_time[6] = {};
         bool fullscreen = false;
+        bool server_decorations = false;
         int32_t buffer_scale = 1;
 
         WaylandBackend(int width, int height, u32 flags);

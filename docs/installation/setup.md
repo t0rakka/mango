@@ -15,7 +15,7 @@ Debian, Ubuntu, Mint, Raspberry Pi OS, and other apt-based distros.
 
 ### Dependencies
 
-    sudo apt-get install libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev wayland-protocols libvulkan-dev
+    sudo apt-get install cmake ninja-build pkg-config g++ libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev libegl-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev wayland-protocols libdecor-0-dev libvulkan-dev
 
 
 <h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch / pacman</h2>
@@ -25,7 +25,7 @@ Arch Linux and other pacman-based distros.
 
 ### Dependencies
 
-    sudo pacman -S fmt z libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng
+    sudo pacman -S cmake ninja pkgconf gcc fmt zlib libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glu glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng vulkan-headers vulkan-icd-loader libx11 libxext libxrandr libxcb xcb-util-keysyms xcb-util-wm libxkbcommon libxkbcommon-x11 wayland wayland-protocols libdecor
 
 
 ### Building (Linux)
@@ -36,6 +36,8 @@ Arch Linux and other pacman-based distros.
     sudo ninja install
 
 Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. Configure the cmake options before building to tune the library size and dependencies to your taste.
+
+Xlib, Xcb and Wayland backends are compiled together when their packages are found; the active one is chosen at runtime. `libdecor-0-dev` / `libdecor` is optional at configure time but needed for window chrome on GNOME Wayland (title bar, move, resize). Hyprland and KWin draw decorations themselves. A successful Wayland+libdecor configure prints `Wayland (libdecor)` under `[WindowSystem]`; `Wayland` alone means libdecor was not found.
 
 
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>

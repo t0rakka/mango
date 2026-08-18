@@ -4,6 +4,7 @@
 */
 #include <mango/core/configure.hpp>
 #include <mango/core/exception.hpp>
+#include <mango/core/print.hpp>
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 
@@ -22,6 +23,11 @@
 #include <wayland-client-protocol.h>
 #include <xkbcommon/xkbcommon-keysyms.h>
 #include "xdg-shell-client-protocol.h"
+#include "xdg-decoration-client-protocol.h"
+
+#if defined(MANGO_HAS_LIBDECOR)
+#include <libdecor.h>
+#endif
 
 namespace
 {
@@ -274,25 +280,12 @@ namespace
         WaylandBackend* window = static_cast<WaylandBackend*>(data);
         applyToplevelStates(window, states);
 
-        const bool was_visible = window->size[0] > 0 && window->size[1] > 0;
-
+        // 0x0 means the client chooses the size (xdg-shell). GNOME sends this on
+        // the initial configure; treating it as minimize leaves size at 0 and the
+        // surface never maps. Keep the last requested size instead.
         if (width <= 0 || height <= 0)
         {
-            if (was_visible && window->owner)
-            {
-                window->owner->onMinimize();
-            }
-
-            window->size[0] = 0;
-            window->size[1] = 0;
-            window->pending_resize = true;
-            window->requestRefresh();
             return;
-        }
-
-        if (!was_visible && window->owner)
-        {
-            window->owner->onShow();
         }
 
         if (window->size[0] != width || window->size[1] != height)
@@ -314,11 +307,182 @@ namespace
         }
     }
 
+#if defined(XDG_TOPLEVEL_CONFIGURE_BOUNDS_SINCE_VERSION)
+    void xdg_toplevel_configure_bounds(void* data, struct xdg_toplevel* xdg_toplevel,
+                                       int32_t width, int32_t height)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(xdg_toplevel);
+        MANGO_UNREFERENCED(width);
+        MANGO_UNREFERENCED(height);
+    }
+#endif
+
+#if defined(XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
+    void xdg_toplevel_wm_capabilities(void* data, struct xdg_toplevel* xdg_toplevel,
+                                      struct wl_array* capabilities)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(xdg_toplevel);
+        MANGO_UNREFERENCED(capabilities);
+    }
+#endif
+
     static const struct xdg_toplevel_listener s_xdg_toplevel_listener =
     {
         .configure = xdg_toplevel_configure,
         .close = xdg_toplevel_close,
+#if defined(XDG_TOPLEVEL_CONFIGURE_BOUNDS_SINCE_VERSION)
+        .configure_bounds = xdg_toplevel_configure_bounds,
+#endif
+#if defined(XDG_TOPLEVEL_WM_CAPABILITIES_SINCE_VERSION)
+        .wm_capabilities = xdg_toplevel_wm_capabilities,
+#endif
     };
+
+    void xdg_decoration_configure(void* data, struct zxdg_toplevel_decoration_v1* decoration, uint32_t mode)
+    {
+        MANGO_UNREFERENCED(decoration);
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
+        window->server_decorations = (mode == ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+    }
+
+    static const struct zxdg_toplevel_decoration_v1_listener s_xdg_decoration_listener =
+    {
+        .configure = xdg_decoration_configure,
+    };
+
+#if defined(MANGO_HAS_LIBDECOR)
+
+    void libdecorError(struct libdecor* context, enum libdecor_error error, const char* message)
+    {
+        MANGO_UNREFERENCED(context);
+        MANGO_UNREFERENCED(error);
+        printLine(Print::Error, "[Wayland] libdecor: {}", message ? message : "unknown error");
+    }
+
+    static struct libdecor_interface s_libdecor_interface =
+    {
+        .error = libdecorError,
+    };
+
+    void libdecorFrameConfigure(struct libdecor_frame* frame,
+                                struct libdecor_configuration* configuration,
+                                void* user_data)
+    {
+        WaylandBackend* window = static_cast<WaylandBackend*>(user_data);
+
+        int width = 0;
+        int height = 0;
+        if (!libdecor_configuration_get_content_size(configuration, frame, &width, &height))
+        {
+            width = window->size[0];
+            height = window->size[1];
+        }
+
+        if (width > 0 && height > 0 &&
+            (window->size[0] != width || window->size[1] != height))
+        {
+            window->size[0] = width;
+            window->size[1] = height;
+            window->pending_resize = true;
+            window->requestRefresh();
+        }
+
+        const int commit_width = window->size[0] > 0 ? window->size[0] : std::max(width, 1);
+        const int commit_height = window->size[1] > 0 ? window->size[1] : std::max(height, 1);
+
+        struct libdecor_state* state = libdecor_state_new(commit_width, commit_height);
+        libdecor_frame_commit(frame, state, configuration);
+        libdecor_state_free(state);
+
+        window->configured = true;
+    }
+
+    void libdecorFrameClose(struct libdecor_frame* frame, void* user_data)
+    {
+        MANGO_UNREFERENCED(frame);
+        WaylandBackend* window = static_cast<WaylandBackend*>(user_data);
+        if (window->owner)
+        {
+            window->owner->handleCloseRequest();
+        }
+    }
+
+    void libdecorFrameCommit(struct libdecor_frame* frame, void* user_data)
+    {
+        MANGO_UNREFERENCED(frame);
+        MANGO_UNREFERENCED(user_data);
+    }
+
+    void libdecorFrameDismissPopup(struct libdecor_frame* frame, const char* seat_name, void* user_data)
+    {
+        MANGO_UNREFERENCED(frame);
+        MANGO_UNREFERENCED(seat_name);
+        MANGO_UNREFERENCED(user_data);
+    }
+
+    static struct libdecor_frame_interface s_libdecor_frame_interface =
+    {
+        .configure = libdecorFrameConfigure,
+        .close = libdecorFrameClose,
+        .commit = libdecorFrameCommit,
+        .dismiss_popup = libdecorFrameDismissPopup,
+    };
+
+#endif
+
+    bool tryInteractiveToplevel(WaylandBackend* window, uint32_t serial, uint32_t button, uint32_t state)
+    {
+        if (state != WL_POINTER_BUTTON_STATE_PRESSED || button != 0x110)
+        {
+            return false;
+        }
+
+        if (!window->xdg_toplevel || !window->seat || window->fullscreen || window->server_decorations)
+        {
+            return false;
+        }
+
+#if defined(MANGO_HAS_LIBDECOR)
+        if (window->libdecor_frame)
+        {
+            return false;
+        }
+#endif
+
+        const int w = window->size[0];
+        const int h = window->size[1];
+        if (w <= 0 || h <= 0)
+        {
+            return false;
+        }
+
+        const int x = window->cursor[0];
+        const int y = window->cursor[1];
+        const int border = 8;
+
+        uint32_t edges = XDG_TOPLEVEL_RESIZE_EDGE_NONE;
+        if (x < border) edges |= XDG_TOPLEVEL_RESIZE_EDGE_LEFT;
+        if (x >= w - border) edges |= XDG_TOPLEVEL_RESIZE_EDGE_RIGHT;
+        if (y < border) edges |= XDG_TOPLEVEL_RESIZE_EDGE_TOP;
+        if (y >= h - border) edges |= XDG_TOPLEVEL_RESIZE_EDGE_BOTTOM;
+
+        if (edges != XDG_TOPLEVEL_RESIZE_EDGE_NONE)
+        {
+            xdg_toplevel_resize(window->xdg_toplevel, window->seat, serial, edges);
+            return true;
+        }
+
+        const bool alt = window->key_pressed[KEYCODE_LEFT_ALT] || window->key_pressed[KEYCODE_RIGHT_ALT];
+        if (alt)
+        {
+            xdg_toplevel_move(window->xdg_toplevel, window->seat, serial);
+            return true;
+        }
+
+        return false;
+    }
 
     void pointer_enter(void* data, struct wl_pointer* pointer, uint32_t serial,
                        struct wl_surface* surface, wl_fixed_t surface_x, wl_fixed_t surface_y)
@@ -363,11 +527,15 @@ namespace
                         uint32_t time, uint32_t button, uint32_t state)
     {
         MANGO_UNREFERENCED(pointer);
-        MANGO_UNREFERENCED(serial);
         MANGO_UNREFERENCED(time);
 
         WaylandBackend* window = static_cast<WaylandBackend*>(data);
         if (!window->owner)
+        {
+            return;
+        }
+
+        if (tryInteractiveToplevel(window, serial, button, state))
         {
             return;
         }
@@ -798,6 +966,11 @@ namespace
                 wl_registry_bind(registry, name, &xdg_wm_base_interface, bind_version));
             xdg_wm_base_add_listener(window->xdg_wm_base, &xdg_wm_base_listener, window);
         }
+        else if (std::strcmp(interface, zxdg_decoration_manager_v1_interface.name) == 0)
+        {
+            window->decoration_manager = static_cast<struct zxdg_decoration_manager_v1*>(
+                wl_registry_bind(registry, name, &zxdg_decoration_manager_v1_interface, 1));
+        }
         else if (std::strcmp(interface, "wl_seat") == 0)
         {
             window->seat = static_cast<struct wl_seat*>(
@@ -875,6 +1048,10 @@ namespace mango
         wl_display_roundtrip(display);
         wl_display_roundtrip(display);
 
+#if defined(MANGO_HAS_LIBDECOR)
+        libdecor_context = libdecor_new(display, &s_libdecor_interface);
+#endif
+
         if (!createWaylandWindow(width, height, "Mango Window"))
         {
             MANGO_EXCEPTION("[Window] Failed to create Wayland window.");
@@ -888,6 +1065,20 @@ namespace mango
 
     WaylandBackend::~WaylandBackend()
     {
+#if defined(MANGO_HAS_LIBDECOR)
+        if (libdecor_frame)
+        {
+            libdecor_frame_unref(libdecor_frame);
+            libdecor_frame = nullptr;
+        }
+        if (libdecor_context)
+        {
+            libdecor_unref(libdecor_context);
+            libdecor_context = nullptr;
+        }
+#endif
+        if (toplevel_decoration) zxdg_toplevel_decoration_v1_destroy(toplevel_decoration);
+        if (decoration_manager) zxdg_decoration_manager_v1_destroy(decoration_manager);
         if (xdg_toplevel) xdg_toplevel_destroy(xdg_toplevel);
         if (xdg_surface) xdg_surface_destroy(xdg_surface);
         if (surface) wl_surface_destroy(surface);
@@ -909,6 +1100,25 @@ namespace mango
 
     void WaylandBackend::toggleFullscreen()
     {
+#if defined(MANGO_HAS_LIBDECOR)
+        if (libdecor_frame)
+        {
+            if (fullscreen)
+            {
+                libdecor_frame_unset_fullscreen(libdecor_frame);
+                fullscreen = false;
+            }
+            else
+            {
+                libdecor_frame_set_fullscreen(libdecor_frame, nullptr);
+                fullscreen = true;
+            }
+
+            requestRefresh();
+            return;
+        }
+#endif
+
         if (!xdg_toplevel)
         {
             return;
@@ -961,7 +1171,13 @@ namespace mango
 
     bool WaylandBackend::createWaylandWindow(int width, int height, const char* title)
     {
-        if (!compositor || !xdg_wm_base)
+#if defined(MANGO_HAS_LIBDECOR)
+        const bool use_libdecor = libdecor_context != nullptr;
+#else
+        const bool use_libdecor = false;
+#endif
+
+        if (!compositor || (!use_libdecor && !xdg_wm_base))
         {
             return false;
         }
@@ -972,31 +1188,61 @@ namespace mango
             return false;
         }
 
-        xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, surface);
-        if (!xdg_surface)
-        {
-            return false;
-        }
-
-        xdg_surface_add_listener(xdg_surface, &s_xdg_surface_listener, this);
-
-        xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
-        if (!xdg_toplevel)
-        {
-            return false;
-        }
-
-        xdg_toplevel_add_listener(xdg_toplevel, &s_xdg_toplevel_listener, this);
-        xdg_toplevel_set_title(xdg_toplevel, title);
-        xdg_toplevel_set_app_id(xdg_toplevel, "mango");
-
         if (width > 0 && height > 0)
         {
             size[0] = width;
             size[1] = height;
         }
 
-        wl_surface_commit(surface);
+#if defined(MANGO_HAS_LIBDECOR)
+        if (use_libdecor)
+        {
+            libdecor_frame = libdecor_decorate(libdecor_context, surface, &s_libdecor_frame_interface, this);
+            if (!libdecor_frame)
+            {
+                return false;
+            }
+
+            libdecor_frame_set_app_id(libdecor_frame, "mango");
+            libdecor_frame_set_title(libdecor_frame, title);
+            libdecor_frame_map(libdecor_frame);
+        }
+        else
+#endif
+        {
+            xdg_surface = xdg_wm_base_get_xdg_surface(xdg_wm_base, surface);
+            if (!xdg_surface)
+            {
+                return false;
+            }
+
+            xdg_surface_add_listener(xdg_surface, &s_xdg_surface_listener, this);
+
+            xdg_toplevel = xdg_surface_get_toplevel(xdg_surface);
+            if (!xdg_toplevel)
+            {
+                return false;
+            }
+
+            xdg_toplevel_add_listener(xdg_toplevel, &s_xdg_toplevel_listener, this);
+            xdg_toplevel_set_title(xdg_toplevel, title);
+            xdg_toplevel_set_app_id(xdg_toplevel, "mango");
+
+            if (decoration_manager)
+            {
+                toplevel_decoration = zxdg_decoration_manager_v1_get_toplevel_decoration(
+                    decoration_manager, xdg_toplevel);
+                if (toplevel_decoration)
+                {
+                    zxdg_toplevel_decoration_v1_add_listener(
+                        toplevel_decoration, &s_xdg_decoration_listener, this);
+                    zxdg_toplevel_decoration_v1_set_mode(
+                        toplevel_decoration, ZXDG_TOPLEVEL_DECORATION_V1_MODE_SERVER_SIDE);
+                }
+            }
+
+            wl_surface_commit(surface);
+        }
 
         configured = false;
         while (!configured)
@@ -1162,6 +1408,15 @@ namespace mango
 
     void WaylandBackend::setTitle(const std::string& title)
     {
+#if defined(MANGO_HAS_LIBDECOR)
+        if (libdecor_frame && display)
+        {
+            libdecor_frame_set_title(libdecor_frame, title.c_str());
+            wl_display_flush(display);
+            return;
+        }
+#endif
+
         if (xdg_toplevel && display)
         {
             xdg_toplevel_set_title(xdg_toplevel, title.c_str());
