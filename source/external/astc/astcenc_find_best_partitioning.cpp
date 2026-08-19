@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // ----------------------------------------------------------------------------
-// Copyright 2011-2024 Arm Limited
+// Copyright 2011-2026 Arm Limited
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
 // use this file except in compliance with the License. You may obtain a copy
@@ -226,7 +226,7 @@ static void kmeans_update(
 
 	uint8_t partition_texel_count[BLOCK_MAX_PARTITIONS] { 0 };
 
-	// Find the center-of-gravity in each cluster
+	// Find the center of gravity in each cluster
 	for (unsigned int i = 0; i < texel_count; i++)
 	{
 		uint8_t partition = partition_of_texel[i];
@@ -587,11 +587,11 @@ unsigned int find_best_partition_candidates(
 
 	// Partitioning errors assuming uncorrelated-chrominance endpoints
 	float uncor_best_errors[TUNE_MAX_PARTITIONING_CANDIDATES];
-	unsigned int uncor_best_partitions[TUNE_MAX_PARTITIONING_CANDIDATES];
+	unsigned int uncor_best_partitions[TUNE_MAX_PARTITIONING_CANDIDATES] = {};
 
 	// Partitioning errors assuming same-chrominance endpoints
 	float samec_best_errors[TUNE_MAX_PARTITIONING_CANDIDATES];
-	unsigned int samec_best_partitions[TUNE_MAX_PARTITIONING_CANDIDATES];
+	unsigned int samec_best_partitions[TUNE_MAX_PARTITIONING_CANDIDATES] = {};
 
 	for (unsigned int i = 0; i < requested_candidates; i++)
 	{

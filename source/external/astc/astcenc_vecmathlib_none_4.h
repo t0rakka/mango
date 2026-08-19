@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // ----------------------------------------------------------------------------
-// Copyright 2019-2024 Arm Limited
+// Copyright 2019-2026 Arm Limited
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
 // use this file except in compliance with the License. You may obtain a copy
@@ -412,10 +412,10 @@ ASTCENC_SIMD_INLINE vmask4 operator~(vmask4 a)
  */
 ASTCENC_SIMD_INLINE unsigned int mask(vmask4 a)
 {
-	return ((a.m[0] >> 31) & 0x1) |
-	       ((a.m[1] >> 30) & 0x2) |
-	       ((a.m[2] >> 29) & 0x4) |
-	       ((a.m[3] >> 28) & 0x8);
+	return (a.m[0] & 0x1) |
+	       (a.m[1] & 0x2) |
+	       (a.m[2] & 0x4) |
+	       (a.m[3] & 0x8);
 }
 
 /**
@@ -694,7 +694,11 @@ ASTCENC_SIMD_INLINE void pack_and_store_low_bytes(vint4 a, uint8_t* p)
 	int b2 = a.m[2] & 0xFF;
 	int b3 = a.m[3] & 0xFF;
 
+#if !defined(ASTCENC_BIG_ENDIAN)
 	int b = b0 | (b1 << 8) | (b2 << 16) | (b3 << 24);
+#else
+	int b = b3 | (b2 << 8) | (b1 << 16) | (b0 << 24);
+#endif
 	a = vint4(b, 0, 0, 0);
 	store_nbytes(a, p);
 }
@@ -760,6 +764,8 @@ ASTCENC_SIMD_INLINE vfloat4 operator/(vfloat4 a, vfloat4 b)
 
 /**
  * @brief Overload: vector by vector equality.
+ *
+ * Returns vector of false mask values if a or b is NaN.
  */
 ASTCENC_SIMD_INLINE vmask4 operator==(vfloat4 a, vfloat4 b)
 {
@@ -771,6 +777,8 @@ ASTCENC_SIMD_INLINE vmask4 operator==(vfloat4 a, vfloat4 b)
 
 /**
  * @brief Overload: vector by vector inequality.
+ *
+ * Returns vector of true mask values if a or b is NaN.
  */
 ASTCENC_SIMD_INLINE vmask4 operator!=(vfloat4 a, vfloat4 b)
 {
@@ -1052,8 +1060,10 @@ ASTCENC_SIMD_INLINE float float16_to_float(uint16_t a)
  */
 ASTCENC_SIMD_INLINE vint4 float_as_int(vfloat4 a)
 {
+	static_assert(sizeof(int) == sizeof(float), "int must be 32-bit");
+
 	vint4 r;
-	std::memcpy(r.m, a.m, 4 * 4);
+	std::memcpy(r.m, a.m, 4 * sizeof(int));
 	return r;
 }
 
@@ -1067,7 +1077,7 @@ ASTCENC_SIMD_INLINE vint4 float_as_int(vfloat4 a)
 ASTCENC_SIMD_INLINE vfloat4 int_as_float(vint4 a)
 {
 	vfloat4 r;
-	std::memcpy(r.m, a.m, 4 * 4);
+	std::memcpy(r.m, a.m, 4 * sizeof(float));
 	return r;
 }
 
@@ -1171,7 +1181,11 @@ ASTCENC_SIMD_INLINE vint4 vtable_lookup_32bit(
  */
 ASTCENC_SIMD_INLINE vint4 interleave_rgba8(vint4 r, vint4 g, vint4 b, vint4 a)
 {
+#if !defined(ASTCENC_BIG_ENDIAN)
 	return r + lsl<8>(g) + lsl<16>(b) + lsl<24>(a);
+#else
+	return a + lsl<8>(b) + lsl<16>(g) + lsl<24>(r);
+#endif
 }
 
 /**

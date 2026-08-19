@@ -43,7 +43,7 @@ namespace mango::image
         astcenc_context* context;
         u32 thread_count = u32(ThreadPool::getHardwareConcurrency());
 
-        status = astcenc_context_alloc(&config, thread_count, &context);
+        status = astcenc_context_alloc(&config, thread_count, &context, nullptr);
         if (status != ASTCENC_SUCCESS)
         {
             printLine(Print::Error, "[ASTC] astcenc_context_alloc: {}", astcenc_get_error_string(status));
@@ -126,7 +126,7 @@ namespace mango::image
         astcenc_context* context;
         u32 thread_count = u32(ThreadPool::getHardwareConcurrency());
 
-        status = astcenc_context_alloc(&config, thread_count, &context);
+        status = astcenc_context_alloc(&config, thread_count, &context, nullptr);
         if (status != ASTCENC_SUCCESS)
         {
             printLine(Print::Error, "[ASTC] astcenc_context_alloc: {}", astcenc_get_error_string(status));

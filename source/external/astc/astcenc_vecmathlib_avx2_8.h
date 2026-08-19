@@ -1,6 +1,6 @@
 // SPDX-License-Identifier: Apache-2.0
 // ----------------------------------------------------------------------------
-// Copyright 2019-2024 Arm Limited
+// Copyright 2019-2026 Arm Limited
 //
 // Licensed under the Apache License, Version 2.0 (the "License"); you may not
 // use this file except in compliance with the License. You may obtain a copy
@@ -142,8 +142,14 @@ struct vint8
 	 */
 	ASTCENC_SIMD_INLINE explicit vint8(const uint8_t *p)
 	{
-		// _mm_loadu_si64 would be nicer syntax, but missing on older GCC
-		m = _mm256_cvtepu8_epi32(_mm_cvtsi64_si128(*reinterpret_cast<const long long*>(p)));
+		// Copy through a uint32_t to avoid load through a reinterpreted
+		// pointer, which is both unaligned and an aliasing violation.
+		uint64_t tmp;
+		std::memcpy(&tmp, p, sizeof(tmp));
+
+		// _mm_loadu_si64 would be nicer syntax, but missing on older GCC and
+		// generates broken code on GCC 11.x before 11.3.
+		m = _mm256_cvtepu8_epi32(_mm_cvtsi64_si128(tmp));
 	}
 
 	/**
@@ -288,7 +294,7 @@ ASTCENC_SIMD_INLINE vmask8 operator~(vmask8 a)
 }
 
 /**
- * @brief Return a 8-bit mask code indicating mask status.
+ * @brief Return an 8-bit mask code indicating mask status.
  *
  * bit0 = lane 0
  */
@@ -498,6 +504,15 @@ ASTCENC_SIMD_INLINE int hmax_s(vint8 a)
 }
 
 /**
+ * @brief Generate a vint8 from a size_t.
+ */
+ ASTCENC_SIMD_INLINE vint8 vint8_from_size(size_t a)
+ {
+	assert(a <= std::numeric_limits<int>::max());
+	return vint8(static_cast<int>(a));
+ }
+
+/**
  * @brief Store a vector to a 16B aligned memory address.
  */
 ASTCENC_SIMD_INLINE void storea(vint8 a, int* p)
@@ -631,6 +646,8 @@ ASTCENC_SIMD_INLINE vfloat8 operator/(float a, vfloat8 b)
 
 /**
  * @brief Overload: vector by vector equality.
+ *
+ * Returns vector of false mask values if a or b is NaN.
  */
 ASTCENC_SIMD_INLINE vmask8 operator==(vfloat8 a, vfloat8 b)
 {
@@ -639,10 +656,12 @@ ASTCENC_SIMD_INLINE vmask8 operator==(vfloat8 a, vfloat8 b)
 
 /**
  * @brief Overload: vector by vector inequality.
+ *
+ * Returns vector of true mask values if a or b is NaN.
  */
 ASTCENC_SIMD_INLINE vmask8 operator!=(vfloat8 a, vfloat8 b)
 {
-	return vmask8(_mm256_cmp_ps(a.m, b.m, _CMP_NEQ_OQ));
+	return vmask8(_mm256_cmp_ps(a.m, b.m, _CMP_NEQ_UQ));
 }
 
 /**
@@ -1176,8 +1195,12 @@ ASTCENC_SIMD_INLINE void printx(vint8 a)
 {
 	alignas(32) int v[8];
 	storea(a, v);
+
+	unsigned int uv[8];
+	std::memcpy(uv, v, sizeof(int) * 8);
+
 	printf("v8_i32:\n  %08x %08x %08x %08x %08x %08x %08x %08x\n",
-	       v[0], v[1], v[2], v[3], v[4], v[5], v[6], v[7]);
+		uv[0], uv[1], uv[2], uv[3], uv[4], uv[5], uv[6], uv[7]);
 }
 
 /**

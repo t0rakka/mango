@@ -166,6 +166,8 @@ function (mango_apply_isa_to_target target)
 
         # enable only one (the most recent) SIMD extension
         if (ENABLE_AVX512)
+            # astcenc selects its AVX2 backend via __AVX2__; AVX-512 flags alone do not define it.
+            target_compile_options(${target} PUBLIC "-mavx2")
             target_compile_options(${target} PUBLIC "-mavx512dq")
             target_compile_options(${target} PUBLIC "-mavx512vl")
             target_compile_options(${target} PUBLIC "-mavx512bw")
