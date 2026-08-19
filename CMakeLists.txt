@@ -1,6 +1,6 @@
 cmake_minimum_required(VERSION 3.19)
 project(mango
-        VERSION 3.5.8
+        VERSION 3.5.9
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
@@ -33,6 +33,7 @@ OPTION(BUILD_OPENGL         "Build OpenGL support"                       ON)
 OPTION(BUILD_VULKAN         "Build Vulkan support"                       ON)
 OPTION(BUILD_IMPORT3D       "Build Import3D support"                     ON)
 OPTION(BUILD_EXAMPLES       "Build examples"                             ON)
+OPTION(BUILD_TOOLS          "Build tools"                                ON)
 OPTION(BUILD_TESTS          "Build tests"                                ON)
 
 # Window system backends (Linux). All compiled and linked together so the active
@@ -120,11 +121,12 @@ endif ()
 # Option to build everything
 option(BUILD_ALL,           "Build everything"                          OFF)
 if (BUILD_ALL)
-    set(BUILD_OPENGL     ON)
-    set(BUILD_VULKAN     ON)
-    set(BUILD_IMPORT3D   ON)
-    set(BUILD_EXAMPLES   ON)
-    set(BUILD_TESTS      ON)
+    set(BUILD_OPENGL      ON)
+    set(BUILD_VULKAN      ON)
+    set(BUILD_IMPORT3D    ON)
+    set(BUILD_EXAMPLES    ON)
+    set(BUILD_TOOLS       ON)
+    set(BUILD_TESTS       ON)
 endif ()
 
 # Option to build only essentials
@@ -134,6 +136,7 @@ if (BUILD_MINIMAL)
     set(BUILD_VULKAN     OFF)
     set(BUILD_IMPORT3D   OFF)
     set(BUILD_EXAMPLES   OFF)
+    set(BUILD_TOOLS      OFF)
     set(BUILD_TESTS      OFF)
 endif ()
 
@@ -146,15 +149,15 @@ endif ()
 # Option to enable every Intel ISA extension
 option(INTEL_DELUXE         "Enable ALL Intel ISA extensions"           OFF)
 if (INTEL_DELUXE)
-    set(ENABLE_PCLMUL    ON)
-    set(ENABLE_POPCNT    ON)
-    set(ENABLE_AES       ON)
-    set(ENABLE_F16C      ON)
-    set(ENABLE_LZCNT     ON)
-    set(ENABLE_BMI       ON)
-    set(ENABLE_BMI2      ON)
-    set(ENABLE_FMA       ON)
-    set(ENABLE_SHA       ON)
+    set(ENABLE_PCLMUL     ON)
+    set(ENABLE_POPCNT     ON)
+    set(ENABLE_AES        ON)
+    set(ENABLE_F16C       ON)
+    set(ENABLE_LZCNT      ON)
+    set(ENABLE_BMI        ON)
+    set(ENABLE_BMI2       ON)
+    set(ENABLE_FMA        ON)
+    set(ENABLE_SHA        ON)
 endif ()
 
 # Linker selection
@@ -956,6 +959,7 @@ message("    BUILD_OPENGL:    " ${BUILD_OPENGL})
 message("    BUILD_VULKAN:    " ${BUILD_VULKAN})
 message("    BUILD_IMPORT3D:  " ${BUILD_IMPORT3D})
 message("    BUILD_EXAMPLES:  " ${BUILD_EXAMPLES})
+message("    BUILD_TOOLS:     " ${BUILD_TOOLS})
 message("    BUILD_TESTS:     " ${BUILD_TESTS})
 
 # ------------------------------------------------------------------------------
@@ -1048,6 +1052,45 @@ if (BUILD_EXAMPLES)
                 if (target_type STREQUAL "EXECUTABLE")
                     foreach (lib ${MANGO_LIBRARY_TARGETS})
                         add_dependencies(${target} copy_${lib}_to_${folder_name})
+                    endforeach ()
+                endif ()
+            endforeach ()
+        endforeach ()
+    endif ()
+
+endif ()
+
+# ------------------------------------------------------------------------------
+# tools
+# ------------------------------------------------------------------------------
+
+if (BUILD_TOOLS)
+
+    add_subdirectory(tools)
+
+    if (WIN32 AND BUILD_SHARED_LIBS)
+        foreach (x ${TOOL_BINARY_FOLDERS})
+
+            get_filename_component(folder_name ${x} NAME)
+            set(destination_folder ${x}/${CMAKE_CFG_INTDIR})
+
+            foreach (lib ${MANGO_LIBRARY_TARGETS})
+                add_custom_target(copy_${lib}_to_tools_${folder_name} ALL
+                    COMMAND ${CMAKE_COMMAND} -E make_directory "${destination_folder}"
+                    COMMAND ${CMAKE_COMMAND} -E copy_if_different "$<TARGET_FILE:${lib}>" "${destination_folder}"
+                    DEPENDS ${lib}
+                )
+            endforeach ()
+
+            get_directory_property(tool_targets DIRECTORY ${x} BUILDSYSTEM_TARGETS)
+            foreach (target ${tool_targets})
+                if (NOT TARGET ${target})
+                    continue()
+                endif ()
+                get_target_property(target_type ${target} TYPE)
+                if (target_type STREQUAL "EXECUTABLE")
+                    foreach (lib ${MANGO_LIBRARY_TARGETS})
+                        add_dependencies(${target} copy_${lib}_to_tools_${folder_name})
                     endforeach ()
                 endif ()
             endforeach ()

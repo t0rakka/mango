@@ -17,11 +17,39 @@
 #include <mango/vulkan/allocator.hpp>
 #include <mango/vulkan/font.hpp>
 #include <mango/vulkan/render_target.hpp>
-#include "../demo_cli.hpp"
 
 using namespace mango;
 using namespace mango::math;
 using namespace mango::vulkan;
+
+namespace
+{
+    struct VulkanDemoArgs
+    {
+        bool info = false;
+        bool validate = false;
+        std::string bodyFontPath = "data/fonts/GreatVibes-Regular.ttf";
+    };
+
+    inline
+    void configureVulkanDemoParser(CommandLineParser& parser, VulkanDemoArgs& args)
+    {
+        parser.usage("[options]");
+
+        parser.flag("--info", "enable verbose info output",
+            [&]()
+            {
+                args.info = true;
+            });
+
+        parser.flag("--validate", "enable Khronos validation layer",
+            [&]()
+            {
+                args.validate = true;
+            });
+    }
+
+} // namespace
 
 class FontWindow : public VulkanWindow
 {
@@ -430,13 +458,11 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    struct Args : demo::VulkanDemoArgs
-    {
-        std::string bodyFontPath = "data/fonts/GreatVibes-Regular.ttf";
-    } args;
-
     CommandLineParser parser;
-    demo::configureVulkanDemoParser(parser, args);
+ 
+    VulkanDemoArgs args;
+    configureVulkanDemoParser(parser, args);
+
     parser.usage("[options] [font.ttf]");
     parser.positional([&](std::string_view token)
     {
@@ -448,8 +474,17 @@ int mangoMain(const mango::CommandLine& commands)
         return 1;
     }
 
-    demo::applyVulkanDemoArgs(args);
-    std::vector<const char*> enabledLayers = demo::vulkanEnabledLayers(args);
+    if (args.info)
+    {
+        printEnable(Print::Info, true);
+    }
+
+    std::vector<const char*> enabledLayers;
+
+    if (args.validate)
+    {
+        enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+    }
 
     std::vector<const char*> enabledExtensions = vulkan::requiredSurfaceExtensions();
 

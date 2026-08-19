@@ -23,20 +23,21 @@ namespace
     }
     const g_astc_table[] =
     {
-        {  4,  4, TextureCompression::ASTC_UNORM_4x4 },
-        {  5,  4, TextureCompression::ASTC_UNORM_5x4 },
-        {  5,  5, TextureCompression::ASTC_UNORM_5x5 },
-        {  6,  5, TextureCompression::ASTC_UNORM_6x5 },
-        {  6,  6, TextureCompression::ASTC_UNORM_6x6 },
-        {  8,  5, TextureCompression::ASTC_UNORM_8x5 },
-        {  8,  6, TextureCompression::ASTC_UNORM_8x6 },
-        {  8,  8, TextureCompression::ASTC_UNORM_8x8 },
-        { 10,  5, TextureCompression::ASTC_UNORM_10x5 },
-        { 10,  6, TextureCompression::ASTC_UNORM_10x6 },
-        { 10,  8, TextureCompression::ASTC_UNORM_10x8 },
-        { 10, 10, TextureCompression::ASTC_UNORM_10x10 },
-        { 12, 10, TextureCompression::ASTC_UNORM_12x10 },
-        { 12, 12, TextureCompression::ASTC_UNORM_12x12 }
+        // .astc has no colorspace field; default to LDR sRGB (KHR_texture_compression_astc_ldr).
+        {  4,  4, TextureCompression::ASTC_SRGB_4x4 },
+        {  5,  4, TextureCompression::ASTC_SRGB_5x4 },
+        {  5,  5, TextureCompression::ASTC_SRGB_5x5 },
+        {  6,  5, TextureCompression::ASTC_SRGB_6x5 },
+        {  6,  6, TextureCompression::ASTC_SRGB_6x6 },
+        {  8,  5, TextureCompression::ASTC_SRGB_8x5 },
+        {  8,  6, TextureCompression::ASTC_SRGB_8x6 },
+        {  8,  8, TextureCompression::ASTC_SRGB_8x8 },
+        { 10,  5, TextureCompression::ASTC_SRGB_10x5 },
+        { 10,  6, TextureCompression::ASTC_SRGB_10x6 },
+        { 10,  8, TextureCompression::ASTC_SRGB_10x8 },
+        { 10, 10, TextureCompression::ASTC_SRGB_10x10 },
+        { 12, 10, TextureCompression::ASTC_SRGB_12x10 },
+        { 12, 12, TextureCompression::ASTC_SRGB_12x12 }
     };
 
     u32 select_astc_format(int width, int height)

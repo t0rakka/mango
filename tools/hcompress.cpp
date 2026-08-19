@@ -731,8 +731,20 @@ void compress(State& state, const std::vector<std::string>& inputs, const std::s
         {
             auto& node = manager.files[i];
             File file(sources.at(node.filename));
-            node.checksum = crc32c(0, file);
-            counterBytes += node.size;
+            ConstMemory memory = file;
+
+            constexpr size_t chunk_size = 64 * MB;
+
+            u32 crc = 0;
+
+            for (size_t offset = 0; offset < file.size(); offset += chunk_size)
+            {
+                size_t size = std::min(chunk_size, memory.size - offset);
+                crc = crc32c(crc, memory.slice(offset, size));
+                counterBytes += size;
+            }
+
+            node.checksum = crc;
         });
     }
 

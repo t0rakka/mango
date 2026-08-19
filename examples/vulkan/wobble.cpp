@@ -5,7 +5,6 @@
 #define MANGO_IMPLEMENT_MAIN
 #include <mango/mango.hpp>
 #include <mango/vulkan/framebuffer.hpp>
-#include "../demo_cli.hpp"
 
 #include <cmath>
 #include <vector>
@@ -14,6 +13,34 @@ using namespace mango;
 using namespace mango::image;
 using namespace mango::math;
 using namespace mango::vulkan;
+
+namespace
+{
+    struct VulkanDemoArgs
+    {
+        bool info = false;
+        bool validate = false;
+    };
+
+    inline
+    void configureVulkanDemoParser(CommandLineParser& parser, VulkanDemoArgs& args)
+    {
+        parser.usage("[options]");
+
+        parser.flag("--info", "enable verbose info output",
+            [&]()
+            {
+                args.info = true;
+            });
+
+        parser.flag("--validate", "enable Khronos validation layer",
+            [&]()
+            {
+                args.validate = true;
+            });
+    }
+
+} // namespace
 
 struct Wave
 {
@@ -349,18 +376,27 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    demo::VulkanDemoArgs args;
-
     CommandLineParser parser;
-    demo::configureVulkanDemoParser(parser, args);
+
+    VulkanDemoArgs args;
+    configureVulkanDemoParser(parser, args);
 
     if (!parser.parse(commands))
     {
         return 1;
     }
 
-    demo::applyVulkanDemoArgs(args);
-    std::vector<const char*> enabledLayers = demo::vulkanEnabledLayers(args);
+    if (args.info)
+    {
+        printEnable(Print::Info, true);
+    }
+
+    std::vector<const char*> enabledLayers;
+
+    if (args.validate)
+    {
+        enabledLayers.push_back("VK_LAYER_KHRONOS_validation");
+    }
 
     std::vector<const char*> enabledExtensions = requiredSurfaceExtensions();
 

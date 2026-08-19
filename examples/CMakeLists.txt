@@ -14,12 +14,10 @@ set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
 add_subdirectory(misc)
 add_subdirectory(image)
-add_subdirectory(utils)
 
 set(_mango_example_binary_folders
     "${CMAKE_CURRENT_BINARY_DIR}/misc"
     "${CMAKE_CURRENT_BINARY_DIR}/image"
-    "${CMAKE_CURRENT_BINARY_DIR}/utils"
 )
 
 if (BUILD_OPENGL)
