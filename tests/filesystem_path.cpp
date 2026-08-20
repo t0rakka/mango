@@ -173,6 +173,20 @@ namespace
         return true;
     }
 
+    bool test_empty_child_path_shares_mapper()
+    {
+        Path original("data/pathtest/foo/");
+        Path child(original, "");
+
+        CHECK(child.pathname() == original.pathname());
+        CHECK(&child.getIndex() == &original.getIndex());
+
+        File file(child, "test.data");
+        CHECK(crc32c(0, file) == 0x149cd379u);
+
+        return true;
+    }
+
     const Case cases[] =
     {
         { "copy_same_pathname", test_copy_same_pathname },
@@ -185,6 +199,7 @@ namespace
         { "store_in_container", test_store_in_container },
         { "fresh_string_still_independent", test_fresh_string_still_independent },
         { "zip_logical_subfolder_index", test_zip_logical_subfolder_index },
+        { "empty_child_path_shares_mapper", test_empty_child_path_shares_mapper },
     };
 
 } // namespace

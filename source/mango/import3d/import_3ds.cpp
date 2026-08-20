@@ -1057,8 +1057,8 @@ namespace mango::import3d
 {
 
     Import3DS::Import3DS(const filesystem::Path& path, const std::string& filename)
+        : Scene(path)
     {
-        basePath = path.pathname();
 
         filesystem::File file(path, filename);
         Reader3DS reader(file);

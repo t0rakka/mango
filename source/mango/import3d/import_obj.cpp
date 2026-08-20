@@ -675,8 +675,8 @@ namespace mango::import3d
     }
 
     ImportOBJ::ImportOBJ(const filesystem::Path& path, const std::string& filename)
+        : Scene(path)
     {
-        basePath = path.pathname();
 
         u64 time0 = mango::Time::ms();
 

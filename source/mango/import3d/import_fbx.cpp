@@ -1459,8 +1459,8 @@ namespace mango::import3d
 {
 
     ImportFBX::ImportFBX(const filesystem::Path& path, const std::string& filename)
+        : Scene(path)
     {
-        basePath = path.pathname();
 
         filesystem::File file(path, filename);
         ReaderFBX reader(file);

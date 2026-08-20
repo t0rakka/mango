@@ -41,10 +41,9 @@ namespace mango::import3d
 {
 
 ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename)
+    : Scene(path)
 {
     u64 time0 = Time::ms();
-
-    basePath = path.pathname();
 
     // --------------------------------------------------------------------------
     // read
