@@ -92,6 +92,15 @@ void main()
             return a.format == b.format && a.colorSpace == b.colorSpace;
         }
 
+        bool outputOptionsEqual(const OutputTransformOptions& a, const OutputTransformOptions& b)
+        {
+            return a.input == b.input
+                && a.sdrWhiteNits == b.sdrWhiteNits
+                && a.peakNits == b.peakNits
+                && a.tonemap == b.tonemap
+                && a.exposure == b.exposure;
+        }
+
         void imageBarrier(VkCommandBuffer commandBuffer, VkImage image, VkImageLayout& trackedLayout,
                           VkImageLayout newLayout, VkAccessFlags srcAccess, VkAccessFlags dstAccess,
                           VkPipelineStageFlags srcStage, VkPipelineStageFlags dstStage)
@@ -145,6 +154,7 @@ void main()
 
         VkFormat resolveSwapchainFormat = VK_FORMAT_UNDEFINED;
         VkSurfaceFormatKHR resolveSurfaceFormat {};
+        OutputTransformOptions resolveColorOptions {};
 
         Impl(const CreateInfo& info)
             : device(info.device)
@@ -405,11 +415,16 @@ void main()
             const VkSurfaceFormatKHR surfaceFormat = swapchain.getSurfaceFormat();
             const VkFormat swapchainFormat = swapchain.getFormat();
 
+            OutputTransformOptions options = colorOptions
+                ? *colorOptions
+                : defaultOutputOptions(surfaceFormat);
+
             if (resolvePipeline)
             {
                 if (targetFormat == RenderTargetFormat::Float16)
                 {
-                    if (surfaceFormatEquals(resolveSurfaceFormat, surfaceFormat))
+                    if (surfaceFormatEquals(resolveSurfaceFormat, surfaceFormat)
+                        && outputOptionsEqual(resolveColorOptions, options))
                     {
                         return;
                     }
@@ -433,9 +448,6 @@ void main()
             std::string fragmentSource;
             if (targetFormat == RenderTargetFormat::Float16)
             {
-                OutputTransformOptions options = colorOptions
-                    ? *colorOptions
-                    : defaultOutputOptions(surfaceFormat);
                 fragmentSource = g_linear_fragment_preamble;
                 fragmentSource += getOutputTransformGLSL(surfaceFormat, options);
                 fragmentSource += g_linear_fragment_body;
@@ -539,6 +551,7 @@ void main()
 
             resolveSwapchainFormat = swapchainFormat;
             resolveSurfaceFormat = surfaceFormat;
+            resolveColorOptions = options;
 
             VkFormat colorFormat = swapchainFormat;
             VkPipelineRenderingCreateInfo renderingCreateInfo =
