@@ -123,6 +123,9 @@ namespace mango::filesystem
         std::string m_basepath;
         std::string m_pathname;
 
+        mutable FileIndex m_index;
+        mutable bool m_index_is_dirty = true;
+
         AbstractMapper* createFileMapper(const std::string& basepath);
         std::string parse(const std::string& pathname, const std::string& password);
 
@@ -136,6 +139,8 @@ namespace mango::filesystem
 
         const std::string& basepath() const;
         const std::string& pathname() const;
+
+        const FileIndex& index() const;
 
         // interface
         u64 getSize(const std::string& filename) const override;

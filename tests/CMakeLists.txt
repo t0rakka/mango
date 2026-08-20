@@ -12,6 +12,7 @@ set(MANGO_TESTS
     cache
     threads
     pathtest
+    filesystem_path
     mathtest
     hash
     checksum
