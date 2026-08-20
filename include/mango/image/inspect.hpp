@@ -64,7 +64,7 @@ namespace mango::image
         InspectTriState progressive = InspectTriState::Unknown;
         ImageTileInfo tiling;
 
-        // Accessible palette entry count (0 = none exposed to client on decode).
+        // Color table size from ImageHeader::palette (0 = none).
         int palette_colors = 0;
     };
 

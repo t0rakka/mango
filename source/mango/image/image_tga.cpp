@@ -385,6 +385,10 @@ namespace
                 header.faces   = 0;
                 header.format  = m_targa_header.getFormat();
                 header.compression = TextureCompression::NONE;
+                if (header.format.isIndexed() && m_targa_header.isPalette())
+                {
+                    header.palette = int(m_targa_header.colormap_length);
+                }
             }
             else
             {
@@ -409,11 +413,6 @@ namespace
             report.bit_depth = m_targa_header.pixel_size;
             report.alpha = (m_targa_header.descriptor & DESCRIPTOR_ALPHA) != 0 ||
                            m_targa_header.pixel_size == 32 || m_targa_header.pixel_size == 16;
-
-            if (header.format.isIndexed() && m_targa_header.isPalette())
-            {
-                report.palette_colors = int(m_targa_header.colormap_length);
-            }
         }
 
         ImageDecodeStatus decode(const Surface& surface, const ImageDecodeOptions& options, int level, int depth, int face) override
