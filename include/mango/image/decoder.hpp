@@ -65,6 +65,7 @@ namespace mango::image
         bool    premultiplied = false; // alpha is premultiplied
         bool    linear = false; // linear colorspace (non-linear is sRGB); mirrors color.isLinear()
         bool    alpha = false; // encoded stream carries alpha/transparency (not decode padding)
+        int     palette = 0; // palette color count (0 = no palette)
 
         // Color space signalling (primaries, transfer function, exact chromaticities).
         // Defaults to sRGB: integer image formats are sRGB by near-universal convention,

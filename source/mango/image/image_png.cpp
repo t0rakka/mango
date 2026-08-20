@@ -2026,6 +2026,10 @@ namespace
         Frame m_frame;
         const u8* m_first_frame = nullptr;
 
+        // APNG composition canvas (RGBA). Kept across frames so indexed frame-0
+        // opt-in can still prime history for later RGBA decodes.
+        std::unique_ptr<Bitmap> m_canvas;
+
         // iCCP
         Buffer m_icc;
 
@@ -2209,7 +2213,11 @@ namespace
                     color_type |= 4;
                 }
 
-                // select decoding format
+                // Preferred decode format. Still images keep native layout (indexed stays
+                // indexed). Animated palette APNG prefers RGBA like GIF: disposal/blend is
+                // not a stable indexed canvas. Other color types keep their native format.
+                const bool animated_palette =
+                    (m_number_of_frames > 1) && (color_type == COLOR_TYPE_PALETTE);
                 int bits = m_color_state.bits <= 8 ? 8 : 16;
                 switch (color_type)
                 {
@@ -2222,7 +2230,9 @@ namespace
                         break;
 
                     case COLOR_TYPE_PALETTE:
-                        m_header.format = IndexedFormat(8, flags);
+                        m_header.format = animated_palette
+                            ? Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8, flags)
+                            : IndexedFormat(8, flags);
                         break;
 
                     case COLOR_TYPE_RGB:
@@ -2236,6 +2246,11 @@ namespace
                 m_header.alpha = (m_color_type == COLOR_TYPE_RGBA ||
                                   m_color_type == COLOR_TYPE_IA ||
                                   m_color_state.transparent_enable);
+
+                // Color table for indexed decode (still, or animated frame 0 opt-in).
+                m_header.palette = (m_color_type == COLOR_TYPE_PALETTE)
+                    ? int(m_palette.size)
+                    : 0;
             }
 
             return m_header;
@@ -2298,15 +2313,21 @@ namespace
             // make the animation frame count available from the header (APNG)
             scanAnimationControl();
 
-            // make color space signalling available from the header
+            // make color space signalling + palette available from the header
             scanColorChunks();
+
+            // Indexed-color requires PLTE before IDAT (PNG spec).
+            if (m_header.success && m_color_type == COLOR_TYPE_PALETTE && m_palette.size == 0)
+            {
+                setError("Missing PLTE chunk for indexed-color image.");
+            }
         }
 
         void scanColorChunks()
         {
-            // Pre-scan the ancillary color chunks (all of which must appear before the
-            // first IDAT) so the color space description is available from header() without
-            // having to run the full decode. Does not disturb the decode parsing position.
+            // Pre-scan chunks that must appear before the first IDAT so color space and
+            // palette are available from header()/inspect without a full decode.
+            // Does not disturb the decode parsing position.
             BigEndianConstPointer p = m_pointer;
 
             for ( ; p < m_end - 8; )
@@ -2326,6 +2347,14 @@ namespace
 
                 switch (id)
                 {
+                    case u32_mask_rev('P', 'L', 'T', 'E'):
+                        read_PLTE(p, size);
+                        break;
+
+                    case u32_mask_rev('t', 'R', 'N', 'S'):
+                        read_tRNS(p, size);
+                        break;
+
                     case u32_mask_rev('g', 'A', 'M', 'A'):
                         read_gAMA(p, size);
                         break;
@@ -3852,44 +3881,98 @@ namespace
             return status;
         }
 
-        //
-        // [dest.format]  <--  [m_header.format]
-        //
+        const bool animated = m_number_of_frames > 1;
+        const u32 frame_index = m_next_frame_index;
 
-        DecodeTargetBitmap decode_target(dest, m_width, m_height, m_header.format, m_palette);
-
-        // Set asynchronous update target
-        m_decode_target = &decode_target;
-
-        // Target surface
-        Surface target = decode_target;
-
-        // Temporary animation decoding bitmap
-        std::unique_ptr<Bitmap> temp;
-
-        if (m_number_of_frames > 0)
+        if (animated && dest.format.isIndexed())
         {
-            temp = std::make_unique<Bitmap>(m_frame.width, m_frame.height, m_header.format);
-            target = *temp;
-            m_decode_target = nullptr;
-
-            // compute frame indices (for external users)
-            m_current_frame_index = m_next_frame_index++;
-            if (m_next_frame_index >= m_number_of_frames)
+            if (frame_index > 0)
             {
-                m_next_frame_index = 0;
+                status.setError("[ImageDecoder.PNG] Animated frame > 0 requires a non-indexed target.");
+                return status;
+            }
+
+            if (m_color_type != COLOR_TYPE_PALETTE)
+            {
+                status.setError("[ImageDecoder.PNG] Indexed target requires a palette color type.");
+                return status;
+            }
+
+            if (!dest.palette)
+            {
+                status.setError("[ImageDecoder.PNG] Indexed target requires a non-null palette.");
+                return status;
             }
         }
 
-        Buffer buffer;
+        const bool indexed_frame0 = animated && dest.format.isIndexed() && frame_index == 0;
+
+        // --------------------------------------------------------------------
+        // Still PNG (no acTL)
+        // --------------------------------------------------------------------
+        if (m_number_of_frames == 0)
+        {
+            DecodeTargetBitmap decode_target(dest, m_width, m_height, m_header.format, m_palette);
+            m_decode_target = &decode_target;
+            Surface target = decode_target;
+
+            if (m_interface->cancelled)
+            {
+                return status;
+            }
+
+            const bool plld = m_parallel_height && (m_parallel_flags & 1) != 0;
+
+            if (plld)
+            {
+                decode_plld(target);
+            }
+            else if (m_idot_address && multithread)
+            {
+                decode_idot(target);
+            }
+            else if (!decode_std(target, status))
+            {
+                return status;
+            }
+
+            printLine(Print::Debug, "  filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
+            printLine(Print::Debug, "  color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
+
+            status.direct = decode_target.isDirect();
+            return status;
+        }
+
+        // --------------------------------------------------------------------
+        // APNG frame decode into stream-native temp, then composite
+        // --------------------------------------------------------------------
+        const Format canvas_format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        const Format stream_format = (m_color_type == COLOR_TYPE_PALETTE)
+            ? IndexedFormat(8)
+            : m_header.format;
+
+        std::unique_ptr<Bitmap> temp =
+            std::make_unique<Bitmap>(m_frame.width, m_frame.height, stream_format);
+        if (temp->palette)
+        {
+            *temp->palette = m_palette;
+        }
+
+        m_decode_target = nullptr;
+        Surface target = *temp;
+
+        m_current_frame_index = m_next_frame_index++;
+        if (m_next_frame_index >= m_number_of_frames)
+        {
+            m_next_frame_index = 0;
+        }
 
         if (m_interface->cancelled)
         {
             return status;
         }
 
-        // The first scanline of segment does not require previous scanline from other segment
-        bool plld = m_parallel_height && (m_parallel_flags & 1) != 0;
+        const bool plld = m_parallel_height && (m_parallel_flags & 1) != 0;
 
         if (plld)
         {
@@ -3899,15 +3982,11 @@ namespace
         {
             decode_idot(target);
         }
-        else
+        else if (!decode_std(target, status))
         {
-            if (!decode_std(target, status))
-            {
-                return status;
-            }
+            return status;
         }
 
-        // These are not wall times; it is cumulative time from all concurrent tasks
         printLine(Print::Debug, "  filter: {}.{} ms", m_filter_time / 1000, m_filter_time % 1000);
         printLine(Print::Debug, "  color: {}.{} ms", m_color_time / 1000, m_color_time % 1000);
 
@@ -3916,41 +3995,104 @@ namespace
             return status;
         }
 
-        if (m_number_of_frames > 0)
+        auto composite_frame = [&](Surface& area)
         {
-            Surface area(dest, m_frame.xoffset, m_frame.yoffset, m_frame.width, m_frame.height);
-
-            if (m_header.format.isIndexed() && !dest.format.isIndexed())
+            if (temp->format.isIndexed())
             {
-                // Compositing indexed APNG frames onto an RGBA canvas: resolve the frame
-                // to RGBA first so we never quantize the destination surface.
                 *temp->palette = m_palette;
-                Bitmap frame_rgba(m_frame.width, m_frame.height,
-                    Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+                Bitmap frame_rgba(m_frame.width, m_frame.height, canvas_format);
                 image::resolve(frame_rgba, *temp);
                 blend(area, frame_rgba);
             }
             else
             {
-                TemporaryBitmap bitmap(area, m_header.format);
+                TemporaryBitmap bitmap(area, temp->format);
                 blend(bitmap, *temp);
 
-                if (dest.format != bitmap.format)
+                if (area.format != bitmap.format)
                 {
-                    bitmap.palette = &m_palette;
-                    dest.blit(m_frame.xoffset, m_frame.yoffset, bitmap);
-                }
-                else if (dest.format.isIndexed() && dest.palette)
-                {
-                    *dest.palette = m_palette;
+                    area.blit(0, 0, bitmap);
                 }
             }
+        };
+
+        if (animated)
+        {
+            // Persistent RGBA canvas so indexed frame-0 opt-in still primes history.
+            if (!m_canvas)
+            {
+                m_canvas = std::make_unique<Bitmap>(m_width, m_height, canvas_format);
+                std::memset(m_canvas->image, 0, size_t(m_canvas->stride) * size_t(m_canvas->height));
+            }
+
+            Surface canvas_area(*m_canvas, int(m_frame.xoffset), int(m_frame.yoffset),
+                int(m_frame.width), int(m_frame.height));
+            composite_frame(canvas_area);
+
+            if (indexed_frame0)
+            {
+                for (int y = 0; y < dest.height; ++y)
+                {
+                    std::memset(dest.address<u8>(0, y), 0, size_t(dest.width));
+                }
+
+                for (int y = 0; y < temp->height; ++y)
+                {
+                    const int dy = int(m_frame.yoffset) + y;
+                    if (dy < 0 || dy >= dest.height)
+                    {
+                        continue;
+                    }
+
+                    const u8* src = temp->address<u8>(0, y);
+                    u8* dst = dest.address<u8>(0, dy);
+
+                    for (int x = 0; x < temp->width; ++x)
+                    {
+                        const int dx = int(m_frame.xoffset) + x;
+                        if (dx < 0 || dx >= dest.width)
+                        {
+                            continue;
+                        }
+
+                        const u8 sample = src[x];
+                        if (m_palette[sample].a == 0)
+                        {
+                            continue;
+                        }
+
+                        dst[dx] = sample;
+                    }
+                }
+
+                *dest.palette = m_palette;
+                status.direct = true;
+            }
+            else
+            {
+                DecodeTargetBitmap publish(dest, m_width, m_height, canvas_format);
+                static_cast<Surface&>(publish).blit(0, 0, *m_canvas);
+                publish.resolve();
+                status.direct = publish.isDirect();
+            }
+        }
+        else
+        {
+            // Degenerate single-frame APNG: composite directly into dest.
+            Surface area(dest, int(m_frame.xoffset), int(m_frame.yoffset),
+                int(m_frame.width), int(m_frame.height));
+            composite_frame(area);
+
+            if (dest.format.isIndexed() && dest.palette)
+            {
+                *dest.palette = m_palette;
+            }
+
+            status.direct = false;
         }
 
-        status.current_frame_index = m_current_frame_index;
-        status.next_frame_index = m_next_frame_index;
-
-        status.direct = decode_target.isDirect();
+        status.current_frame_index = int(m_current_frame_index);
+        status.next_frame_index = int(m_next_frame_index);
 
         return status;
     }
@@ -4587,12 +4729,15 @@ namespace
             report.progressive = m_parser.isInterlaced() ? InspectTriState::Yes : InspectTriState::No;
             report.tiling.tiled = InspectTriState::No;
             report.chroma_subsampling = "4:4:4";
-            report.encoding = m_parser.isInterlaced() ? "PNG interlaced" : "PNG";
             report.alpha = header.alpha;
 
-            if (header.format.isIndexed())
+            if (header.frames > 1)
             {
-                report.palette_colors = int(m_parser.paletteSize());
+                report.encoding = m_parser.isInterlaced() ? "APNG interlaced" : "APNG";
+            }
+            else
+            {
+                report.encoding = m_parser.isInterlaced() ? "PNG interlaced" : "PNG";
             }
         }
     };

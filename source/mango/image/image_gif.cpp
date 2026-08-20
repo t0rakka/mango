@@ -140,6 +140,7 @@ namespace
         std::unique_ptr<u32[]> canvas;
         std::unique_ptr<u32[]> saved; // snapshot for disposal method 3 (restore to previous)
         bool saved_valid = false;
+        bool animated = false; // frames > 1: keep canvas primed even for indexed frame 0
 
         // Disposal bookkeeping for the previously drawn frame. Disposal happens between
         // frames, so the previous frame's disposal is applied at the start of the next.
@@ -555,6 +556,52 @@ namespace
             }
         }
 
+        // Animated: also prime the RGBA composition canvas so frame 1+ stays correct
+        // after an indexed frame-0 opt-in decode.
+        if (state.animated)
+        {
+            const int screen_w = state.screen_desc.width;
+            const int screen_h = state.screen_desc.height;
+            const size_t canvas_size = size_t(screen_w) * size_t(screen_h);
+
+            if (!canvas_size)
+            {
+                return nullptr;
+            }
+
+            if (!state.canvas)
+            {
+                state.canvas.reset(new u32[canvas_size]);
+                state.saved.reset(new u32[canvas_size]);
+            }
+
+            u32 clear_color = state.transparent_color_flag ? 0 : background_color(state);
+
+            if (state.first_frame)
+            {
+                std::fill_n(state.canvas.get(), canvas_size, clear_color);
+                state.prev_disposal = 0;
+                state.saved_valid = false;
+            }
+
+            if (state.disposal_method == 3)
+            {
+                std::memcpy(state.saved.get(), state.canvas.get(), canvas_size * sizeof(u32));
+                state.saved_valid = true;
+            }
+
+            canvas_composite(state.canvas.get(), screen_w, screen_h, bits.get(),
+                             x, y, width, height,
+                             palette, state.transparent_color_flag != 0, transparent);
+
+            state.prev_disposal = state.disposal_method;
+            state.prev_x = x;
+            state.prev_y = y;
+            state.prev_w = width;
+            state.prev_h = height;
+            state.prev_clear_color = clear_color;
+        }
+
         return data;
     }
 
@@ -808,6 +855,7 @@ namespace
         int frames = 0;
         bool interlaced = false;
         bool alpha = false;
+        int first_local_palette = 0; // used entry count from the first image's local CT
     };
 
     // Walk the GIF data stream (post logical screen descriptor) and collect
@@ -871,7 +919,13 @@ namespace
 
                 if (field & 0x80)
                 {
-                    p += (1 << ((field & 0x07) + 1)) * 3;
+                    const int local_colors = 1 << ((field & 0x07) + 1);
+                    if (info.frames == 0)
+                    {
+                        info.first_local_palette = local_colors;
+                    }
+
+                    p += local_colors * 3;
                 }
 
                 if (p >= end)
@@ -955,6 +1009,24 @@ namespace
                 header.frames  = frames;
                 header.format  = format;
                 header.compression = TextureCompression::NONE;
+                header.alpha = m_metadata.alpha;
+
+                // Color table available for indexed decode (still, or animated frame 0).
+                if (m_state.screen_desc.color_table_flag() && m_state.screen_desc.palette)
+                {
+                    header.palette = m_state.screen_desc.color_table_size();
+                }
+                else if (m_metadata.first_local_palette > 0)
+                {
+                    header.palette = m_metadata.first_local_palette;
+                }
+                else if (format.isIndexed())
+                {
+                    // Decoder synthesizes a grayscale table when none is stored.
+                    header.palette = 256;
+                }
+
+                m_state.animated = frames > 1;
             }
         }
 
@@ -970,13 +1042,6 @@ namespace
             report.encoding = header.frames > 1 ? "GIF LZW (animated)" : "GIF LZW";
             report.bit_depth = 8;
             report.alpha = m_metadata.alpha;
-
-            if (header.format.isIndexed() &&
-                m_state.screen_desc.color_table_flag() &&
-                m_state.screen_desc.palette)
-            {
-                report.palette_colors = m_state.screen_desc.color_table_size();
-            }
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -993,9 +1058,29 @@ namespace
                 return status;
             }
 
-            DecodeTargetBitmap target(dest, header.width, header.height, header.format);
-
             status.current_frame_index = m_frame_counter;
+
+            if (header.frames > 1 && dest.format.isIndexed())
+            {
+                if (m_frame_counter > 0)
+                {
+                    status.setError("[ImageDecoder.GIF] Animated frame > 0 requires a non-indexed target.");
+                    return status;
+                }
+
+                if (!dest.palette)
+                {
+                    status.setError("[ImageDecoder.GIF] Indexed target requires a non-null palette.");
+                    return status;
+                }
+            }
+
+            // Indexed opt-in uses IndexedFormat even when preferred header.format is RGBA.
+            const Format decode_format = dest.format.isIndexed()
+                ? IndexedFormat(8)
+                : header.format;
+
+            DecodeTargetBitmap target(dest, header.width, header.height, decode_format);
 
             if (m_data)
             {

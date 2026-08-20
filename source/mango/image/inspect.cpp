@@ -99,6 +99,7 @@ namespace mango::image
 
             report.bit_depth = formatBitDepth(report.header.format);
             report.alpha = report.header.alpha;
+            report.palette_colors = report.header.palette;
             report.decode_bytes = estimateDecodeBytes(report.header);
 
             populateColorStrings(report, report.header.color, report.header.format);

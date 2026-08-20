@@ -1174,11 +1174,6 @@ namespace
         void populateInspect(ImageInspect& report) const override
         {
             populateRetroInspect(report, iffEncoding(), iffHasAlpha());
-
-            if (header.format.isIndexed() && m_palette.size > 0)
-            {
-                report.palette_colors = int(m_palette.size);
-            }
         }
 
         const u8* readSignature(const u8* data)
@@ -1536,6 +1531,7 @@ namespace
             if (m_pchg_present && !m_ham && !m_hame && header.success)
             {
                 header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.palette = 0;
             }
         }
 
@@ -1576,6 +1572,7 @@ namespace
                 m_hame_lace = (m_camg & 0x0004) != 0; // interlaced: per-field register sets
                 header.width = planar_w / 2;
                 header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+                header.palette = 0;
             }
         }
 
@@ -1607,6 +1604,7 @@ namespace
                 {
                     case 1:
                         header.format = IndexedFormat(8);
+                        header.palette = int(m_palette.size);
                         break;
                     case 2:
                         header.format = Format(16, Format::UNORM, Format::BGR, 5, 6, 5);
