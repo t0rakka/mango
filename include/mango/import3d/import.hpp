@@ -24,11 +24,12 @@ namespace mango::import3d
     //   .obj         → ImportOBJ
     //   .3ds         → Import3DS
     //   .lwo         → ImportLWO
+    //
+    // path is the asset root; filename is relative to path (may include subfolders).
+    // If filename contains a path prefix, importScene() resolves it so each importer
+    // receives a path pointing at the scene folder and a basename only. Call Import*
+    // directly with the same contract, or resolve path/filename yourself.
     // Throws on unsupported extension or importer failure.
-    std::unique_ptr<Scene> importScene(const std::string& filename);
-
-    // Load an external animation clip (.bvh). Bind to a rigged Scene with
-    // remapAnimationNames() + bindAnimation() before playback.
-    // (Also available as importAnimation in import_bvh.hpp.)
+    std::unique_ptr<Scene> importScene(const filesystem::Path& path, const std::string& filename);
 
 } // namespace mango::import3d

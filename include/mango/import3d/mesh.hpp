@@ -332,7 +332,23 @@ namespace mango::import3d
     };
 
     // -----------------------------------------------------------------------
-    // animation (glTF-compatible; BVH can emit the same type later)
+    // skeleton (bone hierarchy from source file)
+    // -----------------------------------------------------------------------
+
+    struct Joint
+    {
+        std::string name;
+        int parent = -1; // index into Skeleton::joints, -1 for root
+        float32x3 offset { 0.0f, 0.0f, 0.0f }; // bind local translation
+    };
+
+    struct Skeleton
+    {
+        std::vector<Joint> joints; // ROOT first, parents before children
+    };
+
+    // -----------------------------------------------------------------------
+    // animation clip
     // -----------------------------------------------------------------------
 
     enum class AnimationPath : u8
@@ -362,8 +378,9 @@ namespace mango::import3d
     struct AnimationChannel
     {
         u32 sampler = 0;
-        std::optional<u32> node;    // index into Scene::nodes (glTF)
-        std::string targetName;     // node name — for BVH / retarget by name
+        std::optional<u32> node;       // Scene::nodes (glTF, same file)
+        std::optional<u32> joint;      // Skeleton::joints (BVH, same file)
+        std::string targetName;        // target name from source file
         AnimationPath path { AnimationPath::Translation };
     };
 
@@ -398,7 +415,7 @@ namespace mango::import3d
 
     struct Scene
     {
-        // Directory used to resolve ImageSource::filename (asset folder pathname).
+        // Folder containing the scene file; ImageSource::filename is relative to this.
         std::string basePath { "./" };
 
         std::vector<ImageSource> images;
@@ -409,28 +426,6 @@ namespace mango::import3d
         std::vector<Node> nodes;
         std::vector<u32> roots;
     };
-
-    // -----------------------------------------------------------------------
-    // animation binding (external clips → rigged Scene)
-    // -----------------------------------------------------------------------
-
-    // Rename channel targets before bind: sourceName (e.g. BVH "LeftUpLeg") →
-    // rig name (e.g. "thigh_l"). Unknown keys are left unchanged.
-    void remapAnimationNames(Animation& animation,
-        const std::unordered_map<std::string, std::string>& sourceToTarget);
-
-    struct AnimationBindStats
-    {
-        u32 bound = 0;     // channels that resolved to a node
-        u32 unbound = 0;   // channels with no matching node name
-        std::vector<std::string> missing; // unique unbound target names
-    };
-
-    // Set channel.node by matching channel.targetName to scene.nodes[].name.
-    // Clips stay usable unbound (name-only) for sharing across compatible rigs;
-    // bind once per Model/Scene instance before playback.
-    AnimationBindStats bindAnimation(Animation& animation, const Scene& scene,
-        bool caseInsensitive = true);
 
     // -----------------------------------------------------------------------
     // shapes

@@ -291,6 +291,7 @@ namespace
 
                 AnimationChannel channel;
                 channel.sampler = u32(animation.samplers.size());
+                channel.joint = u32(ji);
                 channel.targetName = joint.name;
                 channel.path = AnimationPath::Rotation;
                 animation.samplers.push_back(std::move(sampler));
@@ -329,6 +330,7 @@ namespace
 
                 AnimationChannel channel;
                 channel.sampler = u32(animation.samplers.size());
+                channel.joint = u32(ji);
                 channel.targetName = joint.name;
                 channel.path = AnimationPath::Translation;
                 animation.samplers.push_back(std::move(sampler));
@@ -339,8 +341,8 @@ namespace
         return animation;
     }
 
-    static void parseBVH(ConstMemory memory, const std::string& name, Animation& outAnimation,
-                         std::vector<import3d::BvhJoint>& outJoints)
+    static void parseBVH(ConstMemory memory, const std::string& name, Skeleton& skeleton,
+                         Animation& clip)
     {
         std::string_view text(reinterpret_cast<const char*>(memory.address), memory.size);
         TokenReader r(text);
@@ -374,21 +376,21 @@ namespace
         while (!r.empty())
             motion.push_back(r.nextFloat());
 
-        outAnimation = buildAnimation(name, joints, frameCount, frameTime, motion);
+        clip = buildAnimation(name, joints, frameCount, frameTime, motion);
 
-        outJoints.clear();
-        outJoints.reserve(joints.size());
+        skeleton.joints.clear();
+        skeleton.joints.reserve(joints.size());
         for (const BvhJointParse& j : joints)
         {
-            import3d::BvhJoint out;
+            Joint out;
             out.name = j.name;
             out.parent = j.parent;
             out.offset = toOursPosition(j.offset);
-            outJoints.push_back(std::move(out));
+            skeleton.joints.push_back(std::move(out));
         }
 
         printLine(Print::Info, "[BVH] \"{}\" joints={} frames={} dt={:.4f}s duration={:.3f}s channels={}",
-            name, outJoints.size(), frameCount, frameTime, outAnimation.duration, outAnimation.channels.size());
+            name, skeleton.joints.size(), frameCount, frameTime, clip.duration, clip.channels.size());
     }
 } // namespace
 
@@ -397,46 +399,13 @@ namespace mango::import3d
 
     ImportBVH::ImportBVH(ConstMemory memory, const std::string& name)
     {
-        parseBVH(memory, name, animation, joints);
-        jointNames.clear();
-        jointNames.reserve(joints.size());
-        for (const BvhJoint& j : joints)
-            jointNames.push_back(j.name);
+        parseBVH(memory, name, skeleton, clip);
     }
 
     ImportBVH::ImportBVH(const filesystem::Path& path, const std::string& filename)
     {
         filesystem::File file(path, filename);
-        parseBVH(file, filesystem::removeExtension(filename), animation, joints);
-        jointNames.clear();
-        jointNames.reserve(joints.size());
-        for (const BvhJoint& j : joints)
-            jointNames.push_back(j.name);
-    }
-
-    Animation importAnimation(const std::string& filename)
-    {
-        return importBvhClip(filename).animation;
-    }
-
-    BvhClip importBvhClip(const std::string& filename)
-    {
-        std::string dir = filesystem::getPath(filename);
-        if (dir.empty())
-            dir = "./";
-
-        const std::string file = filesystem::removePath(filename);
-        const std::string ext = toLower(filesystem::getExtension(filename));
-        const filesystem::Path path(dir);
-
-        if (ext != ".bvh")
-            MANGO_EXCEPTION("[import3d] Unsupported animation format '{}' (expected .bvh).", ext);
-
-        ImportBVH bvh(path, file);
-        BvhClip clip;
-        clip.animation = std::move(bvh.animation);
-        clip.joints = std::move(bvh.joints);
-        return clip;
+        parseBVH(file, filesystem::removeExtension(filename), skeleton, clip);
     }
 
 } // namespace mango::import3d
