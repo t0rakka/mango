@@ -18,8 +18,15 @@ namespace mango::filesystem
     }
 
     Path::Path(const Path& path, const std::string& pathname, const std::string& password)
-        : m_mapper(std::make_shared<Mapper>(path.m_mapper, pathname, password))
     {
+        if (pathname.empty() && password.empty())
+        {
+            m_mapper = path.m_mapper;
+        }
+        else
+        {
+            m_mapper = std::make_shared<Mapper>(path.m_mapper, pathname, password);
+        }
     }
 
     Path::Path(ConstMemory memory, const std::string& extension, const std::string& password)

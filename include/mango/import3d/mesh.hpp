@@ -46,7 +46,7 @@ namespace mango::import3d
     // Importers record *how* to get pixel data and *what it means*. They do not
     // decode bitmaps. ConstMemory embeds are copied into ImageSource so the
     // Scene owns the bytes for the lifetime of the Import*/Scene object.
-    // File sources are resolved relative to Scene::basePath.
+    // File sources are resolved relative to Scene::path.
     // -----------------------------------------------------------------------
 
     enum class ImageColorSpace : u8
@@ -105,7 +105,7 @@ namespace mango::import3d
 
     struct ImageSource
     {
-        std::string filename;              // relative to Scene::basePath when set
+        std::string filename;              // relative to Scene::path when set
         std::shared_ptr<u8[]> blob;        // owned embed (GLB buffer view, FBX Video, …)
         size_t blobSize = 0;
         std::string mimeType;              // "image/jpeg", "image/png", ".ktx2", …
@@ -415,8 +415,14 @@ namespace mango::import3d
 
     struct Scene
     {
+        Scene() = default;
+        explicit Scene(const filesystem::Path& scenePath)
+            : path(scenePath)
+        {
+        }
+
         // Folder containing the scene file; ImageSource::filename is relative to this.
-        std::string basePath { "./" };
+        filesystem::Path path { "./" };
 
         std::vector<ImageSource> images;
         std::vector<Material> materials;
