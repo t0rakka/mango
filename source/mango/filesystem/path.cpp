@@ -31,15 +31,6 @@ namespace mango::filesystem
     {
     }
 
-    void Path::updateIndex() const
-    {
-        if (m_index_is_dirty)
-        {
-            m_mapper->getIndex(m_index, m_mapper->basepath());
-            m_index_is_dirty = false;
-        }
-    }
-
     // -----------------------------------------------------------------
     // filename manipulation functions
     // -----------------------------------------------------------------

@@ -314,6 +314,20 @@ namespace mango::filesystem
         return m_pathname;
     }
 
+    const FileIndex& Mapper::index() const
+    {
+        if (m_index_is_dirty)
+        {
+            m_index.clear();
+            if (m_current_mapper)
+            {
+                m_current_mapper->getIndex(m_index, m_basepath);
+            }
+            m_index_is_dirty = false;
+        }
+        return m_index;
+    }
+
     u64 Mapper::getSize(const std::string& filename) const
     {
         if (!m_current_mapper)
