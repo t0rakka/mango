@@ -11,7 +11,6 @@ namespace mango::import3d
 {
 
     // Biovision Hierarchy (.bvh): skeleton from HIERARCHY, clip from MOTION.
-    // Coordinate space matches other importers (+X right, +Y up, +Z ahead).
     struct ImportBVH
     {
         ImportBVH(const filesystem::Path& path, const std::string& filename);
