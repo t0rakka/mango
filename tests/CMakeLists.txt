@@ -66,3 +66,6 @@ if (WIN32 AND BUILD_SHARED_LIBS)
 endif ()
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+list(LENGTH MANGO_TESTS _mango_tests_count)
+message("    Added ${_mango_tests_count} tests.")

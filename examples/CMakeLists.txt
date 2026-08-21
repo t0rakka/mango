@@ -12,6 +12,8 @@ link_libraries(mango::mango)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
+set(_mango_examples_added 0)
+
 add_subdirectory(misc)
 add_subdirectory(image)
 
@@ -39,3 +41,5 @@ if (NOT EXAMPLE_BINARY_FOLDERS STREQUAL "${_mango_example_binary_folders}")
         CACHE STRING "Binary Directories for examples" FORCE
     )
 endif ()
+
+message("    Added ${_mango_examples_added} examples.")

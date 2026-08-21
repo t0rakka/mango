@@ -21,3 +21,7 @@ foreach(example IN LISTS EXAMPLES)
 endforeach()
 
 file(COPY data DESTINATION ${CMAKE_CURRENT_BINARY_DIR})
+
+list(LENGTH EXAMPLES _n)
+math(EXPR _mango_examples_added "${_mango_examples_added} + ${_n}")
+set(_mango_examples_added ${_mango_examples_added} PARENT_SCOPE)
