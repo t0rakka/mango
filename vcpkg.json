@@ -36,6 +36,15 @@
                 "jxrlib"
             ]
         },
+        "image-ci": {
+            "description": "Light image deps for Windows CI (no libheif/x265, libavif, libjxl, libraw)",
+            "dependencies": [
+                "lcms",
+                "openjpeg",
+                "libwebp",
+                "jxrlib"
+            ]
+        },
         "vulkan": {
             "description": "Vulkan / text rendering dependencies",
             "dependencies": [

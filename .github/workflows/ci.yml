@@ -40,9 +40,9 @@ jobs:
         uses: actions/cache/restore@v5
         with:
           path: ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-bincache-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-bincache-${{ runner.os }}-x64-win-ci-${{ hashFiles('vcpkg.json') }}
           restore-keys: |
-            vcpkg-bincache-${{ runner.os }}-x64-
+            vcpkg-bincache-${{ runner.os }}-x64-win-ci-
 
       - name: Ensure binary cache directory
         shell: pwsh
@@ -78,7 +78,15 @@ jobs:
           )
           rem vcvars64.bat points VCPKG_ROOT at VS's bundled vcpkg; use the tree we bootstrapped.
           set VCPKG_ROOT=%GITHUB_WORKSPACE%\vcpkg
-          cmake --preset vcpkg-manifest -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl
+          rem Slim CI deps: skip libheif/x265, libavif, libjxl, libraw (Linux/macOS still build these).
+          cmake --preset vcpkg-manifest -DCMAKE_C_COMPILER=cl -DCMAKE_CXX_COMPILER=cl ^
+            -DVCPKG_MANIFEST_NO_DEFAULT_FEATURES=ON ^
+            -DVCPKG_MANIFEST_FEATURES=base;image-ci;vulkan ^
+            -DBUILD_EXAMPLES=OFF ^
+            -DIMAGE_FORMAT_HEIF=OFF ^
+            -DIMAGE_FORMAT_AVIF=OFF ^
+            -DIMAGE_FORMAT_JXL=OFF ^
+            -DIMAGE_FORMAT_CAMERA=OFF
 
       - name: Build
         shell: cmd
@@ -103,7 +111,7 @@ jobs:
         uses: actions/cache/save@v5
         with:
           path: ${{ github.workspace }}/vcpkg-binary-cache
-          key: vcpkg-bincache-${{ runner.os }}-x64-${{ hashFiles('vcpkg.json') }}
+          key: vcpkg-bincache-${{ runner.os }}-x64-win-ci-${{ hashFiles('vcpkg.json') }}
 
       - name: Collect failure logs
         if: failure()
