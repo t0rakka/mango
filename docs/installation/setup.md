@@ -15,7 +15,7 @@ Debian, Ubuntu, Mint, Raspberry Pi OS, and other apt-based distros.
 
 ### Dependencies
 
-    sudo apt-get install cmake ninja-build pkg-config g++ libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev libegl-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev wayland-protocols libdecor-0-dev libvulkan-dev
+    sudo apt-get install cmake ninja-build pkg-config g++ libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev libegl-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libwayland-bin wayland-protocols libdecor-0-dev libvulkan-dev
 
 
 <h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch / pacman</h2>
@@ -37,7 +37,9 @@ Arch Linux and other pacman-based distros.
 
 Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. Configure the cmake options before building to tune the library size and dependencies to your taste.
 
-Xlib, Xcb and Wayland backends are compiled together when their packages are found; the active one is chosen at runtime. `libdecor-0-dev` / `libdecor` is optional at configure time but needed for window chrome on GNOME Wayland (title bar, move, resize). Hyprland and KWin draw decorations themselves. A successful Wayland+libdecor configure prints `Wayland (libdecor)` under `[WindowSystem]`; `Wayland` alone means libdecor was not found.
+The apt/pacman lines above include Xlib, Xcb, and Wayland. Install them all; backends that are found are compiled in and the active one is chosen at runtime. Wayland is increasingly the default session (e.g. upcoming Linux Mint / Cinnamon), so the Wayland packages are recommended rather than optional extras: `libwayland-dev` + `libwayland-bin` + `wayland-protocols` (+ `libdecor-0-dev`) on apt, or `wayland` + `wayland-protocols` (+ `libdecor`) on pacman. Without them, CMake disables `ENABLE_WAYLAND` and builds X11/Xcb only.
+
+`libdecor-0-dev` / `libdecor` is optional at configure time but needed for window chrome on GNOME Wayland (title bar, move, resize). Hyprland and KWin draw decorations themselves. A successful Wayland+libdecor configure prints `Wayland (libdecor)` under `[WindowSystem]`; `Wayland` alone means libdecor was not found. `libwayland-bin` provides `wayland-scanner`, which the Wayland backend needs at build time.
 
 
 <h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
