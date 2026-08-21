@@ -85,3 +85,8 @@ endif ()
 
 target_link_libraries(jpeg_benchmark PRIVATE mango_example_blend2d)
 find_module(jpeg_benchmark JPEG PRIVATE REQUIRED libjpeg JPEG JPEG::JPEG 0)
+
+# webp_test, bulk_decode, icc_p3_test, blitter, palette, async_decode,
+# png_benchmark, jpeg_benchmark
+math(EXPR _mango_examples_added "${_mango_examples_added} + 8")
+set(_mango_examples_added ${_mango_examples_added} PARENT_SCOPE)

@@ -12,21 +12,21 @@ link_libraries(mango::mango)
 
 set_property(GLOBAL PROPERTY USE_FOLDERS ON)
 
-add_executable(hcompress hcompress.cpp)
-add_executable(hdecompress hdecompress.cpp)
-add_executable(image_encoder image_encoder.cpp)
-add_executable(image_inspect image_inspect.cpp)
+set(MANGO_TOOLS
+    hcompress
+    hdecompress
+    image_encoder
+    image_inspect
+)
 
-foreach(tool IN ITEMS hcompress hdecompress image_encoder image_inspect)
+foreach(tool IN LISTS MANGO_TOOLS)
+    add_executable(${tool} ${tool}.cpp)
     set_target_properties(${tool} PROPERTIES FOLDER "tools")
+    source_group("" FILES ${tool}.cpp)
 endforeach()
 
-source_group("" FILES
-    hcompress.cpp
-    hdecompress.cpp
-    image_encoder.cpp
-    image_inspect.cpp
-)
+list(LENGTH MANGO_TOOLS _mango_tools_count)
+message("    Added ${_mango_tools_count} tools.")
 
 if (NOT TOOL_BINARY_FOLDERS STREQUAL "${CMAKE_CURRENT_BINARY_DIR}")
     set(TOOL_BINARY_FOLDERS "${CMAKE_CURRENT_BINARY_DIR}"

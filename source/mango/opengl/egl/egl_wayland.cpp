@@ -4,6 +4,8 @@
 */
 #include "egl_surface.hpp"
 
+#if defined(MANGO_HAS_WAYLAND_WINDOW)
+
 #include <algorithm>
 #include <cstdint>
 
@@ -136,3 +138,5 @@ namespace mango::opengl::egl
     }
 
 } // namespace mango::opengl::egl
+
+#endif // defined(MANGO_HAS_WAYLAND_WINDOW)

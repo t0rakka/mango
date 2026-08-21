@@ -4,6 +4,8 @@
 */
 #include "egl_surface.hpp"
 
+#if defined(MANGO_HAS_XLIB_WINDOW)
+
 #include <cstdint>
 
 #include "../../window/window_backend.hpp"
@@ -33,3 +35,5 @@ namespace mango::opengl::egl
     }
 
 } // namespace mango::opengl::egl
+
+#endif // defined(MANGO_HAS_XLIB_WINDOW)

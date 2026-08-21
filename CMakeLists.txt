@@ -4,23 +4,6 @@ project(mango
         DESCRIPTION "C++ Graphics Library for the NÖRDS"
         LANGUAGES CXX C)
 
-if (CMAKE_GENERATOR MATCHES "Visual Studio")
-    if (EXISTS "${CMAKE_BINARY_DIR}/build.ninja"
-        OR EXISTS "${CMAKE_BINARY_DIR}/.ninja_log"
-        OR EXISTS "${CMAKE_BINARY_DIR}/.ninja_deps")
-        message(WARNING
-            "Ninja build artifacts found in a Visual Studio build directory.\n"
-            "    Use separate binary dirs for Ninja (cmake --preset default) and Visual Studio.\n"
-            "    Remove build.ninja, .ninja_log, and .ninja_deps from this folder, or wipe CMakeCache.txt.")
-    endif ()
-elseif (CMAKE_GENERATOR MATCHES "Ninja")
-    if (EXISTS "${CMAKE_BINARY_DIR}/mango.sln")
-        message(WARNING
-            "Visual Studio build artifacts found in a Ninja build directory.\n"
-            "    Use build-ninja/ for Ninja and build/ for Visual Studio to avoid reconfigure loops.")
-    endif ()
-endif ()
-
 # ------------------------------------------------------------------------------
 # options
 # ------------------------------------------------------------------------------
