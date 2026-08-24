@@ -129,7 +129,10 @@ if (BUILD_MANGO_WINDOW AND NOT EMSCRIPTEN)
             target_link_libraries(mango-window PUBLIC wayland-client xkbcommon)
             if (MANGO_HAS_LIBDECOR)
                 target_compile_definitions(mango-window PRIVATE MANGO_HAS_LIBDECOR)
-                target_link_libraries(mango-window PUBLIC PkgConfig::LIBDECOR)
+                target_link_libraries(mango-window PUBLIC
+                    $<BUILD_INTERFACE:PkgConfig::LIBDECOR>
+                    $<INSTALL_INTERFACE:decor-0>
+                )
             endif ()
         endif ()
     endif ()
