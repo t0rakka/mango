@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <charconv>
 #include <string_view>
 #include <map>
 #include <mango/core/core.hpp>
@@ -13,6 +14,67 @@
 
     https://en.wikipedia.org/wiki/Wavefront_.obj_file
 */
+
+namespace
+{
+    using namespace mango;
+
+    // TU-local parsers: keep fast_float in this translation unit for speed/inlining.
+
+    static inline
+    float parseFloat(std::string_view s)
+    {
+        float value = 0.0f;
+        fast_float::from_chars(s.data(), s.data() + s.size(), value);
+        return value;
+    }
+
+    static inline
+    int parseInt(std::string_view s)
+    {
+        int value = 0;
+        std::from_chars(s.data(), s.data() + s.size(), value);
+        return value;
+    }
+
+    // Parse "pos", "pos/tex", "pos//nrm", "pos/tex/nrm" within view bounds.
+    static inline
+    void parseFaceCorner(std::string_view s, int value[3])
+    {
+        value[0] = 0;
+        value[1] = 0;
+        value[2] = 0;
+
+        size_t pos = 0;
+
+        for (size_t index = 0; index < 3; ++index)
+        {
+            if (pos >= s.size())
+                break;
+
+            if (s[pos] == '/')
+            {
+                ++pos;
+                continue;
+            }
+
+            int v = 0;
+            const char* begin = s.data() + pos;
+            const char* end = s.data() + s.size();
+            const auto result = std::from_chars(begin, end, v);
+
+            if (result.ptr == begin)
+                break;
+
+            value[index] = v;
+            pos = size_t(result.ptr - s.data());
+
+            if (pos < s.size() && s[pos] == '/')
+                ++pos;
+        }
+    }
+
+} // namespace
 
 namespace mango::import3d
 {
@@ -30,17 +92,31 @@ namespace mango::import3d
         return std::memcmp(&a, &b, sizeof(VertexOBJ)) == 0;
     }
 
-    struct VertexHash
+    struct CornerKey
     {
-        std::size_t operator () (const VertexOBJ& v) const
+        VertexOBJ vertex;
+        u32 smoothing_group = 0;
+    };
+
+    static inline
+    bool operator == (const CornerKey& a, const CornerKey& b)
+    {
+        return a.smoothing_group == b.smoothing_group && a.vertex == b.vertex;
+    }
+
+    struct CornerHash
+    {
+        std::size_t operator () (const CornerKey& k) const
         {
-            return v.position;
+            const VertexOBJ& v = k.vertex;
+            return v.position ^ (v.texcoord << 10) ^ (v.normal << 20) ^ (k.smoothing_group << 30);
         }
     };
 
     struct FaceOBJ
     {
         VertexOBJ vertex[3];
+        u32 smoothing_group = 0;
     };
 
     struct GroupOBJ
@@ -66,6 +142,12 @@ namespace mango::import3d
         float32x3 ks { 0.0f, 0.0f, 0.0f }; // specular color
         float32x3 ke { 0.0f, 0.0f, 0.0f }; // emissive color
 
+        float pr = 0.5f; // roughness (Exocortex PBR extension)
+        float pm = 0.0f; // metallic
+        bool has_pr = false;
+        bool has_pm = false;
+        bool has_d = false; // dissolve: Tr ignored when d is present
+
         std::string map_ka;    // ambient texture
         std::string map_kd;    // diffuse texture
         std::string map_ks;    // specular texture
@@ -76,18 +158,9 @@ namespace mango::import3d
         std::string map_disp;  // displacement texture
         std::string map_decal; // stencil texture
         std::string map_refl;  // reflection texture
-
-        /* PBR:
-        Pr / map_Pr     # roughness
-        Pm / map_Pm     # metallic
-        Ps / map_Ps     # sheen
-        Pc              # clearcoat thickness
-        Pcr             # clearcoat roughness
-        Ke / map_Ke     # emissive
-        aniso           # anisotropy
-        anisor          # anisotropy rotation
-        norm            # normal map (RGB components represent XYZ components of the surface normal)
-        */
+        std::string map_pr;    // roughness texture
+        std::string map_pm;    // metallic texture
+        std::string map_norm;  // normal map (PBR; preferred over bump when present)
     };
 
     struct ObjectOBJ
@@ -108,6 +181,7 @@ namespace mango::import3d
         std::vector<MaterialOBJ> m_materials;
 
         MaterialOBJ* m_current_material = nullptr;
+        u32 m_smoothing_group = 0;
 
         ReaderOBJ(const filesystem::Path& path, const std::string& filename);
 
@@ -146,61 +220,6 @@ namespace mango::import3d
             }
 
             return object.groups.back();
-        }
-
-        float parseFloat(std::string_view s) const
-        {
-            float value = 0.0f;
-            fast_float::from_chars(s.data(), s.data() + s.size(), value);
-            return value;
-        }
-
-        int parseInt(const char* s) const
-        {
-            int result = 0;
-
-            // Skip whitespaces
-            for ( ;; ++s)
-            {
-                char c = *s;
-                bool whitespace = c == ' ' || c == '\t' || c == '\n' || c == '\v' || c == '\f' || c == '\r';
-                if (!whitespace)
-                    break;
-            }
-
-            if (*s == '-')
-            {
-                ++s;
-
-                // Iterate through all characters of input string and update result
-                for ( ;; ++s)
-                {
-                    u32 d = u32(*s) - '0';
-                    if (d > 9)
-                    {
-                        return result;
-                    }
-                    result = result * 10 - d;
-                }
-            }
-            else if (*s == '+')
-            {
-                ++s;
-            }
-
-            // Iterate through all characters of input string and update result
-            for ( ;; ++s)
-            {
-                u32 d = u32(*s) - '0';
-                if (d > 9)
-                {
-                    // return result
-                    break;
-                }
-                result = result * 10 + d;
-            }
-
-            return result;
         }
 
         std::string map_filename(const std::string_view* tokens, size_t count) const
@@ -378,10 +397,12 @@ namespace mango::import3d
                         else if (id == "d")
                         {
                             m_current_material->tr = parse_float(data, count);
+                            m_current_material->has_d = true;
                         }
                         else if (id == "Tr")
                         {
-                            m_current_material->tr = 1.0f - parse_float(data, count);
+                            if (!m_current_material->has_d)
+                                m_current_material->tr = 1.0f - parse_float(data, count);
                         }
                         else if (id == "Tf")
                         {
@@ -446,6 +467,28 @@ namespace mango::import3d
                         else if (id == "refl")
                         {
                             m_current_material->map_refl = map_filename(data, count);
+                        }
+                        else if (id == "Pr")
+                        {
+                            m_current_material->pr = parse_float(data, count);
+                            m_current_material->has_pr = true;
+                        }
+                        else if (id == "Pm")
+                        {
+                            m_current_material->pm = parse_float(data, count);
+                            m_current_material->has_pm = true;
+                        }
+                        else if (id == "map_Pr")
+                        {
+                            m_current_material->map_pr = map_filename(data, count);
+                        }
+                        else if (id == "map_Pm")
+                        {
+                            m_current_material->map_pm = map_filename(data, count);
+                        }
+                        else if (id == "norm")
+                        {
+                            m_current_material->map_norm = map_filename(data, count);
                         }
                         else
                         {
@@ -579,19 +622,19 @@ namespace mango::import3d
 
     void ReaderOBJ::parse_s(const std::string_view* tokens, size_t count)
     {
-        MANGO_UNREFERENCED(tokens);
-
         if (count != 1)
         {
-            // error
             return;
         }
 
-        // TODO
-        /*
-        s 1
-        s off
-        */
+        if (tokens[0] == "off")
+        {
+            m_smoothing_group = 0;
+        }
+        else
+        {
+            m_smoothing_group = u32(parseInt(tokens[0]));
+        }
     }
 
     void ReaderOBJ::parse_f(const std::string_view* tokens, size_t count)
@@ -625,19 +668,7 @@ namespace mango::import3d
 
             int value[3] = { 0, 0, 0 };
 
-            size_t index = 0;
-            size_t first = 0;
-
-            while (first < s.size() && index < 3)
-            {
-                value[index++] = parseInt(s.data() + first);
-
-                size_t second = s.find_first_of("/", first);
-                if (second == std::string_view::npos)
-                    break;
-
-                first = second + 1;
-            }
+            parseFaceCorner(s, value);
 
             // negative indices start from the last element
             if (value[0] < 0) value[0] += bias[0];
@@ -656,6 +687,8 @@ namespace mango::import3d
         for (size_t i = 0; i < count - 2; ++i)
         {
             FaceOBJ face;
+
+            face.smoothing_group = m_smoothing_group;
 
             // Z-reflect already yields CW front faces — keep file corner order.
             face.vertex[0].position = positionIndex[0];
@@ -710,9 +743,25 @@ namespace mango::import3d
 
             material.baseColorFactor = float32x4(materialobj.kd, materialobj.tr);
             material.emissiveFactor = materialobj.ke;
-            // OBJ/MTL has no metal-rough workflow — force dielectric so PBR isn't black.
-            material.metallicFactor = 0.0f;
-            material.roughnessFactor = 0.5f;
+
+            if (materialobj.has_pm)
+                material.metallicFactor = materialobj.pm;
+            else
+                material.metallicFactor = 0.0f;
+
+            if (materialobj.has_pr)
+            {
+                material.roughnessFactor = materialobj.pr;
+            }
+            else if (materialobj.ns > 0.0f)
+            {
+                // Blinn-Phong exponent → GGX roughness (common OBJ fallback).
+                material.roughnessFactor = std::sqrt(2.0f / (materialobj.ns + 2.0f));
+            }
+            else
+            {
+                material.roughnessFactor = 0.5f;
+            }
 
             const u32 kd = addFileImage(materialobj.map_kd);
             if (kd != ImageSample::none)
@@ -722,13 +771,31 @@ namespace mango::import3d
             if (ke != ImageSample::none)
                 material.emissive = ImageSample::from(ke, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
 
-            const u32 bump = addFileImage(materialobj.map_bump);
-            if (bump != ImageSample::none)
-                material.normal = ImageSample::from(bump, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+            const std::string& normalMap = !materialobj.map_norm.empty()
+                ? materialobj.map_norm
+                : materialobj.map_bump;
+            const u32 normalTex = addFileImage(normalMap);
+            if (normalTex != ImageSample::none)
+                material.normal = ImageSample::from(normalTex, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+
+            const u32 pr = addFileImage(materialobj.map_pr);
+            if (pr != ImageSample::none)
+                material.roughness = ImageSample::from(pr, ImageSwizzle::r(), ImageColorSpace::Linear);
+
+            const u32 pm = addFileImage(materialobj.map_pm);
+            if (pm != ImageSample::none)
+                material.metallic = ImageSample::from(pm, ImageSwizzle::r(), ImageColorSpace::Linear);
+
+            const u32 opacity = addFileImage(materialobj.map_d);
+            if (opacity != ImageSample::none)
+                material.opacity = ImageSample::from(opacity, ImageSwizzle::r(), ImageColorSpace::Linear);
 
             const u32 ka = addFileImage(materialobj.map_ka);
             if (ka != ImageSample::none)
                 material.occlusion = ImageSample::from(ka, ImageSwizzle::r(), ImageColorSpace::Linear);
+
+            if (materialobj.tr < 1.0f || material.opacity)
+                material.alphaMode = Material::AlphaMode::Blend;
 
             materials.push_back(material);
         }
@@ -761,7 +828,7 @@ namespace mango::import3d
 
                 mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
 
-                std::unordered_map<VertexOBJ, u32, VertexHash> unique;
+                std::unordered_map<CornerKey, u32, CornerHash> unique;
 
                 for (const FaceOBJ& face : group.faces)
                 {
@@ -769,16 +836,17 @@ namespace mango::import3d
                     {
                         u32 index;
 
-                        auto it = unique.find(face.vertex[i]);
+                        CornerKey key { face.vertex[i], face.smoothing_group };
+
+                        auto it = unique.find(key);
                         if (it != unique.end())
                         {
-                            // vertex already exists; use it's index
                             index = it->second;
                         }
                         else
                         {
                             index = u32(mesh.vertices.size());
-                            unique[face.vertex[i]] = index; // remember the index of this vertex
+                            unique[key] = index;
 
                             Vertex vertex;
 
@@ -871,15 +939,27 @@ namespace mango::import3d
                     }
                 }
 
-                Primitive primitive;
+                Mesh trimesh;
+                trimesh.flags = mesh.flags;
 
-                primitive.type = Primitive::Type::TriangleList;
-                primitive.start = 0;
-                primitive.count = u32(mesh.indices.size());
-                primitive.base = 0;
-                primitive.material = group.material;
+                for (size_t i = 0; i + 2 < mesh.indices.size(); i += 3)
+                {
+                    Triangle triangle;
 
-                mesh.primitives.push_back(primitive);
+                    triangle.vertex[0] = mesh.vertices[mesh.indices[i + 0]];
+                    triangle.vertex[1] = mesh.vertices[mesh.indices[i + 1]];
+                    triangle.vertex[2] = mesh.vertices[mesh.indices[i + 2]];
+
+                    trimesh.triangles.push_back(triangle);
+                }
+
+                trimesh.computeTangents();
+
+                IndexedMesh indexed;
+                indexed.append(trimesh, group.material);
+                indexed.boundingBox = mesh.boundingBox;
+
+                ptr = std::make_unique<IndexedMesh>(std::move(indexed));
 
                 Node node;
 
