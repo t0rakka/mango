@@ -8,13 +8,17 @@
 #include <mango/core/string.hpp>
 #include <mango/core/timer.hpp>
 
+#include <cerrno>
 #include <unistd.h>
 #include <poll.h>
+#include <fcntl.h>
 #include <sys/mman.h>
+#include <sys/stat.h>
 #include <cstring>
 #include <cstdint>
 #include <algorithm>
 #include <memory>
+#include <string>
 #include <vector>
 
 #include "wayland_window.hpp"
@@ -841,6 +845,392 @@ namespace
         .name = seat_name,
     };
 
+    // -----------------------------------------------------------------------
+    // Drag and drop (wl_data_device)
+    // -----------------------------------------------------------------------
+
+    using namespace mango::filesystem;
+
+    void clearDndOffer(WaylandBackend* window)
+    {
+        if (window->dnd_offer)
+        {
+            wl_data_offer_destroy(window->dnd_offer);
+            window->dnd_offer = nullptr;
+        }
+
+        window->dnd_mime.clear();
+        window->dnd_has_uri_list = false;
+        window->dnd_serial = 0;
+    }
+
+    void clearDndPending(WaylandBackend* window)
+    {
+        window->dnd_pending_mime.clear();
+        window->dnd_pending_uri_list = false;
+    }
+
+    void emplaceLocalPath(FileIndex& dropped, const std::string& filename)
+    {
+        int fd = ::open(filename.c_str(), O_RDONLY | O_CLOEXEC);
+        if (fd < 0)
+        {
+            return;
+        }
+
+        struct stat s;
+        if (::fstat(fd, &s) == 0)
+        {
+            if ((s.st_mode & S_IFDIR) == 0)
+            {
+                dropped.emplace(filename, u64(s.st_size), 0);
+            }
+            else
+            {
+                dropped.emplace(filename + "/", 0, FileInfo::Directory);
+            }
+        }
+
+        ::close(fd);
+    }
+
+    std::string uriDecode(const std::string& uri)
+    {
+        std::string result;
+        result.reserve(uri.size());
+
+        for (size_t i = 0; i < uri.size(); ++i)
+        {
+            if (uri[i] == '%' && i + 2 < uri.size())
+            {
+                auto hex = [](char c) -> int
+                {
+                    if (c >= '0' && c <= '9') return c - '0';
+                    if (c >= 'a' && c <= 'f') return c - 'a' + 10;
+                    if (c >= 'A' && c <= 'F') return c - 'A' + 10;
+                    return -1;
+                };
+
+                const int hi = hex(uri[i + 1]);
+                const int lo = hex(uri[i + 2]);
+                if (hi >= 0 && lo >= 0)
+                {
+                    result.push_back(char((hi << 4) | lo));
+                    i += 2;
+                    continue;
+                }
+            }
+
+            result.push_back(uri[i]);
+        }
+
+        return result;
+    }
+
+    bool uriToLocalPath(const std::string& uri, std::string& out_path)
+    {
+        const char* p = uri.c_str();
+
+        if (std::strncmp(p, "file:", 5) != 0)
+        {
+            return false;
+        }
+
+        p += 5;
+        if (p[0] == '/' && p[1] == '/')
+        {
+            // file://[host]/path
+            p += 2;
+            const char* slash = std::strchr(p, '/');
+            if (!slash)
+            {
+                return false;
+            }
+
+            if (slash != p)
+            {
+                char hostname[256];
+                if (::gethostname(hostname, sizeof(hostname)) != 0)
+                {
+                    return false;
+                }
+                hostname[sizeof(hostname) - 1] = '\0';
+
+                const size_t host_len = size_t(slash - p);
+                if (std::strlen(hostname) != host_len || std::strncmp(p, hostname, host_len) != 0)
+                {
+                    if (!(host_len == 9 && std::strncmp(p, "localhost", 9) == 0))
+                    {
+                        return false;
+                    }
+                }
+            }
+
+            p = slash;
+        }
+
+        out_path = uriDecode(p);
+        return !out_path.empty();
+    }
+
+    void dispatchUriList(Window* window, const std::string& data)
+    {
+        FileIndex dropped;
+
+        size_t begin = 0;
+        while (begin < data.size())
+        {
+            size_t end = data.find_first_of("\r\n", begin);
+            if (end == std::string::npos)
+            {
+                end = data.size();
+            }
+
+            std::string line = data.substr(begin, end - begin);
+            begin = data.find_first_not_of("\r\n", end);
+            if (begin == std::string::npos)
+            {
+                begin = data.size();
+            }
+
+            if (line.empty() || line[0] == '#')
+            {
+                continue;
+            }
+
+            // GNOME copied-files: first line is "copy" / "cut"
+            if (line == "copy" || line == "cut" || line == "link")
+            {
+                continue;
+            }
+
+            std::string path;
+            if (uriToLocalPath(line, path))
+            {
+                emplaceLocalPath(dropped, path);
+            }
+        }
+
+        if (!dropped.empty())
+        {
+            window->onDropFiles(dropped);
+        }
+    }
+
+    std::string receiveOfferData(WaylandBackend* window, wl_data_offer* offer, const char* mime)
+    {
+        int fds[2];
+        if (::pipe2(fds, O_CLOEXEC) != 0)
+        {
+            return {};
+        }
+
+        wl_data_offer_receive(offer, mime, fds[1]);
+        ::close(fds[1]);
+        wl_display_flush(window->display);
+
+        std::string result;
+        char buffer[4096];
+        for (;;)
+        {
+            const ssize_t n = ::read(fds[0], buffer, sizeof(buffer));
+            if (n < 0)
+            {
+                if (errno == EINTR)
+                {
+                    continue;
+                }
+                break;
+            }
+            if (n == 0)
+            {
+                break;
+            }
+            result.append(buffer, size_t(n));
+        }
+
+        ::close(fds[0]);
+        return result;
+    }
+
+    void data_offer_offer(void* data, struct wl_data_offer* offer, const char* mime_type)
+    {
+        MANGO_UNREFERENCED(offer);
+
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
+        if (!mime_type)
+        {
+            return;
+        }
+
+        // Prefer text/uri-list; accept GNOME's variant as fallback.
+        if (std::strcmp(mime_type, "text/uri-list") == 0)
+        {
+            window->dnd_pending_uri_list = true;
+            window->dnd_pending_mime = mime_type;
+        }
+        else if (window->dnd_pending_mime.empty() &&
+                 (std::strcmp(mime_type, "x-special/gnome-copied-files") == 0 ||
+                  std::strcmp(mime_type, "text/x-moz-url") == 0))
+        {
+            window->dnd_pending_uri_list = true;
+            window->dnd_pending_mime = mime_type;
+        }
+    }
+
+    void data_offer_source_actions(void* data, struct wl_data_offer* offer, uint32_t source_actions)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(offer);
+        MANGO_UNREFERENCED(source_actions);
+    }
+
+    void data_offer_action(void* data, struct wl_data_offer* offer, uint32_t dnd_action)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(offer);
+        MANGO_UNREFERENCED(dnd_action);
+    }
+
+    static const struct wl_data_offer_listener data_offer_listener =
+    {
+        .offer = data_offer_offer,
+        .source_actions = data_offer_source_actions,
+        .action = data_offer_action,
+    };
+
+    void data_device_data_offer(void* data, struct wl_data_device* device, struct wl_data_offer* offer)
+    {
+        MANGO_UNREFERENCED(device);
+
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
+        clearDndPending(window);
+        wl_data_offer_add_listener(offer, &data_offer_listener, window);
+    }
+
+    void data_device_enter(void* data, struct wl_data_device* device, uint32_t serial,
+                           struct wl_surface* surface, wl_fixed_t x, wl_fixed_t y,
+                           struct wl_data_offer* offer)
+    {
+        MANGO_UNREFERENCED(device);
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
+
+        if (window->dnd_offer && window->dnd_offer != offer)
+        {
+            wl_data_offer_destroy(window->dnd_offer);
+        }
+
+        window->dnd_offer = offer;
+        window->dnd_serial = serial;
+        window->dnd_mime = window->dnd_pending_mime;
+        window->dnd_has_uri_list = window->dnd_pending_uri_list;
+        clearDndPending(window);
+
+        if (!offer || surface != window->surface || !window->dnd_has_uri_list || window->dnd_mime.empty())
+        {
+            if (offer)
+            {
+                wl_data_offer_accept(offer, serial, nullptr);
+            }
+            return;
+        }
+
+        wl_data_offer_accept(offer, serial, window->dnd_mime.c_str());
+
+        if (wl_proxy_get_version((struct wl_proxy*)offer) >= WL_DATA_OFFER_SET_ACTIONS_SINCE_VERSION)
+        {
+            wl_data_offer_set_actions(offer,
+                WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY,
+                WL_DATA_DEVICE_MANAGER_DND_ACTION_COPY);
+        }
+    }
+
+    void data_device_leave(void* data, struct wl_data_device* device)
+    {
+        MANGO_UNREFERENCED(device);
+        clearDndOffer(static_cast<WaylandBackend*>(data));
+    }
+
+    void data_device_motion(void* data, struct wl_data_device* device,
+                            uint32_t time, wl_fixed_t x, wl_fixed_t y)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(device);
+        MANGO_UNREFERENCED(time);
+        MANGO_UNREFERENCED(x);
+        MANGO_UNREFERENCED(y);
+    }
+
+    void data_device_drop(void* data, struct wl_data_device* device)
+    {
+        MANGO_UNREFERENCED(device);
+
+        WaylandBackend* window = static_cast<WaylandBackend*>(data);
+        if (!window->owner || !window->dnd_offer || window->dnd_mime.empty())
+        {
+            clearDndOffer(window);
+            return;
+        }
+
+        wl_data_offer* offer = window->dnd_offer;
+        const std::string mime = window->dnd_mime;
+
+        const std::string payload = receiveOfferData(window, offer, mime.c_str());
+
+        if (wl_proxy_get_version((struct wl_proxy*)offer) >= WL_DATA_OFFER_FINISH_SINCE_VERSION)
+        {
+            wl_data_offer_finish(offer);
+        }
+
+        window->dnd_offer = nullptr;
+        clearDndOffer(window);
+        wl_data_offer_destroy(offer);
+
+        if (!payload.empty())
+        {
+            dispatchUriList(window->owner, payload);
+        }
+    }
+
+    void data_device_selection(void* data, struct wl_data_device* device, struct wl_data_offer* offer)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(device);
+
+        // Clipboard offers are unused; destroy so they do not leak.
+        if (offer)
+        {
+            wl_data_offer_destroy(offer);
+        }
+    }
+
+    static const struct wl_data_device_listener data_device_listener =
+    {
+        .data_offer = data_device_data_offer,
+        .enter = data_device_enter,
+        .leave = data_device_leave,
+        .motion = data_device_motion,
+        .drop = data_device_drop,
+        .selection = data_device_selection,
+    };
+
+    void ensureDataDevice(WaylandBackend* window)
+    {
+        if (window->data_device || !window->data_device_manager || !window->seat)
+        {
+            return;
+        }
+
+        window->data_device = wl_data_device_manager_get_data_device(window->data_device_manager, window->seat);
+        if (window->data_device)
+        {
+            wl_data_device_add_listener(window->data_device, &data_device_listener, window);
+        }
+    }
+
     struct WaylandOutput
     {
         struct wl_output* output = nullptr;
@@ -976,6 +1366,14 @@ namespace
             window->seat = static_cast<struct wl_seat*>(
                 wl_registry_bind(registry, name, &wl_seat_interface, 5));
             wl_seat_add_listener(window->seat, &seat_listener, window);
+            ensureDataDevice(window);
+        }
+        else if (std::strcmp(interface, "wl_data_device_manager") == 0)
+        {
+            const uint32_t bind_version = version < 3 ? version : 3;
+            window->data_device_manager = static_cast<struct wl_data_device_manager*>(
+                wl_registry_bind(registry, name, &wl_data_device_manager_interface, bind_version));
+            ensureDataDevice(window);
         }
         else if (std::strcmp(interface, "wl_output") == 0)
         {
@@ -1047,6 +1445,7 @@ namespace mango
         wl_registry_add_listener(registry, &registry_listener, this);
         wl_display_roundtrip(display);
         wl_display_roundtrip(display);
+        ensureDataDevice(this);
 
         if (!createWaylandWindow(width, height, "Mango Window"))
         {
@@ -1079,6 +1478,20 @@ namespace mango
         if (xdg_surface) xdg_surface_destroy(xdg_surface);
         if (surface) wl_surface_destroy(surface);
         if (xdg_wm_base) xdg_wm_base_destroy(xdg_wm_base);
+        clearDndOffer(this);
+        if (data_device)
+        {
+            if (wl_proxy_get_version((struct wl_proxy*)data_device) >= WL_DATA_DEVICE_RELEASE_SINCE_VERSION)
+            {
+                wl_data_device_release(data_device);
+            }
+            else
+            {
+                wl_data_device_destroy(data_device);
+            }
+            data_device = nullptr;
+        }
+        if (data_device_manager) wl_data_device_manager_destroy(data_device_manager);
         if (pointer) wl_pointer_destroy(pointer);
         if (keyboard) wl_keyboard_destroy(keyboard);
         if (seat) wl_seat_destroy(seat);

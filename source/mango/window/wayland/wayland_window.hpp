@@ -10,6 +10,7 @@
 
 #include <mango/math/math.hpp>
 
+#include <string>
 #include <wayland-client.h>
 #include <xkbcommon/xkbcommon.h>
 
@@ -48,6 +49,9 @@ namespace mango
         struct wl_seat* seat = nullptr;
         struct wl_pointer* pointer = nullptr;
         struct wl_keyboard* keyboard = nullptr;
+        struct wl_data_device_manager* data_device_manager = nullptr;
+        struct wl_data_device* data_device = nullptr;
+        struct wl_data_offer* dnd_offer = nullptr;
 
         struct xkb_context* xkb_context = nullptr;
         struct xkb_keymap* xkb_keymap = nullptr;
@@ -57,6 +61,11 @@ namespace mango
         bool key_pressed[256] = {};
 
         bool pointer_focused = false;
+        bool dnd_pending_uri_list = false;
+        bool dnd_has_uri_list = false;
+        uint32_t dnd_serial = 0;
+        std::string dnd_pending_mime;
+        std::string dnd_mime;
 
         bool is_looping = false;
         bool configured = false;
