@@ -25,17 +25,17 @@ namespace
     };
 
     inline
-    void configureVulkanDemoParser(CommandLineParser& parser, VulkanDemoArgs& args)
+    void configureVulkanDemoParser(const CommandLine& commands, VulkanDemoArgs& args)
     {
-        parser.usage("[options]");
+        commands.usage("[options]");
 
-        parser.flag("--info", "enable verbose info output",
+        commands.flag("--info", "enable verbose info output",
             [&]()
             {
                 args.info = true;
             });
 
-        parser.flag("--validate", "enable Khronos validation layer",
+        commands.flag("--validate", "enable Khronos validation layer",
             [&]()
             {
                 args.validate = true;
@@ -857,12 +857,10 @@ public:
 
 int mangoMain(const mango::CommandLine& commands)
 {
-    CommandLineParser parser;
-
     VulkanDemoArgs args;
-    configureVulkanDemoParser(parser, args);
+    configureVulkanDemoParser(commands, args);
 
-    if (!parser.parse(commands))
+    if (!commands.parse())
     {
         return 1;
     }

@@ -873,35 +873,35 @@ void test_folder(Path& path)
 namespace
 {
 
-    void configureParser(CommandLineParser& parser)
+    void configureParser(const CommandLine& commands)
     {
-        parser.usage("[options] <file.png | folder/>");
+        commands.usage("[options] <file.png | folder/>");
 
-        parser.flag("--nomt", "disable multi-threaded codec",
+        commands.flag("--nomt", "disable multi-threaded codec",
             []()
             {
                 g_option_multithread = false;
             });
 
-        parser.optionInt("--compression", "zlib compression level (0-9)",
+        commands.optionInt("--compression", "zlib compression level (0-9)",
             [](int value)
             {
                 g_option_compression = value;
             });
 
-        parser.flag("--debug", "enable debug output",
+        commands.flag("--debug", "enable debug output",
             []()
             {
                 printEnable(Print::Debug, true);
             });
 
-        parser.flag("--trace", "enable tracing",
+        commands.flag("--trace", "enable tracing",
             []()
             {
                 g_option_tracing = true;
             });
 
-        parser.flag("--save", "disable save testing",
+        commands.flag("--save", "disable save testing",
             []()
             {
                 g_option_save = false;
@@ -912,21 +912,21 @@ namespace
 
 int main(int argc, const char* argv[])
 {
-    CommandLineParser parser;
-    configureParser(parser);
+    CommandLine commands(argc, argv);
+    configureParser(commands);
 
     if (argc < 2)
     {
-        parser.printHelp();
+        commands.printHelp();
         return 1;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }
 
-    const auto& positionals = parser.positionals();
+    const auto& positionals = commands.positionals();
     if (positionals.empty())
     {
         printLine("Missing file or folder.");

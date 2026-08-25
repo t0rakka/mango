@@ -1059,47 +1059,47 @@ void compress(State& state, const std::vector<std::string>& inputs, const std::s
         printLine("");
     }
 
-    void configureParser(CommandLineParser& parser, CompressArgs& args)
+    void configureParser(const CommandLine& commands, CompressArgs& args)
     {
-        parser.usage("[options] <files...>");
+        commands.usage("[options] <files...>");
 
-        parser.option("--output", "output archive filename",
+        commands.option("--output", "output archive filename",
             [&](std::string_view value)
             {
                 args.output = value;
             });
 
-        parser.option("--method", "compression method (default: zstd)",
+        commands.option("--method", "compression method (default: zstd)",
             [&](std::string_view value)
             {
                 args.method = value;
             });
 
-        parser.optionInt("--level", "compression level 0..10 (default: 6)",
+        commands.optionInt("--level", "compression level 0..10 (default: 6)",
             [&](int value)
             {
                 args.level = value;
             });
 
-        parser.flag("--store", "store incompressible data uncompressed",
+        commands.flag("--store", "store incompressible data uncompressed",
             [&]()
             {
                 args.store_threshold = 0;
             });
 
-        parser.flag("--verbose", "verbose output",
+        commands.flag("--verbose", "verbose output",
             [&]()
             {
                 args.verbose = true;
             });
 
-        parser.flag("--developer", "print layout diagnostics and exit",
+        commands.flag("--developer", "print layout diagnostics and exit",
             [&]()
             {
                 args.developer = true;
             });
 
-        parser.positional([&](std::string_view token)
+        commands.positional([&](std::string_view token)
         {
             args.inputs.emplace_back(token);
         });
@@ -1113,18 +1113,18 @@ int main(int argc, const char* argv[])
 {
     CompressArgs args;
 
-    CommandLineParser parser;
-    configureParser(parser, args);
+    CommandLine commands(argc, argv);
+    configureParser(commands, args);
 
     if (argc < 2)
     {
         printBanner();
-        parser.printHelp();
+        commands.printHelp();
         printCompressors();
         return 0;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }

@@ -83,14 +83,13 @@ int mangoMain(const mango::CommandLine& commands)
         std::string filename = "data/tech_helmet_2005.jpg";
     } args;
 
-    CommandLineParser parser;
-    parser.usage("[filename]");
-    parser.positional([&](std::string_view token)
+    commands.usage("[filename]");
+    commands.positional([&](std::string_view token)
     {
         args.filename = token;
     });
 
-    if (!parser.parse(commands))
+    if (!commands.parse())
     {
         return 1;
     }

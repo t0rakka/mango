@@ -838,29 +838,29 @@ namespace
         printLine("");
     }
 
-    void configureParser(CommandLineParser& parser, DecompressArgs& args)
+    void configureParser(const CommandLine& commands, DecompressArgs& args)
     {
-        parser.usage("[options] <archive> [destination]");
+        commands.usage("[options] <archive> [destination]");
 
-        parser.flag("--list", "list archive contents",
+        commands.flag("--list", "list archive contents",
             [&]()
             {
                 args.print_list = true;
             });
 
-        parser.flag("--tree", "print archive as a directory tree",
+        commands.flag("--tree", "print archive as a directory tree",
             [&]()
             {
                 args.print_tree = true;
             });
 
-        parser.flag("--verify", "verify checksums without extracting",
+        commands.flag("--verify", "verify checksums without extracting",
             [&]()
             {
                 args.verify = true;
             });
 
-        parser.positional([&](std::string_view token)
+        commands.positional([&](std::string_view token)
         {
             if (args.archive.empty())
             {
@@ -1034,19 +1034,19 @@ namespace
 
 int main(int argc, const char* argv[])
 {
+    CommandLine commands(argc, argv);
     DecompressArgs args;
 
-    CommandLineParser parser;
-    configureParser(parser, args);
+    configureParser(commands, args);
 
     if (argc < 2)
     {
         printBanner();
-        parser.printHelp();
+        commands.printHelp();
         return 0;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }

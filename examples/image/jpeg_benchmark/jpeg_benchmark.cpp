@@ -401,47 +401,47 @@ namespace
         bool mango_only = false;
     };
 
-    void configureParser(CommandLineParser& parser, JpegBenchmarkArgs& args)
+    void configureParser(const CommandLine& commands, JpegBenchmarkArgs& args)
     {
-        parser.usage("[options] <filename.jpg>");
+        commands.usage("[options] <filename.jpg>");
 
-        parser.flag("--nomt", "disable multi-threaded codec",
+        commands.flag("--nomt", "disable multi-threaded codec",
             [&]()
             {
                 args.multithread = false;
             });
 
-        parser.flag("--debug", "enable debug output",
+        commands.flag("--debug", "enable debug output",
             [&]()
             {
                 printEnable(Print::Debug, true);
             });
 
-        parser.flag("--trace", "enable tracing",
+        commands.flag("--trace", "enable tracing",
             [&]()
             {
                 args.tracing = true;
             });
 
-        parser.flag("--save", "disable save testing",
+        commands.flag("--save", "disable save testing",
             [&]()
             {
                 g_enable_save = false;
             });
 
-        parser.flag("--mango", "benchmark mango codec only",
+        commands.flag("--mango", "benchmark mango codec only",
             [&]()
             {
                 args.mango_only = true;
             });
 
-        parser.optionInt("--count", "repeat mango benchmark N times",
+        commands.optionInt("--count", "repeat mango benchmark N times",
             [&](int value)
             {
                 args.test_count = value;
             });
 
-        parser.positional([&](std::string_view token)
+        commands.positional([&](std::string_view token)
         {
             args.filename = token;
         });
@@ -451,18 +451,18 @@ namespace
 
 int main(int argc, const char* argv[])
 {
+    CommandLine commands(argc, argv);
     JpegBenchmarkArgs args;
 
-    CommandLineParser parser;
-    configureParser(parser, args);
+    configureParser(commands, args);
 
     if (argc < 2)
     {
-        parser.printHelp();
+        commands.printHelp();
         return 1;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }

@@ -90,12 +90,10 @@ namespace mango
     void stopTrace();
 
     // ------------------------------------------------------------------------------
-    // CommandLineParser
+    // CommandLine
     // ------------------------------------------------------------------------------
 
-    using CommandLine = std::vector<std::string_view>;
-
-    class CommandLineParser
+    class CommandLine
     {
     public:
         using Action = std::function<void()>;
@@ -104,48 +102,79 @@ namespace mango
         using FloatAction = std::function<void(float value)>;
         using Size2DAction = std::function<void(int width, int height)>;
 
+        CommandLine() = default;
+
+        CommandLine(int argc, const char** argv)
+            : m_argv(argv, argv + argc)
+        {
+        }
+
+        template <typename Iterator>
+        CommandLine(Iterator first, Iterator last)
+            : m_argv(first, last)
+        {
+        }
+
+        explicit CommandLine(const std::vector<std::string>& strings)
+        {
+            m_argv.reserve(strings.size());
+            for (const std::string& s : strings)
+            {
+                m_argv.push_back(s);
+            }
+        }
+
+        CommandLine(const CommandLine&) = delete;
+        CommandLine& operator=(const CommandLine&) = delete;
+        CommandLine(CommandLine&&) noexcept = default;
+        CommandLine& operator=(CommandLine&&) noexcept = default;
+
+        size_t size() const { return m_argv.size(); }
+        bool empty() const { return m_argv.empty(); }
+
+        std::string_view operator [] (size_t index) const { return m_argv[index]; }
+
         // Boolean / switch flag: --name
-        CommandLineParser& flag(std::string_view name, Action action);
-        CommandLineParser& flag(std::string_view name, std::string_view help, Action action);
+        CommandLine& flag(std::string_view name, Action action) const;
+        CommandLine& flag(std::string_view name, std::string_view help, Action action) const;
 
         // Option that consumes the next argument: --name value  (or --name=value)
-        CommandLineParser& option(std::string_view name, ValueAction action);
-        CommandLineParser& option(std::string_view name, std::string_view help, ValueAction action);
+        CommandLine& option(std::string_view name, ValueAction action) const;
+        CommandLine& option(std::string_view name, std::string_view help, ValueAction action) const;
 
-        CommandLineParser& optionInt(std::string_view name, IntAction action);
-        CommandLineParser& optionInt(std::string_view name, std::string_view help, IntAction action);
+        CommandLine& optionInt(std::string_view name, IntAction action) const;
+        CommandLine& optionInt(std::string_view name, std::string_view help, IntAction action) const;
 
-        CommandLineParser& optionFloat(std::string_view name, FloatAction action);
-        CommandLineParser& optionFloat(std::string_view name, std::string_view help, FloatAction action);
+        CommandLine& optionFloat(std::string_view name, FloatAction action) const;
+        CommandLine& optionFloat(std::string_view name, std::string_view help, FloatAction action) const;
 
         // Option with WxH value: --name 4x4  (or --name=4x4, 4,4)
-        CommandLineParser& option2D(std::string_view name, Size2DAction action);
-        CommandLineParser& option2D(std::string_view name, std::string_view help, Size2DAction action);
+        CommandLine& option2D(std::string_view name, Size2DAction action) const;
+        CommandLine& option2D(std::string_view name, std::string_view help, Size2DAction action) const;
 
         // Called for each non-option token (and for tokens after bare "--").
         // Only tokens starting with "--" are treated as options. A lone "-" is positional.
         // Other tokens starting with "-" are rejected (likely a mistyped option); pass
         // literal paths like "-file.png" after "--".
         // Tokens are always collected in positionals() as well.
-        CommandLineParser& positional(ValueAction action);
+        CommandLine& positional(ValueAction action) const;
 
         // Declare a required positional (order matters). Example:
-        //   parser.requirePositional("filename");
+        //   commands.requirePositional("filename");
         // parse() fails if fewer positionals were given; --help lists them.
-        CommandLineParser& requirePositional(std::string_view name);
+        CommandLine& requirePositional(std::string_view name) const;
 
         // Optional usage suffix printed after argv[0] (commands[0]) by --help.
-        // Example: parser.usage("[options]");
-        CommandLineParser& usage(std::string_view text);
+        // Example: commands.usage("[options]");
+        CommandLine& usage(std::string_view text) const;
 
-        // Walk commands[1..). Returns true on success.
+        // Walk m_argv[1..). Returns true on success.
         // --help / errors print unconditionally and return false.
-        bool parse(const CommandLine& commands);
-        bool parse(int argc, const char** argv);
+        bool parse() const;
 
         void printHelp() const;
 
-        const std::vector<std::string_view>& positionals() const { return m_positionals; }
+        const std::vector<std::string_view>& positionals() const;
 
     private:
         enum class ValueType
@@ -169,17 +198,18 @@ namespace mango
             Size2DAction size2DAction;
         };
 
-        Handler* findHandler(std::string_view name);
-        void registerHandler(Handler handler);
-        void addPositional(std::string_view token);
+        Handler* findHandler(std::string_view name) const;
+        void registerHandler(Handler handler) const;
+        void addPositional(std::string_view token) const;
 
-        std::vector<Handler> m_handlers;
-        std::vector<std::string> m_requiredPositionals;
-        ValueAction m_positional;
-        std::string m_usage;
-        std::string m_programName;
+        std::vector<std::string_view> m_argv;
 
-        std::vector<std::string_view> m_positionals;
+        mutable std::vector<Handler> m_handlers;
+        mutable std::vector<std::string> m_requiredPositionals;
+        mutable ValueAction m_positional;
+        mutable std::string m_usage;
+        mutable std::string m_programName;
+        mutable std::vector<std::string_view> m_positionals;
     };
 
 } // namespace mango
@@ -220,7 +250,7 @@ namespace mango
             MANGO_UNREFERENCED(lpCmdLine);
             MANGO_UNREFERENCED(nCmdShow);
 
-            mango::CommandLine commands(__argv + 0, __argv + __argc);
+            mango::CommandLine commands(__argc, const_cast<const char**>(__argv));
             WindowsConsole console;
             return mangoMain(commands);
         }
@@ -229,7 +259,7 @@ namespace mango
 
         int main(int argc, const char** argv)
         {
-            mango::CommandLine commands(argv + 0, argv + argc);
+            mango::CommandLine commands(argc, argv);
             return mangoMain(commands);
         }
 

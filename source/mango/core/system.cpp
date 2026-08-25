@@ -505,117 +505,10 @@ namespace mango
     }
 
     // ----------------------------------------------------------------------------
-    // CommandLineParser
+    // CommandLine
     // ----------------------------------------------------------------------------
 
-    CommandLineParser& CommandLineParser::flag(std::string_view name, Action action)
-    {
-        return flag(name, {}, std::move(action));
-    }
-
-    CommandLineParser& CommandLineParser::flag(std::string_view name, std::string_view help, Action action)
-    {
-        Handler handler;
-        handler.name = std::string(name);
-        handler.help = std::string(help);
-        handler.takesValue = false;
-        handler.action = std::move(action);
-        registerHandler(std::move(handler));
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::option(std::string_view name, ValueAction action)
-    {
-        return option(name, {}, std::move(action));
-    }
-
-    CommandLineParser& CommandLineParser::option(std::string_view name, std::string_view help, ValueAction action)
-    {
-        Handler handler;
-        handler.name = std::string(name);
-        handler.help = std::string(help);
-        handler.takesValue = true;
-        handler.valueType = ValueType::String;
-        handler.valueAction = std::move(action);
-        registerHandler(std::move(handler));
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::optionInt(std::string_view name, IntAction action)
-    {
-        return optionInt(name, {}, std::move(action));
-    }
-
-    CommandLineParser& CommandLineParser::optionInt(std::string_view name, std::string_view help, IntAction action)
-    {
-        Handler handler;
-        handler.name = std::string(name);
-        handler.help = std::string(help);
-        handler.takesValue = true;
-        handler.valueType = ValueType::Int;
-        handler.intAction = std::move(action);
-        registerHandler(std::move(handler));
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::optionFloat(std::string_view name, FloatAction action)
-    {
-        return optionFloat(name, {}, std::move(action));
-    }
-
-    CommandLineParser& CommandLineParser::optionFloat(std::string_view name, std::string_view help, FloatAction action)
-    {
-        Handler handler;
-        handler.name = std::string(name);
-        handler.help = std::string(help);
-        handler.takesValue = true;
-        handler.valueType = ValueType::Float;
-        handler.floatAction = std::move(action);
-        registerHandler(std::move(handler));
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::option2D(std::string_view name, Size2DAction action)
-    {
-        return option2D(name, {}, std::move(action));
-    }
-
-    CommandLineParser& CommandLineParser::option2D(std::string_view name, std::string_view help, Size2DAction action)
-    {
-        Handler handler;
-        handler.name = std::string(name);
-        handler.help = std::string(help);
-        handler.takesValue = true;
-        handler.valueType = ValueType::Size2D;
-        handler.size2DAction = std::move(action);
-        registerHandler(std::move(handler));
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::positional(ValueAction action)
-    {
-        if (!action)
-        {
-            MANGO_EXCEPTION("CommandLineParser: positional handler must not be empty.");
-        }
-
-        m_positional = std::move(action);
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::requirePositional(std::string_view name)
-    {
-        m_requiredPositionals.emplace_back(name);
-        return *this;
-    }
-
-    CommandLineParser& CommandLineParser::usage(std::string_view text)
-    {
-        m_usage = std::string(text);
-        return *this;
-    }
-
-    CommandLineParser::Handler* CommandLineParser::findHandler(std::string_view name)
+    CommandLine::Handler* CommandLine::findHandler(std::string_view name) const
     {
         for (Handler& handler : m_handlers)
         {
@@ -628,16 +521,16 @@ namespace mango
         return nullptr;
     }
 
-    void CommandLineParser::registerHandler(Handler handler)
+    void CommandLine::registerHandler(Handler handler) const
     {
         if (handler.name.size() < 2 || handler.name[0] != '-' || handler.name[1] != '-')
         {
-            MANGO_EXCEPTION("CommandLineParser: '{}' must start with '--'.", handler.name);
+            MANGO_EXCEPTION("CommandLine: '{}' must start with '--'.", handler.name);
         }
 
         if (findHandler(handler.name))
         {
-            MANGO_EXCEPTION("CommandLineParser: duplicate option '{}'.", handler.name);
+            MANGO_EXCEPTION("CommandLine: duplicate option '{}'.", handler.name);
         }
 
         if (handler.takesValue)
@@ -647,41 +540,41 @@ namespace mango
                 case ValueType::String:
                     if (!handler.valueAction)
                     {
-                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                        MANGO_EXCEPTION("CommandLine: option '{}' has no handler.", handler.name);
                     }
                     break;
 
                 case ValueType::Int:
                     if (!handler.intAction)
                     {
-                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                        MANGO_EXCEPTION("CommandLine: option '{}' has no handler.", handler.name);
                     }
                     break;
 
                 case ValueType::Float:
                     if (!handler.floatAction)
                     {
-                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                        MANGO_EXCEPTION("CommandLine: option '{}' has no handler.", handler.name);
                     }
                     break;
 
                 case ValueType::Size2D:
                     if (!handler.size2DAction)
                     {
-                        MANGO_EXCEPTION("CommandLineParser: option '{}' has no handler.", handler.name);
+                        MANGO_EXCEPTION("CommandLine: option '{}' has no handler.", handler.name);
                     }
                     break;
             }
         }
         else if (!handler.action)
         {
-            MANGO_EXCEPTION("CommandLineParser: flag '{}' has no handler.", handler.name);
+            MANGO_EXCEPTION("CommandLine: flag '{}' has no handler.", handler.name);
         }
 
         m_handlers.push_back(std::move(handler));
     }
 
-    void CommandLineParser::addPositional(std::string_view token)
+    void CommandLine::addPositional(std::string_view token) const
     {
         m_positionals.push_back(token);
 
@@ -691,7 +584,259 @@ namespace mango
         }
     }
 
-    void CommandLineParser::printHelp() const
+    CommandLine& CommandLine::flag(std::string_view name, Action action) const
+    {
+        return flag(name, {}, std::move(action));
+    }
+
+    CommandLine& CommandLine::flag(std::string_view name, std::string_view help, Action action) const
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = false;
+        handler.action = std::move(action);
+        registerHandler(std::move(handler));
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::option(std::string_view name, ValueAction action) const
+    {
+        return option(name, {}, std::move(action));
+    }
+
+    CommandLine& CommandLine::option(std::string_view name, std::string_view help, ValueAction action) const
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueType = ValueType::String;
+        handler.valueAction = std::move(action);
+        registerHandler(std::move(handler));
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::optionInt(std::string_view name, IntAction action) const
+    {
+        return optionInt(name, {}, std::move(action));
+    }
+
+    CommandLine& CommandLine::optionInt(std::string_view name, std::string_view help, IntAction action) const
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueType = ValueType::Int;
+        handler.intAction = std::move(action);
+        registerHandler(std::move(handler));
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::optionFloat(std::string_view name, FloatAction action) const
+    {
+        return optionFloat(name, {}, std::move(action));
+    }
+
+    CommandLine& CommandLine::optionFloat(std::string_view name, std::string_view help, FloatAction action) const
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueType = ValueType::Float;
+        handler.floatAction = std::move(action);
+        registerHandler(std::move(handler));
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::option2D(std::string_view name, Size2DAction action) const
+    {
+        return option2D(name, {}, std::move(action));
+    }
+
+    CommandLine& CommandLine::option2D(std::string_view name, std::string_view help, Size2DAction action) const
+    {
+        Handler handler;
+        handler.name = std::string(name);
+        handler.help = std::string(help);
+        handler.takesValue = true;
+        handler.valueType = ValueType::Size2D;
+        handler.size2DAction = std::move(action);
+        registerHandler(std::move(handler));
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::positional(ValueAction action) const
+    {
+        if (!action)
+        {
+            MANGO_EXCEPTION("CommandLine: positional handler must not be empty.");
+        }
+
+        m_positional = std::move(action);
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::requirePositional(std::string_view name) const
+    {
+        m_requiredPositionals.emplace_back(name);
+        return const_cast<CommandLine&>(*this);
+    }
+
+    CommandLine& CommandLine::usage(std::string_view text) const
+    {
+        m_usage = std::string(text);
+        return const_cast<CommandLine&>(*this);
+    }
+
+    bool CommandLine::parse() const
+    {
+        m_positionals.clear();
+        m_programName = m_argv.empty() ? std::string{} : std::string(m_argv[0]);
+
+        for (size_t i = 1; i < m_argv.size(); ++i)
+        {
+            const std::string_view arg = m_argv[i];
+
+            if (arg == "--")
+            {
+                for (++i; i < m_argv.size(); ++i)
+                {
+                    addPositional(m_argv[i]);
+                }
+                break;
+            }
+
+            if (arg == "--help")
+            {
+                printHelp();
+                return false;
+            }
+
+            if (!arg.starts_with("--"))
+            {
+                if (arg.size() > 1 && arg[0] == '-')
+                {
+                    printLine("Unknown option: {}", arg);
+                    printLine("Try '--help'.");
+                    return false;
+                }
+
+                addPositional(arg);
+                continue;
+            }
+
+            const size_t eq = arg.find('=');
+            const bool hasInlineValue = (eq != std::string_view::npos);
+            const std::string_view name = hasInlineValue ? arg.substr(0, eq) : arg;
+
+            Handler* handler = findHandler(name);
+            if (!handler)
+            {
+                printLine("Unknown option: {}", arg);
+                printLine("Try '--help'.");
+                return false;
+            }
+
+            if (handler->takesValue)
+            {
+                std::string_view value;
+
+                if (hasInlineValue)
+                {
+                    value = arg.substr(eq + 1);
+                }
+                else
+                {
+                    if (i + 1 >= m_argv.size())
+                    {
+                        printLine("Missing value for option: {}", name);
+                        printLine("Try '--help'.");
+                        return false;
+                    }
+
+                    ++i;
+                    value = m_argv[i];
+                }
+
+                switch (handler->valueType)
+                {
+                    case ValueType::Int:
+                    {
+                        int parsed = 0;
+
+                        if (!tryParseInt(value, parsed))
+                        {
+                            printLine("Invalid value for option: {} (expected integer)", name);
+                            printLine("Try '--help'.");
+                            return false;
+                        }
+
+                        handler->intAction(parsed);
+                        break;
+                    }
+
+                    case ValueType::Float:
+                    {
+                        float parsed = 0.0f;
+
+                        if (!tryParseFloat(value, parsed))
+                        {
+                            printLine("Invalid value for option: {} (expected number)", name);
+                            printLine("Try '--help'.");
+                            return false;
+                        }
+
+                        handler->floatAction(parsed);
+                        break;
+                    }
+
+                    case ValueType::Size2D:
+                    {
+                        int width = 0;
+                        int height = 0;
+
+                        if (!parseSize2D(value, width, height))
+                        {
+                            printLine("Invalid value for option: {} (expected WxH)", name);
+                            printLine("Try '--help'.");
+                            return false;
+                        }
+
+                        handler->size2DAction(width, height);
+                        break;
+                    }
+
+                    case ValueType::String:
+                        handler->valueAction(value);
+                        break;
+                }
+            }
+            else
+            {
+                if (hasInlineValue)
+                {
+                    printLine("Option '{}' does not take a value.", name);
+                    return false;
+                }
+
+                handler->action();
+            }
+        }
+
+        if (m_positionals.size() < m_requiredPositionals.size())
+        {
+            printLine("Missing required argument: {}",
+                m_requiredPositionals[m_positionals.size()]);
+            return false;
+        }
+
+        return true;
+    }
+
+    void CommandLine::printHelp() const
     {
         if (!m_programName.empty() || !m_usage.empty())
         {
@@ -778,155 +923,9 @@ namespace mango
         printEntry("--help", "Show this help and exit");
     }
 
-    bool CommandLineParser::parse(const CommandLine& commands)
+    const std::vector<std::string_view>& CommandLine::positionals() const
     {
-        m_positionals.clear();
-        m_programName = commands.empty() ? std::string{} : std::string(commands[0]);
-
-        for (size_t i = 1; i < commands.size(); ++i)
-        {
-            const std::string_view arg = commands[i];
-
-            if (arg == "--")
-            {
-                for (++i; i < commands.size(); ++i)
-                {
-                    addPositional(commands[i]);
-                }
-                break;
-            }
-
-            if (arg == "--help")
-            {
-                printHelp();
-                return false;
-            }
-
-            if (!arg.starts_with("--"))
-            {
-                if (arg.size() > 1 && arg[0] == '-')
-                {
-                    printLine("Unknown option: {}", arg);
-                    printLine("Try '--help'.");
-                    return false;
-                }
-
-                addPositional(arg);
-                continue;
-            }
-
-            const size_t eq = arg.find('=');
-            const bool hasInlineValue = (eq != std::string_view::npos);
-            const std::string_view name = hasInlineValue ? arg.substr(0, eq) : arg;
-
-            Handler* handler = findHandler(name);
-            if (!handler)
-            {
-                printLine("Unknown option: {}", arg);
-                printLine("Try '--help'.");
-                return false;
-            }
-
-            if (handler->takesValue)
-            {
-                std::string_view value;
-
-                if (hasInlineValue)
-                {
-                    value = arg.substr(eq + 1);
-                }
-                else
-                {
-                    if (i + 1 >= commands.size())
-                    {
-                        printLine("Missing value for option: {}", name);
-                        printLine("Try '--help'.");
-                        return false;
-                    }
-
-                    ++i;
-                    value = commands[i];
-                }
-
-                switch (handler->valueType)
-                {
-                    case ValueType::Int:
-                    {
-                        int parsed = 0;
-
-                        if (!tryParseInt(value, parsed))
-                        {
-                            printLine("Invalid value for option: {} (expected integer)", name);
-                            printLine("Try '--help'.");
-                            return false;
-                        }
-
-                        handler->intAction(parsed);
-                        break;
-                    }
-
-                    case ValueType::Float:
-                    {
-                        float parsed = 0.0f;
-
-                        if (!tryParseFloat(value, parsed))
-                        {
-                            printLine("Invalid value for option: {} (expected number)", name);
-                            printLine("Try '--help'.");
-                            return false;
-                        }
-
-                        handler->floatAction(parsed);
-                        break;
-                    }
-
-                    case ValueType::Size2D:
-                    {
-                        int width = 0;
-                        int height = 0;
-
-                        if (!parseSize2D(value, width, height))
-                        {
-                            printLine("Invalid value for option: {} (expected WxH)", name);
-                            printLine("Try '--help'.");
-                            return false;
-                        }
-
-                        handler->size2DAction(width, height);
-                        break;
-                    }
-
-                    case ValueType::String:
-                        handler->valueAction(value);
-                        break;
-                }
-            }
-            else
-            {
-                if (hasInlineValue)
-                {
-                    printLine("Option '{}' does not take a value.", name);
-                    return false;
-                }
-
-                handler->action();
-            }
-        }
-
-        if (m_positionals.size() < m_requiredPositionals.size())
-        {
-            printLine("Missing required argument: {}",
-                m_requiredPositionals[m_positionals.size()]);
-            return false;
-        }
-
-        return true;
-    }
-
-    bool CommandLineParser::parse(int argc, const char** argv)
-    {
-        mango::CommandLine commands(argv + 0, argv + argc);
-        return parse(commands);
+        return m_positionals;
     }
 
     // ----------------------------------------------------------------------------

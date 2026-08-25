@@ -127,20 +127,19 @@ int mangoMain(const mango::CommandLine& commands)
         bool srgb = false;
     } args;
 
-    CommandLineParser parser;
-    parser.usage("[options]");
-    parser.flag("--hdr", "request 16-bit framebuffer",
+    commands.usage("[options]");
+    commands.flag("--hdr", "request 16-bit framebuffer",
         [&]()
         {
             args.hdr = true;
         });
-    parser.flag("--srgb", "enable sRGB framebuffer",
+    commands.flag("--srgb", "enable sRGB framebuffer",
         [&]()
         {
             args.srgb = true;
         });
 
-    if (!parser.parse(commands))
+    if (!commands.parse())
     {
         return 1;
     }

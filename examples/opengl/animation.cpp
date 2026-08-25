@@ -157,19 +157,18 @@ int mangoMain(const mango::CommandLine& commands)
         std::string filename = "data/dude.gif";
     } args;
 
-    CommandLineParser parser;
-    parser.usage("[filename]");
-    parser.positional([&](std::string_view token)
+    commands.usage("[filename]");
+    commands.positional([&](std::string_view token)
     {
         args.filename = token;
     });
 
-    if (!parser.parse(commands))
+    if (!commands.parse())
     {
         return 1;
     }
 
-    if (parser.positionals().empty())
+    if (commands.positionals().empty())
     {
         printLine("Too few arguments. Usage: {} <filename>", commands[0]);
         printLine("We play the default animation for your convenience.");

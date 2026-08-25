@@ -87,13 +87,13 @@ namespace
         }
     }
 
-    void configureParser(CommandLineParser& parser, ImageEncoderArgs& args)
+    void configureParser(const CommandLine& commands, ImageEncoderArgs& args)
     {
         args.options.compression = 8;
 
-        parser.usage("[options] <inputs...>");
+        commands.usage("[options] <inputs...>");
 
-        parser.option("--format", "output format (png, .png, ...)",
+        commands.option("--format", "output format (png, .png, ...)",
             [&](std::string_view value)
             {
                 const std::string extension = normalizeFormatExtension(value);
@@ -108,56 +108,56 @@ namespace
                 args.request_format = extension;
             });
 
-        parser.option("--output", "output filename (single input only)",
+        commands.option("--output", "output filename (single input only)",
             [&](std::string_view value)
             {
                 args.output_filename = value;
             });
 
-        parser.optionInt("--compression", "compression level (0..10)",
+        commands.optionInt("--compression", "compression level (0..10)",
             [&](int value)
             {
                 args.options.compression = value;
             });
 
-        parser.optionInt("--quality", "quality level (0..100)",
+        commands.optionInt("--quality", "quality level (0..100)",
             [&](int value)
             {
                 args.options.quality = value / 100.0f;
             });
 
-        parser.option2D("--astc", "ASTC block size (e.g. 4x4)",
+        commands.option2D("--astc", "ASTC block size (e.g. 4x4)",
             [&](int width, int height)
             {
                 args.options.astc_block_width = width;
                 args.options.astc_block_height = height;
             });
 
-        parser.flag("--luminance", "encode as luminance",
+        commands.flag("--luminance", "encode as luminance",
             [&]()
             {
                 args.luminance = true;
             });
 
-        parser.flag("--lossless", "lossless encoding",
+        commands.flag("--lossless", "lossless encoding",
             [&]()
             {
                 args.lossless = true;
             });
 
-        parser.flag("--linear", "treat input as sRGB and convert to linear",
+        commands.flag("--linear", "treat input as sRGB and convert to linear",
             [&]()
             {
                 args.linear = true;
             });
 
-        parser.flag("--info", "enable decoder/encoder diagnostic output",
+        commands.flag("--info", "enable decoder/encoder diagnostic output",
             [&]()
             {
                 printEnable(Print::Debug, true);
             });
 
-        parser.positional([&](std::string_view token)
+        commands.positional([&](std::string_view token)
         {
             addInputFilename(args, token);
         });
@@ -214,18 +214,18 @@ namespace
 
 int main(int argc, const char* argv[])
 {
+    CommandLine commands(argc, argv);
     ImageEncoderArgs args;
 
-    CommandLineParser parser;
-    configureParser(parser, args);
+    configureParser(commands, args);
 
     if (argc < 2)
     {
-        parser.printHelp();
+        commands.printHelp();
         return 0;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }

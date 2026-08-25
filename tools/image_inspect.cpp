@@ -11,33 +11,33 @@ using namespace mango::image;
 namespace
 {
 
-    void configureParser(CommandLineParser& parser)
+    void configureParser(const CommandLine& commands)
     {
-        parser.usage("<image> [...]");
+        commands.usage("<image> [...]");
     }
 
 } // namespace
 
 int main(int argc, const char* argv[])
 {
-    CommandLineParser parser;
-    configureParser(parser);
+    CommandLine commands(argc, argv);
+    configureParser(commands);
 
     if (argc < 2)
     {
-        parser.printHelp();
+        commands.printHelp();
         return 1;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }
 
-    const auto& filenames = parser.positionals();
+    const auto& filenames = commands.positionals();
     if (filenames.empty())
     {
-        parser.printHelp();
+        commands.printHelp();
         return 1;
     }
 

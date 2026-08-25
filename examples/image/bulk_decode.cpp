@@ -185,41 +185,41 @@ namespace
         bool tracing = false;
     };
 
-    void configureParser(CommandLineParser& parser, BulkDecodeArgs& args)
+    void configureParser(const CommandLine& commands, BulkDecodeArgs& args)
     {
-        parser.usage("[options] <folder>");
+        commands.usage("[options] <folder>");
 
-        parser.option("--format", "select specific format extension",
+        commands.option("--format", "select specific format extension",
             [&](std::string_view value)
             {
                 args.format = value;
             });
 
-        parser.flag("--trace", "enable tracing",
+        commands.flag("--trace", "enable tracing",
             [&]()
             {
                 args.tracing = true;
             });
 
-        parser.flag("--info", "enable decoding diagnostic information",
+        commands.flag("--info", "enable decoding diagnostic information",
             [&]()
             {
                 printEnable(Print::Debug, true);
             });
 
-        parser.flag("--mmap", "enable memory mapping",
+        commands.flag("--mmap", "enable memory mapping",
             [&]()
             {
                 args.mmap = true;
             });
 
-        parser.flag("--mt", "enable multi-threaded decoding",
+        commands.flag("--mt", "enable multi-threaded decoding",
             [&]()
             {
                 args.multithread = true;
             });
 
-        parser.positional([&](std::string_view token)
+        commands.positional([&](std::string_view token)
         {
             args.pathname = token;
         });
@@ -229,18 +229,18 @@ namespace
 
 int main(int argc, const char* argv[])
 {
+    CommandLine commands(argc, argv);
     BulkDecodeArgs args;
 
-    CommandLineParser parser;
-    configureParser(parser, args);
+    configureParser(commands, args);
 
     if (argc < 2)
     {
-        parser.printHelp();
+        commands.printHelp();
         return 1;
     }
 
-    if (!parser.parse(argc, argv))
+    if (!commands.parse())
     {
         return 1;
     }
