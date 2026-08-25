@@ -466,4 +466,19 @@ namespace mango::import3d
     std::unique_ptr<IndexedMesh> createTorus(TorusParameters params);
     std::unique_ptr<IndexedMesh> createTorusknot(TorusknotParameters params);
 
+    // Geodesic sphere: icosahedron subdivided `subdivisions` times, then projected.
+    // Smooth normals (radial). subdivisions=0 → icosa; 2–3 is typical for demos.
+    std::unique_ptr<IndexedMesh> createSphere(float radius, int subdivisions);
+
+    // Finite +Y quad on XZ (not an infinite plane). segments≥1; 1×1 → two triangles.
+    struct QuadParameters
+    {
+        float width = 1.0f;
+        float depth = 1.0f;
+        int segmentsX = 1;
+        int segmentsZ = 1;
+    };
+
+    std::unique_ptr<IndexedMesh> createQuad(QuadParameters params);
+
 } // namespace mango::import3d

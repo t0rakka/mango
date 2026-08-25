@@ -4,6 +4,7 @@
 */
 #include <algorithm>
 #include <cctype>
+#include <cmath>
 #include <map>
 #include <unordered_map>
 #include <mango/core/core.hpp>
@@ -685,6 +686,196 @@ namespace mango::import3d
         primitive.base = 0;
         primitive.material = 0;
 
+        mesh.primitives.push_back(primitive);
+
+        return ptr;
+    }
+
+    std::unique_ptr<IndexedMesh> createSphere(float radius, int subdivisions)
+    {
+        subdivisions = std::max(0, subdivisions);
+        const float r = std::max(radius, 1.0e-6f);
+
+        const float sqrt5 = std::sqrt(5.0f);
+        const float phi = (1.0f + sqrt5) * 0.5f;
+        const float ratio = std::sqrt(10.0f + (2.0f * sqrt5)) / (4.0f * phi);
+        const float a = (r / ratio) * 0.5f;
+        const float b = (r / ratio) / (2.0f * phi);
+
+        std::vector<float32x3> positions =
+        {
+            float32x3( 0,  b, -a),
+            float32x3( b,  a,  0),
+            float32x3(-b,  a,  0),
+            float32x3( 0,  b,  a),
+            float32x3( 0, -b,  a),
+            float32x3(-a,  0,  b),
+            float32x3( 0, -b, -a),
+            float32x3( a,  0, -b),
+            float32x3( a,  0,  b),
+            float32x3(-a,  0, -b),
+            float32x3( b, -a,  0),
+            float32x3(-b, -a,  0),
+        };
+
+        // Project exact radius (icosa construction is already near-sphere).
+        for (float32x3& p : positions)
+        {
+            p = normalize(p) * r;
+        }
+
+        // CW-outside (same as createIcosahedron).
+        std::vector<u32> indices =
+        {
+            2, 0, 1, 1, 3, 2, 5, 3, 4, 4, 3, 8,
+            7, 0, 6, 6, 0, 9, 11, 4, 10, 10, 6, 11,
+            9, 2, 5, 5, 11, 9, 8, 1, 7, 7, 10, 8,
+            2, 3, 5, 8, 3, 1, 9, 0, 2, 1, 0, 7,
+            11, 6, 9, 7, 6, 10, 5, 4, 11, 10, 4, 8,
+        };
+
+        for (int level = 0; level < subdivisions; ++level)
+        {
+            std::map<std::pair<u32, u32>, u32> midpointCache;
+
+            auto midpoint = [&](u32 i0, u32 i1) -> u32
+            {
+                if (i0 > i1)
+                {
+                    std::swap(i0, i1);
+                }
+
+                const auto key = std::make_pair(i0, i1);
+                const auto it = midpointCache.find(key);
+                if (it != midpointCache.end())
+                {
+                    return it->second;
+                }
+
+                const float32x3 mid = normalize(positions[i0] + positions[i1]) * r;
+                const u32 index = u32(positions.size());
+                positions.push_back(mid);
+                midpointCache.emplace(key, index);
+                return index;
+            };
+
+            std::vector<u32> next;
+            next.reserve(indices.size() * 4);
+
+            for (size_t t = 0; t < indices.size(); t += 3)
+            {
+                const u32 i0 = indices[t + 0];
+                const u32 i1 = indices[t + 1];
+                const u32 i2 = indices[t + 2];
+                const u32 a01 = midpoint(i0, i1);
+                const u32 a12 = midpoint(i1, i2);
+                const u32 a20 = midpoint(i2, i0);
+
+                next.push_back(i0); next.push_back(a01); next.push_back(a20);
+                next.push_back(i1); next.push_back(a12); next.push_back(a01);
+                next.push_back(i2); next.push_back(a20); next.push_back(a12);
+                next.push_back(a01); next.push_back(a12); next.push_back(a20);
+            }
+
+            indices.swap(next);
+        }
+
+        auto ptr = std::make_unique<IndexedMesh>();
+        IndexedMesh& mesh = *ptr;
+        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
+
+        mesh.vertices.reserve(positions.size());
+        for (const float32x3& p : positions)
+        {
+            Vertex vertex;
+            vertex.position = p;
+            vertex.normal = normalize(p);
+            // Spherical UV (seam on -X). Fine for lighting demos; not atlas-perfect.
+            const float u = 0.5f + std::atan2(p.z, p.x) / float(math::pi * 2.0);
+            const float v = 0.5f - std::asin(std::clamp(p.y / r, -1.0f, 1.0f)) / float(math::pi);
+            vertex.texcoord = float32x2(u, v);
+            mesh.vertices.push_back(vertex);
+            mesh.boundingBox.extend(p);
+        }
+
+        mesh.indices = std::move(indices);
+
+        Primitive primitive;
+        primitive.type = Primitive::Type::TriangleList;
+        primitive.start = 0;
+        primitive.count = u32(mesh.indices.size());
+        primitive.base = 0;
+        primitive.material = 0;
+        mesh.primitives.push_back(primitive);
+
+        return ptr;
+    }
+
+    std::unique_ptr<IndexedMesh> createQuad(QuadParameters params)
+    {
+        const int segmentsX = std::max(1, params.segmentsX);
+        const int segmentsZ = std::max(1, params.segmentsZ);
+        const float width = params.width;
+        const float depth = params.depth;
+
+        auto ptr = std::make_unique<IndexedMesh>();
+        IndexedMesh& mesh = *ptr;
+        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord | Vertex::Tangent;
+
+        const float32x3 normal(0.0f, 1.0f, 0.0f);
+        const float32x4 tangent(1.0f, 0.0f, 0.0f, 1.0f);
+
+        mesh.vertices.reserve(size_t(segmentsX + 1) * size_t(segmentsZ + 1));
+
+        for (int z = 0; z <= segmentsZ; ++z)
+        {
+            const float vz = float(z) / float(segmentsZ);
+            const float pz = (vz - 0.5f) * depth;
+
+            for (int x = 0; x <= segmentsX; ++x)
+            {
+                const float vx = float(x) / float(segmentsX);
+                const float px = (vx - 0.5f) * width;
+
+                Vertex vertex;
+                vertex.position = float32x3(px, 0.0f, pz);
+                vertex.normal = normal;
+                vertex.texcoord = float32x2(vx, vz);
+                vertex.tangent = tangent;
+                mesh.vertices.push_back(vertex);
+                mesh.boundingBox.extend(vertex.position);
+            }
+        }
+
+        const int stride = segmentsX + 1;
+        mesh.indices.reserve(size_t(segmentsX) * size_t(segmentsZ) * 6);
+
+        for (int z = 0; z < segmentsZ; ++z)
+        {
+            for (int x = 0; x < segmentsX; ++x)
+            {
+                const u32 i0 = u32(z * stride + x);
+                const u32 i1 = i0 + 1;
+                const u32 i2 = i0 + u32(stride);
+                const u32 i3 = i2 + 1;
+
+                // CW when viewed from +Y (outside).
+                mesh.indices.push_back(i0);
+                mesh.indices.push_back(i1);
+                mesh.indices.push_back(i3);
+
+                mesh.indices.push_back(i0);
+                mesh.indices.push_back(i3);
+                mesh.indices.push_back(i2);
+            }
+        }
+
+        Primitive primitive;
+        primitive.type = Primitive::Type::TriangleList;
+        primitive.start = 0;
+        primitive.count = u32(mesh.indices.size());
+        primitive.base = 0;
+        primitive.material = 0;
         mesh.primitives.push_back(primitive);
 
         return ptr;
