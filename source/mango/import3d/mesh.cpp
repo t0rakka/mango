@@ -718,7 +718,6 @@ namespace mango::import3d
             float32x3(-b, -a,  0),
         };
 
-        // Project exact radius (icosa construction is already near-sphere).
         for (float32x3& p : positions)
         {
             p = normalize(p) * r;
@@ -780,35 +779,85 @@ namespace mango::import3d
             indices.swap(next);
         }
 
-        auto ptr = std::make_unique<IndexedMesh>();
-        IndexedMesh& mesh = *ptr;
-        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
+        const float invTwoPi = 1.0f / float(math::pi * 2.0);
+        const float invPi = 1.0f / float(math::pi);
+        const float poleEps2 = r * r * 1.0e-8f;
 
-        mesh.vertices.reserve(positions.size());
-        for (const float32x3& p : positions)
+        auto sphericalUV = [&](const float32x3& p) -> float32x2
         {
-            Vertex vertex;
-            vertex.position = p;
-            vertex.normal = normalize(p);
-            // Spherical UV (seam on -X). Fine for lighting demos; not atlas-perfect.
-            const float u = 0.5f + std::atan2(p.z, p.x) / float(math::pi * 2.0);
-            const float v = 0.5f - std::asin(std::clamp(p.y / r, -1.0f, 1.0f)) / float(math::pi);
-            vertex.texcoord = float32x2(u, v);
-            mesh.vertices.push_back(vertex);
-            mesh.boundingBox.extend(p);
+            const float u = 0.5f + std::atan2(p.z, p.x) * invTwoPi;
+            const float v = 0.5f - std::asin(std::clamp(p.y / r, -1.0f, 1.0f)) * invPi;
+            return float32x2(u, v);
+        };
+
+        auto isPole = [&](const float32x3& p) -> bool
+        {
+            return (p.x * p.x + p.z * p.z) < poleEps2;
+        };
+
+        // Emit triangles with per-corner UVs. Seam-crossing faces bump the low-u
+        // side by +1 so the chart is continuous; IndexedMesh then duplicates verts
+        // that differ only in texcoord (Position|Normal|Texcoord — no Tangent).
+        Mesh mesh;
+        mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord;
+        mesh.triangles.reserve(indices.size() / 3);
+
+        for (size_t t = 0; t < indices.size(); t += 3)
+        {
+            const float32x3 p0 = positions[indices[t + 0]];
+            const float32x3 p1 = positions[indices[t + 1]];
+            const float32x3 p2 = positions[indices[t + 2]];
+
+            float32x2 uv0 = sphericalUV(p0);
+            float32x2 uv1 = sphericalUV(p1);
+            float32x2 uv2 = sphericalUV(p2);
+
+            // Poles: atan2 is arbitrary — inherit u from the other corners.
+            if (isPole(p0))
+            {
+                uv0.x = 0.5f * (uv1.x + uv2.x);
+            }
+            if (isPole(p1))
+            {
+                uv1.x = 0.5f * (uv0.x + uv2.x);
+            }
+            if (isPole(p2))
+            {
+                uv2.x = 0.5f * (uv0.x + uv1.x);
+            }
+
+            const float uMin = std::min(uv0.x, std::min(uv1.x, uv2.x));
+            const float uMax = std::max(uv0.x, std::max(uv1.x, uv2.x));
+            if (uMax - uMin > 0.5f)
+            {
+                if (uv0.x < 0.5f)
+                {
+                    uv0.x += 1.0f;
+                }
+                if (uv1.x < 0.5f)
+                {
+                    uv1.x += 1.0f;
+                }
+                if (uv2.x < 0.5f)
+                {
+                    uv2.x += 1.0f;
+                }
+            }
+
+            Triangle triangle;
+            triangle.vertex[0].position = p0;
+            triangle.vertex[0].normal = normalize(p0);
+            triangle.vertex[0].texcoord = uv0;
+            triangle.vertex[1].position = p1;
+            triangle.vertex[1].normal = normalize(p1);
+            triangle.vertex[1].texcoord = uv1;
+            triangle.vertex[2].position = p2;
+            triangle.vertex[2].normal = normalize(p2);
+            triangle.vertex[2].texcoord = uv2;
+            mesh.triangles.push_back(triangle);
         }
 
-        mesh.indices = std::move(indices);
-
-        Primitive primitive;
-        primitive.type = Primitive::Type::TriangleList;
-        primitive.start = 0;
-        primitive.count = u32(mesh.indices.size());
-        primitive.base = 0;
-        primitive.material = 0;
-        mesh.primitives.push_back(primitive);
-
-        return ptr;
+        return std::make_unique<IndexedMesh>(mesh, 0);
     }
 
     std::unique_ptr<IndexedMesh> createQuad(QuadParameters params)
