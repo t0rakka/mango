@@ -6,9 +6,9 @@
 
 #include <vector>
 #include <string>
+#include <string_view>
 #include <optional>
 #include <memory>
-#include <cstring>
 #include <algorithm>
 #include <utility>
 #include <unordered_map>
@@ -43,11 +43,58 @@ namespace mango::import3d
     // -----------------------------------------------------------------------
     // images (deferred decode — engine loads / packs / uploads)
     //
-    // Importers record *how* to get pixel data and *what it means*. They do not
-    // decode bitmaps. ConstMemory embeds are copied into ImageSource so the
-    // Scene owns the bytes for the lifetime of the Import*/Scene object.
-    // File sources are resolved relative to Scene::path.
+    // Importers record *how* to get pixel data. They do not decode bitmaps.
+    //
+    // External file:
+    //   filename relative to Scene::path; open File only when decoding.
+    //   Path is refcounted — consumers may capture Scene::path (or stash a
+    //   Path on the decode job) so the mapping stays alive without ImageSource
+    //   holding it.
+    //
+    // Embedded (GLB buffer view, FBX Video, …):
+    //   ConstMemory is a non-owning view. Importers keep the bytes alive via
+    //   Scene::resourceFiles (zero-copy mapped files) or Scene::retain()
+    //   (owned Buffer copy when the source would otherwise die with the parser).
+    //   Valid while the Scene / Import* object lives.
+    //
+    // Empty: filename.empty() && !memory.address (ConstMemory{nullptr,0}).
+    // Format id is a mango extension (".jpg", ".png", …), not a MIME type.
     // -----------------------------------------------------------------------
+
+    // glTF/etc. speak MIME; mango image decode speaks extensions.
+    // Pass-through if `mime` already looks like an extension (leading '.').
+    inline std::string mimeToExtension(std::string_view mime)
+    {
+        if (mime.empty())
+            return {};
+
+        if (mime.front() == '.')
+            return std::string(mime);
+
+        // Common glTF / FBX image MIME types
+        if (mime == "image/jpeg" || mime == "image/jpg")
+            return ".jpg";
+        if (mime == "image/png")
+            return ".png";
+        if (mime == "image/webp")
+            return ".webp";
+        if (mime == "image/bmp" || mime == "image/x-ms-bmp")
+            return ".bmp";
+        if (mime == "image/gif")
+            return ".gif";
+        if (mime == "image/tiff" || mime == "image/tif")
+            return ".tiff";
+        if (mime == "image/ktx" || mime == "image/ktx2")
+            return ".ktx2";
+        if (mime == "image/vnd-ms.dds" || mime == "image/dds")
+            return ".dds";
+        if (mime == "image/x-exr" || mime == "image/exr")
+            return ".exr";
+        if (mime == "image/x-hdr" || mime == "image/vnd.radiance")
+            return ".hdr";
+
+        return {};
+    }
 
     enum class ImageColorSpace : u8
     {
@@ -105,51 +152,45 @@ namespace mango::import3d
 
     struct ImageSource
     {
-        std::string filename;              // relative to Scene::path when set
-        std::shared_ptr<u8[]> blob;        // owned embed (GLB buffer view, FBX Video, …)
-        size_t blobSize = 0;
-        std::string mimeType;              // "image/jpeg", "image/png", ".ktx2", …
-        std::string name;
+        std::string filename;   // relative to Scene::path; empty if embed-only
+        ConstMemory memory {};  // non-owning embed view; {nullptr,0} if file-only / empty
+        std::string extension;  // mango format id: ".jpg", ".png", …
+        std::string name;       // optional debug label
 
         bool empty() const
         {
-            return filename.empty() && blobSize == 0;
+            return filename.empty() && !memory.address;
         }
 
         bool isFile() const
         {
-            return !filename.empty() && blobSize == 0;
+            return !filename.empty();
         }
 
         bool isMemory() const
         {
-            return blobSize > 0 && blob != nullptr;
+            return memory.address != nullptr && memory.size > 0;
         }
 
-        ConstMemory memory() const
-        {
-            return isMemory() ? ConstMemory(blob.get(), blobSize) : ConstMemory {};
-        }
-
-        static ImageSource fromFile(std::string file, std::string mime = {}, std::string debugName = {})
+        // extension: mango id; if empty, derived from filename.
+        // Prefer mimeToExtension() at call sites that only have a MIME string.
+        static ImageSource fromFile(std::string file, std::string extension = {}, std::string debugName = {})
         {
             ImageSource src;
             src.filename = std::move(file);
-            src.mimeType = mime.empty() ? filesystem::getExtension(src.filename) : std::move(mime);
+            src.extension = extension.empty()
+                ? std::string(filesystem::getExtension(src.filename))
+                : std::move(extension);
             src.name = std::move(debugName);
             return src;
         }
 
-        static ImageSource fromMemory(ConstMemory mem, std::string mime, std::string debugName = {})
+        // Non-owning: mem must outlive decode (typically Scene / Import* buffers).
+        static ImageSource fromMemory(ConstMemory mem, std::string extension, std::string debugName = {})
         {
             ImageSource src;
-            src.blobSize = mem.size;
-            if (mem.size > 0 && mem.address)
-            {
-                src.blob = std::shared_ptr<u8[]>(new u8[mem.size], std::default_delete<u8[]>());
-                std::memcpy(src.blob.get(), mem.address, mem.size);
-            }
-            src.mimeType = std::move(mime);
+            src.memory = mem;
+            src.extension = std::move(extension);
             src.name = std::move(debugName);
             return src;
         }
@@ -422,7 +463,25 @@ namespace mango::import3d
         }
 
         // Folder containing the scene file; ImageSource::filename is relative to this.
+        // Path is refcounted — capture it on decode jobs if needed.
         filesystem::Path path { "./" };
+
+        // Lifetime anchors for ImageSource::memory embeds (and any other views).
+        // Prefer resourceFiles for zero-copy; retain() when bytes would die with the parser.
+        std::vector<std::unique_ptr<filesystem::File>> resourceFiles;
+        std::vector<std::unique_ptr<Buffer>> resourceBuffers;
+
+        // Copy mem into an owned Buffer; return a view into it. No-op for empty.
+        ConstMemory retain(ConstMemory mem)
+        {
+            if (!mem.address || mem.size == 0)
+                return {};
+
+            auto buffer = std::make_unique<Buffer>(mem);
+            ConstMemory view = *buffer;
+            resourceBuffers.push_back(std::move(buffer));
+            return view;
+        }
 
         std::vector<ImageSource> images;
         std::vector<Material> materials;
@@ -460,25 +519,22 @@ namespace mango::import3d
         float q = 5.0f;             // Q parameter of the knot
     };
 
+    // Finite quad on a plane: origin + direction (normal), symmetrical about origin.
+    // `size` is the full edge length (area = size²). subdivision = N → N×N cells (N≥1).
+    struct QuadParameters
+    {
+        float32x3 origin { 0.0f, 0.0f, 0.0f };
+        float32x3 direction { 0.0f, 1.0f, 0.0f }; // plane normal
+        float size = 1.0f;
+        u32 subdivision = 1;
+    };
+
     std::unique_ptr<IndexedMesh> createCube(float32x3 size);
     std::unique_ptr<IndexedMesh> createIcosahedron(float radius);
     std::unique_ptr<IndexedMesh> createDodecahedron(float radius);
     std::unique_ptr<IndexedMesh> createTorus(TorusParameters params);
     std::unique_ptr<IndexedMesh> createTorusknot(TorusknotParameters params);
-
-    // Geodesic sphere: icosahedron subdivided `subdivisions` times, then projected.
-    // Smooth normals (radial). subdivisions=0 → icosa; 2–3 is typical for demos.
     std::unique_ptr<IndexedMesh> createSphere(float radius, int subdivisions);
-
-    // Finite +Y quad on XZ (not an infinite plane). segments≥1; 1×1 → two triangles.
-    struct QuadParameters
-    {
-        float width = 1.0f;
-        float depth = 1.0f;
-        int segmentsX = 1;
-        int segmentsZ = 1;
-    };
-
     std::unique_ptr<IndexedMesh> createQuad(QuadParameters params);
 
 } // namespace mango::import3d

@@ -862,53 +862,66 @@ namespace mango::import3d
 
     std::unique_ptr<IndexedMesh> createQuad(QuadParameters params)
     {
-        const int segmentsX = std::max(1, params.segmentsX);
-        const int segmentsZ = std::max(1, params.segmentsZ);
-        const float width = params.width;
-        const float depth = params.depth;
+        const u32 subdivision = std::max(u32(1), params.subdivision);
+        const float half = params.size * 0.5f;
+
+        float32x3 normal = params.direction;
+        if (dot(normal, normal) < 1.0e-20f)
+        {
+            normal = float32x3(0.0f, 1.0f, 0.0f);
+        }
+        else
+        {
+            normal = normalize(normal);
+        }
+
+        // Orthonormal tangent frame: T × B = N (RH), CW when viewed along N.
+        const float32x3 helper = std::abs(normal.y) < 0.999f
+            ? float32x3(0.0f, 1.0f, 0.0f)
+            : float32x3(1.0f, 0.0f, 0.0f);
+        const float32x3 tangent = normalize(cross(helper, normal));
+        const float32x3 bitangent = cross(tangent, normal);
 
         auto ptr = std::make_unique<IndexedMesh>();
         IndexedMesh& mesh = *ptr;
         mesh.flags = Vertex::Position | Vertex::Normal | Vertex::Texcoord | Vertex::Tangent;
 
-        const float32x3 normal(0.0f, 1.0f, 0.0f);
-        const float32x4 tangent(1.0f, 0.0f, 0.0f, 1.0f);
+        const float32x4 tangentAttr(tangent, 1.0f);
+        const u32 vertsPerSide = subdivision + 1;
+        mesh.vertices.reserve(size_t(vertsPerSide) * size_t(vertsPerSide));
 
-        mesh.vertices.reserve(size_t(segmentsX + 1) * size_t(segmentsZ + 1));
-
-        for (int z = 0; z <= segmentsZ; ++z)
+        for (u32 v = 0; v < vertsPerSide; ++v)
         {
-            const float vz = float(z) / float(segmentsZ);
-            const float pz = (vz - 0.5f) * depth;
+            const float tv = float(v) / float(subdivision);
+                const float bv = (tv * 2.0f - 1.0f) * half;
 
-            for (int x = 0; x <= segmentsX; ++x)
+            for (u32 u = 0; u < vertsPerSide; ++u)
             {
-                const float vx = float(x) / float(segmentsX);
-                const float px = (vx - 0.5f) * width;
+                const float tu = float(u) / float(subdivision);
+                const float bu = (tu * 2.0f - 1.0f) * half;
 
                 Vertex vertex;
-                vertex.position = float32x3(px, 0.0f, pz);
+                vertex.position = params.origin + tangent * bu + bitangent * bv;
                 vertex.normal = normal;
-                vertex.texcoord = float32x2(vx, vz);
-                vertex.tangent = tangent;
+                vertex.texcoord = float32x2(tu, tv);
+                vertex.tangent = tangentAttr;
                 mesh.vertices.push_back(vertex);
                 mesh.boundingBox.extend(vertex.position);
             }
         }
 
-        const int stride = segmentsX + 1;
-        mesh.indices.reserve(size_t(segmentsX) * size_t(segmentsZ) * 6);
+        mesh.indices.reserve(size_t(subdivision) * size_t(subdivision) * 6);
 
-        for (int z = 0; z < segmentsZ; ++z)
+        for (u32 v = 0; v < subdivision; ++v)
         {
-            for (int x = 0; x < segmentsX; ++x)
+            for (u32 u = 0; u < subdivision; ++u)
             {
-                const u32 i0 = u32(z * stride + x);
+                const u32 i0 = v * vertsPerSide + u;
                 const u32 i1 = i0 + 1;
-                const u32 i2 = i0 + u32(stride);
+                const u32 i2 = i0 + vertsPerSide;
                 const u32 i3 = i2 + 1;
 
-                // CW when viewed from +Y (outside).
+                // CW when viewed from outside (normal toward viewer).
                 mesh.indices.push_back(i0);
                 mesh.indices.push_back(i1);
                 mesh.indices.push_back(i3);

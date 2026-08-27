@@ -372,10 +372,10 @@ namespace
         return {};
     }
 
-    std::string mimeFromFilename(const std::string& filename)
+    std::string extensionFromFilename(const std::string& filename)
     {
         const std::string ext = filesystem::getExtension(filename);
-        return ext.empty() ? std::string("image/png") : ext;
+        return ext.empty() ? std::string(".png") : ext;
     }
 
     // Per-import image cache: FBX often has many Texture objects / materials
@@ -404,7 +404,7 @@ namespace
             return index;
         }
 
-        u32 loadEmbedded(u64 videoId, ConstMemory content, const std::string& mime, const std::string& debugName,
+        u32 loadEmbedded(u64 videoId, ConstMemory content, const std::string& extension, const std::string& debugName,
                          const std::function<u32(ConstMemory, const std::string&, const std::string&)>& addMemory)
         {
             const std::string key = "embed:" + std::to_string(videoId);
@@ -414,7 +414,7 @@ namespace
 
             u32 index = ImageSample::none;
             if (content.size > 0)
-                index = addMemory(content, mime, debugName);
+                index = addMemory(content, extension, debugName);
 
             byKey.emplace(key, index);
             return index;
@@ -1461,9 +1461,10 @@ namespace mango::import3d
     ImportFBX::ImportFBX(const filesystem::Path& path, const std::string& filename)
         : Scene(path)
     {
-
-        filesystem::File file(path, filename);
-        ReaderFBX reader(file);
+        // Keep the FBX mapping alive — Video Content embeds are ConstMemory into this file.
+        auto file = std::make_unique<filesystem::File>(path, filename);
+        ReaderFBX reader(*file);
+        resourceFiles.push_back(std::move(file));
 
         std::unordered_map<std::string, u32> imageIndexByKey;
 
@@ -1482,13 +1483,13 @@ namespace mango::import3d
             return idx;
         };
 
-        auto addEmbeddedImage = [&](ConstMemory content, const std::string& mime, const std::string& debugName) -> u32
+        auto addEmbeddedImage = [&](ConstMemory content, const std::string& extension, const std::string& debugName) -> u32
         {
             if (content.size == 0)
                 return ImageSample::none;
 
             u32 idx = u32(images.size());
-            images.push_back(ImageSource::fromMemory(content, mime, debugName));
+            images.push_back(ImageSource::fromMemory(content, extension, debugName));
             return idx;
         };
 
@@ -1548,9 +1549,9 @@ namespace mango::import3d
                     u32 imageIndex = ImageSample::none;
                     if (video && video->content.size > 0)
                     {
-                        const std::string mime = mimeFromFilename(
+                        const std::string extension = extensionFromFilename(
                             !video->relativeFilename.empty() ? video->relativeFilename : video->filename);
-                        imageIndex = imageCache.loadEmbedded(video->id, video->content, mime, video->name, addEmbeddedImage);
+                        imageIndex = imageCache.loadEmbedded(video->id, video->content, extension, video->name, addEmbeddedImage);
                     }
                     if (imageIndex == ImageSample::none && !declared.empty())
                         imageIndex = imageCache.loadFile(path, declared, addResolvedFile);
