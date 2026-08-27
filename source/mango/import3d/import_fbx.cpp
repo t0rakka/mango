@@ -1673,34 +1673,6 @@ namespace mango::import3d
             node.name = model.name;
             node.transform = reader.toOursMatrix(model.localMatrix());
 
-            // Fill bind TRS for external clips (BVH) but keep the matrix as the
-            // skinning source of truth. Decompose→compose does not round-trip for
-            // FBX (Euler Lcl + basis change), and marking hasTRS would rebuild
-            // locals that no longer match IBMs → exploded skin.
-            {
-                const matrix4x4& m = node.transform;
-                float32x3 xaxis(m[0].x, m[0].y, m[0].z);
-                float32x3 yaxis(m[1].x, m[1].y, m[1].z);
-                float32x3 zaxis(m[2].x, m[2].y, m[2].z);
-                node.translation = float32x3(m[3].x, m[3].y, m[3].z);
-                node.scale = float32x3(math::length(xaxis), math::length(yaxis), math::length(zaxis));
-                const float eps = 1.0e-8f;
-                if (node.scale.x > eps) xaxis *= (1.0f / node.scale.x);
-                else xaxis = float32x3(1.0f, 0.0f, 0.0f);
-                if (node.scale.y > eps) yaxis *= (1.0f / node.scale.y);
-                else yaxis = float32x3(0.0f, 1.0f, 0.0f);
-                if (node.scale.z > eps) zaxis *= (1.0f / node.scale.z);
-                else zaxis = float32x3(0.0f, 0.0f, 1.0f);
-                if (math::dot(math::cross(xaxis, yaxis), zaxis) < 0.0f)
-                {
-                    node.scale.x = -node.scale.x;
-                    xaxis = -xaxis;
-                }
-                const math::Quaternion q = math::normalize(math::Quaternion(math::Matrix3x3(xaxis, yaxis, zaxis)));
-                node.rotation = float32x4(q.x, q.y, q.z, q.w);
-                node.hasTRS = false;
-            }
-
             modelIdToNode[id] = u32(nodes.size());
             nodes.push_back(std::move(node));
         }

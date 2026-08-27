@@ -1270,8 +1270,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         {
             const float* data = matrix->data();
             node.transform = axisReflect * matrix4x4(data) * axisReflect;
-            // Matrix-only node: TRS not separated (rare for skinned bones).
-            node.hasTRS = false;
         }
         else if (const auto* trs = std::get_if<fastgltf::TRS>(&current.transform))
         {
@@ -1284,14 +1282,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             fixTranslation(translation);
             fixRotation(rotation);
 
-            node.translation = float32x3(translation[0], translation[1], translation[2]);
-            node.rotation = float32x4(rotation[0], rotation[1], rotation[2], rotation[3]);
-            node.scale = float32x3(s[0], s[1], s[2]);
-            node.hasTRS = true;
-
-            matrix4x4 T = matrix4x4::translate(node.translation.x, node.translation.y, node.translation.z);
-            matrix4x4 R(math::Quaternion(node.rotation.x, node.rotation.y, node.rotation.z, node.rotation.w));
-            matrix4x4 S = matrix4x4::scale(node.scale.x, node.scale.y, node.scale.z);
+            const matrix4x4 T = matrix4x4::translate(translation[0], translation[1], translation[2]);
+            const matrix4x4 R = math::Quaternion(rotation[0], rotation[1], rotation[2], rotation[3]);
+            const matrix4x4 S = matrix4x4::scale(s[0], s[1], s[2]);
             node.transform = S * R * T;
         }
 
