@@ -8,7 +8,7 @@
 namespace mango::import3d
 {
 
-    std::unique_ptr<Scene> importScene(const filesystem::Path& path, const std::string& filename)
+    std::shared_ptr<Scene> importScene(const filesystem::Path& path, const std::string& filename)
     {
         // Resolve folder containing the scene file; assets are relative to this.
         const std::string dir = filesystem::getPath(filename);
@@ -18,15 +18,15 @@ namespace mango::import3d
         const std::string ext = toLower(filesystem::getExtension(filename));
 
         if (ext == ".gltf" || ext == ".glb")
-            return std::make_unique<ImportGLTF>(scenePath, file);
+            return std::make_shared<ImportGLTF>(scenePath, file);
         if (ext == ".fbx")
-            return std::make_unique<ImportFBX>(scenePath, file);
+            return std::make_shared<ImportFBX>(scenePath, file);
         if (ext == ".obj")
-            return std::make_unique<ImportOBJ>(scenePath, file);
+            return std::make_shared<ImportOBJ>(scenePath, file);
         if (ext == ".3ds")
-            return std::make_unique<Import3DS>(scenePath, file);
+            return std::make_shared<Import3DS>(scenePath, file);
         if (ext == ".lwo")
-            return std::make_unique<ImportLWO>(scenePath, file);
+            return std::make_shared<ImportLWO>(scenePath, file);
 
         MANGO_EXCEPTION("[import3d] Unsupported format '{}' (expected .gltf/.glb/.fbx/.obj/.3ds/.lwo).", ext);
     }

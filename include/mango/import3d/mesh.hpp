@@ -46,16 +46,12 @@ namespace mango::import3d
     // Importers record *how* to get pixel data. They do not decode bitmaps.
     //
     // External file:
-    //   filename relative to Scene::path; open File only when decoding.
-    //   Path is refcounted — consumers may capture Scene::path (or stash a
-    //   Path on the decode job) so the mapping stays alive without ImageSource
-    //   holding it.
+    //   filename relative to SceneResources::path; open File when decoding.
+    //   Decode jobs may capture resources->path (refcounted Mapper).
     //
     // Embedded (GLB buffer view, FBX Video, …):
-    //   ConstMemory is a non-owning view. Importers keep the bytes alive via
-    //   Scene::resourceFiles (zero-copy mapped files) or Scene::retain()
-    //   (owned Buffer copy when the source would otherwise die with the parser).
-    //   Valid while the Scene / Import* object lives.
+    //   ConstMemory is a non-owning view into SceneResources::files.
+    //   Capture std::shared_ptr<SceneResources> (or individual File) on decode jobs.
     //
     // Empty: filename.empty() && !memory.address (ConstMemory{nullptr,0}).
     // Format id is a mango extension (".jpg", ".png", …), not a MIME type.
@@ -152,7 +148,7 @@ namespace mango::import3d
 
     struct ImageSource
     {
-        std::string filename;   // relative to Scene::path; empty if embed-only
+        std::string filename;   // relative to SceneResources::path; empty if embed-only
         ConstMemory memory {};  // non-owning embed view; {nullptr,0} if file-only / empty
         std::string extension;  // mango format id: ".jpg", ".png", …
         std::string name;       // optional debug label
@@ -454,33 +450,30 @@ namespace mango::import3d
         std::optional<u32> skin; // glTF: skin lives on the node that instances the mesh
     };
 
+    struct SceneResources
+    {
+        filesystem::Path path { "./" };
+        std::vector<std::shared_ptr<filesystem::File>> files;
+    };
+
     struct Scene
     {
-        Scene() = default;
-        explicit Scene(const filesystem::Path& scenePath)
-            : path(scenePath)
+        Scene()
+            : resources(std::make_shared<SceneResources>())
         {
         }
 
-        // Folder containing the scene file; ImageSource::filename is relative to this.
-        // Path is refcounted — capture it on decode jobs if needed.
-        filesystem::Path path { "./" };
-
-        // Lifetime anchors for ImageSource::memory embeds (and any other views).
-        // Prefer resourceFiles for zero-copy; retain() when bytes would die with the parser.
-        std::vector<std::unique_ptr<filesystem::File>> resourceFiles;
-        std::vector<std::unique_ptr<Buffer>> resourceBuffers;
-
-        // Copy mem into an owned Buffer; return a view into it. No-op for empty.
-        ConstMemory retain(ConstMemory mem)
+        explicit Scene(const filesystem::Path& scenePath)
+            : resources(std::make_shared<SceneResources>())
         {
-            if (!mem.address || mem.size == 0)
-                return {};
+            resources->path = scenePath;
+        }
 
-            auto buffer = std::make_unique<Buffer>(mem);
-            ConstMemory view = *buffer;
-            resourceBuffers.push_back(std::move(buffer));
-            return view;
+        std::shared_ptr<SceneResources> resources;
+
+        const filesystem::Path& path() const
+        {
+            return resources->path;
         }
 
         std::vector<ImageSource> images;
@@ -519,14 +512,12 @@ namespace mango::import3d
         float q = 5.0f;             // Q parameter of the knot
     };
 
-    // Finite quad on a plane: origin + direction (normal), symmetrical about origin.
-    // `size` is the full edge length (area = size²). subdivision = N → N×N cells (N≥1).
     struct QuadParameters
     {
-        float32x3 origin { 0.0f, 0.0f, 0.0f };
-        float32x3 direction { 0.0f, 1.0f, 0.0f }; // plane normal
-        float size = 1.0f;
-        u32 subdivision = 1;
+        float32x3 origin { 0.0f, 0.0f, 0.0f };    // plane origin (center of quad)
+        float32x3 direction { 0.0f, 1.0f, 0.0f }; // plane direction (normal)
+        float size = 1.0f;                        // full edge length (area = size²)
+        u32 subdivision = 1;                      // N×N cells (N >= 1)
     };
 
     std::unique_ptr<IndexedMesh> createCube(float32x3 size);

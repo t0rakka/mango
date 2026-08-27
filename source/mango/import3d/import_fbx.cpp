@@ -1462,9 +1462,9 @@ namespace mango::import3d
         : Scene(path)
     {
         // Keep the FBX mapping alive — Video Content embeds are ConstMemory into this file.
-        auto file = std::make_unique<filesystem::File>(path, filename);
+        auto file = std::make_shared<filesystem::File>(path, filename);
         ReaderFBX reader(*file);
-        resourceFiles.push_back(std::move(file));
+        resources->files.push_back(std::move(file));
 
         std::unordered_map<std::string, u32> imageIndexByKey;
 

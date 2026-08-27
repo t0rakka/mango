@@ -49,7 +49,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     // read
     // --------------------------------------------------------------------------
 
-    filesystem::File file(path, filename);
+    resources->files.push_back(std::make_shared<filesystem::File>(path, filename));
+    const filesystem::File& file = *resources->files.back();
 
     fastgltf::GltfDataBuffer dataBuffer = *fastgltf::GltfDataBuffer::FromBytes(
         reinterpret_cast<const std::byte*>(file.data()), file.size());
@@ -117,7 +118,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     fastgltf::Asset asset = std::move(expected_asset.get());
 
     // --------------------------------------------------------------------------
-    // buffers — keep file mappings / owned copies alive for the Scene lifetime
+    // buffers — zero-copy views; lifetime anchored via resources->files
     // --------------------------------------------------------------------------
 
     std::vector<ConstMemory> buffers;
@@ -137,10 +138,10 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 std::string filename = std::string(source.uri.path().begin(), source.uri.path().end());
 
-                auto file = std::make_unique<filesystem::File>(path, filename);
+                auto file = std::make_shared<filesystem::File>(path, filename);
                 ConstMemory memory = *file;
                 buffers.push_back(memory);
-                resourceFiles.push_back(std::move(file));
+                resources->files.push_back(std::move(file));
 
                 // [x] standard
                 // [ ] binary
@@ -149,9 +150,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             },
             [&] (const fastgltf::sources::ByteView& source)
             {
-                // Points into the temporary GltfDataBuffer — retain a Scene-owned copy.
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
-                buffers.push_back(retain(memory));
+                buffers.push_back(memory);
 
                 // [ ] standard
                 // [x] binary
@@ -169,7 +169,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             [&](const fastgltf::sources::Array& array)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(array.bytes.data()), array.bytes.size());
-                buffers.push_back(retain(memory));
+                buffers.push_back(memory);
 
                 // [ ] standard
                 // [ ] binary
@@ -179,7 +179,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             [&] (const fastgltf::sources::Vector& source)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(source.bytes.data()), source.bytes.size());
-                buffers.push_back(retain(memory));
+                buffers.push_back(memory);
 
                 // [ ] standard
                 // [ ] binary
@@ -230,13 +230,13 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             [&] (const fastgltf::sources::Array& arr)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(arr.bytes.data()), arr.bytes.size());
-                source = ImageSource::fromMemory(retain(memory), extensionFromMime(arr.mimeType), source.name);
+                source = ImageSource::fromMemory(memory, extensionFromMime(arr.mimeType), source.name);
                 printLine(Print::Verbose, "  Array: {} bytes", memory.size);
             },
             [&] (const fastgltf::sources::Vector& vec)
             {
                 ConstMemory memory(reinterpret_cast<const u8*>(vec.bytes.data()), vec.bytes.size());
-                source = ImageSource::fromMemory(retain(memory), extensionFromMime(vec.mimeType), source.name);
+                source = ImageSource::fromMemory(memory, extensionFromMime(vec.mimeType), source.name);
                 printLine(Print::Verbose, "  vector: {} bytes", memory.size);
             },
             [&] (const fastgltf::sources::ByteView& view)
@@ -259,7 +259,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     }
                 }
 
-                // buffers[] already retained / file-backed for Scene lifetime
+                // buffers[] views are file-backed for Scene lifetime
                 if (memory.address)
                     source = ImageSource::fromMemory(memory, extensionFromMime(viewSrc.mimeType), source.name);
 

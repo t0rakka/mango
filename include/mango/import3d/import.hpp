@@ -30,6 +30,6 @@ namespace mango::import3d
     // receives a path pointing at the scene folder and a basename only. Call Import*
     // directly with the same contract, or resolve path/filename yourself.
     // Throws on unsupported extension or importer failure.
-    std::unique_ptr<Scene> importScene(const filesystem::Path& path, const std::string& filename);
+    std::shared_ptr<Scene> importScene(const filesystem::Path& path, const std::string& filename);
 
 } // namespace mango::import3d
