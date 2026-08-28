@@ -273,6 +273,11 @@ namespace mango::import3d
         ImageSample sheenColor;
         ImageSample sheenRoughness;
 
+        // KHR_materials_anisotropy (anisotropyStrength ~0 = disabled)
+        float anisotropyStrength { 0.0f };
+        float anisotropyRotation { 0.0f }; // radians (glTF); Exocortex OBJ anisor is [0,1]
+        ImageSample anisotropy;
+
         AlphaMode alphaMode { AlphaMode::Opaque };
         float alphaCutoff { 0.5f };
         bool twosided { false };

@@ -211,13 +211,13 @@ namespace mango::import3d
     {
         VertexOBJ vertex[3];
         u32 smoothing_group = 0;
+        u32 material = 0;
     };
 
     struct GroupOBJ
     {
         std::string name;
         std::vector<FaceOBJ> faces;
-        u32 material = 0;
     };
 
     struct MaterialOBJ
@@ -247,8 +247,8 @@ namespace mango::import3d
         float ps = 0.0f;    // sheen strength
         float pc = 0.0f;    // clearcoat strength
         float pcr = 0.0f;   // clearcoat roughness
-        float aniso = 0.0f; // anisotropy strength — parsed, not exported to Material yet
-        float anisor = 0.0f; // anisotropy rotation [0,1] — parsed, not exported yet
+        float aniso = 0.0f;
+        float anisor = 0.0f;
         bool has_ps = false;
         bool has_pc = false;
         bool has_pcr = false;
@@ -292,6 +292,7 @@ namespace mango::import3d
         std::vector<MaterialOBJ> m_materials;
 
         MaterialOBJ* m_current_material = nullptr;
+        u32 m_face_material = 0;
         u32 m_smoothing_group = 0;
 
         ReaderOBJ(const filesystem::Path& path, const std::string& filename);
@@ -708,18 +709,20 @@ namespace mango::import3d
 
     void ReaderOBJ::parse_mtllib(const std::string_view* tokens, size_t count)
     {
-        if (count != 1)
+        if (count < 1)
+            return;
+
+        for (size_t i = 0; i < count; ++i)
         {
-            // error
+            std::string filename(tokens[i]);
+            replace(filename, "\\", "/");
+            printLine(Print::Verbose, "mtllib: {}", filename);
+
+            filesystem::File file(m_path, filename);
+
+            std::string_view s(reinterpret_cast<const char *>(file.data()), file.size());
+            parse_mtl(s);
         }
-
-        std::string filename(tokens[0]);
-        printLine(Print::Verbose, "mtllib: {}", filename);
-
-        filesystem::File file(m_path, filename);
-
-        std::string_view s(reinterpret_cast<const char *>(file.data()), file.size());
-        parse_mtl(s);
     }
 
     void ReaderOBJ::parse_usemtl(const std::string_view* tokens, size_t count)
@@ -731,13 +734,12 @@ namespace mango::import3d
 
         std::string name(tokens[0]);
 
-        // NOTE: brute-force search
         for (size_t index = 0; index < m_materials.size(); ++index)
         {
             if (m_materials[index].name == name)
             {
-                auto& group = getCurrentGroup();
-                group.material = u32(index);
+                m_face_material = u32(index);
+                return;
             }
         }
     }
@@ -839,6 +841,7 @@ namespace mango::import3d
             FaceOBJ face;
 
             face.smoothing_group = m_smoothing_group;
+            face.material = m_face_material;
 
             // Z-reflect already yields CW front faces — keep file corner order.
             face.vertex[0].position = positionIndex[i0];
@@ -998,7 +1001,11 @@ namespace mango::import3d
             if (sheen != ImageSample::none)
                 material.sheenColor = ImageSample::from(sheen, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
 
-            // aniso / anisor: parsed on MaterialOBJ, no Material slot yet (roadmap).
+            if (materialobj.has_aniso)
+                material.anisotropyStrength = materialobj.aniso;
+
+            if (materialobj.has_anisor)
+                material.anisotropyRotation = materialobj.anisor;
 
             if (materialobj.tr < 1.0f || material.opacity)
                 material.alphaMode = Material::AlphaMode::Blend;
@@ -1167,11 +1174,45 @@ namespace mango::import3d
 
                 trimesh.computeTangents();
 
-                IndexedMesh indexed;
-                indexed.append(trimesh, group.material);
-                indexed.boundingBox = mesh.boundingBox;
+                for (size_t f = 0; f < trimesh.triangles.size(); ++f)
+                {
+                    const Triangle& triangle = trimesh.triangles[f];
 
-                ptr = std::make_unique<IndexedMesh>(std::move(indexed));
+                    for (int i = 0; i < 3; ++i)
+                        mesh.vertices[mesh.indices[f * 3 + u32(i)]] = triangle.vertex[i];
+                }
+
+                mesh.flags = trimesh.flags;
+
+                if (!group.faces.empty())
+                {
+                    size_t runStart = 0;
+                    u32 material = group.faces[0].material;
+
+                    for (size_t f = 1; f <= group.faces.size(); ++f)
+                    {
+                        if (f == group.faces.size() || group.faces[f].material != material)
+                        {
+                            Primitive primitive;
+
+                            primitive.type = Primitive::Type::TriangleList;
+                            primitive.start = u32(runStart * 3);
+                            primitive.count = u32((f - runStart) * 3);
+                            primitive.base = 0;
+                            primitive.material = material;
+
+                            mesh.primitives.push_back(primitive);
+
+                            if (f < group.faces.size())
+                            {
+                                runStart = f;
+                                material = group.faces[f].material;
+                            }
+                        }
+                    }
+                }
+
+                ptr = std::make_unique<IndexedMesh>(std::move(mesh));
 
                 Node node;
 

@@ -448,6 +448,20 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 material.sheenRoughnessFactor);
         }
 
+        if (current.anisotropy)
+        {
+            const fastgltf::MaterialAnisotropy& aniso = *current.anisotropy;
+            material.anisotropyStrength = aniso.anisotropyStrength;
+            material.anisotropyRotation = aniso.anisotropyRotation;
+
+            if (aniso.anisotropyTexture.has_value())
+                bindSample(material.anisotropy, *aniso.anisotropyTexture,
+                    ImageSwizzle::rgba(), ImageColorSpace::Linear);
+
+            printLine(Print::Verbose, "  anisotropyStrength: {}  anisotropyRotation: {}",
+                material.anisotropyStrength, material.anisotropyRotation);
+        }
+
         materials.push_back(material);
 
         if (current.iridescence)
