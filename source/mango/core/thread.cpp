@@ -163,6 +163,7 @@ namespace mango
     ThreadPool::~ThreadPool()
     {
         m_stop = true;
+        m_wake_epoch.fetch_add(1, std::memory_order_release);
         m_queue_condition.notify_all();
 
         for (auto& thread : m_threads)
@@ -205,11 +206,11 @@ namespace mango
                 steady_clock::now().time_since_epoch()).count());
         }
 
-        // Worker idle backoff: brief pause/yield, then park. Wake is notify-driven;
-        // the wait_for timeout is only for rechecking m_stop.
+        // Worker idle backoff: brief pause/yield, then park on the condition variable.
+        // Wake is notify-driven via m_wake_epoch (no timed wait — avoids libc++ /
+        // pthread_cond_timedwait aborts after long uptime / sleep-wake on macOS).
         constexpr auto kPauseFor = microseconds(32);
         constexpr auto kYieldFor = microseconds(256);
-        constexpr auto kParkFor  = milliseconds(2);
     }
 
     std::vector<float> ThreadPool::utilization()
@@ -288,6 +289,8 @@ namespace mango
             }
             else
             {
+                const u64 seen_epoch = m_wake_epoch.load(std::memory_order_acquire);
+
                 const auto idle = high_resolution_clock::now() - idle_start;
                 if (idle < kPauseFor)
                 {
@@ -297,11 +300,29 @@ namespace mango
                 {
                     std::this_thread::yield();
                 }
+                else if (m_queue->tasks.try_dequeue(consumer.token, task))
+                {
+                    // Work arrived between the top-of-loop try and parking.
+                    const u64 t0 = steady_ns();
+                    worker.busy_stamp_ns.store(t0, std::memory_order_relaxed);
+
+                    process(task);
+
+                    const u64 t1 = steady_ns();
+                    worker.busy_stamp_ns.store(0, std::memory_order_relaxed);
+                    worker.busy_ns.fetch_add(t1 - t0, std::memory_order_relaxed);
+
+                    idle_start = high_resolution_clock::now();
+                }
                 else
                 {
-                    // Park until notified (or a short stop-check timeout).
                     std::unique_lock<std::mutex> lock(m_queue_mutex);
-                    m_queue_condition.wait_for(lock, kParkFor);
+                    m_queue_condition.wait(lock, [this, seen_epoch]
+                    {
+                        return m_stop.load(std::memory_order_relaxed)
+                            || m_wake_epoch.load(std::memory_order_acquire) != seen_epoch;
+                    });
+
                     idle_start = high_resolution_clock::now();
                 }
             }
@@ -319,6 +340,7 @@ namespace mango
         ++queue->task_counter;
 
         m_queue->tasks.enqueue(std::move(task));
+        m_wake_epoch.fetch_add(1, std::memory_order_release);
         m_queue_condition.notify_one();
     }
 
@@ -339,6 +361,7 @@ namespace mango
         }
 
         m_queue->tasks.enqueue_bulk(tasks.data(), count);
+        m_wake_epoch.fetch_add(1, std::memory_order_release);
         m_queue_condition.notify_all();
     }
 
