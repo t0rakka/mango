@@ -741,6 +741,7 @@ FILE(GLOB EXTERNAL_IMPORT3D
     "${EXTERNAL_SOURCE_DIR}/mikktspace/*.c"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/include/fastgltf/*.hpp"
     "${EXTERNAL_SOURCE_DIR}/fastgltf/src/*.cpp"
+    "${EXTERNAL_SOURCE_DIR}/earcut/earcut.hpp"
 )
 
 SOURCE_GROUP("external/aes"         FILES ${EXTERNAL_AES})
