@@ -9,7 +9,6 @@
 #include "../../external/concurrentqueue/concurrentqueue.h"
 #include "../../external/concurrentqueue/readerwriterqueue.h"
 
-using std::chrono::high_resolution_clock;
 using std::chrono::steady_clock;
 using std::chrono::duration_cast;
 using std::chrono::microseconds;
@@ -269,7 +268,7 @@ namespace mango
         Consumer consumer(*m_queue);
         WorkerState& worker = m_workers[threadID];
 
-        auto idle_start = high_resolution_clock::now();
+        auto idle_start = steady_clock::now();
 
         while (!m_stop.load(std::memory_order_relaxed))
         {
@@ -285,13 +284,13 @@ namespace mango
                 worker.busy_stamp_ns.store(0, std::memory_order_relaxed);
                 worker.busy_ns.fetch_add(t1 - t0, std::memory_order_relaxed);
 
-                idle_start = high_resolution_clock::now();
+                idle_start = steady_clock::now();
             }
             else
             {
                 const u64 seen_epoch = m_wake_epoch.load(std::memory_order_acquire);
 
-                const auto idle = high_resolution_clock::now() - idle_start;
+                const auto idle = steady_clock::now() - idle_start;
                 if (idle < kPauseFor)
                 {
                     pause();
@@ -312,7 +311,7 @@ namespace mango
                     worker.busy_stamp_ns.store(0, std::memory_order_relaxed);
                     worker.busy_ns.fetch_add(t1 - t0, std::memory_order_relaxed);
 
-                    idle_start = high_resolution_clock::now();
+                    idle_start = steady_clock::now();
                 }
                 else
                 {
@@ -323,7 +322,7 @@ namespace mango
                             || m_wake_epoch.load(std::memory_order_acquire) != seen_epoch;
                     });
 
-                    idle_start = high_resolution_clock::now();
+                    idle_start = steady_clock::now();
                 }
             }
         }
