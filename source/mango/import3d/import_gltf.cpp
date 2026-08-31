@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2024 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/core/core.hpp>
 #include <mango/import3d/import_gltf.hpp>
@@ -12,7 +12,6 @@
 
 /*
     Khronos GLTF 2.0 importer
-
     https://registry.khronos.org/glTF/specs/2.0/glTF-2.0.html
 */
 
@@ -54,7 +53,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
     fastgltf::GltfDataBuffer dataBuffer = *fastgltf::GltfDataBuffer::FromBytes(
         reinterpret_cast<const std::byte*>(file.data()), file.size());
-        
+
     // --------------------------------------------------------------------------
     // parse
     // --------------------------------------------------------------------------
@@ -261,7 +260,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 // buffers[] views are file-backed for Scene lifetime
                 if (memory.address)
+                {
                     source = ImageSource::fromMemory(memory, extensionFromMime(viewSrc.mimeType), source.name);
+                }
 
                 printLine(Print::Verbose, "  BufferView: {} bytes", memory.size);
             },
@@ -347,8 +348,7 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
         if (pbr.baseColorTexture.has_value())
         {
-            bindSample(material.baseColor, *pbr.baseColorTexture,
-                ImageSwizzle::rgba(), ImageColorSpace::sRGB);
+            bindSample(material.baseColor, *pbr.baseColorTexture, ImageSwizzle::rgba(), ImageColorSpace::sRGB);
             if (material.baseColor)
                 printLine(Print::Verbose, "  baseColor: image[{}]", material.baseColor.image);
         }
@@ -359,34 +359,37 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             bindSample(material.roughness, info, ImageSwizzle::g(), ImageColorSpace::Linear);
             bindSample(material.metallic, info, ImageSwizzle::b(), ImageColorSpace::Linear);
             if (material.roughness)
+            {
                 printLine(Print::Verbose, "  metallicRoughness: image[{}] (G=rough, B=metal)",
                     material.roughness.image);
+            }
         }
 
         if (current.normalTexture.has_value())
         {
-            bindSample(material.normal, *current.normalTexture,
-                ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+            bindSample(material.normal, *current.normalTexture, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
             material.normal.scale = float(current.normalTexture->scale);
             if (material.normal)
+            {
                 printLine(Print::Verbose, "  normal: image[{}] scale {}",
                     material.normal.image, material.normal.scale);
+            }
         }
 
         if (current.occlusionTexture.has_value())
         {
-            bindSample(material.occlusion, *current.occlusionTexture,
-                ImageSwizzle::r(), ImageColorSpace::Linear);
+            bindSample(material.occlusion, *current.occlusionTexture, ImageSwizzle::r(), ImageColorSpace::Linear);
             material.occlusion.scale = float(current.occlusionTexture->strength);
             if (material.occlusion)
+            {
                 printLine(Print::Verbose, "  occlusion: image[{}] strength {}",
                     material.occlusion.image, material.occlusion.scale);
+            }
         }
 
         if (current.emissiveTexture.has_value())
         {
-            bindSample(material.emissive, *current.emissiveTexture,
-                ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
+            bindSample(material.emissive, *current.emissiveTexture, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
             if (material.emissive)
                 printLine(Print::Verbose, "  emissive: image[{}]", material.emissive.image);
         }
@@ -414,14 +417,19 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             material.clearcoatRoughnessFactor = coat.clearcoatRoughnessFactor;
 
             if (coat.clearcoatTexture.has_value())
-                bindSample(material.clearcoat, *coat.clearcoatTexture,
-                    ImageSwizzle::r(), ImageColorSpace::Linear);
+            {
+                bindSample(material.clearcoat, *coat.clearcoatTexture, ImageSwizzle::r(), ImageColorSpace::Linear);
+            }
+
             if (coat.clearcoatRoughnessTexture.has_value())
-                bindSample(material.clearcoatRoughness, *coat.clearcoatRoughnessTexture,
-                    ImageSwizzle::g(), ImageColorSpace::Linear);
+            {
+                bindSample(material.clearcoatRoughness, *coat.clearcoatRoughnessTexture, ImageSwizzle::g(), ImageColorSpace::Linear);
+            }
+
             if (coat.clearcoatNormalTexture.has_value())
-                bindSample(material.clearcoatNormal, *coat.clearcoatNormalTexture,
-                    ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+            {
+                bindSample(material.clearcoatNormal, *coat.clearcoatNormalTexture, ImageSwizzle::rgb1(), ImageColorSpace::Linear);
+            }
 
             printLine(Print::Verbose, "  clearcoatFactor: {}", material.clearcoatFactor);
             printLine(Print::Verbose, "  clearcoatRoughnessFactor: {}", material.clearcoatRoughnessFactor);
@@ -437,11 +445,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             material.sheenRoughnessFactor = sheen.sheenRoughnessFactor;
 
             if (sheen.sheenColorTexture.has_value())
-                bindSample(material.sheenColor, *sheen.sheenColorTexture,
-                    ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
+            {
+                bindSample(material.sheenColor, *sheen.sheenColorTexture, ImageSwizzle::rgb1(), ImageColorSpace::sRGB);
+            }
+
             if (sheen.sheenRoughnessTexture.has_value())
-                bindSample(material.sheenRoughness, *sheen.sheenRoughnessTexture,
-                    ImageSwizzle::a(), ImageColorSpace::Linear);
+            {
+                bindSample(material.sheenRoughness, *sheen.sheenRoughnessTexture, ImageSwizzle::a(), ImageColorSpace::Linear);
+            }
 
             printLine(Print::Info, "  sheenColorFactor: {} {} {}  sheenRoughness: {} (shading TBD)",
                 material.sheenColorFactor.x, material.sheenColorFactor.y, material.sheenColorFactor.z,
@@ -455,8 +466,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             material.anisotropyRotation = aniso.anisotropyRotation;
 
             if (aniso.anisotropyTexture.has_value())
-                bindSample(material.anisotropy, *aniso.anisotropyTexture,
-                    ImageSwizzle::rgba(), ImageColorSpace::Linear);
+            {
+                bindSample(material.anisotropy, *aniso.anisotropyTexture, ImageSwizzle::rgba(), ImageColorSpace::Linear);
+            }
 
             printLine(Print::Verbose, "  anisotropyStrength: {}  anisotropyRotation: {}",
                 material.anisotropyStrength, material.anisotropyRotation);
@@ -1052,10 +1064,14 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         skin.name = current.name;
 
         for (std::size_t joint : current.joints)
+        {
             skin.joints.push_back(u32(joint));
+        }
 
         if (current.skeleton.has_value())
+        {
             skin.skeleton = u32(current.skeleton.value());
+        }
 
         skin.inverseBindMatrices.assign(skin.joints.size(), matrix4x4(1.0f));
 
