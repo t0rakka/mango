@@ -1080,7 +1080,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                     // node matrices are imported (fmat4x4::data() → matrix4x4).
                     float m[16];
                     for (int k = 0; k < 16; ++k)
+                    {
                         m[k] = uload32f(data + i * stride + size_t(k) * 4);
+                    }
 
                     matrix4x4 ibm(m);
                     // Same S M S as node transforms so IBM space matches Z-reflected mesh.
@@ -1121,7 +1123,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
         for (size_t i = 0; i < accessor.count; ++i)
         {
             for (size_t c = 0; c < components; ++c)
+            {
                 out[i * components + c] = uload32f(data + i * stride + c * 4);
+            }
         }
         if (outComponents)
             *outComponents = components;
@@ -1133,18 +1137,27 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     {
         v[2] = -v[2];
     };
+
     auto fixRotation = [&](float* v)
     {
         // R' = S R S with S = diag(1,1,-1), then back to quaternion.
         matrix4x4 R(math::Quaternion(v[0], v[1], v[2], v[3]));
         matrix4x4 Rp = axisReflect * R * axisReflect;
         math::Quaternion q(Rp);
+
         // Keep hemisphere stable for interpolation.
         if (q.w < 0.0f)
         {
-            q.x = -q.x; q.y = -q.y; q.z = -q.z; q.w = -q.w;
+            q.x = -q.x;
+            q.y = -q.y;
+            q.z = -q.z;
+            q.w = -q.w;
         }
-        v[0] = q.x; v[1] = q.y; v[2] = q.z; v[3] = q.w;
+
+        v[0] = q.x;
+        v[1] = q.y;
+        v[2] = q.z;
+        v[3] = q.w;
     };
 
     for (const auto& current : asset.animations)
@@ -1223,7 +1236,9 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 const u32 nodeIndex = u32(srcChannel.nodeIndex.value());
                 channel.node = nodeIndex;
                 if (nodeIndex < asset.nodes.size())
+                {
                     channel.targetName = std::string(asset.nodes[nodeIndex].name);
+                }
             }
 
             animation.channels.push_back(std::move(channel));
