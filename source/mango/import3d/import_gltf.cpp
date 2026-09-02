@@ -34,6 +34,30 @@ namespace
         }
     };
 
+    static float loadNormalizedComponent(const u8* p, fastgltf::ComponentType type, bool normalized, size_t c)
+    {
+        switch (type)
+        {
+            case fastgltf::ComponentType::Float:
+                return uload32f(p + c * 4);
+
+            case fastgltf::ComponentType::UnsignedByte:
+            {
+                const float v = float(p[c]);
+                return normalized ? v / 255.0f : v;
+            }
+
+            case fastgltf::ComponentType::UnsignedShort:
+            {
+                const float v = float(uload16(p + c * 2));
+                return normalized ? v / 65535.0f : v;
+            }
+
+            default:
+                return 0.0f;
+        }
+    }
+
 } // namespace
 
 namespace mango::import3d
@@ -711,11 +735,11 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 for (size_t i = 0; i < attributeTexcoord.count; ++i)
                 {
-                    // TODO: u8, u16
-                    float32x2 texcoord = float32x2::uload(data);
+                    const float u = loadNormalizedComponent(data, attributeTexcoord.type, attributeTexcoord.normalized, 0);
+                    const float v = loadNormalizedComponent(data, attributeTexcoord.type, attributeTexcoord.normalized, 1);
                     data += attributeTexcoord.stride;
                     // glTF UVs are already top-left / V-down (Vulkan-compatible).
-                    vertices[i].texcoord = texcoord;
+                    vertices[i].texcoord = float32x2(u, v);
                 }
             }
 
@@ -728,15 +752,17 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
 
                 const u8* data = attributeColor.data;
+                const size_t comps = std::min(attributeColor.components, size_t(4));
 
                 for (size_t i = 0; i < attributeColor.count; ++i)
                 {
-                    // TODO: 3 and 4 components
-                    // TODO: u8, u16
-                    float32x3 color = float32x3::uload(data);
+                    float c[4] = { 0.0f, 0.0f, 0.0f, 1.0f };
+                    for (size_t k = 0; k < comps; ++k)
+                    {
+                        c[k] = loadNormalizedComponent(data, attributeColor.type, attributeColor.normalized, k);
+                    }
                     data += attributeColor.stride;
-
-                    vertices[i].color = float32x4(color, 1.0f);
+                    vertices[i].color = float32x4(c[0], c[1], c[2], c[3]);
                 }
             }
 
@@ -920,8 +946,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
 
                 trimesh.flags = mesh.flags;
 
-                // TODO: support primitive restart (index: 0xffffffff)
-
                 switch (primitiveIterator->type)
                 {
                     case fastgltf::PrimitiveType::Triangles:
@@ -1014,8 +1038,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
             {
                 Primitive primitive;
 
-                // TODO: support primitive restart (index: 0xffffffff)
-
                 switch (primitiveIterator->type)
                 {
                     case fastgltf::PrimitiveType::Triangles:
@@ -1036,6 +1058,8 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
                 }
 
                 // Z-reflect (det −1) already turns glTF CCW into CW — keep index order.
+                // Restart index 0xffffffff is left in the buffer for GPU primitive restart
+                // (e.g. Vulkan primitiveRestartEnable); no CPU split.
 
                 primitive.start = u32(mesh.indices.size());
                 primitive.count = u32(indices.size());

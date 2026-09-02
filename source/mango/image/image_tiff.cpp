@@ -12,6 +12,7 @@
 #include <vector>
 #include <numeric>
 #include <memory>
+#include <set>
 
 #include "ccitt_fax_decode.hpp"
 #include "../jpeg/jpeg.hpp"
@@ -1974,7 +1975,9 @@ namespace
     {
         ConstMemory m_memory;
         TIFFHeader m_header;
-        IFDContext m_context;
+        IFDContext m_context;              // active page (decode / inspect)
+        std::vector<IFDContext> m_pages;  // multi-page IFD chain (full pages only)
+        size_t m_next_frame_index = 0;
         bool m_is_little_endian;
 
         Interface(ConstMemory memory)
@@ -2123,24 +2126,146 @@ namespace
                 : m_context.tile_byte_counts[i];
         }
 
-        void parseIFDs()
+        static bool isFullResolutionPage(const IFDContext& ctx)
         {
-            if (m_header.first_ifd_offset >= m_memory.size)
+            // NewSubfileType bit0 = reduced resolution, bit2 = transparency mask.
+            if (ctx.new_subfile_type & 0x1u)
             {
-                header.setError("[ImageDecoder.TIFF] IFD offset out of bounds.");
-                return;
+                return false;
+            }
+            if (ctx.new_subfile_type & 0x4u)
+            {
+                return false;
+            }
+            // Classic SubfileType: 2 = reduced-resolution image.
+            if (ctx.subfile_type == 2)
+            {
+                return false;
+            }
+            return true;
+        }
+
+        bool finalizeIFD(IFDContext& ctx)
+        {
+            if (ctx.width == 0 || ctx.height == 0)
+            {
+                header.setError("[ImageDecoder.TIFF] Missing required image dimensions.");
+                return false;
             }
 
-            const u8* p = m_memory.address + m_header.first_ifd_offset;
+            if (ctx.bits_per_sample.empty())
+            {
+                header.setError("[ImageDecoder.TIFF] Missing required bits per sample.");
+                return false;
+            }
+
+            u32 sample_bits = u32(ctx.bits_per_sample[0]);
+            for (auto bits : ctx.bits_per_sample)
+            {
+                if (bits != sample_bits)
+                {
+                    header.setError("[ImageDecoder.TIFF] Unsupported channel configuration.");
+                    return false;
+                }
+            }
+
+            ctx.sample_bits = sample_bits;
+
+            if (!ctx.extra_samples.empty())
+            {
+                for (size_t i = 0; i < ctx.extra_samples.size(); ++i)
+                {
+                    if (ctx.extra_samples[i] == 1)
+                    {
+                        const u32 color_channels = ctx.samples_per_pixel - u32(ctx.extra_samples.size());
+                        ctx.associated_alpha_index = color_channels + i;
+                        ctx.associated_alpha = true;
+                        break;
+                    }
+                }
+            }
+
+            if (!ctx.photometric_specified &&
+                ctx.photometric == u32(PhotometricInterpretation::RGB) &&
+                ctx.ink_set == 1 &&
+                ctx.samples_per_pixel == 4)
+            {
+                ctx.photometric = u16(PhotometricInterpretation::SEPARATED);
+            }
+
+            if (ctx.photometric == u32(PhotometricInterpretation::PALETTE))
+            {
+                if (sample_bits > 8)
+                {
+                    const u64 need = u64(ctx.colormap_entry_count) * 6;
+                    if (!ctx.colormap_entry_count || ctx.colormap_in_file.size < need)
+                    {
+                        header.setError("[ImageDecoder.TIFF] Palette image with wide indices requires a valid ColorMap.");
+                        return false;
+                    }
+                }
+                else if (ctx.palette.size == 0)
+                {
+                    header.setError("[ImageDecoder.TIFF] Indexed TIFF requires a ColorMap.");
+                    return false;
+                }
+            }
+
+            resolve_strip_byte_counts(ctx, m_memory.size);
+            return true;
+        }
+
+        void applyHeaderFromContext()
+        {
+            header.width = int(m_context.width);
+            header.height = int(m_context.height);
+            header.depth = 0;
+            header.levels = 0;
+            header.faces = 0;
+            header.format = getImageFormat();
+            header.compression = TextureCompression::NONE;
+            header.premultiplied = m_context.associated_alpha;
+            header.palette = 0;
+            if (header.format.isIndexed() && m_context.palette.size > 0)
+            {
+                header.palette = int(m_context.palette.size);
+            }
+
+            icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
+
+            if (m_context.icc_profile.size)
+            {
+                header.color.primaries = ColorPrimaries::Unspecified;
+                header.color.transfer = TransferFunction::Unspecified;
+            }
+            else if (header.format.isFloat())
+            {
+                header.linear = true;
+                header.color.transfer = TransferFunction::Linear;
+            }
+        }
+
+        // Parse one IFD at offset; returns next-IFD offset (0 = end). On failure, header has error.
+        bool parseOneIFD(u64 offset, IFDContext& ctx, u64& next_offset)
+        {
+            next_offset = 0;
+            ctx = IFDContext();
+
+            if (offset >= m_memory.size)
+            {
+                header.setError("[ImageDecoder.TIFF] IFD offset out of bounds.");
+                return false;
+            }
+
+            const u8* p = m_memory.address + offset;
             const u8* end = m_memory.end();
 
             if (p + 2 > end)
             {
                 header.setError("[ImageDecoder.TIFF] Cannot read IFD count.");
-                return;
+                return false;
             }
 
-            // Read IFD count
             u64 ifd_count;
             if (m_is_little_endian)
             {
@@ -2156,147 +2281,104 @@ namespace
 
             printLine(Print::Debug, "  IFD entries: {}", ifd_count);
 
-            size_t ifd_entry_size = m_header.is_big_tiff ? 20 : 12;
+            const size_t ifd_entry_size = m_header.is_big_tiff ? 20 : 12;
 
-            // Parse each IFD entry
             for (u64 i = 0; i < ifd_count; ++i)
             {
                 if (p + ifd_entry_size > end)
                 {
                     header.setError("[ImageDecoder.TIFF] IFD entry {} out of bounds.", i);
-                    return;
+                    return false;
                 }
 
                 if (m_is_little_endian)
                 {
-                    parse_ifd(m_context, m_memory, LittleEndianConstPointer(p), m_header.is_big_tiff, m_is_little_endian);
+                    parse_ifd(ctx, m_memory, LittleEndianConstPointer(p), m_header.is_big_tiff, m_is_little_endian);
                 }
                 else
                 {
-                    parse_ifd(m_context, m_memory, BigEndianConstPointer(p), m_header.is_big_tiff, m_is_little_endian);
+                    parse_ifd(ctx, m_memory, BigEndianConstPointer(p), m_header.is_big_tiff, m_is_little_endian);
                 }
 
                 p += ifd_entry_size;
             }
 
-            u64 offset_to_next_ifd = 0;
+            const size_t next_bytes = m_header.is_big_tiff ? 8 : 4;
+            if (p + next_bytes > end)
+            {
+                header.setError("[ImageDecoder.TIFF] Cannot read next IFD offset.");
+                return false;
+            }
+
             if (m_header.is_big_tiff)
             {
-                offset_to_next_ifd = bigEndian::uload64(p);
+                next_offset = m_is_little_endian ? littleEndian::uload64(p) : bigEndian::uload64(p);
             }
             else
             {
-                offset_to_next_ifd = bigEndian::uload32(p);
+                next_offset = m_is_little_endian ? littleEndian::uload32(p) : bigEndian::uload32(p);
             }
 
-            // MANGO TODO: read ALL IFDs (multiple images)
+            return finalizeIFD(ctx);
+        }
 
-            // Validate required fields
-            if (m_context.width == 0 || m_context.height == 0)
+        void parseIFDs()
+        {
+            std::set<u64> visited;
+            u64 offset = m_header.first_ifd_offset;
+            std::vector<IFDContext> chain;
+
+            while (offset != 0)
             {
-                header.setError("[ImageDecoder.TIFF] Missing required image dimensions.");
+                if (!visited.insert(offset).second)
+                {
+                    header.setError("[ImageDecoder.TIFF] IFD chain cycle detected.");
+                    return;
+                }
+
+                IFDContext ctx;
+                u64 next = 0;
+                if (!parseOneIFD(offset, ctx, next))
+                {
+                    return;
+                }
+
+                chain.push_back(std::move(ctx));
+                offset = next;
+            }
+
+            if (chain.empty())
+            {
+                header.setError("[ImageDecoder.TIFF] No IFDs found.");
                 return;
             }
 
-            if (m_context.bits_per_sample.empty())
+            m_pages.clear();
+            for (IFDContext& ctx : chain)
             {
-                header.setError("[ImageDecoder.TIFF] Missing required bits per sample.");
-                return;
-            }
-
-            // check channel sizes
-            u32 sample_bits = m_context.bits_per_sample[0];
-
-            // Yes, we check first sample twice to keep the code simple
-            for (auto bits : m_context.bits_per_sample)
-            {
-                if (bits != sample_bits)
+                if (isFullResolutionPage(ctx))
                 {
-                    // We only support images with the same bit depth per channel
-                    header.setError("[ImageDecoder.TIFF] Unsupported channel configuration.");
-                    return;
+                    m_pages.push_back(std::move(ctx));
                 }
             }
 
-            m_context.sample_bits = sample_bits;
-
-            if (!m_context.extra_samples.empty())
+            // If filtering removed everything (unusual), keep the first IFD.
+            if (m_pages.empty())
             {
-                for (size_t i = 0; i < m_context.extra_samples.size(); ++i)
-                {
-                    if (m_context.extra_samples[i] == 1)
-                    {
-                        const u32 color_channels = m_context.samples_per_pixel - u32(m_context.extra_samples.size());
-                        m_context.associated_alpha_index = color_channels + i;
-                        m_context.associated_alpha = true;
-                        break;
-                    }
-                }
+                m_pages.push_back(std::move(chain.front()));
             }
 
-            if (!m_context.photometric_specified &&
-                m_context.photometric == u32(PhotometricInterpretation::RGB) &&
-                m_context.ink_set == 1 &&
-                m_context.samples_per_pixel == 4)
-            {
-                m_context.photometric = u16(PhotometricInterpretation::SEPARATED);
-            }
-
-            if (m_context.photometric == u32(PhotometricInterpretation::PALETTE))
-            {
-                if (sample_bits > 8)
-                {
-                    const u64 need = u64(m_context.colormap_entry_count) * 6;
-                    if (!m_context.colormap_entry_count || m_context.colormap_in_file.size < need)
-                    {
-                        header.setError("[ImageDecoder.TIFF] Palette image with wide indices requires a valid ColorMap.");
-                        return;
-                    }
-                }
-                else if (m_context.palette.size == 0)
-                {
-                    header.setError("[ImageDecoder.TIFF] Indexed TIFF requires a ColorMap.");
-                    return;
-                }
-            }
-
-            // Set header info
-            header.width = m_context.width;
-            header.height = m_context.height;
-            header.depth = 0;
-            header.levels = 0;
-            header.faces = 0;
-            header.format = getImageFormat();
-            header.compression = TextureCompression::NONE;
-            header.premultiplied = m_context.associated_alpha;
-            if (header.format.isIndexed() && m_context.palette.size > 0)
-            {
-                header.palette = int(m_context.palette.size);
-            }
-
-            // Forward the ICC profile at header() time (decode() also sets it). Color space:
-            // integer RGB/grayscale TIFF is sRGB by convention (the default); floating-point
-            // samples carry linear scene data. An embedded ICC profile defines it exactly.
-            icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
-
-            if (m_context.icc_profile.size)
-            {
-                header.color.primaries = ColorPrimaries::Unspecified;
-                header.color.transfer = TransferFunction::Unspecified;
-            }
-            else if (header.format.isFloat())
-            {
-                header.linear = true;
-                header.color.transfer = TransferFunction::Linear;
-            }
-
-            resolve_strip_byte_counts(m_context, m_memory.size);
+            m_context = m_pages[0];
+            applyHeaderFromContext();
+            header.frames = (m_pages.size() > 1) ? int(m_pages.size()) : 0;
+            m_next_frame_index = 0;
 
             u32 data_size = std::accumulate(m_context.strip_byte_counts.begin(), m_context.strip_byte_counts.end(), 0u);
             data_size += std::accumulate(m_context.tile_byte_counts.begin(), m_context.tile_byte_counts.end(), 0u);
 
-            printLine(Print::Debug, "  Image: {} x {} ({} bpp, {} channels)", 
+            printLine(Print::Debug, "  Image: {} x {} ({} bpp, {} channels)",
                      m_context.width, m_context.height, header.format.bits, m_context.samples_per_pixel);
+            printLine(Print::Debug, "  Pages: {}", m_pages.size());
             printLine(Print::Debug, "  Data: {} bytes", data_size);
         }
 
@@ -2481,6 +2563,26 @@ namespace
 
             ImageDecodeStatus status;
 
+            if (!header.success)
+            {
+                status.setError(header.info);
+                return status;
+            }
+
+            if (m_pages.empty())
+            {
+                status.setError("[ImageDecoder.TIFF] No pages available.");
+                return status;
+            }
+
+            const size_t frame_index = (header.frames > 1)
+                ? (m_next_frame_index % size_t(header.frames))
+                : 0;
+            m_context = m_pages[frame_index];
+            applyHeaderFromContext();
+            // Keep multipage frame count (applyHeaderFromContext does not touch frames).
+            header.frames = (m_pages.size() > 1) ? int(m_pages.size()) : 0;
+
             if (m_context.rows_per_strip == StripHeightNoLimit)
             {
                 m_context.rows_per_strip = header.height;
@@ -2489,6 +2591,7 @@ namespace
             // xxx
             printLine(Print::Debug, "    [decode]");
             printLine(Print::Debug, "      image: {} x {}", header.width, header.height);
+            printLine(Print::Debug, "      page: {} / {}", frame_index, m_pages.size());
             printLine(Print::Debug, "      compression: {}", m_context.compression);
             printLine(Print::Debug, "      planar_configuration: {} ({})", m_context.planar_configuration,
                 m_context.planar_configuration == 1 ? "chunky" : "planar");
@@ -2507,12 +2610,6 @@ namespace
                 printLine(Print::Debug, "        strip: {} bytes", byte_count);
             }
             */
-
-            if (!header.success)
-            {
-                status.setError(header.info);
-                return status;
-            }
 
             // Calculate target width and height
             int target_width = header.width;
@@ -2722,6 +2819,28 @@ namespace
 
             // Store ICC profile into the ImageDecodeInterface
             icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
+
+            status.current_frame_index = int(frame_index);
+            if (header.frames > 1)
+            {
+                m_next_frame_index = (frame_index + 1) % size_t(header.frames);
+                status.next_frame_index = int(m_next_frame_index);
+                status.frame_delay_numerator = 1;
+                status.frame_delay_denominator = 1;
+            }
+            else
+            {
+                status.next_frame_index = 0;
+            }
+
+            // Restore page-0 geometry on the public header (decode used the active page).
+            if (!m_pages.empty())
+            {
+                m_context = m_pages[0];
+                const int frames = header.frames;
+                applyHeaderFromContext();
+                header.frames = frames;
+            }
 
             return status;
         }

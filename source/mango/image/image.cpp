@@ -327,6 +327,12 @@ namespace mango::image
         return ConstMemory();
     }
 
+    ConstMemory ImageDecodeInterface::memory(int level, int depth, int face, const ImageDecodeOptions& options)
+    {
+        MANGO_UNREFERENCED(options);
+        return memory(level, depth, face);
+    }
+
     void ImageDecodeInterface::populateInspect(ImageInspect& report) const
     {
         MANGO_UNREFERENCED(report);
@@ -602,13 +608,13 @@ namespace mango::image
         }
     }
 
-    ConstMemory ImageDecoder::memory(int level, int depth, int face)
+    ConstMemory ImageDecoder::memory(int level, int depth, int face, const ImageDecodeOptions& options)
     {
         ConstMemory memory;
 
         if (m_interface)
         {
-            memory = m_interface->memory(level, depth, face);
+            memory = m_interface->memory(level, depth, face, options);
         }
 
         return memory;
