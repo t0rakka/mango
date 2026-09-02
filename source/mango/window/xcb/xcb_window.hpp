@@ -7,6 +7,7 @@
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
 #include "../window_peers.hpp"
+#include "../linux_event_wake.hpp"
 
 #include <unistd.h>
 #include <mango/math/math.hpp>
@@ -97,6 +98,8 @@ namespace mango
         // GLX opens a separate Xlib Display for the same window; poll it for events too.
         void* xlib_display { nullptr };
 
+        LinuxEventWake event_wake;
+
         void processXdndClientMessage(xcb_atom_t type, const uint32_t data[5]);
         void processXdndSelection(xcb_atom_t target, xcb_atom_t property);
         xcb_window_t xdndReplyWindow(xcb_window_t source) const;
@@ -125,6 +128,7 @@ namespace mango
         void wakeEventLoop() override;
         void drainPendingEvents() override;
         int eventFileDescriptor() const override;
+        int wakeFileDescriptor() const override;
 
         void* createNativeWindowForGraphics(int width, int height, u32 flags) override;
     };

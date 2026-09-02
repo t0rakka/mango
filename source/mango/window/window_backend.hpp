@@ -65,6 +65,9 @@ namespace mango
         // Native fd to include in the loop owner's poll set (-1 if none / N/A).
         virtual int eventFileDescriptor() const { return -1; }
 
+        // Optional self-pipe / eventfd for cross-thread wake (-1 if none).
+        virtual int wakeFileDescriptor() const { return -1; }
+
         void syncGraphicsSurface();
         void presentGraphicsSurface();
         void clearGraphicsHooks();

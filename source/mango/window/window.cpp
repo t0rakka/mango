@@ -123,7 +123,8 @@ namespace mango
     {
         running = true;
         needs_redraw = true;
-        frame_in_flight = false;
+        frame_in_flight.store(false, std::memory_order_relaxed);
+        frame_held.store(false, std::memory_order_relaxed);
         loop_start_time_us = Time::us();
         last_frame_time_us = 0;
         last_dt = 0.0;
@@ -137,7 +138,7 @@ namespace mango
 
     bool EventLoopState::shouldScheduleFrame(u64 now_us) const
     {
-        if (config.waitForFrame && frame_in_flight)
+        if (config.waitForFrame && frame_in_flight.load(std::memory_order_acquire))
         {
             return false;
         }
@@ -176,7 +177,7 @@ namespace mango
         // Async backpressure: a frame is in flight and will be cleared by
         // frameComplete() (possibly from another context that posts no event), so we
         // must keep polling to notice it promptly rather than blocking.
-        if (config.waitForFrame && frame_in_flight)
+        if (config.waitForFrame && frame_in_flight.load(std::memory_order_acquire))
         {
             return config.pollTimeoutMs;
         }
@@ -439,9 +440,22 @@ namespace mango
         }
     }
 
+    void Window::holdFrame()
+    {
+        if (m_event_loop.config.waitForFrame)
+        {
+            m_event_loop.frame_held.store(true, std::memory_order_release);
+        }
+    }
+
     void Window::frameComplete()
     {
-        m_event_loop.frame_in_flight = false;
+        m_event_loop.frame_held.store(false, std::memory_order_relaxed);
+        m_event_loop.frame_in_flight.store(false, std::memory_order_release);
+        if (m_backend)
+        {
+            m_backend->wakeEventLoop();
+        }
     }
 
     void Window::dispatchFrame()
@@ -492,16 +506,19 @@ namespace mango
 
         if (m_event_loop.config.waitForFrame)
         {
-            m_event_loop.frame_in_flight = true;
+            m_event_loop.frame_held.store(false, std::memory_order_relaxed);
+            m_event_loop.frame_in_flight.store(true, std::memory_order_release);
         }
 
         m_event_loop.last_frame_time_us = now;
 
         onFrame(info);
 
-        if (m_event_loop.config.waitForFrame)
+        // Sync default: complete when onFrame returns unless holdFrame() opted into async.
+        if (m_event_loop.config.waitForFrame &&
+            !m_event_loop.frame_held.load(std::memory_order_acquire))
         {
-            m_event_loop.frame_in_flight = false;
+            frameComplete();
         }
     }
 

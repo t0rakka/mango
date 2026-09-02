@@ -133,6 +133,59 @@ namespace
         return true;
     }
 
+    bool test_hold_keeps_in_flight_until_complete()
+    {
+        EventLoopState state;
+        state.config.mode = FrameMode::Continuous;
+        state.config.waitForFrame = true;
+        state.config.maxFrameRate = 0.0;
+        state.config.pollTimeoutMs = 7;
+        state.reset();
+        state.needs_redraw = false;
+
+        // Simulate dispatchFrame start + holdFrame() inside onFrame.
+        state.frame_held.store(false);
+        state.frame_in_flight.store(true);
+        state.frame_held.store(true);
+
+        // Sync auto-complete is skipped while held.
+        if (!state.frame_held.load())
+        {
+            state.frame_in_flight.store(false);
+        }
+        CHECK(state.frame_in_flight.load());
+        CHECK(!state.shouldScheduleFrame(5'000));
+        CHECK(state.computeWaitTimeoutMs(5'000) == 7);
+
+        // frameComplete(): clear hold and in-flight.
+        state.frame_held.store(false);
+        state.frame_in_flight.store(false);
+        CHECK(state.shouldScheduleFrame(5'000));
+
+        return true;
+    }
+
+    bool test_sync_auto_complete_clears_in_flight()
+    {
+        EventLoopState state;
+        state.config.mode = FrameMode::Continuous;
+        state.config.waitForFrame = true;
+        state.config.maxFrameRate = 0.0;
+        state.reset();
+        state.needs_redraw = false;
+
+        state.frame_held.store(false);
+        state.frame_in_flight.store(true);
+        if (!state.frame_held.load())
+        {
+            state.frame_in_flight.store(false);
+        }
+        CHECK(!state.frame_in_flight.load());
+        CHECK(state.shouldScheduleFrame(5'000));
+
+        return true;
+    }
+
     const Case cases[] =
     {
         { "continuous_default_schedules", test_continuous_default_schedules },
@@ -142,6 +195,8 @@ namespace
         { "max_frame_rate_gate", test_max_frame_rate_gate },
         { "consume_invalidated", test_consume_invalidated },
         { "compute_dt", test_compute_dt },
+        { "hold_keeps_in_flight_until_complete", test_hold_keeps_in_flight_until_complete },
+        { "sync_auto_complete_clears_in_flight", test_sync_auto_complete_clears_in_flight },
     };
 
 } // namespace

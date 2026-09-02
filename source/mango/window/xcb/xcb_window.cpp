@@ -707,6 +707,8 @@ namespace mango
     XcbBackend::XcbBackend()
         : key_symbols(nullptr)
     {
+        event_wake.create();
+
         connection = xcb_connect(nullptr, nullptr);
         if (!connection)
         {
@@ -875,6 +877,8 @@ namespace mango
             xcb_disconnect(connection);
             connection = nullptr;
         }
+
+        event_wake.destroy();
     }
 
     bool XcbBackend::init(int width, int height, u32 flags, const char* title)
@@ -1264,10 +1268,7 @@ namespace mango
 
     void XcbBackend::wakeEventLoop()
     {
-        // The loop blocks in poll() on the XCB connection fd. Same-thread state changes
-        // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
-        // and the idle wait is capped, so a cross-thread change is noticed within the
-        // cap without an explicit wake. A self-pipe could make this immediate later.
+        event_wake.signal();
     }
 
     xcb_window_t XcbBackend::xdndReplyWindow(xcb_window_t source) const
@@ -1639,6 +1640,8 @@ namespace mango
 
     void XcbBackend::drainPendingEvents()
     {
+        event_wake.drain();
+
         bool hadEvents = false;
         drainEvents(hadEvents);
 
@@ -1655,6 +1658,11 @@ namespace mango
     int XcbBackend::eventFileDescriptor() const
     {
         return connection ? xcb_get_file_descriptor(connection) : -1;
+    }
+
+    int XcbBackend::wakeFileDescriptor() const
+    {
+        return event_wake.readFd();
     }
 
     void XcbBackend::runEventLoop()
@@ -1722,6 +1730,11 @@ namespace mango
                         if (fd >= 0)
                         {
                             out->push_back({ fd, POLLIN, 0 });
+                        }
+                        int wake = backend->wakeFileDescriptor();
+                        if (wake >= 0)
+                        {
+                            out->push_back({ wake, POLLIN, 0 });
                         }
 
                         // XcbBackend may also poll a GLX Xlib Display on the same window.
