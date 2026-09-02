@@ -7,6 +7,7 @@
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
 #include "../window_peers.hpp"
+#include "../linux_event_wake.hpp"
 
 #include <unistd.h>
 #include <sys/types.h>
@@ -79,6 +80,7 @@ namespace mango
         bool            sync_pending { false };
         bool            sync_supported { false };
         bool            resize_pending { false };
+        LinuxEventWake  event_wake;
 
         XlibBackend();
         ~XlibBackend() override;
@@ -107,6 +109,7 @@ namespace mango
         void wakeEventLoop() override;
         void drainPendingEvents() override;
         int eventFileDescriptor() const override;
+        int wakeFileDescriptor() const override;
 
         void* createNativeWindowForGraphics(int width, int height, u32 flags) override;
     };

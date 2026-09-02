@@ -8,6 +8,7 @@
 #include <string_view>
 #include <vector>
 #include <memory>
+#include <atomic>
 #include <mango/math/math.hpp>
 #include <mango/filesystem/filesystem.hpp>
 
@@ -196,8 +197,10 @@ namespace mango
         double maxFrameRate = 0.0;
 
         // Do not schedule another onFrame until the current frame is complete.
-        // Sync rendering: completion is automatic when onFrame() returns.
-        // Async rendering: call frameComplete() when present/GPU finishes (idempotent).
+        // Sync rendering: completion is automatic when onFrame() returns (unless
+        // holdFrame() was called during onFrame).
+        // Async rendering: call holdFrame() from onFrame, then frameComplete()
+        // when present/GPU finishes (idempotent; wakes the event loop).
         bool waitForFrame = true;
 
         // Event poll sleep when idle (milliseconds).
@@ -221,7 +224,10 @@ namespace mango
 
         bool running = false;
         bool needs_redraw = false;
-        bool frame_in_flight = false;
+        std::atomic<bool> frame_in_flight { false };
+        // When true, dispatchFrame() will not auto-clear frame_in_flight after onFrame();
+        // the client must call Window::frameComplete() (async GPU/present).
+        std::atomic<bool> frame_held { false };
 
         u64 last_frame_time_us = 0;
         u64 loop_start_time_us = 0;
@@ -342,6 +348,9 @@ namespace mango
         void requestFrameAt(u64 time_us);  // schedule one frame at an absolute monotonic time (microseconds)
         void requestFrameIn(double seconds); // schedule one frame after a delay from now
         void dispatchFrame();
+        // Opt into async completion from inside onFrame(): keep frame_in_flight set
+        // until frameComplete() (e.g. after GPU present). No-op when waitForFrame is false.
+        void holdFrame();
         void frameComplete();
 
         void syncDisplayRefreshRate();

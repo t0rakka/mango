@@ -1611,6 +1611,9 @@ namespace
                     imageHeader->faces   = 0;
                     imageHeader->format  = bitmap_header.format;
                     imageHeader->compression = TextureCompression::NONE;
+                    imageHeader->palette = (bitmap_header.bitsPerPixel <= 8)
+                        ? int(bitmap_header.paletteSize)
+                        : 0;
                 }
 
                 if (surface)
@@ -1694,6 +1697,11 @@ namespace
                     header.compression = TextureCompression::NONE;
                     m_native_compression = bmp_header.compression;
                     header.alpha = bmp_header.alphaMask != 0 || header.format.size.a > 0;
+                    // Preferred decode format is BGRA for indexed BMPs, but still
+                    // report the source color-table size for inspect / opt-in paths.
+                    header.palette = (bmp_header.bitsPerPixel <= 8)
+                        ? int(bmp_header.paletteSize)
+                        : 0;
 
                     printLine(Print::Debug, "[Header]");
                     printLine(Print::Debug, "  image: {} x {}, bits: {}",

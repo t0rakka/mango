@@ -27,7 +27,12 @@ set(MANGO_TESTS
     core_string
     core_checksum
     core_commandline
+    image_inspect_test
 )
+
+if (TARGET mango-window)
+    list(APPEND MANGO_TESTS eventloop)
+endif ()
 
 foreach(test IN LISTS MANGO_TESTS)
     add_executable(${test} ${test}.cpp)

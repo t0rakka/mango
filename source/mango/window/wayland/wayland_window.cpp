@@ -1427,6 +1427,8 @@ namespace mango
     {
         MANGO_UNREFERENCED(flags);
 
+        event_wake.create();
+
         size[0] = width;
         size[1] = height;
 
@@ -1505,6 +1507,8 @@ namespace mango
         if (xkb_state) xkb_state_unref(xkb_state);
         if (xkb_keymap) xkb_keymap_unref(xkb_keymap);
         if (xkb_context) xkb_context_unref(xkb_context);
+
+        event_wake.destroy();
     }
 
     void WaylandBackend::toggleFullscreen()
@@ -1899,10 +1903,7 @@ namespace mango
 
     void WaylandBackend::wakeEventLoop()
     {
-        // The loop blocks in poll() on the Wayland display fd. Same-thread state changes
-        // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
-        // and the idle wait is capped, so a cross-thread change is noticed within the
-        // cap without an explicit wake. A self-pipe could make this immediate later.
+        event_wake.signal();
     }
 
     int WaylandBackend::eventFileDescriptor() const
@@ -1910,8 +1911,15 @@ namespace mango
         return display ? wl_display_get_fd(display) : -1;
     }
 
+    int WaylandBackend::wakeFileDescriptor() const
+    {
+        return event_wake.readFd();
+    }
+
     void WaylandBackend::drainPendingEvents()
     {
+        event_wake.drain();
+
         if (!display)
         {
             return;
@@ -1983,19 +1991,29 @@ namespace mango
             const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
             const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
 
-            std::vector<pollfd> pfds(backends.size());
+            std::vector<pollfd> pfds;
+            std::vector<int> display_pfd_index(backends.size(), -1);
+            pfds.reserve(backends.size() * 2);
             for (size_t i = 0; i < backends.size(); ++i)
             {
-                pfds[i].fd = wl_display_get_fd(backends[i]->display);
-                pfds[i].events = POLLIN;
-                pfds[i].revents = 0;
+                display_pfd_index[i] = int(pfds.size());
+                pfds.push_back({ wl_display_get_fd(backends[i]->display), POLLIN, 0 });
+                const int wake = backends[i]->event_wake.readFd();
+                if (wake >= 0)
+                {
+                    pfds.push_back({ wake, POLLIN, 0 });
+                }
             }
 
             const int poll_result = ::poll(pfds.data(), pfds.size(), wait_ms);
 
             for (size_t i = 0; i < backends.size(); ++i)
             {
-                if (poll_result > 0 && (pfds[i].revents & POLLIN))
+                const bool readable = poll_result > 0 &&
+                    display_pfd_index[i] >= 0 &&
+                    (pfds[size_t(display_pfd_index[i])].revents & POLLIN);
+
+                if (readable)
                 {
                     if (wl_display_read_events(backends[i]->display) < 0)
                     {
@@ -2007,9 +2025,11 @@ namespace mango
                 }
                 else
                 {
-                    // timeout (frame due) or error: abandon the read we announced
+                    // timeout (frame due), wake-only, or error: abandon the read we announced
                     wl_display_cancel_read(backends[i]->display);
                 }
+
+                backends[i]->event_wake.drain();
             }
 
             if (!loop->isRunning())

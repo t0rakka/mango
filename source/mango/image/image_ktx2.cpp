@@ -13,14 +13,9 @@
 #include <cstring>
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 
-// MANGO TODO: supercompression transcoding API to ImageDecoder interface.
-/*
-    Implementation note: The BASIS_LZ and UASTC supercompression schemes are
-    meant as transcoders so that other (supported) block compression-formatted
-    data can be extracted from the supercompressed data. We don't yet have
-    API for this so we only support the decode-to-surface and can only get
-    uncompressed rgba data out.
-*/
+// BASIS_LZ / UASTC: GPU path is memory(..., options) with options.compression set to a
+// TextureCompression from header.supercompression — basisu transcodes to that block format.
+// decode() to Surface remains a CPU convenience (RGBA32). Gated by IMAGE_FORMAT_KTX2.
 
 namespace
 {
@@ -983,6 +978,106 @@ namespace
         basist::basisu_transcoder_init();
     }
 
+    // GPU block formats basisu can emit from ETC1S / UASTC (plus source markers).
+    static constexpr u32 BASISU_GPU_TARGET_MASK =
+        SUPERCOMPRESS_ETC1_RGB |
+        SUPERCOMPRESS_ETC2_RGBA |
+        SUPERCOMPRESS_BC1_UNORM |
+        SUPERCOMPRESS_BC3_UNORM |
+        SUPERCOMPRESS_BC4_UNORM |
+        SUPERCOMPRESS_BC5_UNORM |
+        SUPERCOMPRESS_BC7_UNORM |
+        SUPERCOMPRESS_PVRTC_RGB_4BPP |
+        SUPERCOMPRESS_PVRTC_RGBA_4BPP |
+        SUPERCOMPRESS_ASTC_RGBA_4x4 |
+        SUPERCOMPRESS_ATC_RGB |
+        SUPERCOMPRESS_ATC_RGBA |
+        SUPERCOMPRESS_FXT1_RGB |
+        SUPERCOMPRESS_PVRTC2_RGBA_4BPP |
+        SUPERCOMPRESS_EAC_R11 |
+        SUPERCOMPRESS_EAC_RG11;
+
+    static u32 supercompressFlagFromTextureCompression(u32 compression)
+    {
+        switch (compression)
+        {
+            case TextureCompression::ETC1_RGB:                    return SUPERCOMPRESS_ETC1_RGB;
+            case TextureCompression::ETC2_RGBA:                   return SUPERCOMPRESS_ETC2_RGBA;
+            case TextureCompression::BC1_UNORM:                   return SUPERCOMPRESS_BC1_UNORM;
+            case TextureCompression::BC3_UNORM:                   return SUPERCOMPRESS_BC3_UNORM;
+            case TextureCompression::BC4_UNORM:                   return SUPERCOMPRESS_BC4_UNORM;
+            case TextureCompression::BC5_UNORM:                   return SUPERCOMPRESS_BC5_UNORM;
+            case TextureCompression::BC7_UNORM:                   return SUPERCOMPRESS_BC7_UNORM;
+            case TextureCompression::PVRTC_RGB_4BPP:              return SUPERCOMPRESS_PVRTC_RGB_4BPP;
+            case TextureCompression::PVRTC_RGBA_4BPP:             return SUPERCOMPRESS_PVRTC_RGBA_4BPP;
+            case TextureCompression::ASTC_UNORM_4x4:              return SUPERCOMPRESS_ASTC_RGBA_4x4;
+            case TextureCompression::ATC_RGB:                     return SUPERCOMPRESS_ATC_RGB;
+            case TextureCompression::ATC_RGBA_INTERPOLATED_ALPHA: return SUPERCOMPRESS_ATC_RGBA;
+            case TextureCompression::FXT1_RGB:                    return SUPERCOMPRESS_FXT1_RGB;
+            case TextureCompression::PVRTC2_RGBA_4BPP:            return SUPERCOMPRESS_PVRTC2_RGBA_4BPP;
+            case TextureCompression::EAC_R11:                     return SUPERCOMPRESS_EAC_R11;
+            case TextureCompression::EAC_RG11:                    return SUPERCOMPRESS_EAC_RG11;
+            default:                                              return 0;
+        }
+    }
+
+    static bool basisuFormatFromTextureCompression(u32 compression, basist::transcoder_texture_format& out)
+    {
+        switch (compression)
+        {
+            case TextureCompression::ETC1_RGB:
+                out = basist::transcoder_texture_format::cTFETC1_RGB;
+                return true;
+            case TextureCompression::ETC2_RGBA:
+                out = basist::transcoder_texture_format::cTFETC2_RGBA;
+                return true;
+            case TextureCompression::BC1_UNORM:
+                out = basist::transcoder_texture_format::cTFBC1_RGB;
+                return true;
+            case TextureCompression::BC3_UNORM:
+                out = basist::transcoder_texture_format::cTFBC3_RGBA;
+                return true;
+            case TextureCompression::BC4_UNORM:
+                out = basist::transcoder_texture_format::cTFBC4_R;
+                return true;
+            case TextureCompression::BC5_UNORM:
+                out = basist::transcoder_texture_format::cTFBC5_RG;
+                return true;
+            case TextureCompression::BC7_UNORM:
+                out = basist::transcoder_texture_format::cTFBC7_RGBA;
+                return true;
+            case TextureCompression::PVRTC_RGB_4BPP:
+                out = basist::transcoder_texture_format::cTFPVRTC1_4_RGB;
+                return true;
+            case TextureCompression::PVRTC_RGBA_4BPP:
+                out = basist::transcoder_texture_format::cTFPVRTC1_4_RGBA;
+                return true;
+            case TextureCompression::ASTC_UNORM_4x4:
+                out = basist::transcoder_texture_format::cTFASTC_4x4_RGBA;
+                return true;
+            case TextureCompression::ATC_RGB:
+                out = basist::transcoder_texture_format::cTFATC_RGB;
+                return true;
+            case TextureCompression::ATC_RGBA_INTERPOLATED_ALPHA:
+                out = basist::transcoder_texture_format::cTFATC_RGBA;
+                return true;
+            case TextureCompression::FXT1_RGB:
+                out = basist::transcoder_texture_format::cTFFXT1_RGB;
+                return true;
+            case TextureCompression::PVRTC2_RGBA_4BPP:
+                out = basist::transcoder_texture_format::cTFPVRTC2_4_RGBA;
+                return true;
+            case TextureCompression::EAC_R11:
+                out = basist::transcoder_texture_format::cTFETC2_EAC_R11;
+                return true;
+            case TextureCompression::EAC_RG11:
+                out = basist::transcoder_texture_format::cTFETC2_EAC_RG11;
+                return true;
+            default:
+                return false;
+        }
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -999,6 +1094,13 @@ namespace
 
         u32 m_supercompression = 0;
         Buffer m_buffer;
+
+        // Cached GPU block transcode for memory(..., options.compression).
+        u32 m_cached_compression = TextureCompression::NONE;
+        int m_cached_level = -1;
+        int m_cached_depth = -1;
+        int m_cached_face = -1;
+        Buffer m_transcode_buffer;
 
         bool m_orientation_x = false;
         bool m_orientation_y = false;
@@ -1100,7 +1202,8 @@ namespace
                     m_is_etc1s = true;
                     header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     header.linear = false;
-                    header.supercompression = SUPERCOMPRESS_BASISU_ETC1S;
+                    header.compression = TextureCompression::NONE;
+                    header.supercompression = SUPERCOMPRESS_BASISU_ETC1S | BASISU_GPU_TARGET_MASK;
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
                     break;
@@ -1249,7 +1352,8 @@ namespace
                             m_is_uastc = true;
                             header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                             header.linear = false;
-                            header.supercompression = SUPERCOMPRESS_BASISU_UASTC;
+                            header.compression = TextureCompression::NONE;
+                            header.supercompression = SUPERCOMPRESS_BASISU_UASTC | BASISU_GPU_TARGET_MASK;
                             break;
                     }
 
@@ -1459,6 +1563,112 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
+            return sourceLevelMemory(level, depth, face);
+        }
+
+        ConstMemory memory(int level, int depth, int face, const ImageDecodeOptions& options) override
+        {
+            if (options.compression == TextureCompression::NONE || (!m_is_etc1s && !m_is_uastc))
+            {
+                return sourceLevelMemory(level, depth, face);
+            }
+
+            const u32 flag = supercompressFlagFromTextureCompression(options.compression);
+            if (!flag || (header.supercompression & flag) == 0)
+            {
+                return ConstMemory();
+            }
+
+            basist::transcoder_texture_format fmt;
+            if (!basisuFormatFromTextureCompression(options.compression, fmt))
+            {
+                return ConstMemory();
+            }
+
+            if (m_cached_compression == options.compression &&
+                m_cached_level == level &&
+                m_cached_depth == depth &&
+                m_cached_face == face &&
+                m_transcode_buffer.size() > 0)
+            {
+                header.compression = options.compression;
+                return ConstMemory(m_transcode_buffer);
+            }
+
+            ConstMemory source = sourceLevelMemory(level, depth, face);
+            if (!source.address || !source.size)
+            {
+                return ConstMemory();
+            }
+
+            const int width = std::max(1, header.width >> level);
+            const int height = std::max(1, header.height >> level);
+            const int block_w = int(basist::basis_get_block_width(fmt));
+            const int block_h = int(basist::basis_get_block_height(fmt));
+            const int xblocks = std::max(1, (width + block_w - 1) / block_w);
+            const int yblocks = std::max(1, (height + block_h - 1) / block_h);
+            const u32 total_blocks = u32(xblocks) * u32(yblocks);
+            const u32 bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
+            const size_t output_bytes = size_t(total_blocks) * bytes_per_block;
+
+            m_transcode_buffer.resize(output_bytes);
+
+            initialize_basisu_only_once();
+            bool ok = false;
+
+            if (m_is_etc1s)
+            {
+                basist::basisu_lowlevel_etc1s_transcoder transcoder;
+                transcoder.decode_palettes(
+                    m_basis.endpointCount, m_basis.endpointsData, m_basis.endpointsByteLength,
+                    m_basis.selectorCount, m_basis.selectorsData, m_basis.selectorsByteLength);
+                transcoder.decode_tables(m_basis.tablesData, m_basis.tablesByteLength);
+
+                const int imageIndex = level * header.faces + face;
+                BasisImageDesc desc;
+                if (!m_basis.readImageDesc(imageIndex, desc))
+                {
+                    m_transcode_buffer.resize(0);
+                    return ConstMemory();
+                }
+
+                ok = transcoder.transcode_image(fmt,
+                    m_transcode_buffer.data(), total_blocks,
+                    source.address, u32(source.size),
+                    u32(xblocks), u32(yblocks), u32(width), u32(height),
+                    u32(level),
+                    desc.rgbSliceByteOffset, desc.rgbSliceByteLength,
+                    desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
+            }
+            else // UASTC
+            {
+                basist::basisu_lowlevel_uastc_transcoder transcoder;
+                ok = transcoder.transcode_image(fmt,
+                    m_transcode_buffer.data(), total_blocks,
+                    source.address, u32(source.size),
+                    u32(xblocks), u32(yblocks), u32(width), u32(height),
+                    u32(level),
+                    0, u32(source.size));
+            }
+
+            if (!ok)
+            {
+                m_transcode_buffer.resize(0);
+                m_cached_compression = TextureCompression::NONE;
+                m_cached_level = -1;
+                return ConstMemory();
+            }
+
+            m_cached_compression = options.compression;
+            m_cached_level = level;
+            m_cached_depth = depth;
+            m_cached_face = face;
+            header.compression = options.compression;
+            return ConstMemory(m_transcode_buffer);
+        }
+
+        ConstMemory sourceLevelMemory(int level, int depth, int face)
+        {
             if (level < 0 || level >= int(m_levels.size()))
             {
                 return ConstMemory();
@@ -1526,7 +1736,7 @@ namespace
 
             if (m_is_etc1s)
             {
-                ConstMemory memory = this->memory(level, depth, 0);
+                ConstMemory memory = sourceLevelMemory(level, depth, 0);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
                 //printLine(Print::Debug, "memory: {} bytes", memory.size);
@@ -1564,7 +1774,7 @@ namespace
             }
             else if (m_is_uastc)
             {
-                ConstMemory memory = this->memory(level, depth, face);
+                ConstMemory memory = sourceLevelMemory(level, depth, face);
 
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
@@ -1589,7 +1799,7 @@ namespace
             }
             else
             {
-                ConstMemory memory = this->memory(level, depth, face);
+                ConstMemory memory = sourceLevelMemory(level, depth, face);
 
                 if (header.compression != TextureCompression::NONE)
                 {

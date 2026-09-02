@@ -62,6 +62,8 @@ int main()
         { "normal.rar",       "lorem-2.txt",        0xe65308f5, "" },
         { "solid.rar",        "lorem-1.txt",        0xe65308f5, "" },
         { "solid.rar",        "lorem-2.txt",        0xe65308f5, "" },
+        { "hp_secret.rar",    "logo-apple.png",     0xac7b9dcc, "secret1234" },
+        { "p_secret.rar",     "logo-apple.png",     0xac7b9dcc, "secret1234" },
     };
 
     int failed_count = 0;

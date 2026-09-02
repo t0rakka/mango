@@ -608,6 +608,8 @@ namespace mango
 
     XlibBackend::XlibBackend()
     {
+        event_wake.create();
+
         display = XOpenDisplay(NULL);
         if (!display)
         {
@@ -648,6 +650,8 @@ namespace mango
             XCloseDisplay(dpy);
             display = nullptr;
         }
+
+        event_wake.destroy();
     }
 
     bool XlibBackend::init(int screen, int depth, Visual* visual, int width, int height, u32 flags, const char* title)
@@ -1014,10 +1018,7 @@ namespace mango
 
     void XlibBackend::wakeEventLoop()
     {
-        // The loop blocks in poll() on the X connection fd. Same-thread state changes
-        // (invalidate / requestFrame / breakEventLoop) are applied between iterations,
-        // and the idle wait is capped, so a cross-thread state change is noticed within the
-        // cap without an explicit wake. A self-pipe could make this immediate later.
+        event_wake.signal();
     }
 
     int XlibBackend::eventFileDescriptor() const
@@ -1025,8 +1026,15 @@ namespace mango
         return display ? ConnectionNumber(x11Display()) : -1;
     }
 
+    int XlibBackend::wakeFileDescriptor() const
+    {
+        return event_wake.readFd();
+    }
+
     void XlibBackend::drainPendingEvents()
     {
+        event_wake.drain();
+
         if (!display)
         {
             return;
@@ -1366,10 +1374,16 @@ namespace mango
                     std::vector<pollfd> pfds;
                     window_peers::forEach([](WindowBackend* backend, void* user)
                     {
+                        auto* out = static_cast<std::vector<pollfd>*>(user);
                         int fd = backend->eventFileDescriptor();
                         if (fd >= 0)
                         {
-                            static_cast<std::vector<pollfd>*>(user)->push_back({ fd, POLLIN, 0 });
+                            out->push_back({ fd, POLLIN, 0 });
+                        }
+                        int wake = backend->wakeFileDescriptor();
+                        if (wake >= 0)
+                        {
+                            out->push_back({ wake, POLLIN, 0 });
                         }
                     }, &pfds);
 

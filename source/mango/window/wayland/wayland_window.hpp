@@ -7,6 +7,7 @@
 #include <mango/window/window.hpp>
 #include "../window_backend.hpp"
 #include "../window_peers.hpp"
+#include "../linux_event_wake.hpp"
 
 #include <mango/math/math.hpp>
 
@@ -79,6 +80,7 @@ namespace mango
         bool fullscreen = false;
         bool server_decorations = false;
         int32_t buffer_scale = 1;
+        LinuxEventWake event_wake;
 
         WaylandBackend(int width, int height, u32 flags);
         ~WaylandBackend() override;
@@ -99,6 +101,7 @@ namespace mango
         void wakeEventLoop() override;
         void drainPendingEvents() override;
         int eventFileDescriptor() const override;
+        int wakeFileDescriptor() const override;
         void beforePresent() override;
 
         void* nativeDisplay() override { return display; }

@@ -31,8 +31,10 @@ namespace mango::image
         These flags indicate when supercompressed blocks are stored in the image file.
         This kind of data can be extracted from the file by two mechanisms:
 
-        1. decoded into Surface
+        1. decoded into Surface (CPU convenience path)
         2. the compressed memory block and TextureCompression format can be queried
+           via memory(..., options) with options.compression set to a target from
+           this mask (GPU upload path — the intended use of Basis/UASTC)
 
     */
     enum : u32
@@ -43,15 +45,18 @@ namespace mango::image
         SUPERCOMPRESS_BC7_UNORM        = 0x00000008,
         SUPERCOMPRESS_PVRTC_RGB_4BPP   = 0x00000010,
         SUPERCOMPRESS_PVRTC_RGBA_4BPP  = 0x00000020,
-        SUPERCOMPRESS_ASTC_RGBA_4x4    = 0x00000030,
         SUPERCOMPRESS_ATC_RGB          = 0x00000040,
+        SUPERCOMPRESS_ASTC_RGBA_4x4    = 0x00000080,
         SUPERCOMPRESS_ATC_RGBA         = 0x00000100,
         SUPERCOMPRESS_FXT1_RGB         = 0x00000200,
-        SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000300,
         SUPERCOMPRESS_EAC_R11          = 0x00000400,
+        SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000800,
         SUPERCOMPRESS_EAC_RG11         = 0x00001000,
-        SUPERCOMPRESS_BASISU_ETC1S     = 0x00001fff,
-        SUPERCOMPRESS_BASISU_UASTC     = 0x00001fff,
+        SUPERCOMPRESS_BASISU_ETC1S     = 0x00002000,
+        SUPERCOMPRESS_BASISU_UASTC     = 0x00004000,
+        SUPERCOMPRESS_ETC2_RGBA        = 0x00008000,
+        SUPERCOMPRESS_BC3_UNORM        = 0x00010000,
+        SUPERCOMPRESS_BC5_UNORM        = 0x00020000,
     };
 
     struct ImageHeader : Status
@@ -99,6 +104,12 @@ namespace mango::image
         bool simd = true;
         bool multithread = true;
         bool jpeg_colorspace_rgb = false; // assumes channel data is RGB instead of YCbCr
+
+        // Requested GPU block format for supercompressed sources (Basis/UASTC).
+        // TextureCompression::NONE keeps the default path (RGBA surface decode /
+        // native blocks). A value from ImageHeader::supercompression selects the
+        // GPU upload blob returned by memory(..., options).
+        u32 compression = TextureCompression::NONE;
     };
 
     struct ImageDecodeRect
@@ -132,6 +143,7 @@ namespace mango::image
 
         virtual ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face);
         virtual ConstMemory memory(int level, int depth, int face);
+        virtual ConstMemory memory(int level, int depth, int face, const ImageDecodeOptions& options);
         virtual void populateInspect(ImageInspect& report) const;
 
         void clipAndDispatch(const Surface& dest, ImageDecodeRect rect);
@@ -153,7 +165,7 @@ namespace mango::image
         ImageDecodeFuture launch(ImageDecodeCallback callback, const Surface& dest, const ImageDecodeOptions& options = ImageDecodeOptions(), int level = 0, int depth = 0, int face = 0);
         void cancel();
 
-        ConstMemory memory(int level, int depth, int face);
+        ConstMemory memory(int level, int depth, int face, const ImageDecodeOptions& options = {});
         ConstMemory icc();
         ConstMemory exif();
         ImageInspect inspect(ConstMemory memory = ConstMemory()) const;
