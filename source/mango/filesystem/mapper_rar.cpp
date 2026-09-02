@@ -101,18 +101,50 @@ namespace
         }
     };
     
-    bool decompress(ComprDataIO& io, Unpack& unpack, u8* output, const u8* input,
-        u64 unpacked_size, u64 packed_size, u8 unp_ver, u64 win_size, bool solid)
+    std::wstring passwordToWide(const std::string& password)
     {
-        io.Init();
-        io.EnableShowProgress(false);
-        io.SetUnpackFromMemory(const_cast<byte*>(input), size_t(packed_size));
-        io.SetUnpackToMemory(output, size_t(unpacked_size));
-        io.SetPackedSizeToRead(packed_size);
+        const std::u16string utf16 = utf16_from_utf8(password);
+        return std::wstring(utf16.begin(), utf16.end());
+    }
 
-        unpack.Init(win_size, solid);
-        unpack.SetDestSize(unpacked_size);
-        unpack.DoUnpack(unp_ver, solid);
+    bool setupDecryption(ComprDataIO& io, CRYPT_METHOD method, const u8* salt, const u8* init_v,
+        u32 lg2_count, const u8* expected_psw_check, bool use_psw_check, const std::string& password)
+    {
+        if (password.empty())
+        {
+            return false;
+        }
+
+        const std::wstring wide = passwordToWide(password);
+        SecPassword sec;
+        sec.Set(wide.c_str());
+
+        byte hash_key[SHA256_DIGEST_SIZE];
+        byte psw_check[SIZE_PSWCHECK];
+
+        if (method == CRYPT_RAR50)
+        {
+            if (!io.SetEncryption(false, CRYPT_RAR50, &sec, salt, init_v, lg2_count, hash_key, psw_check))
+            {
+                return false;
+            }
+
+            if (use_psw_check && std::memcmp(psw_check, expected_psw_check, SIZE_PSWCHECK) != 0)
+            {
+                return false;
+            }
+        }
+        else if (method == CRYPT_RAR30)
+        {
+            if (!io.SetEncryption(false, CRYPT_RAR30, &sec, salt, nullptr, 0, nullptr, nullptr))
+            {
+                return false;
+            }
+        }
+        else
+        {
+            return false;
+        }
 
         return true;
     }
@@ -236,6 +268,8 @@ namespace
         u8   method;
         std::string filename;
         bool is_encrypted { false };
+        bool has_salt { false };
+        u8   salt[SIZE_SALT30] {};
 
         Header(const u8* address)
         {
@@ -260,9 +294,9 @@ namespace
             {
                 case HEAD3_MAIN:
                 {
-                    if (flags & 0x0200)
+                    if (flags & MHD_PASSWORD)
                     {
-                        // encrypted
+                        // encrypted headers / password protected archive
                         is_encrypted = true;
                     }
                     break;
@@ -293,8 +327,6 @@ namespace
                     const char* s = reinterpret_cast<const char*>(us);
                     p += filename_size;
 
-                    //printLine(Print::Info, "[RAR] version: {:#x}, method: {:#x}", version, method);
-
                     if (isSupportedVersion())
                     {
                         if (flags & LHD_UNICODE)
@@ -308,14 +340,19 @@ namespace
                             filename = std::string(s, filename_size);
                         }
 
-                        //printLine(Print::Info, "  Filename: {}", filename);
                         std::replace(filename.begin(), filename.end(), '\\', '/');
                     }
 
                     if (flags & LHD_SALT)
                     {
-                        // encryption salt is present
-                        p += 8;
+                        std::memcpy(salt, p, SIZE_SALT30);
+                        p += SIZE_SALT30;
+                        has_salt = true;
+                    }
+
+                    if (flags & LHD_PASSWORD)
+                    {
+                        is_encrypted = true;
                     }
 
                     if (flags & LHD_EXTTIME)
@@ -364,6 +401,14 @@ namespace
         bool folder;
         const u8* data;
 
+        bool encrypted { false };
+        CRYPT_METHOD crypt_method { CRYPT_NONE };
+        u8 salt[SIZE_SALT50] {};
+        u8 init_v[SIZE_INITV] {};
+        u8 psw_check[SIZE_PSWCHECK] {};
+        u32 lg2_count { 0 };
+        bool use_psw_check { false };
+
         bool compressed() const
         {
             if (is_rar5)
@@ -402,6 +447,7 @@ namespace mango::filesystem
         std::vector<RarEntry> m_files;
         Indexer<RarEntry> m_folders;
         bool is_encrypted { false };
+        bool m_headers_encrypted { false };
 
         MapperRAR(ConstMemory parent, const std::string& password)
             : m_password(password)
@@ -475,7 +521,7 @@ namespace mango::filesystem
                 Header header(p);
                 p = h + header.size;
 
-                is_encrypted = header.is_encrypted;
+                is_encrypted = is_encrypted || header.is_encrypted;
 
                 switch (header.type)
                 {
@@ -508,6 +554,16 @@ namespace mango::filesystem
                                 if (file.folder)
                                 {
                                     file.filename += "/";
+                                }
+
+                                if (header.is_encrypted)
+                                {
+                                    file.encrypted = true;
+                                    file.crypt_method = CRYPT_RAR30;
+                                    if (header.has_salt)
+                                    {
+                                        std::memcpy(file.salt, header.salt, SIZE_SALT30);
+                                    }
                                 }
 
                                 m_files.push_back(file);
@@ -548,7 +604,77 @@ namespace mango::filesystem
             return value;
         }
 
-        void parse_rar5_file_header(mango::LittleEndianConstPointer p, ConstMemory compressed_data)
+        void parse_rar5_extra_crypt(mango::LittleEndianConstPointer& p, const u8* rec_end, RarEntry& file)
+        {
+            const u64 version = vint(p);
+            const u64 flags = vint(p);
+            MANGO_UNREFERENCED(version);
+
+            if (p >= rec_end)
+            {
+                return;
+            }
+
+            file.lg2_count = *p++;
+            if (size_t(rec_end - p) < SIZE_SALT50 + SIZE_INITV)
+            {
+                return;
+            }
+
+            std::memcpy(file.salt, p, SIZE_SALT50);
+            p += SIZE_SALT50;
+            std::memcpy(file.init_v, p, SIZE_INITV);
+            p += SIZE_INITV;
+
+            if (flags & FHEXTRA_CRYPT_PSWCHECK)
+            {
+                if (size_t(rec_end - p) < SIZE_PSWCHECK + SIZE_PSWCHECK_CSUM)
+                {
+                    return;
+                }
+
+                std::memcpy(file.psw_check, p, SIZE_PSWCHECK);
+                p += SIZE_PSWCHECK;
+                p += SIZE_PSWCHECK_CSUM; // integrity of check value; unused here
+                file.use_psw_check = true;
+            }
+
+            file.encrypted = true;
+            file.crypt_method = CRYPT_RAR50;
+            is_encrypted = true;
+        }
+
+        void parse_rar5_extra(ConstMemory extra, RarEntry& file)
+        {
+            if (!extra.address || !extra.size)
+            {
+                return;
+            }
+
+            mango::LittleEndianConstPointer p = extra.address;
+            const u8* end = extra.end();
+
+            while (p < end)
+            {
+                const u64 rec_size = vint(p);
+                if (rec_size == 0 || p + rec_size > end)
+                {
+                    break;
+                }
+
+                const u8* rec_end = p + rec_size;
+                const u64 type = vint(p);
+
+                if (type == FHEXTRA_CRYPT)
+                {
+                    parse_rar5_extra_crypt(p, rec_end, file);
+                }
+
+                p = rec_end;
+            }
+        }
+
+        void parse_rar5_file_header(mango::LittleEndianConstPointer p, ConstMemory compressed_data, ConstMemory extra)
         {
             u64 flags = vint(p);
             u64 unpacked_size = vint(p);
@@ -624,9 +750,6 @@ namespace mango::filesystem
             const char* s = reinterpret_cast<const char *>(ptr);
             std::string filename(s, int(length));
 
-            //printf("  %s%s [algorithm: %d, solid: %d, method: %d]\n", 
-            //    filename.c_str(), is_directory ? "/" : "", algorithm, is_solid, method);
-
             RarEntry file;
 
             file.packed_size = compressed_data.size;
@@ -647,6 +770,8 @@ namespace mango::filesystem
                 file.filename += "/";
             }
 
+            parse_rar5_extra(extra, file);
+
             m_files.push_back(file);
         }
 
@@ -666,44 +791,45 @@ namespace mango::filesystem
                 u64 extra_size = 0;
                 u64 data_size = 0;
 
-                if (flags & 1)
+                if (flags & HFL_EXTRA)
                 {
                     extra_size = vint(p);
                 }
 
-                if (flags & 2)
+                if (flags & HFL_DATA)
                 {
                     data_size = vint(p);
                 }
 
                 ConstMemory compressed_data(base + header_size, size_t(data_size));
-
-                //printf("crc: %.8x, type: %x, flags: %x, header: %x, extra: %x, data: %x\n", 
-                //    crc, type, flags, (int)header_size, (int)extra_size, (int)data_size);
+                ConstMemory extra;
+                if (extra_size && extra_size <= header_size)
+                {
+                    extra = ConstMemory(base + header_size - size_t(extra_size), size_t(extra_size));
+                }
 
                 MANGO_UNREFERENCED(crc);
-                MANGO_UNREFERENCED(extra_size);
-
-                // MANGO TODO: add support for AES decryption headers
-                // MANGO TODO: add support for RAR 5.0 compression
 
                 switch (type)
                 {
-                    case 1:
+                    case HEAD_MAIN:
                         // Main archive header
                         break;
-                    case 2:
+                    case HEAD_FILE:
                         // File header
-                        parse_rar5_file_header(p, compressed_data);
+                        parse_rar5_file_header(p, compressed_data, extra);
                         break;
-                    case 3:
+                    case HEAD_SERVICE:
                         // Service header
                         break;
-                    case 4:
-                        // Archive encryption header
+                    case HEAD_CRYPT:
+                        // Archive encryption header (-hp): subsequent headers are encrypted.
+                        // Per-file encryption (-p) uses FHEXTRA_CRYPT and is supported.
                         is_encrypted = true;
-                        break;
-                    case 5:
+                        m_headers_encrypted = true;
+                        p = end;
+                        continue;
+                    case HEAD_ENDARC:
                         // End of archive header
                         break;
                 }
@@ -757,7 +883,7 @@ namespace mango::filesystem
                         flags |= FileInfo::Compressed;
                     }
 
-                    if (is_encrypted)
+                    if (is_encrypted || header.encrypted)
                     {
                         flags |= FileInfo::Encrypted;
                     }
@@ -769,6 +895,11 @@ namespace mango::filesystem
 
         std::unique_ptr<VirtualMemory> mapFile(size_t file_index) const
         {
+            if (m_headers_encrypted)
+            {
+                MANGO_EXCEPTION("[mapper.rar] Archive headers are encrypted (-hp); not supported.");
+            }
+
             const RarEntry& file = m_files[file_index];
 
             if (file.folder)
@@ -776,7 +907,12 @@ namespace mango::filesystem
                 MANGO_EXCEPTION("[mapper.rar] Cannot map directory \"{}\".", file.filename);
             }
 
-            if (!file.compressed())
+            if (file.encrypted && m_password.empty())
+            {
+                MANGO_EXCEPTION("[mapper.rar] File \"{}\" is encrypted; password required.", file.filename);
+            }
+
+            if (!file.compressed() && !file.encrypted)
             {
                 return std::make_unique<VirtualMemoryRAR>(
                     file.data, nullptr, size_t(file.unpacked_size));
@@ -792,7 +928,7 @@ namespace mango::filesystem
             {
                 const RarEntry& current = m_files[i];
 
-                if (!current.compressed())
+                if (!current.compressed() && !current.encrypted)
                 {
                     if (i == file_index)
                     {
@@ -816,11 +952,25 @@ namespace mango::filesystem
                     buffer = scratch.data();
                 }
 
-                if (!decompress(io, unpack, buffer, current.data, current.unpacked_size,
-                    current.packed_size, current.unp_ver, current.win_size, current.solid_continue))
+                io.Init();
+                io.EnableShowProgress(false);
+
+                if (current.encrypted)
                 {
-                    MANGO_EXCEPTION("[mapper.rar] Decompression failed.");
+                    if (!setupDecryption(io, current.crypt_method, current.salt, current.init_v,
+                        current.lg2_count, current.psw_check, current.use_psw_check, m_password))
+                    {
+                        MANGO_EXCEPTION("[mapper.rar] Incorrect password for \"{}\".", current.filename);
+                    }
                 }
+
+                io.SetUnpackFromMemory(const_cast<byte*>(current.data), size_t(current.packed_size));
+                io.SetUnpackToMemory(buffer, size_t(current.unpacked_size));
+                io.SetPackedSizeToRead(current.packed_size);
+
+                unpack.Init(current.win_size, current.solid_continue);
+                unpack.SetDestSize(current.unpacked_size);
+                unpack.DoUnpack(current.unp_ver, current.solid_continue);
 
                 if (i == file_index)
                 {
@@ -835,6 +985,11 @@ namespace mango::filesystem
 
         std::unique_ptr<VirtualMemory> map(const std::string& filename) override
         {
+            if (m_headers_encrypted)
+            {
+                MANGO_EXCEPTION("[mapper.rar] Archive headers are encrypted (-hp); not supported.");
+            }
+
             const RarEntry* ptrHeader = m_folders.getHeader(filename);
             if (!ptrHeader)
             {
