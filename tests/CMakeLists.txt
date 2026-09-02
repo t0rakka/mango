@@ -27,7 +27,7 @@ set(MANGO_TESTS
     core_string
     core_checksum
     core_commandline
-    image_inspect
+    image_inspect_test
 )
 
 if (TARGET mango-window)

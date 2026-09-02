@@ -158,5 +158,5 @@ namespace
 
 int main(int argc, char* argv[])
 {
-    return run_cases("image_inspect", cases, std::size(cases), argc, argv);
+    return run_cases("image_inspect_test", cases, std::size(cases), argc, argv);
 }
