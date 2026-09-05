@@ -725,7 +725,14 @@ namespace mango
                 XCB_XKB_PER_CLIENT_FLAG_DETECTABLE_AUTO_REPEAT,
                 XCB_XKB_PER_CLIENT_FLAG_DETECTABLE_AUTO_REPEAT,
                 0, 0, 0);
-            free(xcb_xkb_per_client_flags_reply(connection, flags_cookie, nullptr));
+            xcb_xkb_per_client_flags_reply_t* flags_reply =
+                xcb_xkb_per_client_flags_reply(connection, flags_cookie, nullptr);
+            if (flags_reply)
+            {
+                detectable_autorepeat =
+                    (flags_reply->value & XCB_XKB_PER_CLIENT_FLAG_DETECTABLE_AUTO_REPEAT) != 0;
+                free(flags_reply);
+            }
             free(use_reply);
         }
 
@@ -742,6 +749,8 @@ namespace mango
         xcb_intern_atom_cookie_t state_cookie = xcb_intern_atom(connection, 0, 13, "_NET_WM_STATE");
         xcb_intern_atom_cookie_t fullscreen_cookie = xcb_intern_atom(connection, 0, 24, "_NET_WM_STATE_FULLSCREEN");
         xcb_intern_atom_cookie_t primary_cookie = xcb_intern_atom(connection, 0, 7, "PRIMARY");
+        xcb_intern_atom_cookie_t net_wm_name_cookie = xcb_intern_atom(connection, 0, 12, "_NET_WM_NAME");
+        xcb_intern_atom_cookie_t utf8_string_cookie = xcb_intern_atom(connection, 0, 11, "UTF8_STRING");
         xcb_intern_atom_cookie_t text_uri_list_cookie = xcb_intern_atom(connection, 0, 13, "text/uri-list");
         xcb_intern_atom_cookie_t gnome_copied_cookie = xcb_intern_atom(connection, 0, 27, "x-special/gnome-copied-files");
         xcb_intern_atom_cookie_t kde_urilist_cookie = xcb_intern_atom(connection, 0, 24, "application/x-kde4-urilist");
@@ -767,6 +776,8 @@ namespace mango
         xcb_intern_atom_reply_t* state_reply = xcb_intern_atom_reply(connection, state_cookie, nullptr);
         xcb_intern_atom_reply_t* fullscreen_reply = xcb_intern_atom_reply(connection, fullscreen_cookie, nullptr);
         xcb_intern_atom_reply_t* primary_reply = xcb_intern_atom_reply(connection, primary_cookie, nullptr);
+        xcb_intern_atom_reply_t* net_wm_name_reply = xcb_intern_atom_reply(connection, net_wm_name_cookie, nullptr);
+        xcb_intern_atom_reply_t* utf8_string_reply = xcb_intern_atom_reply(connection, utf8_string_cookie, nullptr);
         xcb_intern_atom_reply_t* text_uri_list_reply = xcb_intern_atom_reply(connection, text_uri_list_cookie, nullptr);
         xcb_intern_atom_reply_t* gnome_copied_reply = xcb_intern_atom_reply(connection, gnome_copied_cookie, nullptr);
         xcb_intern_atom_reply_t* kde_urilist_reply = xcb_intern_atom_reply(connection, kde_urilist_cookie, nullptr);
@@ -792,6 +803,8 @@ namespace mango
         atom_state = state_reply->atom;
         atom_fullscreen = fullscreen_reply->atom;
         atom_primary = primary_reply->atom;
+        atom_net_wm_name = net_wm_name_reply ? net_wm_name_reply->atom : 0;
+        atom_utf8_string = utf8_string_reply ? utf8_string_reply->atom : 0;
         atom_text_uri_list = text_uri_list_reply->atom;
         atom_gnome_copied_files = gnome_copied_reply->atom;
         atom_kde_urilist = kde_urilist_reply->atom;
@@ -817,6 +830,8 @@ namespace mango
         free(state_reply);
         free(fullscreen_reply);
         free(primary_reply);
+        free(net_wm_name_reply);
+        free(utf8_string_reply);
         free(text_uri_list_reply);
         free(gnome_copied_reply);
         free(kde_urilist_reply);
@@ -925,6 +940,9 @@ namespace mango
                           visualid,
                           value_mask, value_list);
 
+        size[0] = width;
+        size[1] = height;
+
         // Frame synchronization (_NET_WM_SYNC_REQUEST). Only enabled when the X server
         // has the SYNC extension and the atoms resolved. A 64-bit counter is created and
         // its id published in _NET_WM_SYNC_REQUEST_COUNTER; the compositor then sends a
@@ -952,7 +970,14 @@ namespace mango
         xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_xdnd_Aware, XCB_ATOM_ATOM, 32, 1, &xdnd_version);
 
         // Set window title
-        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title), title);
+        window_title = title ? title : "";
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME,
+            XCB_ATOM_STRING, 8, window_title.size(), window_title.c_str());
+        if (atom_net_wm_name && atom_utf8_string)
+        {
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_net_wm_name,
+                atom_utf8_string, 8, window_title.size(), window_title.c_str());
+        }
 
         // Set window manager hints for better resize behavior
         xcb_icccm_wm_hints_t hints = { 0 };
@@ -1073,6 +1098,14 @@ namespace mango
 
     math::int32x2 XcbBackend::getWindowSize() const
     {
+        // Use the ConfigureNotify-maintained cache. xcb_get_geometry is a
+        // synchronous roundtrip; OpenGLFramebuffer::present() calls this every
+        // frame and that hitch is visible under a compositing WM in windowed mode.
+        if (size[0] > 0 && size[1] > 0)
+        {
+            return int32x2(size[0], size[1]);
+        }
+
         xcb_get_geometry_cookie_t cookie = xcb_get_geometry(connection, window);
         xcb_get_geometry_reply_t* reply = xcb_get_geometry_reply(connection, cookie, nullptr);
 
@@ -1172,6 +1205,8 @@ namespace mango
 
     void XcbBackend::setWindowSize(int width, int height)
     {
+        size[0] = width;
+        size[1] = height;
         uint32_t values[] = { uint32_t(width), uint32_t(height) };
         xcb_configure_window(connection, window, XCB_CONFIG_WINDOW_WIDTH | XCB_CONFIG_WINDOW_HEIGHT, values);
         xcb_flush(connection);
@@ -1179,7 +1214,26 @@ namespace mango
 
     void XcbBackend::setTitle(const std::string& title)
     {
-        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME, XCB_ATOM_STRING, 8, strlen(title.c_str()), title.c_str());
+        // Skip no-ops: compositors often redraw chrome on WM_NAME / _NET_WM_NAME changes.
+        if (title == window_title)
+        {
+            return;
+        }
+
+        window_title = title;
+
+        xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, XCB_ATOM_WM_NAME,
+            XCB_ATOM_STRING, 8, title.size(), title.c_str());
+
+        if (atom_net_wm_name && atom_utf8_string)
+        {
+            xcb_change_property(connection, XCB_PROP_MODE_REPLACE, window, atom_net_wm_name,
+                atom_utf8_string, 8, title.size(), title.c_str());
+        }
+
+        // Flush so the title is visible promptly. Historically this was fine with
+        // Continuous OpenGLFramebuffer; the stutter came from EventLoop Invalidate
+        // preemption, not from title updates themselves.
         xcb_flush(connection);
     }
 
@@ -1474,9 +1528,15 @@ namespace mango
                     if (keysym != XKB_KEY_NoSymbol)
                     {
                         const Keycode code = translateEventToKeycode(keysym);
+                        const int idx = int(code);
+                        const bool already = (idx > 0 && idx < 256 && key_pressed[idx]);
                         setKeyPressed(this, code, true);
-                        u32 mask = translateKeyMask(key_press->state);
-                        owner->onKeyPress(code, mask);
+                        // Detectable auto-repeat delivers extra KeyPress while held.
+                        if (!already)
+                        {
+                            u32 mask = translateKeyMask(key_press->state);
+                            owner->onKeyPress(code, mask);
+                        }
                     }
                     break;
                 }
@@ -1489,24 +1549,28 @@ namespace mango
                     {
                         bool is_repeat = false;
 
-                        xcb_generic_event_t* next_event = takeEvent(this);
-                        if (next_event)
+                        // Only needed when the server still synthesizes release/press pairs.
+                        if (!detectable_autorepeat)
                         {
-                            if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
-                            {
-                                xcb_key_press_event_t* next_key = (xcb_key_press_event_t*)next_event;
-                                if (next_key->time == key_release->time && next_key->detail == key_release->detail)
-                                {
-                                    is_repeat = true;
-                                    free(next_event);
-                                    next_event = nullptr;
-                                }
-                            }
-
-                            // Not a matching auto-repeat: keep the event for the next drain iteration.
+                            xcb_generic_event_t* next_event = takeEvent(this);
                             if (next_event)
                             {
-                                pending_event = next_event;
+                                if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
+                                {
+                                    xcb_key_press_event_t* next_key = (xcb_key_press_event_t*)next_event;
+                                    if (next_key->time == key_release->time && next_key->detail == key_release->detail)
+                                    {
+                                        is_repeat = true;
+                                        free(next_event);
+                                        next_event = nullptr;
+                                    }
+                                }
+
+                                // Not a matching auto-repeat: keep the event for the next drain iteration.
+                                if (next_event)
+                                {
+                                    pending_event = next_event;
+                                }
                             }
                         }
 
@@ -1535,6 +1599,9 @@ namespace mango
 
                 case XCB_CONFIGURE_NOTIFY:
                 {
+                    // Do not syncDisplayRefreshRate() here: RandR probing is many sync
+                    // roundtrips. EventLoop::run() already syncs once; resize does not
+                    // change the display mode. (Wayland's refresh query is a cached read.)
                     xcb_configure_notify_event_t* configure = (xcb_configure_notify_event_t*)event;
                     if (configure->width != size[0] || configure->height != size[1])
                     {
@@ -1543,13 +1610,17 @@ namespace mango
                         resize_pending = true;
                     }
 
-                    owner->syncDisplayRefreshRate();
                     break;
                 }
 
                 case XCB_EXPOSE:
                 {
-                    if (!busy)
+                    // OnDemand needs expose to schedule a redraw. Continuous already
+                    // paints every frame — invalidate() would preempt those as
+                    // FrameTrigger::Invalidate (zero dt / skipped app work) and is a
+                    // major source of X11 windowed stutter under compositors.
+                    if (!busy &&
+                        owner->getEventLoopConfig().mode == FrameMode::OnDemand)
                     {
                         owner->invalidate();
                     }
@@ -1720,15 +1791,32 @@ namespace mango
                 }
             }
 
-            if (!hadEvents)
+            // Drain the auxiliary GLX Xlib Display (OpenGL on Xcb opens a second
+            // connection). Those events are not our input path — leaving them
+            // unread keeps that fd POLLIN forever and busy-spins the poll below.
+            if (xlib_display)
             {
-                // Block on the XCB connection fd (and peer window fds) until an event
-                // arrives or the next frame is due, instead of busy-polling. An idle
-                // (WAIT_INFINITE) wait is capped so a cross-thread state change is
-                // observed within the cap; a pending deadline (animation) is waited
-                // exactly so it fires on time.
-                const u32 timeout = loop->computeWaitTimeoutMs(mango::Time::us());
-                if (timeout != 0)
+                Display* glx_dpy = static_cast<Display*>(xlib_display);
+                while (XPending(glx_dpy) > 0)
+                {
+                    XEvent discard;
+                    XNextEvent(glx_dpy, &discard);
+                }
+            }
+
+            // Wait for the next frame slot or an xcb/wake event. Do not poll the
+            // GLX Xlib fd (see drain above). Only poll when the xcb queue is empty.
+            const u32 timeout = loop->computeWaitTimeoutMs(mango::Time::us());
+            if (timeout != 0 && !pending_event)
+            {
+                // Peek without blocking: if the server already buffered more events,
+                // process them on the next iteration instead of busy-polling.
+                xcb_generic_event_t* queued = xcb_poll_for_queued_event(connection);
+                if (queued)
+                {
+                    pending_event = queued;
+                }
+                else
                 {
                     const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
                     xcb_flush(connection);
@@ -1746,17 +1834,6 @@ namespace mango
                         if (wake >= 0)
                         {
                             out->push_back({ wake, POLLIN, 0 });
-                        }
-
-                        // XcbBackend may also poll a GLX Xlib Display on the same window.
-                        auto* xcb = dynamic_cast<XcbBackend*>(backend);
-                        if (xcb && xcb->xlib_display)
-                        {
-                            out->push_back({
-                                ConnectionNumber(static_cast<Display*>(xcb->xlib_display)),
-                                POLLIN,
-                                0
-                            });
                         }
                     }, &pfds);
 

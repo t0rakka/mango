@@ -145,7 +145,7 @@ namespace mango
 
         void swapInterval(int interval) override
         {
-            glXSwapIntervalEXT(window->x11Display(), window->x11Window(), interval);
+            glxSetSwapInterval(window->x11Display(), window->x11Window(), interval);
         }
 
         void toggleFullscreen() override

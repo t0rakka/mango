@@ -95,12 +95,15 @@ namespace
         state.config.mode = FrameMode::Continuous;
         state.config.waitForFrame = true;
         state.config.maxFrameRate = 100.0; // 10 ms interval
+        state.config.pollTimeoutMs = 1;
         state.reset();
         state.needs_redraw = false;
         state.last_frame_time_us = 1'000'000;
 
         CHECK(!state.shouldScheduleFrame(1'005'000)); // +5 ms
+        CHECK(state.computeWaitTimeoutMs(1'005'000) == 5);
         CHECK(state.shouldScheduleFrame(1'010'000)); // +10 ms
+        CHECK(state.computeWaitTimeoutMs(1'010'000) == 0);
 
         return true;
     }

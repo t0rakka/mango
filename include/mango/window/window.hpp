@@ -201,6 +201,7 @@ namespace mango
         // holdFrame() was called during onFrame).
         // Async rendering: call holdFrame() from onFrame, then frameComplete()
         // when present/GPU finishes (idempotent; wakes the event loop).
+        // Sync rendering clears in-flight on the loop thread without a wake.
         bool waitForFrame = true;
 
         // Event poll sleep when idle (milliseconds).
@@ -210,8 +211,10 @@ namespace mango
         bool trackDisplayRefreshRate = true;
 
         // CPU cap = getDisplayRefreshRate() * headroom when tracking is enabled.
-        // Set above 1.0 so vsync/present stays the real limiter (nominal Hz is approximate).
-        double displayRefreshHeadroom = 2.0;
+        // Keep near 1.0: on X11/GLX under a compositor, swapInterval often does not
+        // block, so headroom > 1 schedules faster than the display and judders.
+        // Wayland's compositor paces presents regardless.
+        double displayRefreshHeadroom = 1.0;
 
         // Native close (X button): quit the event loop after onClose(). When false,
         // the window is hidden and the loop keeps running (tool / secondary windows).

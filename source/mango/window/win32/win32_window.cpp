@@ -407,7 +407,12 @@ namespace
             {
                 if (::GetUpdateRect(hwnd, NULL, FALSE))
                 {
-                    window->invalidate();
+                    // Continuous already repaints every frame; invalidating here
+                    // preempts those frames as FrameTrigger::Invalidate.
+                    if (window->getEventLoopConfig().mode == FrameMode::OnDemand)
+                    {
+                        window->invalidate();
+                    }
                 }
             }
 

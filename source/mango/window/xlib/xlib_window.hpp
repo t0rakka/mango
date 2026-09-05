@@ -12,6 +12,7 @@
 #include <unistd.h>
 #include <sys/types.h>
 #include <sys/stat.h>
+#include <string>
 #include <mango/math/math.hpp>
 
 #include <X11/Xlib.h>
@@ -50,6 +51,11 @@ namespace mango
         // primary atom
         ::Atom      atom_primary;
 
+        // window title (EWMH)
+        ::Atom      atom_net_wm_name { 0 };
+        ::Atom      atom_utf8_string { 0 };
+        std::string window_title;
+
         // xdnd atoms
         ::Atom      atom_xdnd_Aware;
         ::Atom      atom_xdnd_Enter;
@@ -82,6 +88,7 @@ namespace mango
         bool            resize_pending { false };
         bool            keyboard_focused { false };
         bool            key_pressed[256] = {};
+        bool            detectable_autorepeat { false };
         LinuxEventWake  event_wake;
 
         XlibBackend();

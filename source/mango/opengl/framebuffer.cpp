@@ -302,11 +302,11 @@ namespace mango
             m_index_texcoord = glGetAttribLocation(m_index_program, "a_Texcoord");
         }
 
-        // create pixelbuffer
+        // create streaming pixel buffer
 
         glGenBuffers(1, &m_buffer);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
-        glBufferData(GL_PIXEL_UNPACK_BUFFER, m_stride * height, nullptr, GL_STATIC_DRAW);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER, m_stride * height, nullptr, GL_STREAM_DRAW);
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);
 
         // create vertex buffers
@@ -388,7 +388,7 @@ namespace mango
 
         if (m_vao)
         {
-            glDeleteBuffers(1, &m_vao);
+            glDeleteVertexArrays(1, &m_vao);
         }
 
         if (m_buffer)
@@ -423,8 +423,16 @@ namespace mango
 
     Surface OpenGLFramebuffer::lock()
     {
+        // Orphan + INVALIDATE so Map does not wait on the previous TexSubImage.
+        // Single PBO: dual buffering hid stalls but also lengthened the present
+        // pipeline (old frames draining under X11 compositors).
+        const GLsizeiptr bytes = GLsizeiptr(m_stride * size_t(m_height));
+
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, m_buffer);
-        void* data = glMapBuffer(GL_PIXEL_UNPACK_BUFFER, GL_WRITE_ONLY);
+        glBufferData(GL_PIXEL_UNPACK_BUFFER, bytes, nullptr, GL_STREAM_DRAW);
+
+        void* data = glMapBufferRange(GL_PIXEL_UNPACK_BUFFER, 0, bytes,
+            GL_MAP_WRITE_BIT | GL_MAP_INVALIDATE_BUFFER_BIT);
         return Surface(m_width, m_height, m_format, m_stride, data);
     }
 
@@ -435,22 +443,22 @@ namespace mango
 
         glPixelStorei(GL_UNPACK_ALIGNMENT, 1);
 
+        // Update existing storage — glTexImage2D every frame reallocates and hitchs.
         if (m_framebuffer)
         {
             glBindTexture(GL_TEXTURE_2D, m_index_texture);
             
 #ifdef __APPLE__
             // APPLE SUCKS: Same broken integer texture issue here
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8, m_width, m_height, 0, GL_RED, GL_UNSIGNED_BYTE, nullptr);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RED, GL_UNSIGNED_BYTE, nullptr);
 #else
-            // Proper integer texture upload for non-Apple platforms
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_R8UI, m_width, m_height, 0, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RED_INTEGER, GL_UNSIGNED_BYTE, nullptr);
 #endif
         }
         else
         {
             glBindTexture(GL_TEXTURE_2D, m_texture);
-            glTexImage2D(GL_TEXTURE_2D, 0, GL_RGBA, m_width, m_height, 0, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
+            glTexSubImage2D(GL_TEXTURE_2D, 0, 0, 0, m_width, m_height, GL_RGBA, GL_UNSIGNED_BYTE, nullptr);
         }
 
         glBindBuffer(GL_PIXEL_UNPACK_BUFFER, 0);

@@ -207,7 +207,24 @@ namespace mango
             return WAIT_INFINITE;
         }
 
-        // Continuous: keep the existing poll cadence; present()/vsync is the limiter.
+        // Continuous with a CPU-side cap: sleep until the next frame slot.
+        // When GLX swapInterval does not block (common under X11 compositors),
+        // this is what keeps frame delivery regular — Wayland is paced by the
+        // compositor instead and looks smooth without it.
+        if (config.maxFrameRate > 0.0 && last_frame_time_us > 0)
+        {
+            const u64 interval_us = u64(1'000'000.0 / config.maxFrameRate);
+            const u64 next_us = last_frame_time_us + interval_us;
+            if (now_us >= next_us)
+            {
+                return 0;
+            }
+
+            const u64 remaining_ms = (next_us - now_us + 999) / 1000;
+            return remaining_ms > 0x7fffffffull ? 0x7fffffffu : u32(remaining_ms);
+        }
+
+        // Continuous uncapped: short poll; present()/vsync is the limiter.
         return config.pollTimeoutMs;
     }
 
@@ -475,8 +492,14 @@ namespace mango
         // Classify why we're dispatching, mirroring shouldScheduleFrame's precedence:
         // an explicit redraw request wins, then a pending timed wake, otherwise the
         // continuous cadence. consumeInvalidated() also clears the needs_redraw flag.
+        //
+        // In Continuous mode a pending invalidate is just "draw immediately" — still a
+        // Continuous frame that advances time. Emitting Invalidate here froze dt at 0
+        // and, with X11 expose spam, starved real Continuous frames (stutter / dead titles).
+        const bool invalidated = m_event_loop.consumeInvalidated();
+
         FrameTrigger trigger;
-        if (m_event_loop.consumeInvalidated())
+        if (invalidated && m_event_loop.config.mode == FrameMode::OnDemand)
         {
             trigger = FrameTrigger::Invalidate;
         }
@@ -484,9 +507,13 @@ namespace mango
         {
             trigger = FrameTrigger::Timed;
         }
-        else
+        else if (m_event_loop.config.mode == FrameMode::Continuous)
         {
             trigger = FrameTrigger::Continuous;
+        }
+        else
+        {
+            trigger = FrameTrigger::Invalidate;
         }
 
         // Only a frame that actually fired the deadline consumes it. If an invalidate
@@ -501,8 +528,18 @@ namespace mango
         FrameInfo info;
         info.time_us = now;
         info.time = double(now - m_event_loop.loop_start_time_us) / 1'000'000.0;
-        info.dt = m_event_loop.computeDt(now);
         info.trigger = trigger;
+
+        // Invalidate is a repaint of current content — do not advance the animation clock.
+        if (trigger == FrameTrigger::Invalidate)
+        {
+            info.dt = 0.0;
+        }
+        else
+        {
+            info.dt = m_event_loop.computeDt(now);
+            m_event_loop.last_frame_time_us = now;
+        }
 
         if (m_event_loop.config.waitForFrame)
         {
@@ -510,15 +547,15 @@ namespace mango
             m_event_loop.frame_in_flight.store(true, std::memory_order_release);
         }
 
-        m_event_loop.last_frame_time_us = now;
-
         onFrame(info);
 
         // Sync default: complete when onFrame returns unless holdFrame() opted into async.
+        // Stay on the loop thread — clear in-flight without wakeEventLoop(). Waking on
+        // every sync frame made X11 poll return immediately and fight frame pacing.
         if (m_event_loop.config.waitForFrame &&
             !m_event_loop.frame_held.load(std::memory_order_acquire))
         {
-            frameComplete();
+            m_event_loop.frame_in_flight.store(false, std::memory_order_release);
         }
     }
 

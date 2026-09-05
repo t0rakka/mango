@@ -603,7 +603,7 @@ namespace mango
         // for auto-repeat (reduces sticky-key bugs in the event filter).
         Bool detectable = False;
         XkbSetDetectableAutoRepeat(x11Display(), True, &detectable);
-        MANGO_UNREFERENCED(detectable);
+        detectable_autorepeat = (detectable == True);
     }
 
     XlibBackend::~XlibBackend()
@@ -696,6 +696,9 @@ namespace mango
             return false;
         }
 
+        size[0] = width;
+        size[1] = height;
+
         if (flags & Window::DISABLE_RESIZE)
         {
             XSizeHints hints;
@@ -748,6 +751,10 @@ namespace mango
         // primary atom
         atom_primary = XInternAtom(dpy, "PRIMARY", False);
 
+        // EWMH window title
+        atom_net_wm_name = XInternAtom(dpy, "_NET_WM_NAME", False);
+        atom_utf8_string = XInternAtom(dpy, "UTF8_STRING", False);
+
         // xdnd atoms
         atom_xdnd_Aware = XInternAtom(dpy, "XdndAware", False);
         atom_xdnd_Enter = XInternAtom(dpy, "XdndEnter", False);
@@ -765,7 +772,15 @@ namespace mango
                         PropModeReplace, (unsigned char*)&xdnd_version, 1);
 
         XFlush(dpy);
-        XStoreName(dpy, win, title);
+        window_title = title ? title : "";
+        XStoreName(dpy, win, window_title.c_str());
+        if (atom_net_wm_name && atom_utf8_string)
+        {
+            XChangeProperty(dpy, win, atom_net_wm_name, atom_utf8_string, 8,
+                PropModeReplace,
+                reinterpret_cast<const unsigned char*>(window_title.data()),
+                int(window_title.size()));
+        }
 
         // NOTE: the window is created un-mapped (not visible). This is required by Vulkan
         // so that nothing is shown while the application configures itself; the caller
@@ -835,6 +850,14 @@ namespace mango
 
     math::int32x2 XlibBackend::getWindowSize() const
     {
+        // Use the ConfigureNotify-maintained cache. XGetWindowAttributes is a
+        // synchronous roundtrip; OpenGLFramebuffer::present() calls this every
+        // frame and that hitch is visible under a compositing WM in windowed mode.
+        if (size[0] > 0 && size[1] > 0)
+        {
+            return int32x2(size[0], size[1]);
+        }
+
         XWindowAttributes attributes;
         XGetWindowAttributes(x11Display(), x11Window(), &attributes);
         return int32x2(attributes.width, attributes.height);
@@ -926,13 +949,40 @@ namespace mango
 
     void XlibBackend::setWindowSize(int width, int height)
     {
+        size[0] = width;
+        size[1] = height;
         XResizeWindow(x11Display(), x11Window(), width, height);
     }
 
     void XlibBackend::setTitle(const std::string& title)
     {
-        XStoreName(x11Display(), x11Window(), title.c_str());
-        XFlush(x11Display());
+        // Skip no-ops: compositors often redraw chrome on WM_NAME / _NET_WM_NAME changes.
+        if (title == window_title)
+        {
+            return;
+        }
+
+        window_title = title;
+
+        Display* dpy = x11Display();
+        ::Window win = x11Window();
+
+        // Legacy ICCCM name (Latin-1). Keep for older WMs.
+        XStoreName(dpy, win, title.c_str());
+
+        // EWMH UTF-8 title — what modern compositors actually display.
+        if (atom_net_wm_name && atom_utf8_string)
+        {
+            XChangeProperty(dpy, win, atom_net_wm_name, atom_utf8_string, 8,
+                PropModeReplace,
+                reinterpret_cast<const unsigned char*>(title.data()),
+                int(title.size()));
+        }
+
+        // Flush so the title is visible promptly. Historically this was fine with
+        // Continuous OpenGLFramebuffer; the stutter came from EventLoop Invalidate
+        // preemption, not from title updates themselves.
+        XFlush(dpy);
     }
 
     void XlibBackend::setVisible(bool enable)
@@ -1075,9 +1125,16 @@ namespace mango
                 case KeyPress:
                 {
                     const Keycode code = translateEventToKeycode(&e);
+                    const int idx = int(code);
+                    const bool already = (idx > 0 && idx < 256 && key_pressed[idx]);
                     setKeyPressed(this, code, true);
-                    u32 mask = translateKeyMask(e.xkey.state);
-                    owner->onKeyPress(code, mask);
+                    // Detectable auto-repeat delivers extra KeyPress while held.
+                    // Edge-trigger onKeyPress so apps don't see a 30 Hz press flood.
+                    if (!already)
+                    {
+                        u32 mask = translateKeyMask(e.xkey.state);
+                        owner->onKeyPress(code, mask);
+                    }
                     break;
                 }
 
@@ -1085,7 +1142,9 @@ namespace mango
                 {
                     bool is_repeat = false;
 
-                    if (XEventsQueued(x11Display(), QueuedAfterReading))
+                    // Only needed when the server still synthesizes release/press pairs.
+                    if (!detectable_autorepeat &&
+                        XEventsQueued(x11Display(), QueuedAfterReading))
                     {
                         XEvent next;
                         XPeekEvent(x11Display(), &next);
@@ -1129,6 +1188,10 @@ namespace mango
                     // and the frame are emitted once, after draining (see below). The frame
                     // is what bumps the _NET_WM_SYNC counter, so the compositor keeps the
                     // previous content until our resized frame lands.
+                    //
+                    // Do not syncDisplayRefreshRate() here: RandR probing is many sync
+                    // roundtrips. EventLoop::run() already syncs once; resize does not
+                    // change the display mode. (Wayland's refresh query is a cached read.)
                     int width = e.xconfigure.width;
                     int height = e.xconfigure.height;
                     if (width != size[0] || height != size[1])
@@ -1138,12 +1201,16 @@ namespace mango
                         resize_pending = true;
                     }
 
-                    owner->syncDisplayRefreshRate();
                     break;
                 }
 
                 case Expose:
-                    if (!busy)
+                    // OnDemand needs expose to schedule a redraw. Continuous already
+                    // paints every frame — invalidate() would preempt those as
+                    // FrameTrigger::Invalidate (zero dt / skipped app work) and is a
+                    // major source of X11 windowed stutter under compositors.
+                    if (!busy &&
+                        owner->getEventLoopConfig().mode == FrameMode::OnDemand)
                     {
                         owner->invalidate();
                     }
@@ -1355,38 +1422,33 @@ namespace mango
                 }
             }
 
-            // Block on the X connection fd (and peer window fds) until an event arrives
-            // or the next frame is due, instead of busy-polling. An idle (WAIT_INFINITE)
-            // wait is capped so a cross-thread state change is still observed within the
-            // cap; a pending deadline (animation) is waited exactly, so a timed frame
-            // fires on time.
-            if (XPending(x11Display()) == 0)
+            // Wait for the next frame slot or an event. Only poll when the X
+            // queue is empty — polling a still-readable connection fd busy-spins
+            // (X11 often leaves POLLIN set) and destroys Continuous pacing.
+            const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
+            if (timeout != 0 && XPending(x11Display()) == 0)
             {
-                const u32 timeout = loop->computeWaitTimeoutMs(Time::us());
-                if (timeout != 0)
+                const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
+
+                std::vector<pollfd> pfds;
+                window_peers::forEach([](WindowBackend* backend, void* user)
                 {
-                    const int wait_ms = (timeout == EventLoopState::WAIT_INFINITE) ? 100 : int(timeout);
-
-                    std::vector<pollfd> pfds;
-                    window_peers::forEach([](WindowBackend* backend, void* user)
+                    auto* out = static_cast<std::vector<pollfd>*>(user);
+                    int fd = backend->eventFileDescriptor();
+                    if (fd >= 0)
                     {
-                        auto* out = static_cast<std::vector<pollfd>*>(user);
-                        int fd = backend->eventFileDescriptor();
-                        if (fd >= 0)
-                        {
-                            out->push_back({ fd, POLLIN, 0 });
-                        }
-                        int wake = backend->wakeFileDescriptor();
-                        if (wake >= 0)
-                        {
-                            out->push_back({ wake, POLLIN, 0 });
-                        }
-                    }, &pfds);
-
-                    if (!pfds.empty())
-                    {
-                        ::poll(pfds.data(), pfds.size(), wait_ms);
+                        out->push_back({ fd, POLLIN, 0 });
                     }
+                    int wake = backend->wakeFileDescriptor();
+                    if (wake >= 0)
+                    {
+                        out->push_back({ wake, POLLIN, 0 });
+                    }
+                }, &pfds);
+
+                if (!pfds.empty())
+                {
+                    ::poll(pfds.data(), pfds.size(), wait_ms);
                 }
             }
         }

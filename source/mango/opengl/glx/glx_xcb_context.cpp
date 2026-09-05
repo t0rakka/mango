@@ -157,14 +157,18 @@ namespace mango
 
         void swapInterval(int interval) override
         {
-            if (display)
+            if (!display)
             {
-                ::Window xwindow = static_cast<::Window>(*window);
-                if (xwindow)
-                {
-                    glXSwapIntervalEXT(display, xwindow, interval);
-                }
+                return;
             }
+
+            ::Window xwindow = static_cast<::Window>(*window);
+            if (!xwindow)
+            {
+                return;
+            }
+
+            glxSetSwapInterval(display, xwindow, interval);
         }
 
         void toggleFullscreen() override

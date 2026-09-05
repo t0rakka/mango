@@ -291,6 +291,32 @@ namespace mango
         return context;
     }
 
+    void glxSetSwapInterval(Display* display, GLXDrawable drawable, int interval)
+    {
+        // Call every available control. Under compositors EXT is frequently present
+        // but ignored; falling through to MESA/SGI is what actually enables vsync.
+        auto* ext = (PFNGLXSWAPINTERVALEXTPROC)
+            glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalEXT");
+        if (ext)
+        {
+            ext(display, drawable, interval);
+        }
+
+        auto* mesa = (PFNGLXSWAPINTERVALMESAPROC)
+            glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalMESA");
+        if (mesa)
+        {
+            mesa(interval);
+        }
+
+        auto* sgi = (PFNGLXSWAPINTERVALSGIPROC)
+            glXGetProcAddressARB((const GLubyte*)"glXSwapIntervalSGI");
+        if (sgi)
+        {
+            sgi(interval);
+        }
+    }
+
 } // namespace mango
 
 #endif // defined(MANGO_HAS_XLIB_WINDOW) || defined(MANGO_HAS_XCB_WINDOW)

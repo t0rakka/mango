@@ -117,6 +117,10 @@ namespace mango
             u32 depth    = 24;
             u32 stencil  = 8;
             u32 samples  = 1;
+
+            // Display refreshes to wait per swapBuffers (1 = vsync, 0 = uncapped).
+            // Applied once after context creation; change later with swapInterval().
+            int swapInterval = 1;
         };
 
         struct InternalFormat

@@ -10,6 +10,7 @@
 #include "../linux_event_wake.hpp"
 
 #include <unistd.h>
+#include <string>
 #include <mango/math/math.hpp>
 
 #define explicit explicit_
@@ -54,6 +55,11 @@ namespace mango
 
         // primary atom
         xcb_atom_t atom_primary;
+
+        // window title (EWMH)
+        xcb_atom_t atom_net_wm_name { 0 };
+        xcb_atom_t atom_utf8_string { 0 };
+        std::string window_title;
 
         // drag-and-drop conversion targets
         xcb_atom_t atom_text_uri_list { 0 };
@@ -101,6 +107,7 @@ namespace mango
 
         bool keyboard_focused { false };
         bool key_pressed[256] = {};
+        bool detectable_autorepeat { false };
 
         // GLX opens a separate Xlib Display for the same window; poll it for events too.
         void* xlib_display { nullptr };

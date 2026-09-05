@@ -16,5 +16,9 @@ namespace mango
 
         GLXContext createContext(Display* display, GLXContext shared);
     };
+
+    // Apply every available swap-interval extension. EXT is often advertised under
+    // compositors but is a silent no-op; MESA/SGI may still enforce blocking.
+    void glxSetSwapInterval(Display* display, GLXDrawable drawable, int interval);
     
 } // namespace mango

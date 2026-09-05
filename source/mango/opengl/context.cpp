@@ -349,6 +349,10 @@ namespace mango
         printLine("Vendor:   \"{}\"", reinterpret_cast<const char *>(s0));
         printLine("Renderer: \"{}\"", reinterpret_cast<const char *>(s1));
         printLine("Version:  \"{}\"", reinterpret_cast<const char *>(s2));
+
+        // Deterministic default: vsync on unless Config overrides.
+        const int interval = configPtr ? configPtr->swapInterval : 1;
+        swapInterval(interval);
     }
 
     void OpenGLWindow::onEventLoopStarting()
