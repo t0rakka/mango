@@ -82,6 +82,33 @@ namespace
             TR(XKB_KEY_x,              KEYCODE_X);
             TR(XKB_KEY_y,              KEYCODE_Y);
             TR(XKB_KEY_z,              KEYCODE_Z);
+            // Shifted Latin letters (fallback if a caller still passes level>0 syms)
+            TR(XKB_KEY_A,              KEYCODE_A);
+            TR(XKB_KEY_B,              KEYCODE_B);
+            TR(XKB_KEY_C,              KEYCODE_C);
+            TR(XKB_KEY_D,              KEYCODE_D);
+            TR(XKB_KEY_E,              KEYCODE_E);
+            TR(XKB_KEY_F,              KEYCODE_F);
+            TR(XKB_KEY_G,              KEYCODE_G);
+            TR(XKB_KEY_H,              KEYCODE_H);
+            TR(XKB_KEY_I,              KEYCODE_I);
+            TR(XKB_KEY_J,              KEYCODE_J);
+            TR(XKB_KEY_K,              KEYCODE_K);
+            TR(XKB_KEY_L,              KEYCODE_L);
+            TR(XKB_KEY_M,              KEYCODE_M);
+            TR(XKB_KEY_N,              KEYCODE_N);
+            TR(XKB_KEY_O,              KEYCODE_O);
+            TR(XKB_KEY_P,              KEYCODE_P);
+            TR(XKB_KEY_Q,              KEYCODE_Q);
+            TR(XKB_KEY_R,              KEYCODE_R);
+            TR(XKB_KEY_S,              KEYCODE_S);
+            TR(XKB_KEY_T,              KEYCODE_T);
+            TR(XKB_KEY_U,              KEYCODE_U);
+            TR(XKB_KEY_V,              KEYCODE_V);
+            TR(XKB_KEY_W,              KEYCODE_W);
+            TR(XKB_KEY_X,              KEYCODE_X);
+            TR(XKB_KEY_Y,              KEYCODE_Y);
+            TR(XKB_KEY_Z,              KEYCODE_Z);
             TR(XKB_KEY_F1,             KEYCODE_F1);
             TR(XKB_KEY_F2,             KEYCODE_F2);
             TR(XKB_KEY_F3,             KEYCODE_F3);
@@ -171,6 +198,22 @@ namespace
         {
             window->key_pressed[idx] = pressed;
         }
+    }
+
+    // Physical / layout-base keysym (level 0). Using the shifted "one sym" for
+    // Keycode identity breaks isKeyPressed(W) when Shift is already held.
+    xkb_keysym_t physicalKeysym(WaylandBackend* window, xkb_keycode_t keycode)
+    {
+        struct xkb_keymap* keymap = xkb_state_get_keymap(window->xkb_state);
+        const xkb_layout_index_t layout = xkb_state_key_get_layout(window->xkb_state, keycode);
+        const xkb_keysym_t* syms = nullptr;
+        const int count = xkb_keymap_key_get_syms_by_level(keymap, keycode, layout, 0, &syms);
+        if (count > 0 && syms)
+        {
+            return syms[0];
+        }
+
+        return xkb_state_key_get_one_sym(window->xkb_state, keycode);
     }
 
     void clearKeyState(WaylandBackend* window)
@@ -725,8 +768,8 @@ namespace
             const uint32_t keycode = key_array[i] + 8;
             xkb_state_update_key(window->xkb_state, keycode, XKB_KEY_DOWN);
 
-            const xkb_keysym_t sym = xkb_state_key_get_one_sym(window->xkb_state, keycode);
-            setKeyPressed(window, translateKeysym(sym), true);
+            const Keycode code = translateKeysym(physicalKeysym(window, keycode));
+            setKeyPressed(window, code, true);
         }
     }
 
@@ -756,8 +799,7 @@ namespace
         xkb_state_update_key(window->xkb_state, keycode,
             state == WL_KEYBOARD_KEY_STATE_PRESSED ? XKB_KEY_DOWN : XKB_KEY_UP);
 
-        const xkb_keysym_t sym = xkb_state_key_get_one_sym(window->xkb_state, keycode);
-        const Keycode code = translateKeysym(sym);
+        const Keycode code = translateKeysym(physicalKeysym(window, keycode));
 
         if (state == WL_KEYBOARD_KEY_STATE_PRESSED)
         {

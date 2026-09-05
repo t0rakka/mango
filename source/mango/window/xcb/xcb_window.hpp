@@ -95,6 +95,13 @@ namespace mango
 
         xcb_key_symbols_t* key_symbols;
 
+        // One-event lookahead so KeyRelease auto-repeat filtering never drops
+        // an unrelated following event (the old code freed non-repeat events).
+        xcb_generic_event_t* pending_event { nullptr };
+
+        bool keyboard_focused { false };
+        bool key_pressed[256] = {};
+
         // GLX opens a separate Xlib Display for the same window; poll it for events too.
         void* xlib_display { nullptr };
 

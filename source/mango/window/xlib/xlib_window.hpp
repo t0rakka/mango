@@ -80,6 +80,8 @@ namespace mango
         bool            sync_pending { false };
         bool            sync_supported { false };
         bool            resize_pending { false };
+        bool            keyboard_focused { false };
+        bool            key_pressed[256] = {};
         LinuxEventWake  event_wake;
 
         XlibBackend();

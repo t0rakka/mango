@@ -260,6 +260,32 @@ namespace
             TR(XKB_KEY_x,              KEYCODE_X);
             TR(XKB_KEY_y,              KEYCODE_Y);
             TR(XKB_KEY_z,              KEYCODE_Z);
+            TR(XKB_KEY_A,              KEYCODE_A);
+            TR(XKB_KEY_B,              KEYCODE_B);
+            TR(XKB_KEY_C,              KEYCODE_C);
+            TR(XKB_KEY_D,              KEYCODE_D);
+            TR(XKB_KEY_E,              KEYCODE_E);
+            TR(XKB_KEY_F,              KEYCODE_F);
+            TR(XKB_KEY_G,              KEYCODE_G);
+            TR(XKB_KEY_H,              KEYCODE_H);
+            TR(XKB_KEY_I,              KEYCODE_I);
+            TR(XKB_KEY_J,              KEYCODE_J);
+            TR(XKB_KEY_K,              KEYCODE_K);
+            TR(XKB_KEY_L,              KEYCODE_L);
+            TR(XKB_KEY_M,              KEYCODE_M);
+            TR(XKB_KEY_N,              KEYCODE_N);
+            TR(XKB_KEY_O,              KEYCODE_O);
+            TR(XKB_KEY_P,              KEYCODE_P);
+            TR(XKB_KEY_Q,              KEYCODE_Q);
+            TR(XKB_KEY_R,              KEYCODE_R);
+            TR(XKB_KEY_S,              KEYCODE_S);
+            TR(XKB_KEY_T,              KEYCODE_T);
+            TR(XKB_KEY_U,              KEYCODE_U);
+            TR(XKB_KEY_V,              KEYCODE_V);
+            TR(XKB_KEY_W,              KEYCODE_W);
+            TR(XKB_KEY_X,              KEYCODE_X);
+            TR(XKB_KEY_Y,              KEYCODE_Y);
+            TR(XKB_KEY_Z,              KEYCODE_Z);
             TR(XKB_KEY_F1,             KEYCODE_F1);
             TR(XKB_KEY_F2,             KEYCODE_F2);
             TR(XKB_KEY_F3,             KEYCODE_F3);
@@ -322,111 +348,6 @@ namespace
     }
 
 #undef TR
-#define TR(a, b) case b: symbol = a; break
-
-    xcb_keysym_t translateKeycodeToSymbol(Keycode code)
-    {
-        xcb_keysym_t symbol;
-
-        switch (code)
-        {
-            default:
-            TR(255,               KEYCODE_NONE);
-            TR(XKB_KEY_Escape,     KEYCODE_ESC);
-            TR(XKB_KEY_0,          KEYCODE_0);
-            TR(XKB_KEY_1,          KEYCODE_1);
-            TR(XKB_KEY_2,          KEYCODE_2);
-            TR(XKB_KEY_3,          KEYCODE_3);
-            TR(XKB_KEY_4,          KEYCODE_4);
-            TR(XKB_KEY_5,          KEYCODE_5);
-            TR(XKB_KEY_6,          KEYCODE_6);
-            TR(XKB_KEY_7,          KEYCODE_7);
-            TR(XKB_KEY_8,          KEYCODE_8);
-            TR(XKB_KEY_9,          KEYCODE_9);
-            TR(XKB_KEY_a,          KEYCODE_A);
-            TR(XKB_KEY_b,          KEYCODE_B);
-            TR(XKB_KEY_c,          KEYCODE_C);
-            TR(XKB_KEY_d,          KEYCODE_D);
-            TR(XKB_KEY_e,          KEYCODE_E);
-            TR(XKB_KEY_f,          KEYCODE_F);
-            TR(XKB_KEY_g,          KEYCODE_G);
-            TR(XKB_KEY_h,          KEYCODE_H);
-            TR(XKB_KEY_i,          KEYCODE_I);
-            TR(XKB_KEY_j,          KEYCODE_J);
-            TR(XKB_KEY_k,          KEYCODE_K);
-            TR(XKB_KEY_l,          KEYCODE_L);
-            TR(XKB_KEY_m,          KEYCODE_M);
-            TR(XKB_KEY_n,          KEYCODE_N);
-            TR(XKB_KEY_o,          KEYCODE_O);
-            TR(XKB_KEY_p,          KEYCODE_P);
-            TR(XKB_KEY_q,          KEYCODE_Q);
-            TR(XKB_KEY_r,          KEYCODE_R);
-            TR(XKB_KEY_s,          KEYCODE_S);
-            TR(XKB_KEY_t,          KEYCODE_T);
-            TR(XKB_KEY_u,          KEYCODE_U);
-            TR(XKB_KEY_v,          KEYCODE_V);
-            TR(XKB_KEY_w,          KEYCODE_W);
-            TR(XKB_KEY_x,          KEYCODE_X);
-            TR(XKB_KEY_y,          KEYCODE_Y);
-            TR(XKB_KEY_z,          KEYCODE_Z);
-            TR(XKB_KEY_F1,         KEYCODE_F1);
-            TR(XKB_KEY_F2,         KEYCODE_F2);
-            TR(XKB_KEY_F3,         KEYCODE_F3);
-            TR(XKB_KEY_F4,         KEYCODE_F4);
-            TR(XKB_KEY_F5,         KEYCODE_F5);
-            TR(XKB_KEY_F6,         KEYCODE_F6);
-            TR(XKB_KEY_F7,         KEYCODE_F7);
-            TR(XKB_KEY_F8,         KEYCODE_F8);
-            TR(XKB_KEY_F9,         KEYCODE_F9);
-            TR(XKB_KEY_F10,        KEYCODE_F10);
-            TR(XKB_KEY_F11,        KEYCODE_F11);
-            TR(XKB_KEY_F12,        KEYCODE_F12);
-            TR(XKB_KEY_BackSpace,  KEYCODE_BACKSPACE);
-            TR(XKB_KEY_Tab,        KEYCODE_TAB);
-            TR(XKB_KEY_Return,     KEYCODE_RETURN);
-            TR(XKB_KEY_Alt_L,      KEYCODE_LEFT_ALT);
-            TR(XKB_KEY_Alt_R,      KEYCODE_RIGHT_ALT);
-            TR(XKB_KEY_space,      KEYCODE_SPACE);
-            TR(XKB_KEY_Caps_Lock,  KEYCODE_CAPS_LOCK);
-            TR(XKB_KEY_Page_Up,    KEYCODE_PAGE_UP);
-            TR(XKB_KEY_Page_Down,  KEYCODE_PAGE_DOWN);
-            TR(XKB_KEY_Insert,     KEYCODE_INSERT);
-            TR(XKB_KEY_Delete,     KEYCODE_DELETE);
-            TR(XKB_KEY_Home,       KEYCODE_HOME);
-            TR(XKB_KEY_End,        KEYCODE_END);
-            TR(XKB_KEY_Left,       KEYCODE_LEFT);
-            TR(XKB_KEY_Right,      KEYCODE_RIGHT);
-            TR(XKB_KEY_Up,         KEYCODE_UP);
-            TR(XKB_KEY_Down,       KEYCODE_DOWN);
-            TR(XKB_KEY_Print,      KEYCODE_PRINT_SCREEN);
-            TR(XKB_KEY_Scroll_Lock,KEYCODE_SCROLL_LOCK);
-            TR(XKB_KEY_KP_0,       KEYCODE_NUMPAD0);
-            TR(XKB_KEY_KP_1,       KEYCODE_NUMPAD1);
-            TR(XKB_KEY_KP_2,       KEYCODE_NUMPAD2);
-            TR(XKB_KEY_KP_3,       KEYCODE_NUMPAD3);
-            TR(XKB_KEY_KP_4,       KEYCODE_NUMPAD4);
-            TR(XKB_KEY_KP_5,       KEYCODE_NUMPAD5);
-            TR(XKB_KEY_KP_6,       KEYCODE_NUMPAD6);
-            TR(XKB_KEY_KP_7,       KEYCODE_NUMPAD7);
-            TR(XKB_KEY_KP_8,       KEYCODE_NUMPAD8);
-            TR(XKB_KEY_KP_9,       KEYCODE_NUMPAD9);
-            TR(XKB_KEY_Num_Lock,   KEYCODE_NUMLOCK);
-            TR(XKB_KEY_KP_Divide,  KEYCODE_DIVIDE);
-            TR(XKB_KEY_KP_Multiply,KEYCODE_MULTIPLY);
-            TR(XKB_KEY_KP_Subtract,KEYCODE_SUBTRACT);
-            TR(XKB_KEY_KP_Add,     KEYCODE_ADDITION);
-            TR(XKB_KEY_KP_Enter,   KEYCODE_ENTER);
-            TR(XKB_KEY_KP_Decimal, KEYCODE_DECIMAL);
-            TR(XKB_KEY_Shift_L,    KEYCODE_LEFT_SHIFT);
-            TR(XKB_KEY_Shift_R,    KEYCODE_RIGHT_SHIFT);
-            TR(XKB_KEY_Control_L,  KEYCODE_LEFT_CONTROL);
-            TR(XKB_KEY_Control_R,  KEYCODE_RIGHT_CONTROL);
-        }
-
-        return symbol;
-    }
-
-#undef TR
 
     u32 translateKeyMask(uint16_t state)
     {
@@ -435,6 +356,77 @@ namespace
         if (state & XCB_MOD_MASK_SHIFT)   mask |= KEYMASK_SHIFT;
         if (state & XCB_MOD_MASK_4)       mask |= KEYMASK_SUPER;
         return mask;
+    }
+
+    void setKeyPressed(XcbBackend* window, Keycode code, bool pressed)
+    {
+        if (!window || code == KEYCODE_NONE)
+        {
+            return;
+        }
+
+        const int idx = int(code);
+        if (idx > 0 && idx < 256)
+        {
+            window->key_pressed[idx] = pressed;
+        }
+    }
+
+    void clearKeyState(XcbBackend* window)
+    {
+        if (!window)
+        {
+            return;
+        }
+
+        window->keyboard_focused = false;
+        std::memset(window->key_pressed, 0, sizeof(window->key_pressed));
+    }
+
+    void syncKeyStateFromServer(XcbBackend* window)
+    {
+        if (!window || !window->connection || !window->key_symbols)
+        {
+            return;
+        }
+
+        std::memset(window->key_pressed, 0, sizeof(window->key_pressed));
+
+        xcb_query_keymap_cookie_t cookie = xcb_query_keymap(window->connection);
+        xcb_query_keymap_reply_t* reply = xcb_query_keymap_reply(window->connection, cookie, nullptr);
+        if (!reply)
+        {
+            return;
+        }
+
+        for (int kc = 8; kc < 256; ++kc)
+        {
+            if ((reply->keys[kc / 8] & (1 << (kc % 8))) == 0)
+            {
+                continue;
+            }
+
+            // Column 0 = unshifted keysym (physical Keycode identity).
+            const xcb_keysym_t sym = xcb_key_symbols_get_keysym(window->key_symbols, xcb_keycode_t(kc), 0);
+            if (sym != XKB_KEY_NoSymbol)
+            {
+                setKeyPressed(window, translateEventToKeycode(sym), true);
+            }
+        }
+
+        free(reply);
+    }
+
+    xcb_generic_event_t* takeEvent(XcbBackend* window)
+    {
+        if (window->pending_event)
+        {
+            xcb_generic_event_t* event = window->pending_event;
+            window->pending_event = nullptr;
+            return event;
+        }
+
+        return xcb_poll_for_event(window->connection);
     }
 
     MouseButton translateButton(uint8_t button)
@@ -722,6 +714,21 @@ namespace mango
             MANGO_EXCEPTION("[XcbBackend] XKB extension not available.");
         }
 
+        xcb_xkb_use_extension_cookie_t use_cookie = xcb_xkb_use_extension(connection, 1, 0);
+        xcb_xkb_use_extension_reply_t* use_reply = xcb_xkb_use_extension_reply(connection, use_cookie, nullptr);
+        if (use_reply)
+        {
+            // Prefer real KeyRelease events instead of synthetic release/press pairs.
+            xcb_xkb_per_client_flags_cookie_t flags_cookie = xcb_xkb_per_client_flags(
+                connection,
+                XCB_XKB_ID_USE_CORE_KBD,
+                XCB_XKB_PER_CLIENT_FLAG_DETECTABLE_AUTO_REPEAT,
+                XCB_XKB_PER_CLIENT_FLAG_DETECTABLE_AUTO_REPEAT,
+                0, 0, 0);
+            free(xcb_xkb_per_client_flags_reply(connection, flags_cookie, nullptr));
+            free(use_reply);
+        }
+
         // Initialize key symbols
         key_symbols = xcb_key_symbols_alloc(connection);
         if (!key_symbols)
@@ -868,6 +875,9 @@ namespace mango
                 key_symbols = nullptr;
             }
 
+            free(pending_event);
+            pending_event = nullptr;
+
             if (sync_counter)
             {
                 xcb_sync_destroy_counter(connection, sync_counter);
@@ -898,6 +908,7 @@ namespace mango
         uint32_t value_list [] =
         {
             XCB_EVENT_MASK_EXPOSURE |
+            XCB_EVENT_MASK_FOCUS_CHANGE |
             XCB_EVENT_MASK_KEY_PRESS |
             XCB_EVENT_MASK_KEY_RELEASE |
             XCB_EVENT_MASK_BUTTON_PRESS |
@@ -1223,35 +1234,18 @@ namespace mango
                 break;
         }
 
-        bool pressed = false;
-
-        // Get window with input focus
-        xcb_get_input_focus_cookie_t focus_cookie = xcb_get_input_focus(connection);
-        xcb_get_input_focus_reply_t* focus_reply = xcb_get_input_focus_reply(connection, focus_cookie, nullptr);
-
-        if (focus_reply && focus_reply->focus == window)
+        if (!keyboard_focused)
         {
-            // Get keyboard state
-            xcb_query_keymap_cookie_t keymap_cookie = xcb_query_keymap(connection);
-            xcb_query_keymap_reply_t* keymap_reply = xcb_query_keymap_reply(connection, keymap_cookie, nullptr);
-
-            if (keymap_reply)
-            {
-                xcb_keysym_t symbol = translateKeycodeToSymbol(code);
-                xcb_keycode_t* keycodes = xcb_key_symbols_get_keycode(key_symbols, symbol);
-                xcb_keycode_t keycode = keycodes ? keycodes[0] : 0;
-
-                if (keycode >= 0 && keycode < 255)
-                {
-                    pressed = (keymap_reply->keys[keycode / 8] & (1 << (keycode % 8))) != 0;
-                }
-
-                free(keymap_reply);
-            }
+            return false;
         }
 
-        free(focus_reply);
-        return pressed;
+        const int idx = int(code);
+        if (idx <= 0 || idx >= 256)
+        {
+            return false;
+        }
+
+        return key_pressed[idx];
     }
 
     double XcbBackend::getDisplayRefreshRate() const
@@ -1414,7 +1408,7 @@ namespace mango
     {
         for (;;)
         {
-            xcb_generic_event_t* event = xcb_poll_for_event(connection);
+            xcb_generic_event_t* event = takeEvent(this);
             if (!event)
             {
                 break;
@@ -1479,8 +1473,10 @@ namespace mango
                     xcb_keysym_t keysym = xcb_key_symbols_get_keysym(key_symbols, key_press->detail, 0);
                     if (keysym != XKB_KEY_NoSymbol)
                     {
+                        const Keycode code = translateEventToKeycode(keysym);
+                        setKeyPressed(this, code, true);
                         u32 mask = translateKeyMask(key_press->state);
-                        owner->onKeyPress(translateEventToKeycode(keysym), mask);
+                        owner->onKeyPress(code, mask);
                     }
                     break;
                 }
@@ -1493,7 +1489,7 @@ namespace mango
                     {
                         bool is_repeat = false;
 
-                        xcb_generic_event_t* next_event = xcb_poll_for_event(connection);
+                        xcb_generic_event_t* next_event = takeEvent(this);
                         if (next_event)
                         {
                             if ((next_event->response_type & 0x7f) == XCB_KEY_PRESS)
@@ -1502,16 +1498,38 @@ namespace mango
                                 if (next_key->time == key_release->time && next_key->detail == key_release->detail)
                                 {
                                     is_repeat = true;
+                                    free(next_event);
+                                    next_event = nullptr;
                                 }
                             }
-                            free(next_event);
+
+                            // Not a matching auto-repeat: keep the event for the next drain iteration.
+                            if (next_event)
+                            {
+                                pending_event = next_event;
+                            }
                         }
 
                         if (!is_repeat)
                         {
-                            owner->onKeyRelease(translateEventToKeycode(keysym));
+                            const Keycode code = translateEventToKeycode(keysym);
+                            setKeyPressed(this, code, false);
+                            owner->onKeyRelease(code);
                         }
                     }
+                    break;
+                }
+
+                case XCB_FOCUS_IN:
+                {
+                    keyboard_focused = true;
+                    syncKeyStateFromServer(this);
+                    break;
+                }
+
+                case XCB_FOCUS_OUT:
+                {
+                    clearKeyState(this);
                     break;
                 }
 
