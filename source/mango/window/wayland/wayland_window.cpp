@@ -1413,6 +1413,88 @@ namespace
         .global_remove = registry_global_remove,
     };
 
+    // Ephemeral wl_output enumeration for screen queries before any Window exists.
+    // Must not touch g_outputs — that list is owned by live WaylandBackend connections.
+
+    struct ScreenProbe
+    {
+        std::vector<std::unique_ptr<WaylandOutput>> outputs;
+    };
+
+    void probe_registry_global(void* data, struct wl_registry* registry,
+                               uint32_t name, const char* interface, uint32_t version)
+    {
+        ScreenProbe* probe = static_cast<ScreenProbe*>(data);
+
+        if (std::strcmp(interface, "wl_output") == 0)
+        {
+            const uint32_t bind_version = version < 4 ? version : 4;
+            auto output = std::make_unique<WaylandOutput>();
+            output->registry_name = name;
+            output->output = static_cast<struct wl_output*>(
+                wl_registry_bind(registry, name, &wl_output_interface, bind_version));
+            wl_output_add_listener(output->output, &output_listener, output.get());
+            probe->outputs.push_back(std::move(output));
+        }
+    }
+
+    void probe_registry_global_remove(void* data, struct wl_registry* registry, uint32_t name)
+    {
+        MANGO_UNREFERENCED(data);
+        MANGO_UNREFERENCED(registry);
+        MANGO_UNREFERENCED(name);
+    }
+
+    static const struct wl_registry_listener probe_registry_listener =
+    {
+        .global = probe_registry_global,
+        .global_remove = probe_registry_global_remove,
+    };
+
+    std::vector<mango::math::int32x2> collectWaylandScreenSizes()
+    {
+        std::vector<mango::math::int32x2> sizes;
+
+        if (!g_outputs.empty())
+        {
+            for (const auto& output : g_outputs)
+            {
+                sizes.emplace_back(output->width, output->height);
+            }
+
+            return sizes;
+        }
+
+        struct wl_display* display = wl_display_connect(nullptr);
+        if (!display)
+        {
+            return sizes;
+        }
+
+        ScreenProbe probe;
+        struct wl_registry* registry = wl_display_get_registry(display);
+        wl_registry_add_listener(registry, &probe_registry_listener, &probe);
+
+        // First roundtrip: globals (bind outputs). Second: mode/geometry events.
+        wl_display_roundtrip(display);
+        wl_display_roundtrip(display);
+
+        for (const auto& output : probe.outputs)
+        {
+            sizes.emplace_back(output->width, output->height);
+            if (output->output)
+            {
+                wl_output_destroy(output->output);
+                output->output = nullptr;
+            }
+        }
+
+        wl_registry_destroy(registry);
+        wl_display_disconnect(display);
+
+        return sizes;
+    }
+
 } // namespace
 
 namespace mango
@@ -1781,31 +1863,26 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // Window (static, screen queries)
+    // Wayland screen queries (dispatched from Window::getScreen*)
     // -----------------------------------------------------------------------
 
-#if !defined(MANGO_HAS_XLIB_WINDOW) && !defined(MANGO_HAS_XCB_WINDOW)
-
-    // Provided by the X11 backends when present; defined here only when the build
-    // has neither Xlib nor Xcb, so the single Window::getScreen* definition is unique.
-
-    int Window::getScreenCount()
+    int queryWaylandScreenCount()
     {
-        return int(g_outputs.size());
+        return int(collectWaylandScreenSizes().size());
     }
 
-    int32x2 Window::getScreenSize(int index)
+    int32x2 queryWaylandScreenSize(int index)
     {
-        if (index < 0 || index >= int(g_outputs.size()))
+        const std::vector<math::int32x2> sizes = collectWaylandScreenSizes();
+        if (sizes.empty())
         {
             return int32x2(0, 0);
         }
 
-        const WaylandOutput& output = *g_outputs[index];
-        return int32x2(output.width, output.height);
+        index = std::max(index, 0);
+        index = std::min(index, int(sizes.size()) - 1);
+        return sizes[index];
     }
-
-#endif // !defined(MANGO_HAS_XLIB_WINDOW) && !defined(MANGO_HAS_XCB_WINDOW)
 
     // -----------------------------------------------------------------------
     // WaylandBackend (window operations + event loop)

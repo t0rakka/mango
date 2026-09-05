@@ -632,4 +632,54 @@ namespace mango
 #endif
     }
 
+#if defined(MANGO_PLATFORM_LINUX)
+
+    // Linux screen queries dispatch on the active WindowSystem so a Wayland
+    // session never opens an X11 display (and vice versa). Works before any
+    // Window exists — each backend connects ephemerally when needed.
+
+    int Window::getScreenCount()
+    {
+        switch (getWindowSystem())
+        {
+#if defined(MANGO_HAS_WAYLAND_WINDOW)
+            case WindowSystem::Wayland:
+                return queryWaylandScreenCount();
+#endif
+#if defined(MANGO_HAS_XLIB_WINDOW)
+            case WindowSystem::Xlib:
+                return queryXlibScreenCount();
+#endif
+#if defined(MANGO_HAS_XCB_WINDOW)
+            case WindowSystem::Xcb:
+                return queryXcbScreenCount();
+#endif
+            default:
+                return 0;
+        }
+    }
+
+    math::int32x2 Window::getScreenSize(int screen)
+    {
+        switch (getWindowSystem())
+        {
+#if defined(MANGO_HAS_WAYLAND_WINDOW)
+            case WindowSystem::Wayland:
+                return queryWaylandScreenSize(screen);
+#endif
+#if defined(MANGO_HAS_XLIB_WINDOW)
+            case WindowSystem::Xlib:
+                return queryXlibScreenSize(screen);
+#endif
+#if defined(MANGO_HAS_XCB_WINDOW)
+            case WindowSystem::Xcb:
+                return queryXcbScreenSize(screen);
+#endif
+            default:
+                return math::int32x2(0, 0);
+        }
+    }
+
+#endif // defined(MANGO_PLATFORM_LINUX)
+
 } // namespace mango

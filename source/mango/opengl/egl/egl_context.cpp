@@ -6,6 +6,7 @@
 #include <mango/core/system.hpp>
 #include <mango/core/string.hpp>
 #include <mango/opengl/opengl.hpp>
+#include <mango/window/window.hpp>
 
 #include <algorithm>
 #include <cstring>
@@ -82,8 +83,7 @@ namespace
         return attribs;
     }
 
-    EGLConfigChoice chooseEGLConfig(EGLDisplay display, const std::vector<EGLint>& attribs,
-                                    EGLNativeWindowType native_window)
+    EGLConfigChoice chooseEGLConfig(EGLDisplay display, const std::vector<EGLint>& attribs)
     {
         EGLConfigChoice choice;
 
@@ -98,39 +98,17 @@ namespace
         {
             return choice;
         }
-        configs.resize(size_t(num_configs));
 
-        const EGLint srgb_attribs[] =
-        {
-            EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
-            EGL_NONE,
-        };
-
-        if (native_window && eglHasExtension(display, "EGL_KHR_gl_colorspace"))
-        {
-            for (EGLConfig config : configs)
-            {
-                eglClearErrors();
-                EGLSurface test = eglCreateWindowSurface(display, config, native_window, srgb_attribs);
-                if (test != EGL_NO_SURFACE)
-                {
-                    eglDestroySurface(display, test);
-                    choice.config = config;
-                    choice.srgb = true;
-                    return choice;
-                }
-            }
-
-            mango::printLine(mango::Print::Warning, "[EGL] no EGLConfig supports sRGB colorspace (0x{:x}), using linear",
-                eglGetError());
-        }
-
+        // Do not probe sRGB by creating a temporary window surface: on Wayland/Mesa
+        // destroying that surface leaves wl_egl_window unusable for the real create.
+        // createEGLWindowSurface() tries sRGB and falls back to linear.
         choice.config = configs[0];
+        choice.srgb = eglHasExtension(display, "EGL_KHR_gl_colorspace");
         return choice;
     }
 
     EGLConfigChoice chooseEGLConfigWithRetry(EGLDisplay display, mango::OpenGLWindow::Config& config,
-                                             EGLNativeWindowType native_window, bool present_opaque)
+                                             bool present_opaque)
     {
         const auto saved_alpha = config.alpha;
         if (present_opaque)
@@ -140,12 +118,12 @@ namespace
             config.alpha = 0;
         }
 
-        EGLConfigChoice choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+        EGLConfigChoice choice = chooseEGLConfig(display, buildConfigAttribs(config));
 
         if (!choice.config && present_opaque && saved_alpha > 0)
         {
             config.alpha = saved_alpha;
-            choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+            choice = chooseEGLConfig(display, buildConfigAttribs(config));
         }
 
         if (!choice.config && config.samples > 1)
@@ -153,7 +131,7 @@ namespace
             mango::printLine(mango::Print::Warning, "[EGL] {}x multisample not available, falling back to 1x",
                 config.samples);
             config.samples = 1;
-            choice = chooseEGLConfig(display, buildConfigAttribs(config), native_window);
+            choice = chooseEGLConfig(display, buildConfigAttribs(config));
         }
         else if (choice.config && config.samples > 1)
         {
@@ -168,9 +146,47 @@ namespace
     }
 
     EGLSurface createEGLWindowSurface(EGLDisplay display, EGLConfig config,
-                                      EGLNativeWindowType native_window, bool srgb,
-                                      bool present_opaque)
+                                      mango::opengl::egl::NativeWindowBinding& binding,
+                                      bool srgb, bool present_opaque, EGLint* out_error)
     {
+        // Use the libEGL-linked eglCreateWindowSurface entry point only.
+        // Pointers from eglGetProcAddress("eglCreatePlatformWindowSurface*") can
+        // bypass glvnd display dispatch and return EGL_BAD_PARAMETER (0x300c)
+        // when multiple EGL vendors are installed (common on Linux).
+        auto tryCreate = [&](const EGLint* attribs) -> EGLSurface
+        {
+            if (!binding.native_window)
+            {
+                if (out_error)
+                {
+                    *out_error = EGL_BAD_NATIVE_WINDOW;
+                }
+                return EGL_NO_SURFACE;
+            }
+
+            eglClearErrors();
+
+            EGLSurface surface = eglCreateWindowSurface(
+                display, config,
+                (EGLNativeWindowType)(std::uintptr_t)binding.native_window,
+                attribs);
+
+            if (surface == EGL_NO_SURFACE && out_error)
+            {
+                *out_error = eglGetError();
+            }
+            return surface;
+        };
+
+        auto afterFailure = [&]()
+        {
+            // Wayland/Mesa: a failed create can leave wl_egl_window unusable.
+            if (binding.recreate)
+            {
+                binding.recreate(binding);
+            }
+        };
+
         const bool use_present_opaque = present_opaque && eglHasExtension(display, "EGL_EXT_present_opaque");
 
         if (srgb && use_present_opaque)
@@ -182,8 +198,7 @@ namespace
                 EGL_NONE,
             };
 
-            eglClearErrors();
-            EGLSurface surface = eglCreateWindowSurface(display, config, native_window, attribs);
+            EGLSurface surface = tryCreate(attribs);
             if (surface != EGL_NO_SURFACE)
             {
                 mango::printLine("[EGL] EGL_KHR_gl_colorspace : sRGB + EGL_EXT_present_opaque");
@@ -191,27 +206,8 @@ namespace
             }
 
             mango::printLine(mango::Print::Warning, "[EGL] sRGB+opaque surface creation failed (0x{:x}), retrying",
-                eglGetError());
-        }
-
-        if (srgb)
-        {
-            const EGLint attribs[] =
-            {
-                EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
-                EGL_NONE,
-            };
-
-            eglClearErrors();
-            EGLSurface surface = eglCreateWindowSurface(display, config, native_window, attribs);
-            if (surface != EGL_NO_SURFACE)
-            {
-                mango::printLine("[EGL] EGL_KHR_gl_colorspace : sRGB");
-                return surface;
-            }
-
-            mango::printLine(mango::Print::Warning, "[EGL] sRGB surface creation failed (0x{:x}), using linear colorspace",
-                eglGetError());
+                out_error ? *out_error : eglGetError());
+            afterFailure();
         }
 
         if (use_present_opaque)
@@ -222,20 +218,84 @@ namespace
                 EGL_NONE,
             };
 
-            eglClearErrors();
-            EGLSurface surface = eglCreateWindowSurface(display, config, native_window, attribs);
+            EGLSurface surface = tryCreate(attribs);
             if (surface != EGL_NO_SURFACE)
             {
                 mango::printLine("[EGL] EGL_EXT_present_opaque");
                 return surface;
             }
 
-            mango::printLine(mango::Print::Warning, "[EGL] opaque surface creation failed (0x{:x}), using default",
-                eglGetError());
+            mango::printLine(mango::Print::Warning, "[EGL] opaque surface creation failed (0x{:x}), retrying",
+                out_error ? *out_error : eglGetError());
+            afterFailure();
         }
 
-        eglClearErrors();
-        return eglCreateWindowSurface(display, config, native_window, nullptr);
+        if (srgb)
+        {
+            const EGLint attribs[] =
+            {
+                EGL_GL_COLORSPACE_KHR, EGL_GL_COLORSPACE_SRGB_KHR,
+                EGL_NONE,
+            };
+
+            EGLSurface surface = tryCreate(attribs);
+            if (surface != EGL_NO_SURFACE)
+            {
+                mango::printLine("[EGL] EGL_KHR_gl_colorspace : sRGB");
+                return surface;
+            }
+
+            mango::printLine(mango::Print::Warning, "[EGL] sRGB surface creation failed (0x{:x}), using linear",
+                out_error ? *out_error : eglGetError());
+            afterFailure();
+        }
+
+        return tryCreate(nullptr);
+    }
+
+    EGLDisplay openEGLDisplay(void* native_display)
+    {
+        // Prefer an explicit platform display via the libEGL-linked 1.5 entry
+        // point (glvnd-safe). eglGetDisplay(wl_display) can bind the wrong
+        // platform on dual X11/Wayland systems.
+        // Do not use eglGetProcAddress for these — same glvnd dispatch pitfall.
+#if defined(EGL_VERSION_1_5)
+#if defined(MANGO_HAS_WAYLAND_WINDOW)
+        if (mango::Window::getWindowSystem() == mango::WindowSystem::Wayland && native_display)
+        {
+            EGLDisplay display = eglGetPlatformDisplay(EGL_PLATFORM_WAYLAND_KHR, native_display, nullptr);
+            if (display != EGL_NO_DISPLAY)
+            {
+                return display;
+            }
+        }
+#endif
+
+#if defined(MANGO_HAS_XLIB_WINDOW) || defined(MANGO_HAS_XCB_WINDOW)
+        {
+            const mango::WindowSystem ws = mango::Window::getWindowSystem();
+            if (native_display &&
+                (ws == mango::WindowSystem::Xlib || ws == mango::WindowSystem::Xcb))
+            {
+                const EGLenum platform =
+#if defined(MANGO_HAS_XCB_WINDOW)
+                    (ws == mango::WindowSystem::Xcb) ? EGL_PLATFORM_XCB_EXT :
+#endif
+                    EGL_PLATFORM_X11_KHR;
+
+                EGLDisplay display = eglGetPlatformDisplay(platform, native_display, nullptr);
+                if (display != EGL_NO_DISPLAY)
+                {
+                    return display;
+                }
+            }
+        }
+#endif
+#endif // defined(EGL_VERSION_1_5)
+
+        return eglGetDisplay(native_display
+            ? reinterpret_cast<EGLNativeDisplayType>(native_display)
+            : EGL_DEFAULT_DISPLAY);
     }
 
 } // namespace
@@ -262,9 +322,7 @@ namespace mango
             : window(theContext->backend())
         {
             void* native_display = opengl::egl::getNativeDisplay(window);
-            egl_display = eglGetDisplay(native_display
-                ? reinterpret_cast<EGLNativeDisplayType>(native_display)
-                : EGL_DEFAULT_DISPLAY);
+            egl_display = openEGLDisplay(native_display);
             if (egl_display == EGL_NO_DISPLAY)
             {
                 shutdown();
@@ -304,17 +362,14 @@ namespace mango
             bool srgb_surface = false;
 
             m_native_binding = opengl::egl::createNativeWindow(window, width, height, flags);
-            void* native = m_native_binding.native_window;
-            if (!native)
+            if (!m_native_binding.native_window)
             {
                 shutdown();
                 MANGO_EXCEPTION("[OpenGLContextEGL] native window creation failed.");
             }
 
-            EGLNativeWindowType native_window = (EGLNativeWindowType)(std::uintptr_t)native;
-
             {
-                EGLConfigChoice choice = chooseEGLConfigWithRetry(egl_display, config, native_window,
+                EGLConfigChoice choice = chooseEGLConfigWithRetry(egl_display, config,
                     m_native_binding.present_opaque);
                 if (!choice.config)
                 {
@@ -329,17 +384,19 @@ namespace mango
             if (egl_context == EGL_NO_CONTEXT)
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed.");
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateContext() failed (0x{:x}).", eglGetError());
             }
 
             printLine("[EGL] eglCreateContext() : OK");
+            printLine("[EGL] native window: {} x {}", width, height);
 
-            egl_surface = createEGLWindowSurface(egl_display, eglConfig, native_window, srgb_surface,
-                m_native_binding.present_opaque);
+            EGLint surface_error = EGL_SUCCESS;
+            egl_surface = createEGLWindowSurface(egl_display, eglConfig, m_native_binding, srgb_surface,
+                m_native_binding.present_opaque, &surface_error);
             if (egl_surface == EGL_NO_SURFACE)
             {
                 shutdown();
-                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed.");
+                MANGO_EXCEPTION("[OpenGLContextEGL] eglCreateWindowSurface() failed (0x{:x}).", surface_error);
             }
 
             window->presentGraphicsSurface();

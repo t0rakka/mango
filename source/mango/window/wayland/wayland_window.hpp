@@ -20,11 +20,8 @@ struct xdg_surface;
 struct xdg_toplevel;
 struct zxdg_decoration_manager_v1;
 struct zxdg_toplevel_decoration_v1;
-
-#if defined(MANGO_HAS_LIBDECOR)
 struct libdecor;
 struct libdecor_frame;
-#endif
 
 namespace mango
 {
@@ -42,10 +39,11 @@ namespace mango
         struct zxdg_decoration_manager_v1* decoration_manager = nullptr;
         struct zxdg_toplevel_decoration_v1* toplevel_decoration = nullptr;
 
-#if defined(MANGO_HAS_LIBDECOR)
+        // Always present so WaylandBackend layout matches across TUs. mango-opengl
+        // includes this header and reads size[] after these fields; gating them on
+        // MANGO_HAS_LIBDECOR caused EGL to see garbage window dimensions (0x300c).
         struct libdecor* libdecor_context = nullptr;
         struct libdecor_frame* libdecor_frame = nullptr;
-#endif
 
         struct wl_seat* seat = nullptr;
         struct wl_pointer* pointer = nullptr;

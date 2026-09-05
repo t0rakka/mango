@@ -1110,15 +1110,10 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // Window (static, screen queries)
+    // Xcb screen queries (dispatched from Window::getScreen*)
     // -----------------------------------------------------------------------
 
-#if !defined(MANGO_HAS_XLIB_WINDOW)
-
-    // Provided by the Xlib backend when it is present; defined here only when the
-    // build excludes Xlib, so the single Window::getScreen* definition is unique.
-
-    int Window::getScreenCount()
+    int queryXcbScreenCount()
     {
         xcb_connection_t* connection = xcb_connect(NULL, NULL);
         if (xcb_connection_has_error(connection))
@@ -1134,7 +1129,7 @@ namespace mango
         return count;
     }
 
-    int32x2 Window::getScreenSize(int index)
+    int32x2 queryXcbScreenSize(int index)
     {
         xcb_connection_t* connection = xcb_connect(NULL, NULL);
         if (xcb_connection_has_error(connection))
@@ -1152,8 +1147,6 @@ namespace mango
 
         return screens[index].resolution;
     }
-
-#endif // !defined(MANGO_ENABLE_XLIB)
 
     // -----------------------------------------------------------------------
     // XcbBackend (window operations + event loop)

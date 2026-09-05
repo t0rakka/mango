@@ -86,4 +86,20 @@ namespace mango
     std::unique_ptr<WindowBackend> createWindowBackend(WindowSystem ws, Window* window,
         int width, int height, u32 flags, const char* title);
 
+    // Backend-specific screen queries. Window::getScreen*() dispatches to these
+    // based on the active WindowSystem so callers never open the wrong display
+    // server (e.g. Xlib while running on Wayland).
+#if defined(MANGO_HAS_XLIB_WINDOW)
+    int queryXlibScreenCount();
+    math::int32x2 queryXlibScreenSize(int index);
+#endif
+#if defined(MANGO_HAS_XCB_WINDOW)
+    int queryXcbScreenCount();
+    math::int32x2 queryXcbScreenSize(int index);
+#endif
+#if defined(MANGO_HAS_WAYLAND_WINDOW)
+    int queryWaylandScreenCount();
+    math::int32x2 queryWaylandScreenSize(int index);
+#endif
+
 } // namespace mango

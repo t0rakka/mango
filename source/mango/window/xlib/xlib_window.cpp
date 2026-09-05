@@ -884,10 +884,10 @@ namespace mango
     }
 
     // -----------------------------------------------------------------------
-    // Window (static, screen queries)
+    // Xlib screen queries (dispatched from Window::getScreen*)
     // -----------------------------------------------------------------------
 
-    int Window::getScreenCount()
+    int queryXlibScreenCount()
     {
         Display* display = XOpenDisplay(NULL);
         if (!display)
@@ -902,7 +902,7 @@ namespace mango
         return count;
     }
 
-    int32x2 Window::getScreenSize(int index)
+    int32x2 queryXlibScreenSize(int index)
     {
         Display* display = XOpenDisplay(NULL);
         if (!display)

@@ -20,6 +20,9 @@ namespace mango
             void* cookie = nullptr;
             void (*sync)(WindowBackend* backend, void* cookie) = nullptr;
             void (*destroy)(void* cookie) = nullptr;
+            // Recreate the native window in-place after a failed eglCreateWindowSurface.
+            // Required on Wayland/Mesa: a failed create can leave wl_egl_window unusable.
+            void (*recreate)(NativeWindowBinding& binding) = nullptr;
             bool present_opaque = false;
         };
 

@@ -92,6 +92,40 @@ namespace mango::opengl::egl
             delete state;
         }
 
+        void recreateWaylandNativeWindow(NativeWindowBinding& binding)
+        {
+            auto* state = static_cast<WaylandEGLState*>(binding.cookie);
+            if (!state || !state->backend || !state->backend->surface)
+            {
+                return;
+            }
+
+            const int32_t width = std::max(1, state->backend->size[0] > 0 ? state->backend->size[0] : state->synced_size[0]);
+            const int32_t height = std::max(1, state->backend->size[1] > 0 ? state->backend->size[1] : state->synced_size[1]);
+
+            if (state->egl_window)
+            {
+                wl_egl_window_destroy(state->egl_window);
+                state->egl_window = nullptr;
+            }
+
+            state->egl_window = wl_egl_window_create(state->backend->surface, width, height);
+            if (!state->egl_window)
+            {
+                binding.native_window = nullptr;
+                return;
+            }
+
+            if (state->backend->display)
+            {
+                wl_display_flush(state->backend->display);
+            }
+
+            state->synced_size[0] = width;
+            state->synced_size[1] = height;
+            binding.native_window = state->egl_window;
+        }
+
     } // namespace
 
     NativeWindowBinding createWaylandNativeWindow(WindowBackend* backend, int width, int height, u32 flags)
@@ -105,8 +139,10 @@ namespace mango::opengl::egl
             return result;
         }
 
-        const int egl_width = std::max(1, wayland->size[0] > 0 ? wayland->size[0] : width);
-        const int egl_height = std::max(1, wayland->size[1] > 0 ? wayland->size[1] : height);
+        // Prefer the size requested by the GL layer; fall back to the window
+        // backend size if the caller passed 0 (e.g. some recreate paths).
+        const int egl_width = std::max(1, width > 0 ? width : wayland->size[0]);
+        const int egl_height = std::max(1, height > 0 ? height : wayland->size[1]);
 
         auto* state = new WaylandEGLState();
         state->backend = wayland;
@@ -115,6 +151,11 @@ namespace mango::opengl::egl
         {
             delete state;
             return result;
+        }
+
+        if (wayland->display)
+        {
+            wl_display_flush(wayland->display);
         }
 
         state->synced_size[0] = egl_width;
@@ -133,6 +174,7 @@ namespace mango::opengl::egl
             syncWaylandState(cookie);
         };
         result.destroy = destroyWaylandState;
+        result.recreate = recreateWaylandNativeWindow;
 
         return result;
     }
