@@ -219,13 +219,13 @@ jobs:
       - name: Install dependencies
         run: |
           brew install cmake ninja fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp \
-            libavif libheif libraw isa-l lz4 bzip2 jxrlib freetype harfbuzz \
+            libavif libheif libraw isa-l lz4 bzip2 freetype harfbuzz \
             simdjson libjpeg-turbo libpng glslang molten-vk vulkan-headers \
             vulkan-loader
 
       - name: Configure and build
         run: |
-          cmake --preset default
+          cmake --preset default -DIMAGE_FORMAT_JXR=OFF
           cmake --build --preset default
 
       - name: Test
