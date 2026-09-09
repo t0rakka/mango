@@ -423,7 +423,7 @@ namespace
                 args.tracing = true;
             });
 
-        commands.flag("--save", "disable save testing",
+        commands.flag("--nosave", "skip encoding / file output",
             [&]()
             {
                 g_enable_save = false;
@@ -435,7 +435,7 @@ namespace
                 args.mango_only = true;
             });
 
-        commands.optionInt("--count", "repeat mango benchmark N times",
+        commands.optionInt("--count", "total mango benchmark runs (minimum 1)",
             [&](int value)
             {
                 args.test_count = value;
@@ -474,7 +474,7 @@ int main(int argc, const char* argv[])
     }
 
     const char* filename = args.filename.c_str();
-    const int test_count = args.test_count;
+    const int run_count = std::max(1, args.test_count);
     const bool multithread = args.multithread;
     const bool tracing = args.tracing;
     const bool mango_only = args.mango_only;
@@ -582,82 +582,71 @@ int main(int argc, const char* argv[])
 
     // ------------------------------------------------------------------
 
-    time0 = Time::us();
-
     ImageDecodeOptions decode_options;
     decode_options.simd = true;
     decode_options.multithread = multithread;
-
-    std::unique_ptr<filesystem::OutputFileStream> output;
-
-    if (tracing)
-    {
-        output = std::make_unique<filesystem::OutputFileStream>("result.trace");
-        startTrace(output.get());
-    }
-
-    Bitmap bitmap(filename, decode_options);
-
-    if (tracing)
-    {
-        stopTrace();
-    }
-
-    time1 = Time::us();
 
     ImageEncodeOptions encode_options;
     encode_options.quality = 0.70f;
     encode_options.simd = true;
     encode_options.multithread = multithread;
 
-    if (g_enable_save)
+    std::unique_ptr<filesystem::OutputFileStream> trace_output;
+
+    if (tracing)
     {
-        bitmap.save("output-mango.jpg", encode_options);
-        size = getFileSize("output-mango.jpg");
-    }
-    else
-    {
-        size = 0;
+        trace_output = std::make_unique<filesystem::OutputFileStream>("result.trace");
     }
 
-    time2 = Time::us();
-    ::print("mango:   ", time1 - time0, time2 - time1, size);
+    u64 load_total = 0;
+    u64 save_total = 0;
+    u64 load_lowest = ~0ull;
+    u64 save_lowest = ~0ull;
 
-    // ------------------------------------------------------------------
-
-    if (test_count > 0)
+    for (int i = 0; i < run_count; ++i)
     {
-        u64 load_total = time1 - time0;
-        u64 save_total = time2 - time1;
-        u64 load_lowest = load_total;
-        u64 save_lowest = save_total;
-
-        for (int i = 0; i < test_count; ++i)
+        if (tracing && i == 0)
         {
-            time0 = Time::us();
-
-            Bitmap bitmap(filename, decode_options);
-
-            time1 = Time::us();
-
-            if (g_enable_save)
-            {
-                bitmap.save("output-mango.jpg", encode_options);
-            }
-
-            time2 = Time::us();
-
-            u64 load = time1 - time0;
-            u64 save = time2 - time1;
-            load_total += load;
-            save_total += save;
-            load_lowest = std::min(load_lowest, load);
-            save_lowest = std::min(save_lowest, save);
-            ::print("         ", load, save, size);
+            startTrace(trace_output.get());
         }
 
+        time0 = Time::us();
+
+        Bitmap bitmap(filename, decode_options);
+
+        if (tracing && i == 0)
+        {
+            stopTrace();
+        }
+
+        time1 = Time::us();
+
+        if (g_enable_save)
+        {
+            bitmap.save("output-mango.jpg", encode_options);
+            size = getFileSize("output-mango.jpg");
+        }
+        else
+        {
+            size = 0;
+        }
+
+        time2 = Time::us();
+
+        const u64 load = time1 - time0;
+        const u64 save = time2 - time1;
+        load_total += load;
+        save_total += save;
+        load_lowest = std::min(load_lowest, load);
+        save_lowest = std::min(save_lowest, save);
+
+        ::print(i == 0 ? "mango:   " : "         ", load, save, size);
+    }
+
+    if (run_count > 1)
+    {
         printLine("----------------------------------------------");
-        ::print("average: ", load_total / (test_count + 1), save_total / (test_count + 1), size);
+        ::print("average: ", load_total / run_count, save_total / run_count, size);
         ::print("lowest : ", load_lowest, save_lowest, size);
         printLine("----------------------------------------------");
     }
