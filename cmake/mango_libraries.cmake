@@ -56,9 +56,6 @@ function(mango_set_library_properties target)
         VERSION ${PROJECT_VERSION}
         SOVERSION ${MANGO_SOVERSION}
     )
-    if (APPLE)
-        set_target_properties(${target} PROPERTIES OSX_DEPLOYMENT_TARGET "10.15")
-    endif ()
 endfunction()
 
 function(mango_apply_shared_config target)
@@ -325,7 +322,3 @@ if (UNIX AND NOT APPLE)
     target_link_options(mango-image PRIVATE "$<$<CONFIG:Release>:LINKER:-s>")
 endif ()
 
-if (APPLE)
-    target_compile_options(mango-core PUBLIC "-mmacosx-version-min=10.15")
-    target_compile_options(mango-image PUBLIC "-mmacosx-version-min=10.15")
-endif ()

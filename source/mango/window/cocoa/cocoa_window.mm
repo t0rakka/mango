@@ -7,7 +7,6 @@
 #include <mango/window/event_loop.hpp>
 #include "cocoa_window.h"
 #include "../window_peers.hpp"
-#import <CoreVideo/CoreVideo.h>
 
 // -----------------------------------------------------------------------
 // CustomNSWindow
@@ -206,18 +205,6 @@ namespace mango
         if (@available(macOS 12.0, *))
         {
             return double([screen maximumFramesPerSecond]);
-        }
-
-        CGDirectDisplayID displayID = [[screen deviceDescription][@"NSScreenNumber"] unsignedIntValue];
-        CVDisplayLinkRef link = nullptr;
-        if (CVDisplayLinkCreateWithCGDisplay(displayID, &link) == kCVReturnSuccess)
-        {
-            const CVTime time = CVDisplayLinkGetNominalOutputVideoRefreshPeriod(link);
-            CVDisplayLinkRelease(link);
-            if (time.timeScale > 0 && time.timeValue > 0)
-            {
-                return double(time.timeScale) / double(time.timeValue);
-            }
         }
 
         return 0.0;
