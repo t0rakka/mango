@@ -727,7 +727,7 @@ namespace
 
         void chunk_key_ambient(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.ambient]");
             MANGO_UNREFERENCED(p);
         }
@@ -740,35 +740,35 @@ namespace
 
         void chunk_key_camera(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.camera]");
             MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_camera_target(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.camera.target]");
             MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_light(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.light]");
             MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_light_target(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.light.target]");
             MANGO_UNREFERENCED(p);
         }
 
         void chunk_key_spotlight(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.spotlight]");
             MANGO_UNREFERENCED(p);
         }
@@ -783,13 +783,13 @@ namespace
 
         void chunk_key_current_time(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             p += 4;
         }
 
         void chunk_key_header(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.header]");
             p += size;
         }
@@ -819,63 +819,63 @@ namespace
 
         void chunk_key_boundbox(LittleEndianConstPointer& p)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[boundbox]");
             p += 24;
         }
 
         void chunk_key_morph_smooth(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[key.morph.smooth]");
             p += size;
         }
 
         void chunk_key_pos_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[pos.track]");
             p += size;
         }
 
         void chunk_key_rot_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[rot.track]");
             p += size;
         }
 
         void chunk_key_scale_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[scale.track]");
             p += size;
         }
 
         void chunk_key_fov_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[fov.track]");
             p += size;
         }
 
         void chunk_key_roll_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[roll.track]");
             p += size;
         }
 
         void chunk_key_color_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[color.track]");
             p += size;
         }
 
         void chunk_key_morph_track(LittleEndianConstPointer& p, u32 size)
         {
-            // TODO
+            // animation: not supported
             //printLine(Print::Verbose, level * 2, "[morph.track]");
             p += size;
         }

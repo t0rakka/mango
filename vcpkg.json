@@ -37,12 +37,11 @@
             ]
         },
         "image-ci": {
-            "description": "Light image deps for Windows CI (no libheif/x265, libavif, libjxl, libraw)",
+            "description": "Light image deps for Windows CI (no libheif/x265, libavif, libjxl, libraw, jxrlib)",
             "dependencies": [
                 "lcms",
                 "openjpeg",
-                "libwebp",
-                "jxrlib"
+                "libwebp"
             ]
         },
         "vulkan": {

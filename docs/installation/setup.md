@@ -7,6 +7,26 @@ A long time ago MANGO was self-contained source tree where all external librarie
 
 The external libraries are divided into three categories: REQUIRED libraries MUST be installed. OPTIONAL libraries can be disabled by the build script options and they are also disabled if the libraries cannot be found. The EXAMPLE libraries must be installed if examples are going to be compiled (image codec benchmarks specifically).
 
+### JPEG XR (optional)
+
+JPEG XR (`.jxr`, HD Photo) is compiled in when **libjxr** is found at configure time. If the library is missing, CMake prints `JXR: disabling IMAGE_FORMAT_JXR` and continues — no extra `-D` flag needed.
+
+| Platform | How to enable |
+|----------|---------------|
+| **Arch / pacman** | `jxrlib` in the dependency line below |
+| **Debian / Ubuntu** | `sudo apt-get install libjxr-dev` (when your distro still ships it) |
+| **macOS** | Build from source (Homebrew no longer packages jxrlib) |
+| **Windows / vcpkg** | `jxrlib` in the vcpkg dependency list / manifest `image` feature |
+
+**Build libjxr from source** (macOS, or any platform without a package):
+
+    git clone https://github.com/cgohlke/jxrlib.git
+    cmake -S jxrlib -B jxrlib-build -DCMAKE_BUILD_TYPE=Release
+    cmake --build jxrlib-build
+    sudo cmake --install jxrlib-build
+
+Re-run mango configure afterwards; pkg-config (`libjxr`) or the installed headers/libs are picked up automatically.
+
 
 <h2><img src="logo-linux.png" alt="logo" width="80"/> Debian / Ubuntu (apt)</h2>
 
@@ -15,7 +35,9 @@ Debian, Ubuntu, Mint, Raspberry Pi OS, and other apt-based distros.
 
 ### Dependencies
 
-    sudo apt-get install cmake ninja-build pkg-config g++ libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev libjxr-dev mesa-common-dev libgl1-mesa-dev libegl-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libwayland-bin wayland-protocols libdecor-0-dev libvulkan-dev
+    sudo apt-get install cmake ninja-build pkg-config g++ libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev mesa-common-dev libgl1-mesa-dev libegl-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libwayland-bin wayland-protocols libdecor-0-dev libvulkan-dev
+
+**Ubuntu 24.04 (noble):** distro `libjxl-dev` is too old for mango (needs libjxl ≥ 0.9). Use a newer PPA, build JPEG XL from source, or disable `IMAGE_FORMAT_JXL` at configure time.
 
 
 <h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch / pacman</h2>
@@ -47,7 +69,9 @@ The apt/pacman lines above include Xlib, Xcb, and Wayland. Install them all; bac
 
 ### Dependencies
 
-    brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 jxrlib freetype harfbuzz simdjson libjpeg-turbo libpng
+    brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 freetype harfbuzz simdjson libjpeg-turbo libpng
+
+See [JPEG XR (optional)](#jpeg-xr-optional) to add `.jxr` support on macOS.
 
 ### Building
 

@@ -225,7 +225,7 @@ jobs:
 
       - name: Configure and build
         run: |
-          cmake --preset default -DIMAGE_FORMAT_JXR=OFF
+          cmake --preset default
           cmake --build --preset default
 
       - name: Test

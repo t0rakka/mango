@@ -129,7 +129,6 @@ ImportGLTF::ImportGLTF(const filesystem::Path& path, const std::string& filename
     //options |= fastgltf::Options::LoadGLBBuffers;
     //options |= fastgltf::Options::LoadExternalBuffers;
     //options |= fastgltf::Options::LoadExternalImages;
-    //options |= fastgltf::Options::LoadExternalImages;
 
     auto expected_asset = parser.loadGltf(dataBuffer, "", options);
     if (expected_asset.error() != fastgltf::Error::None)

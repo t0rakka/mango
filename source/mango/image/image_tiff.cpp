@@ -364,7 +364,6 @@ namespace
                 value = p.read64();
                 break;
             default:
-                // MANGO TODO: parsing failure
                 printLine(Print::Error, "    [getUnsigned] Unsupported type: {}", int(type));
                 break;
         }

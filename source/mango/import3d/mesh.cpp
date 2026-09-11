@@ -161,8 +161,11 @@ namespace mango::import3d
         mik_context.m_pInterface = &mik_interface;
         mik_context.m_pUserData = this;
 
-        tbool status = genTangSpaceDefault(&mik_context);
-        MANGO_UNREFERENCED(status);
+        if (!genTangSpaceDefault(&mik_context))
+        {
+            printLine(Print::Warning, "[Mesh] computeTangents: MikkTSpace failed.");
+            return;
+        }
 
         flags |= Vertex::Tangent;
     }

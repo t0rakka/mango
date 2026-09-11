@@ -2,6 +2,8 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <atomic>
+
 #include <mango/core/core.hpp>
 #include <mango/image/compression.hpp>
 #include <mango/image/surface.hpp>
@@ -72,21 +74,31 @@ namespace mango::image
         if (thread_count > 1)
         {
             ConcurrentQueue q;
+            std::atomic<astcenc_error> compress_status { ASTCENC_SUCCESS };
 
             for (u32 thread_index = 0; thread_index < thread_count; ++thread_index)
             {
                 q.enqueue([&, thread_index]
                 {
-                    auto status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
-                    MANGO_UNREFERENCED(status);
+                    astcenc_error s = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
+                    if (s != ASTCENC_SUCCESS)
+                    {
+                        compress_status = s;
+                    }
                 });
+            }
+
+            astcenc_error result = compress_status.load();
+            if (result != ASTCENC_SUCCESS)
+            {
+                printLine(Print::Error, "[ASTC] astcenc_compress_image: {}", astcenc_get_error_string(result));
             }
         }
         else
         {
             u32 thread_index = 0;
-            auto status2 = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
-            if (status2 != ASTCENC_SUCCESS)
+            status = astcenc_compress_image(context, &image, &swizzle, output, output_bytes, thread_index);
+            if (status != ASTCENC_SUCCESS)
             {
                 printLine(Print::Error, "[ASTC] astcenc_compress_image: {}", astcenc_get_error_string(status));
             }
@@ -155,14 +167,24 @@ namespace mango::image
         if (thread_count > 1)
         {
             ConcurrentQueue q;
+            std::atomic<astcenc_error> decompress_status { ASTCENC_SUCCESS };
 
             for (u32 thread_index = 0; thread_index < thread_count; ++thread_index)
             {
                 q.enqueue([&, thread_index]
                 {
-                    auto status = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
-                    MANGO_UNREFERENCED(status);
+                    astcenc_error s = astcenc_decompress_image(context, input, input_bytes, &image, &swizzle, thread_index);
+                    if (s != ASTCENC_SUCCESS)
+                    {
+                        decompress_status = s;
+                    }
                 });
+            }
+
+            astcenc_error result = decompress_status.load();
+            if (result != ASTCENC_SUCCESS)
+            {
+                printLine(Print::Error, "[ASTC] astcenc_decompress_image: {}", astcenc_get_error_string(result));
             }
         }
         else
