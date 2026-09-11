@@ -284,8 +284,8 @@ namespace mango::image
 
         // Build source-primaries -> target-primaries (linear) 3x3 matrix. Falls back
         // to identity when source and target match or cannot be resolved (safe no-op).
-        // White-point adaptation is not applied, so non-D65 sources get a small
-        // residual tint (matches the viewer reference; TODO: Bradford adaptation).
+        // White-point adaptation (Bradford) is not applied: non-D65 sources may
+        // show a small residual tint versus a fully adapted reference pipeline.
         void buildPrimariesMatrix(const ColorInfo& color, ColorPrimaries srcPrim,
                                   ColorPrimaries targetPrim, float out[9], bool& identity)
         {

@@ -5,6 +5,7 @@
 #include <algorithm>
 #include <cctype>
 #include <cmath>
+#include <vector>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/buffer.hpp>
@@ -18,10 +19,9 @@ namespace
     using namespace mango::math;
     using namespace mango::image;
 
-    // MANGO TODO: mipmap / ripmap selection
-    // MANGO TODO: deep image support
-    // MANGO TODO: multi-part support
-    // MANGO TODO: more flexible color resolver (more formats)
+    // NOTE: mipmap/ripmap level selection is not implemented (needs level-index API).
+    // NOTE: deep and multi-part EXR are rejected at header parse.
+    // NOTE: channel/color resolver covers current decode paths only.
 
     /*
     // exr half/float to uint8 conversion:
@@ -317,8 +317,8 @@ struct HufDec
     // short code    long code
     //-------------------------------
     int len : 8;   // code length    0
-    int lit : 24;  // lit      p size
-    int *p;        // 0      lits
+    int lit : 24;  // lit      codes size
+    std::vector<int> codes;
 };
 
 inline u64 hufLength(u64 code) { return code & 63; }
@@ -493,7 +493,7 @@ void hufClearDecTable(HufDec *hdecod)
     {
         hdecod[i].len = 0;
         hdecod[i].lit = 0;
-        hdecod[i].p = nullptr;
+        hdecod[i].codes.clear();
     }
 }
 
@@ -547,20 +547,8 @@ bool hufBuildDecTable(const u64 *hcode,  // i : encoding table
         return false;
       }
 
-      pl->lit++;
-
-      if (pl->p) {
-        int *p = pl->p;
-        pl->p = new int[pl->lit]; // xxx
-
-        for (int i = 0; i < pl->lit - 1; ++i) pl->p[i] = p[i];
-
-        delete[] p;
-      } else {
-        pl->p = new int[1]; // xxx
-      }
-
-      pl->p[pl->lit - 1] = im;
+      pl->codes.push_back(im);
+      pl->lit = int(pl->codes.size());
     } else if (l) {
       //
       // Short code: init all primary entries
@@ -569,7 +557,7 @@ bool hufBuildDecTable(const u64 *hcode,  // i : encoding table
       HufDec *pl = hdecod + (c << (HUF_DECBITS - l));
 
       for (u64 i = 1ULL << (HUF_DECBITS - l); i > 0; i--, pl++) {
-        if (pl->len || pl->p) {
+        if (pl->len || !pl->codes.empty()) {
           //
           // Error: a short code or a long code has
           // already been stored in table entry *pl.
@@ -597,11 +585,7 @@ void hufFreeDecTable(HufDec *hdecod)
 {
     for (int i = 0; i < HUF_DECSIZE; i++)
     {
-        if (hdecod[i].p)
-        {
-            delete[] hdecod[i].p;
-            hdecod[i].p = nullptr;
-        }
+        hdecod[i].codes.clear();
     }
 }
 
@@ -696,7 +680,7 @@ void hufDecode(const u64*  hcode, // i : encoding table
             }
             else
             {
-                if (!pl.p)
+                if (pl.codes.empty())
                 {
                     // wrong code: bail out instead of spinning forever on
                     // corrupt input (nothing would consume any bits here)
@@ -711,21 +695,21 @@ void hufDecode(const u64*  hcode, // i : encoding table
 
                 for (j = 0; j < pl.lit; j++)
                 {
-                    int	l = hufLength (hcode[pl.p[j]]);
+                    int	l = hufLength (hcode[pl.codes[j]]);
 
                     while (lc < l && in < ie)	// get more bits
                         getChar (c, lc, in);
 
                     if (lc >= l)
                     {
-                        if (hufCode (hcode[pl.p[j]]) == ((c >> (lc - l)) & ((u64(1) << l) - 1)))
+                        if (hufCode (hcode[pl.codes[j]]) == ((c >> (lc - l)) & ((u64(1) << l) - 1)))
                         {
                             //
                             // Found : get long code
                             //
 
                             lc -= l;
-                            getCode(pl.p[j], rlc, c, lc, in, out, outb, oe)
+                            getCode(pl.codes[j], rlc, c, lc, in, out, outb, oe)
                             break;
                         }
                     }
@@ -3610,11 +3594,24 @@ const u8* ContextEXR::decompress_dwab(Memory dest, ConstMemory source, int width
 }
 
 static inline
+void clipHalfRgbIfNeeded(float& r, float& g, float& b)
+{
+    constexpr float hi = 65504.0f;
+    if (r < 0.0f || r > hi || g < 0.0f || g > hi || b < 0.0f || b > hi)
+    {
+        r = std::clamp(r, 0.0f, hi);
+        g = std::clamp(g, 0.0f, hi);
+        b = std::clamp(b, 0.0f, hi);
+    }
+}
+
+static inline
 void writeChromaRGBA(float16* dest, float32x3 yw, float RY, float BY, float Y, float16 alpha)
 {
     float r = RY * Y + Y;
     float b = BY * Y + Y;
     float g = (Y - r * yw.x - b * yw.z) / yw.y;
+    clipHalfRgbIfNeeded(r, g, b);
     dest[0] = r;
     dest[1] = g;
     dest[2] = b;
@@ -3741,7 +3738,6 @@ void decodeChroma(Surface surface, const u8* src, const Layer& layer, const Chro
 
     if (datatype == DataType::HALF)
     {
-        // MANGO TODO: clipping
         for (int y = y0; y < y1; y += 2)
         {
             float16* image0 = surface.address<float16>(0, y + 0);

@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <cmath>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/core/buffer.hpp>
@@ -1078,6 +1079,153 @@ namespace
         }
     }
 
+    static
+    int ktxSwizzleChannel(char c)
+    {
+        switch (c)
+        {
+            case 'r': return 0;
+            case 'g': return 1;
+            case 'b': return 2;
+            case 'a': return 3;
+            default: return -1;
+        }
+    }
+
+    static
+    bool applyKtxSwizzleToFormat(Format& format, const char* swizzle_value)
+    {
+        char swz[4] = { 'r', 'g', 'b', 'a' };
+        for (int i = 0; i < 4; ++i)
+        {
+            const char c = swizzle_value[i];
+            if (!c)
+                break;
+            swz[i] = c;
+        }
+
+        for (int i = 0; i < 4; ++i)
+        {
+            if (swz[i] == '0' || swz[i] == '1')
+                return false;
+            if (ktxSwizzleChannel(swz[i]) < 0)
+                return false;
+        }
+
+        const int i0 = ktxSwizzleChannel(swz[0]);
+        const int i1 = ktxSwizzleChannel(swz[1]);
+        const int i2 = ktxSwizzleChannel(swz[2]);
+        const int i3 = ktxSwizzleChannel(swz[3]);
+
+        if (i0 == 0 && i1 == 1 && i2 == 2 && i3 == 3)
+            return true;
+
+        const Format::Order order = Format::Order(u8_mask(i0, i1, i2, i3));
+        format = Format(format.bits, format.type, order,
+            format.size[0], format.size[1], format.size[2], format.size[3], format.flags);
+        return true;
+    }
+
+#ifdef MANGO_BIG_ENDIAN
+    static
+    void byteswapKtx2Surface(const Surface& surface, u32 type_size)
+    {
+        if (type_size <= 1)
+            return;
+
+        const int width = surface.width;
+        const int height = surface.height;
+        const int components = surface.format.bits / int(type_size * 8);
+
+        for (int y = 0; y < height; ++y)
+        {
+            u8* scan = surface.address<u8>(0, y);
+            const int count = width * components;
+
+            if (type_size == 2)
+            {
+                u16* data = reinterpret_cast<u16*>(scan);
+                for (int i = 0; i < count; ++i)
+                    data[i] = byteswap(data[i]);
+            }
+            else if (type_size == 4)
+            {
+                u32* data = reinterpret_cast<u32*>(scan);
+                for (int i = 0; i < count; ++i)
+                    data[i] = byteswap(data[i]);
+            }
+            else if (type_size == 8)
+            {
+                u64* data = reinterpret_cast<u64*>(scan);
+                for (int i = 0; i < count; ++i)
+                    data[i] = byteswap(data[i]);
+            }
+        }
+    }
+#endif
+
+    static
+    void applyRuntimeKtxSwizzle(const Surface& dest, const char swz[4])
+    {
+        const int width = dest.width;
+        const int height = dest.height;
+
+        auto sample = [](char c, float r, float g, float b, float a) -> float
+        {
+            switch (c)
+            {
+                case 'r': return r;
+                case 'g': return g;
+                case 'b': return b;
+                case 'a': return a;
+                case '0': return 0.0f;
+                case '1': return 1.0f;
+                default: return 0.0f;
+            }
+        };
+
+        if (dest.format.isFloat())
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                float* row = dest.address<float>(0, y);
+                for (int x = 0; x < width; ++x)
+                {
+                    float* p = row + x * 4;
+                    const float r = p[0];
+                    const float g = p[1];
+                    const float b = p[2];
+                    const float a = p[3];
+                    p[0] = sample(swz[0], r, g, b, a);
+                    p[1] = sample(swz[1], r, g, b, a);
+                    p[2] = sample(swz[2], r, g, b, a);
+                    p[3] = sample(swz[3], r, g, b, a);
+                }
+            }
+        }
+        else
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                u8* row = dest.address<u8>(0, y);
+                const int bytes = dest.format.bytes();
+                for (int x = 0; x < width; ++x)
+                {
+                    u8* p = row + x * bytes;
+                    const float r = float(p[0]) / 255.0f;
+                    const float g = float(p[1]) / 255.0f;
+                    const float b = float(p[2]) / 255.0f;
+                    const float a = bytes > 3 ? float(p[3]) / 255.0f : 1.0f;
+                    p[0] = u8(std::clamp(sample(swz[0], r, g, b, a), 0.0f, 1.0f) * 255.0f);
+                    p[1] = u8(std::clamp(sample(swz[1], r, g, b, a), 0.0f, 1.0f) * 255.0f);
+                    p[2] = u8(std::clamp(sample(swz[2], r, g, b, a), 0.0f, 1.0f) * 255.0f);
+                    if (bytes > 3)
+                        p[3] = u8(std::clamp(sample(swz[3], r, g, b, a), 0.0f, 1.0f) * 255.0f);
+                }
+            }
+        }
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -1108,6 +1256,10 @@ namespace
 
         int m_texel_block_width = 0;
         int m_texel_block_height = 0;
+
+        u32 m_type_size = 1;
+        char m_swizzle[4] = { 'r', 'g', 'b', 'a' };
+        bool m_swizzle_runtime = false;
 
         Interface(ConstMemory memory)
             : m_memory(memory)
@@ -1178,6 +1330,7 @@ namespace
             header.faces = ktx2_header.faceCount;
             header.format = desc.format;
             header.compression = desc.compression;
+            m_type_size = ktx2_header.typeSize;
 
             if (desc.compression != TextureCompression::NONE)
             {
@@ -1479,7 +1632,13 @@ namespace
                     }
                     else if (!strcmp(key, "KTXswizzle"))
                     {
-                        // MANGO TODO: this modifies header.format
+                        char swizzle[5] = { 'r', 'g', 'b', 'a', 0 };
+                        for (int i = 0; i < 4 && value + i < entry_end; ++i)
+                            swizzle[i] = char(value[i]);
+
+                        std::memcpy(m_swizzle, swizzle, 4);
+                        if (!applyKtxSwizzleToFormat(header.format, swizzle))
+                            m_swizzle_runtime = true;
                     }
 
                     printLine(Print::Debug, "  {}", key);
@@ -1494,11 +1653,6 @@ namespace
 
                     p += padding;
                 }
-            }
-
-            if (m_orientation_y)
-            {
-                // MANGO TODO: compressed format origin is at bottom
             }
 
             // Supercompression Global Data
@@ -1713,8 +1867,6 @@ namespace
 
             decompress();
 
-            // MANGO TODO: typesize dictates endianness swap on big-endian
-
             ImageDecodeStatus status;
 
             if (!header.success)
@@ -1771,6 +1923,8 @@ namespace
                 MANGO_UNREFERENCED(x);
 
                 dest.blit(0, 0, temp);
+                if (m_orientation_y)
+                    dest.yflip();
             }
             else if (m_is_uastc)
             {
@@ -1796,6 +1950,8 @@ namespace
                 MANGO_UNREFERENCED(x);
 
                 dest.blit(0, 0, temp);
+                if (m_orientation_y)
+                    dest.yflip();
             }
             else
             {
@@ -1808,6 +1964,10 @@ namespace
                     if (!ts)
                     {
                         status.setError(ts.info);
+                    }
+                    else if (m_orientation_y)
+                    {
+                        dest.yflip();
                     }
                 }
                 else
@@ -1825,9 +1985,17 @@ namespace
                         temp.stride = 0 - temp.stride;
                     }
 
+#ifdef MANGO_BIG_ENDIAN
+                    if (m_type_size > 1)
+                        byteswapKtx2Surface(temp, m_type_size);
+#endif
+
                     dest.blit(0, 0, temp);
                 }
             }
+
+            if (status && m_swizzle_runtime)
+                applyRuntimeKtxSwizzle(dest, m_swizzle);
 
             return status;
         }

@@ -77,9 +77,6 @@ namespace
             }
             */
 
-            const char* mime = heif_get_file_mime_type(memory.address, int(memory.size));
-            printLine(Print::Debug, "MIME: {}", mime);
-
             m_context = heif_context_alloc();
             if (!m_context)
             {

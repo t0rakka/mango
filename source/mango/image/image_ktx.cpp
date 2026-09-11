@@ -705,8 +705,7 @@ namespace
 
             const int maxLevel = int(numberOfMipmapLevels);
             const int maxFace = int(numberOfFaces);
-
-            MANGO_UNREFERENCED(depth); // MANGO TODO
+            const int maxDepth = std::max(1, int(pixelDepth));
 
             ConstMemory data;
 
@@ -718,13 +717,15 @@ namespace
 
                 for (int iFace = 0; iFace < maxFace; ++iFace)
                 {
-                    if (iLevel == level && iFace == face)
+                    const size_t faceSize = size_t(imageSizeRounded);
+                    const size_t sliceSize = faceSize / maxDepth;
+
+                    if (iLevel == level && iFace == face && depth >= 0 && depth < maxDepth)
                     {
-                        // Store selected address
-                        data = ConstMemory(address, imageSizeRounded);
+                        data = ConstMemory(address + depth * sliceSize, sliceSize);
                     }
 
-                    address += imageSizeRounded;
+                    address += faceSize;
                 }
             }
 
