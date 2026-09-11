@@ -43,7 +43,12 @@ void test(const char* filename, int cancel_ms)
         decoder.cancel();
     }
 
-    future.get();
+    ImageDecodeStatus status = future.get();
+    if (!status.success)
+    {
+        printLine(Print::Error, "Decode failed: {}", status.info);
+        return;
+    }
 
     u64 time1 = Time::ms();
     printLine("Decoding: {} ms", time1 - time0);

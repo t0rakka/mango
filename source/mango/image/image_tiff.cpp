@@ -2170,6 +2170,25 @@ namespace
 
             ctx.sample_bits = sample_bits;
 
+            if (!ctx.sample_format.empty())
+            {
+                if (ctx.sample_format.size() != 1 && ctx.sample_format.size() != ctx.samples_per_pixel)
+                {
+                    header.setError("[ImageDecoder.TIFF] SampleFormat count does not match SamplesPerPixel.");
+                    return false;
+                }
+
+                const u64 sample_format = ctx.sample_format[0];
+                for (size_t i = 1; i < ctx.sample_format.size(); ++i)
+                {
+                    if (ctx.sample_format[i] != sample_format)
+                    {
+                        header.setError("[ImageDecoder.TIFF] Mixed per-channel SampleFormat is not supported.");
+                        return false;
+                    }
+                }
+            }
+
             if (!ctx.extra_samples.empty())
             {
                 for (size_t i = 0; i < ctx.extra_samples.size(); ++i)
@@ -2428,8 +2447,6 @@ namespace
             u64 sample_format = u64(SampleFormat::UINT);
             if (!m_context.sample_format.empty())
             {
-                // assume all channels have the same sample format
-                // MANGO TODO: support different sample formats per channel
                 sample_format = m_context.sample_format[0];
             }
 
@@ -2527,7 +2544,6 @@ namespace
                 case PhotometricInterpretation::TRANSPARENCY_MASK:
                 case PhotometricInterpretation::CFA:
                 case PhotometricInterpretation::LINEAR_RAW:
-                    // MANGO TODO: support different sample formats per channel
                     header.setError("Unsupported PhotometricInterpretation: {}", m_context.photometric);
                     return Format();
 
@@ -2716,8 +2732,7 @@ namespace
                 {
                     // planar format
 
-                    // MANGO TODO: clear the target surface correctly
-                    std::memset(target.image, 0, target.stride * header.height);
+                    target.clear(0.0f, 0.0f, 0.0f, 1.0f);
 
                     size_t count = xtiles * ytiles;
 
@@ -2775,8 +2790,7 @@ namespace
                 {
                     // planar format
 
-                    // MANGO TODO: clear the target surface correctly
-                    std::memset(target.image, 0, target.stride * header.height);
+                    target.clear(0.0f, 0.0f, 0.0f, 1.0f);
 
                     // Separate planes (PlanarConfiguration 2): all strips for component 0, then all
                     // for component 1, etc. (TIFF 6 §PlanarConfiguration). Same ordering as tiles above
@@ -4014,18 +4028,8 @@ namespace
             {
                 case Compression::NONE:
                 {
-                    if (needs_expansion)
-                    {
-                        expandPixels(expanded_buffer, memory, width, height, sample_bits, expanded_sample_bits);
-                        memory = expanded_buffer;
-                        needs_expansion = false;
-                    }
-                    else
-                    {
-                        std::memcpy(buffer, memory.address, uncompressed_bytes);
-                        memory = buffer;
-                    }
-
+                    std::memcpy(buffer, memory.address, uncompressed_bytes);
+                    memory = buffer;
                     break;
                 }
 
@@ -4195,6 +4199,23 @@ namespace
                     return;
             }
 
+            // Predictors apply to packed scanlines before bit expansion (TIFF 6 §Predictor).
+            if (m_context.predictor != 1)
+            {
+                const u32 channels_per_pixel = m_context.planar_configuration == 2
+                    ? 1u
+                    : m_context.samples_per_pixel;
+
+                const int predictor_rows = chunky_ycbcr ? int(ycbcr_macro_rows) : height;
+                const u32 predictor_row_bytes = chunky_ycbcr ? ycbcr_macro_row_bytes : bytes_per_row;
+
+                u8* data = const_cast<u8*>(memory.address);
+                for (int y = 0; y < predictor_rows; ++y)
+                {
+                    undoScanlinePredictor(data + y * predictor_row_bytes, predictor_row_bytes, channels_per_pixel);
+                }
+            }
+
             // Post-decompression expansion if needed
             if (needs_expansion)
             {
@@ -4290,22 +4311,14 @@ namespace
                     u8* dest = target.image + target.stride * y;
                     const u8* src = memory.address + y * expanded_bytes_per_row;
 
-                    if (m_context.predictor == 1)
-                    {
-                        std::memcpy(dest, src, expanded_bytes_per_row);
-                    }
-                    else if (m_context.predictor == 2)
-                    {
-                        dest[0] = src[0];
-                        for (u32 i = 1; i < expanded_bytes_per_row; ++i)
-                        {
-                            dest[i] = u8(src[i] + dest[i - 1]);
-                        }
-                    }
-                    else
+                    if (m_context.predictor == 3)
                     {
                         resolvePlanarScanline(dest, src, expanded_bytes_per_row,
                             m_context.samples_per_pixel, channel, expanded_sample_bits);
+                    }
+                    else
+                    {
+                        std::memcpy(dest, src, expanded_bytes_per_row);
                     }
                 }
                 return;
@@ -4545,50 +4558,56 @@ namespace
             }
         }
         
-        void resolveChunkyScanline(u8* output, const u8* input, u32 bytes, u32 channels)
+        void undoScanlinePredictor(u8* row, u32 row_bytes, u32 channels_per_pixel)
         {
-            if (m_context.predictor == 1)
+            if (m_context.predictor == 1 || row_bytes == 0)
             {
-                // chunky, no prediction
-
-                std::memcpy(output, input, bytes);
+                return;
             }
-            else if (m_context.predictor == 2)
+
+            if (m_context.predictor == 2)
             {
-                // chunky, horizontal differencing
-
-                std::memcpy(output, input, channels); // copy first sample
-
-                for (u32 x = channels; x < bytes; x += channels)
+                for (u32 i = channels_per_pixel; i < row_bytes; ++i)
                 {
-                    for (u32 c = 0; c < channels; ++c)
+                    row[i] = u8(row[i] + row[i - channels_per_pixel]);
+                }
+
+                return;
+            }
+
+            if (m_context.predictor == 3)
+            {
+                const u32 bytes_per_float = m_context.sample_bits / 8;
+                if (!bytes_per_float || channels_per_pixel == 0)
+                {
+                    return;
+                }
+
+                u32 offset = channels_per_pixel;
+                const u32 bytes_per_sample = channels_per_pixel * bytes_per_float;
+                const u32 width = row_bytes / bytes_per_sample;
+                const u32 x1 = width * bytes_per_float;
+
+                for (u32 x = 1; x < x1; ++x)
+                {
+                    for (u32 c = 0; c < channels_per_pixel; ++c)
                     {
-                        output[x + c] = input[x + c] + output[x - channels + c];
+                        row[offset] = u8(row[offset] + row[offset - channels_per_pixel]);
+                        ++offset;
                     }
                 }
             }
-            else if (m_context.predictor == 3)
+        }
+
+        void resolveChunkyScanline(u8* output, const u8* input, u32 bytes, u32 channels)
+        {
+            if (m_context.predictor == 3)
             {
-                // chunky, float differencing
+                // Predictor already undone on packed data; reorder TIFF float bytes to host layout.
 
                 u32 bytesPerFloat = m_context.sample_bits / 8;
                 u32 bytesPerSample = channels * bytesPerFloat;
                 u32 width = bytes / bytesPerSample;
-
-                // undo byte difference on input
-                u8* data = const_cast<u8*>(input);
-                u32 offset = channels;
-
-                const u32 x1 = width * bytesPerFloat;
-
-                for (u32 x = 1; x < x1; ++x)
-                {
-                    for (u32 c = 0; c < channels; ++c)
-                    {
-                        data[offset] += data[offset - channels];
-                        ++offset;
-                    }
-                }
 
                 // reorder the semi-BigEndian bytes into the output buffer
                 u32 rowIncrement = width * channels;
@@ -4621,6 +4640,48 @@ namespace
                 }
 #endif
             }
+            else
+            {
+                std::memcpy(output, input, bytes);
+            }
+        }
+
+        void interleavePlanarFloatRow(u8* output, const u8* input, u32 bytes, u32 channels, u32 channel,
+            u32 storage_bits_per_sample) const
+        {
+            const u32 bytes_per_float = storage_bits_per_sample / 8;
+            if (!bytes_per_float || bytes % bytes_per_float)
+            {
+                return;
+            }
+
+            const u32 width = bytes / bytes_per_float;
+
+#ifdef MANGO_BIG_ENDIAN
+            for (u32 x = 0; x < width; ++x)
+            {
+                u8* dest = output + x * channels * bytes_per_float + channel * bytes_per_float;
+                u32 offset = x;
+
+                for (u32 byte = 0; byte < bytes_per_float; ++byte)
+                {
+                    dest[byte] = input[offset];
+                    offset += width;
+                }
+            }
+#else
+            for (u32 x = 0; x < width; ++x)
+            {
+                u8* dest = output + x * channels * bytes_per_float + channel * bytes_per_float;
+                u32 offset = (bytes_per_float - 1) * width + x;
+
+                for (u32 byte = 0; byte < bytes_per_float; ++byte)
+                {
+                    dest[byte] = input[offset];
+                    offset -= width;
+                }
+            }
+#endif
         }
 
         void resolvePlanarScanline(u8* output, const u8* input, u32 bytes, u32 channels, u32 channel,
@@ -4628,11 +4689,10 @@ namespace
         {
             // `storage_bits_per_sample` is the width of each sample in `input` after expand/shrink (decodeRect's
             // expanded_sample_bits). Tag BitsPerSample can be 10–14 while storage is 16 — use storage here.
-            // MANGO TODO: Planar and prediction requires prediction before expansion
 
-            if (m_context.predictor == 1)
+            if (m_context.predictor != 3)
             {
-                // planar, no prediction
+                // planar interleave (predictor 1/2 already undone on packed data)
 
                 if (storage_bits_per_sample <= 8)
                 {
@@ -4656,26 +4716,11 @@ namespace
                     }
                 }
             }
-            else if (m_context.predictor == 2)
-            {
-                // planar, horizontal differencing
-
-                u8* dest = output + channel;
-                u8 prev = 0;
-
-                for (u32 i = 0; i < bytes; ++i)
-                {
-                    *dest = input[i] + prev;
-                    prev = *dest;
-                    dest += channels;
-                }
-            }
             else if (m_context.predictor == 3)
             {
-                // planar, float differencing
+                // Predictor already undone on packed data; reorder into the interleaved surface.
 
-                /* MANGO TODO: implement, need test image
-                */
+                interleavePlanarFloatRow(output, input, bytes, channels, channel, storage_bits_per_sample);
             }
         }
     };
