@@ -4070,7 +4070,7 @@ namespace
                     {
                         Buffer temp(memory.size);
                         u8_reverse_bits(temp, memory);
-                        success = ccitt_group3_decompress(expanded_buffer, temp, width, height, is_2d);
+                        success = ccitt_group3_decompress(expanded_buffer, temp, width, height, is_2d, m_context.group3_options);
                         if (!success)
                         {
                             success = ccitt_rle_decompress(expanded_buffer, temp, width, height, false);
@@ -4078,7 +4078,7 @@ namespace
                     }
                     else
                     {
-                        success = ccitt_group3_decompress(expanded_buffer, memory, width, height, is_2d);
+                        success = ccitt_group3_decompress(expanded_buffer, memory, width, height, is_2d, m_context.group3_options);
                         if (!success)
                         {
                             success = ccitt_rle_decompress(expanded_buffer, memory, width, height, false);
@@ -4104,11 +4104,11 @@ namespace
                     {
                         Buffer temp(memory.size);
                         u8_reverse_bits(temp, memory);
-                        success = ccitt_group4_decompress(expanded_buffer, temp, width, height);
+                        success = ccitt_group4_decompress(expanded_buffer, temp, width, height, m_context.group4_options);
                     }
                     else
                     {
-                        success = ccitt_group4_decompress(expanded_buffer, memory, width, height);
+                        success = ccitt_group4_decompress(expanded_buffer, memory, width, height, m_context.group4_options);
                     }
 
                     if (!success)

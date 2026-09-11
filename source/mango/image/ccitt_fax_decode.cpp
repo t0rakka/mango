@@ -824,24 +824,32 @@ namespace mango::image
         return result == Expand::Success;
     }
 
-    bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d)
+    bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d, u32 group3_options)
     {
         const u32 nruns = round_ceil(width + 1, 32);
         State state(input, width, nruns);
 
-        // MANGO TODO: resolve mode from group3_options
-        state.sp.mode = FAXMODE_NORTC |FAXMODE_BYTEALIGN;
+        // TIFF Group3Options (T4Options): bit 0 = 2D, bit 2 = fill bits appended to EOLs.
+        u32 mode = FAXMODE_NORTC | FAXMODE_BYTEALIGN;
+        if (group3_options & 0x4)
+        {
+            mode |= FAXMODE_NOEOL;
+        }
+
+        state.sp.mode = mode;
 
         auto result = is_2d ? state.Fax3Decode2D(output) : state.Fax3Decode1D(output);
         return result == Expand::Success;
     }
 
-    bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height)
+    bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height, u32 group4_options)
     {
         const u32 nruns = round_ceil(width + 1, 32);
         State state(input, width, nruns);
 
-        // MANGO TODO: resolve mode from group4_options
+        // TIFF Group4Options (T6Options): G4 fax strips omit EOL fill (libtiff convention).
+        MANGO_UNREFERENCED(group4_options);
+
         state.sp.mode = FAXMODE_NORTC | FAXMODE_NOEOL | FAXMODE_BYTEALIGN;
 
         auto result = state.Fax4Decode(output);

@@ -12,6 +12,27 @@ namespace
     using namespace mango;
     using namespace mango::image;
 
+    static
+    bool isHdrTransfer(TransferFunction transfer)
+    {
+        return transfer == TransferFunction::PQ || transfer == TransferFunction::HLG;
+    }
+
+    static
+    heif_chroma selectHeifChroma(bool high_precision, bool has_alpha)
+    {
+        if (high_precision)
+        {
+#ifdef MANGO_BIG_ENDIAN
+            return has_alpha ? heif_chroma_interleaved_RRGGBBAA_BE : heif_chroma_interleaved_RRGGBB_BE;
+#else
+            return has_alpha ? heif_chroma_interleaved_RRGGBBAA_LE : heif_chroma_interleaved_RRGGBB_LE;
+#endif
+        }
+
+        return heif_chroma_interleaved_RGBA;
+    }
+
     // ------------------------------------------------------------
     // ImageDecoder
     // ------------------------------------------------------------
@@ -25,6 +46,7 @@ namespace
         int m_luma_bpp = 0;
         int m_chroma_bpp = 0;
         bool m_has_alpha = false;
+        bool m_high_precision = false;
 
         Interface(ConstMemory memory)
         {
@@ -94,17 +116,19 @@ namespace
             printLine(Print::Debug, "image: {} x {}, bits: {}, chroma: {}, alpha: {}, luma: {}", 
                 width, height, bpp, cbpp, alpha, luma);
 
-            Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
-
             header.width   = width;
             header.height  = height;
             header.depth   = 0;
             header.levels  = 0;
             header.faces   = 0;
-            header.format  = format;
             header.compression = TextureCompression::NONE;
 
             readColorProfile();
+
+            m_high_precision = (m_luma_bpp > 8) || isHdrTransfer(header.color.transfer);
+            header.format = m_high_precision
+                ? Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32)
+                : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
         }
 
         void readColorProfile()
@@ -145,6 +169,7 @@ namespace
                 if (primaries != ColorPrimaries::Unspecified)
                 {
                     color.primaries = primaries;
+                    fillChromaticitiesFromPrimaries(color, primaries);
                 }
                 if (transfer != TransferFunction::Unspecified)
                 {
@@ -202,6 +227,63 @@ namespace
                 else
                     report.chroma_subsampling = "4:2:0";
             }
+
+            syncHdrInspectFromHeader(report);
+        }
+
+        void copyHeifPlane(const Surface& dest, heif_image* image) const
+        {
+            const int width = header.width;
+            const int height = header.height;
+
+            int stride = 0;
+            const u8* plane = heif_image_get_plane_readonly(image, heif_channel_interleaved, &stride);
+            if (!plane)
+            {
+                return;
+            }
+
+            if (!m_high_precision)
+            {
+                Surface temp(width, height, header.format, stride, plane);
+                dest.blit(0, 0, temp);
+                return;
+            }
+
+            const int bits_range = heif_image_get_bits_per_pixel_range(image, heif_channel_interleaved);
+            const int storage_bits = heif_image_get_bits_per_pixel(image, heif_channel_interleaved);
+            const int channels = storage_bits / bits_range;
+
+            float scale = 1.0f / 65535.0f;
+            if (bits_range > 0 && bits_range <= 16)
+            {
+                scale = 1.0f / float((1u << bits_range) - 1u);
+            }
+
+            for (int y = 0; y < height; ++y)
+            {
+                const u16* src = reinterpret_cast<const u16*>(plane + y * stride);
+                float* dst = dest.address<float>(0, y);
+
+                for (int x = 0; x < width; ++x)
+                {
+                    dst[0] = float(src[0]) * scale;
+                    dst[1] = float(src[1]) * scale;
+                    dst[2] = float(src[2]) * scale;
+
+                    if (channels >= 4 && m_has_alpha)
+                    {
+                        dst[3] = float(src[3]) * scale;
+                    }
+                    else
+                    {
+                        dst[3] = 1.0f;
+                    }
+
+                    src += channels;
+                    dst += 4;
+                }
+            }
         }
 
         ImageDecodeStatus decode(const Surface& dest, const ImageDecodeOptions& options, int level, int depth, int face) override
@@ -215,11 +297,13 @@ namespace
 
             heif_decoding_options* decode_options = heif_decoding_options_alloc();
 
-            decode_options->convert_hdr_to_8bit = true;
+            decode_options->convert_hdr_to_8bit = m_high_precision ? 0 : 1;
             decode_options->ignore_transformations = true;
 
+            const heif_chroma chroma = selectHeifChroma(m_high_precision, m_has_alpha);
+
             heif_image* image = nullptr;
-            heif_error error = heif_decode_image(m_image_handle, &image, heif_colorspace_RGB, heif_chroma_interleaved_RGBA, decode_options);
+            heif_error error = heif_decode_image(m_image_handle, &image, heif_colorspace_RGB, chroma, decode_options);
 
             heif_decoding_options_free(decode_options);
 
@@ -229,42 +313,28 @@ namespace
                 return status;
             }
 
-            // MANGO TODO: hdr image, > 8 bits per channel
+            const int storage_bits = heif_image_get_bits_per_pixel(image, heif_channel_interleaved);
+            const int bits_range = heif_image_get_bits_per_pixel_range(image, heif_channel_interleaved);
+            printLine(Print::Debug, "storage_bits: {}, bits_range: {}", storage_bits, bits_range);
 
-            /*
-            heif_channel_Y = 0,
-            heif_channel_Cb = 1,
-            heif_channel_Cr = 2,
-
-            heif_channel_R = 3,
-            heif_channel_G = 4,
-            heif_channel_B = 5,
-            heif_channel_Alpha = 6,
-
-            heif_channel_interleaved = 10
-            */
-            heif_channel ch = heif_channel_interleaved;
-            int s0 = heif_image_get_bits_per_pixel(image, ch);
-            int s1 = heif_image_get_bits_per_pixel_range(image, ch);
-            printLine(Print::Debug, "s0: {}, s1: {}", s0, s1);
-            if (s0 != 32)
+            if (m_high_precision)
+            {
+                if (bits_range <= 8 || storage_bits < 48)
+                {
+                    heif_image_release(image);
+                    status.setError("[ImageDecoder.HEIF] Expected >8-bit storage, got {} (range {}).",
+                        storage_bits, bits_range);
+                    return status;
+                }
+            }
+            else if (storage_bits != 32)
             {
                 heif_image_release(image);
-                status.setError("[ImageDecoder.HEIF] Unsupported format.");
+                status.setError("[ImageDecoder.HEIF] Expected 8-bit RGBA, got {} storage bits.", storage_bits);
                 return status;
             }
 
-            int stride = 0;
-            const u8* p = heif_image_get_plane_readonly(image, heif_channel_interleaved, &stride);
-            if (!p)
-            {
-                heif_image_release(image);
-                status.setError("[ImageDecoder.HEIF] heif_image_get_plane_readonly FAILED.");
-                return status;
-            }
-
-            Surface temp(header.width, header.height, header.format, stride, p);
-            dest.blit(0, 0, temp);
+            copyHeifPlane(dest, image);
 
             heif_image_release(image);
 

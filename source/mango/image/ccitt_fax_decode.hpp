@@ -86,7 +86,7 @@ namespace mango::image
     };
 
     bool ccitt_rle_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool word_aligned);
-    bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d);
-    bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height);
+    bool ccitt_group3_decompress(Memory output, ConstMemory input, u32 width, u32 height, bool is_2d, u32 group3_options = 0);
+    bool ccitt_group4_decompress(Memory output, ConstMemory input, u32 width, u32 height, u32 group4_options = 0);
     
 } // namespace mango::image
