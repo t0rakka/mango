@@ -14,7 +14,7 @@ namespace mango
     // unaligned load
     // --------------------------------------------------------------
 
-    static inline
+    inline
     u16 uload16(const void* p)
     {
         u16 value;
@@ -22,7 +22,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u16 uload16_reverse(const void* p)
     {
         u16 value;
@@ -30,7 +30,7 @@ namespace mango
         return byteswap(value);
     }
 
-    static inline
+    inline
     u32 uload24(const void* p)
     {
         // uload24 is always little endian
@@ -38,7 +38,7 @@ namespace mango
         return u32(data[0]) | (u32(data[1]) << 8) | (u32(data[2]) << 16);
     }
 
-    static inline
+    inline
     u32 uload24_reverse(const void* p)
     {
         // uload24_reverse is always big endian
@@ -46,7 +46,7 @@ namespace mango
         return u32(data[2]) | (u32(data[1]) << 8) | (u32(data[0]) << 16);
     }
 
-    static inline
+    inline
     u32 uload32(const void* p)
     {
         u32 value;
@@ -54,7 +54,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u32 uload32_reverse(const void* p)
     {
         u32 value;
@@ -62,7 +62,7 @@ namespace mango
         return byteswap(value);
     }
 
-    static inline
+    inline
     u64 uload64(const void* p)
     {
         u64 value;
@@ -70,7 +70,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u64 uload64_reverse(const void* p)
     {
         u64 value;
@@ -78,7 +78,7 @@ namespace mango
         return byteswap(value);
     }
 
-    static inline
+    inline
     float16 uload16f(const void* p)
     {
         float16 value;
@@ -86,7 +86,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     float16 uload16f_reverse(const void* p)
     {
         float16 value;
@@ -94,7 +94,7 @@ namespace mango
         return byteswap(value);
     }
 
-    static inline
+    inline
     float32 uload32f(const void* p)
     {
         float32 value;
@@ -102,7 +102,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     float32 uload32f_reverse(const void* p)
     {
         float32 value;
@@ -110,7 +110,7 @@ namespace mango
         return byteswap(value);
     }
 
-    static inline
+    inline
     float64 uload64f(const void* p)
     {
         float64 value;
@@ -118,7 +118,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     float64 uload64f_reverse(const void* p)
     {
         float64 value;
@@ -130,20 +130,20 @@ namespace mango
     // unaligned store
     // --------------------------------------------------------------
 
-    static inline
+    inline
     void ustore16(void* p, u16 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore16_reverse(void* p, u16 value)
     {
         value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore24(void* p, u32 value)
     {
         // ustore24 is always little endian
@@ -153,7 +153,7 @@ namespace mango
         bytes[2] = u8(value >> 16);
     }
 
-    static inline
+    inline
     void ustore24_reverse(void* p, u32 value)
     {
         // ustore24_reverse is always big endian
@@ -163,65 +163,65 @@ namespace mango
         bytes[2] = u8(value >>  0);
     }
 
-    static inline
+    inline
     void ustore32(void* p, u32 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore32_reverse(void* p, u32 value)
     {
         value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore64(void* p, u64 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore64_reverse(void* p, u64 value)
     {
         value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore16f(void* p, float16 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore16f_reverse(void* p, float16 value)
     {
         value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore32f(void* p, float32 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore32f_reverse(void* p, float32 value)
     {
         value = byteswap(value);
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore64f(void* p, float64 value)
     {
         std::memcpy(p, &value, sizeof(value));
     }
 
-    static inline
+    inline
     void ustore64f_reverse(void* p, float64 value)
     {
         value = byteswap(value);

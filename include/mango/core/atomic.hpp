@@ -15,7 +15,7 @@ namespace mango
     // pause()
     // ----------------------------------------------------------------------------
 
-    static inline
+    inline
     void pause()
     {
 #if defined(MANGO_CPU_INTEL)

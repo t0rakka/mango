@@ -24,19 +24,19 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 23
 
-    static inline
+    inline
     u16 byteswap(u16 v)
     {
         return std::byteswap(v);
     }
 
-    static inline
+    inline
     u32 byteswap(u32 v)
     {
         return std::byteswap(v);
     }
 
-    static inline
+    inline
     u64 byteswap(u64 v)
     {
         return std::byteswap(v);
@@ -44,19 +44,19 @@ namespace mango
 
 #elif defined(MANGO_COMPILER_MSVC)
 
-    static inline
+    inline
     u16 byteswap(u16 v)
     {
         return _byteswap_ushort(v);
     }
 
-    static inline
+    inline
     u32 byteswap(u32 v)
     {
         return _byteswap_ulong(v);
     }
 
-    static inline
+    inline
     u64 byteswap(u64 v)
     {
         return _byteswap_uint64(v);
@@ -66,19 +66,19 @@ namespace mango
 
     // GCC / CLANG intrinsics
 
-    static inline
+    inline
     u16 byteswap(u16 v)
     {
         return __builtin_bswap32(v << 16);
     }
 
-    static inline
+    inline
     u32 byteswap(u32 v)
     {
         return __builtin_bswap32(v);
     }
 
-    static inline
+    inline
     u64 byteswap(u64 v)
     {
         return __builtin_bswap64(v);
@@ -91,19 +91,19 @@ namespace mango
     // These idioms are often recognized by compilers and result in bswap instruction being generated
     // but cannot be guaranteed so compiler intrinsics above are preferred when available.
 
-    static inline
+    inline
     u16 byteswap(u16 v)
     {
         return u16((v << 8) | (v >> 8));
     }
 
-    static inline
+    inline
     u32 byteswap(u32 v)
     {
         return (v >> 24) | ((v >> 8) & 0x0000ff00) | ((v << 8) & 0x00ff0000) | (v << 24);
     }
 
-    static inline
+    inline
     u64 byteswap(u64 v)
     {
         v = (v >> 32) | (v << 32);
@@ -114,14 +114,14 @@ namespace mango
 
 #endif
 
-    static inline
+    inline
     u8 byteswap(u8 v)
     {
         // NOTE: we haven't gone mad; this is for templates
         return v;
     }
 
-    static inline
+    inline
     float16 byteswap(float16 v)
     {
         Half temp(v);
@@ -129,7 +129,7 @@ namespace mango
         return temp;
     }
 
-    static inline
+    inline
     float32 byteswap(float32 v)
     {
         Float temp(v);
@@ -137,7 +137,7 @@ namespace mango
         return temp;
     }
 
-    static inline
+    inline
     float64 byteswap(float64 v)
     {
         Double temp(v);
@@ -256,7 +256,7 @@ namespace mango
 
 #if defined(MANGO_COMPILER_MSVC) || defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_ICC)
 
-    static inline
+    inline
     u32 byteclamp(s32 value)
     {
         return u32(std::max(0, std::min(255, value)));
@@ -264,7 +264,7 @@ namespace mango
 
 #elif defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     u32 byteclamp(s32 value)
     {
         return u32(std::clamp(value, 0, 255));
@@ -272,7 +272,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u32 byteclamp(s32 value)
     {
         return u32(value & 0xffffff00 ? (((~value) >> 31) & 0xff) : value);
@@ -280,7 +280,7 @@ namespace mango
 
 #endif
 
-    static inline
+    inline
     u8 u8_clamp(s32 value)
     {
         return u8(byteclamp(value));
@@ -331,7 +331,7 @@ namespace mango
         return T(remainder < 0 ? remainder + S(range) : remainder);
     }
 
-    static inline
+    inline
     float snap(float value, float grid)
     {
         assert(grid != 0);
@@ -363,7 +363,7 @@ namespace mango
     // -----------------------------------------------------------------------
 
     template <typename T>
-    static inline
+    inline
     T align_padding(T offset, u32 alignment)
     {
         // alignment must be a power of two
@@ -375,7 +375,7 @@ namespace mango
     }
 
     template <typename T>
-    static inline
+    inline
     T align_offset(T offset, u32 alignment)
     {
         // alignment must be a power of two
@@ -386,7 +386,7 @@ namespace mango
         return (offset + mask) & ~mask;
     }
 
-    static inline
+    inline
     bool is_aligned(const void* p, size_t alignment)
     {
         assert(((alignment & (alignment - 1)) == 0) && "alignment must be a power of two");
@@ -394,7 +394,7 @@ namespace mango
         return (reinterpret_cast<std::uintptr_t>(p) & mask) == 0;
     }
 
-    static inline
+    inline
     const u8* align_pointer(const u8* pointer, u32 alignment)
     {
         // alignment must be a power of two
@@ -402,7 +402,7 @@ namespace mango
         return reinterpret_cast<const u8*>(p);
     }
 
-    static inline
+    inline
     u8* align_pointer(u8* pointer, u32 alignment)
     {
         // alignment must be a power of two
@@ -491,7 +491,7 @@ namespace mango
     // 8 bits
     // ----------------------------------------------------------------------------
 
-    static inline
+    inline
     u8 u8_reverse_bits(u8 value)
     {
         value = u8(((value >> 1) & 0x55) | ((value << 1) & 0xaa));
@@ -511,7 +511,7 @@ namespace mango
         return u16((mask & (a ^ b)) ^ b);
     }
 
-    static inline
+    inline
     u16 u16_reverse_bits(u16 value)
     {
         value = u16(((value >> 1) & 0x5555) | ((value << 1) & 0xaaaa));
@@ -603,7 +603,7 @@ namespace mango
 
 #if defined(__BMI__)
 
-    static inline
+    inline
     u32 u32_extract_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -611,7 +611,7 @@ namespace mango
         return _blsi_u32(value);
     }
 
-    static inline
+    inline
     u32 u32_clear_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -621,7 +621,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u32 u32_extract_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -629,7 +629,7 @@ namespace mango
         return value & (0 - value);
     }
 
-    static inline
+    inline
     u32 u32_clear_lsb(u32 value)
     {
         // value:  xxxxxx100000
@@ -641,7 +641,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     int u32_tzcnt(u32 value)
     {
         return std::countr_zero(value);
@@ -649,7 +649,7 @@ namespace mango
 
 #elif defined(__BMI__)
 
-    static inline
+    inline
     int u32_tzcnt(u32 value)
     {
         return int(_tzcnt_u32(value));
@@ -657,7 +657,7 @@ namespace mango
 
 #elif defined(__aarch64__) && !defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     int u32_tzcnt(u32 value)
     {
         value = __rbit(value);
@@ -666,7 +666,7 @@ namespace mango
 
 #elif defined(__GNUC__)
 
-    static inline
+    inline
     int u32_tzcnt(u32 value)
     {
         return __builtin_ctz(value);
@@ -674,7 +674,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     int u32_tzcnt(u32 value)
     {
         const u32 lsb = u32_extract_lsb(value);
@@ -690,7 +690,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -699,7 +699,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u32 u32_extract_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -707,7 +707,7 @@ namespace mango
         return value ? 1u << (31 - std::countl_zero(value)) : 0;
     }
 
-    static inline
+    inline
     int u32_lzcnt(u32 value)
     {
         return int(std::countl_zero(value));
@@ -715,7 +715,7 @@ namespace mango
 
 #elif defined(__LZCNT__)
 
-    static inline
+    inline
     u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -724,7 +724,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u32 u32_extract_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -732,7 +732,7 @@ namespace mango
         return value ? 1u << (31 - _lzcnt_u32(value)) : 0;
     }
 
-    static inline
+    inline
     int u32_lzcnt(u32 value)
     {
         return int(_lzcnt_u32(value));
@@ -740,7 +740,7 @@ namespace mango
 
 #elif defined(__ARM_FEATURE_CLZ) && !defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -749,7 +749,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u32 u32_extract_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -757,7 +757,7 @@ namespace mango
         return value ? 1u << (31 - __clz(value)) : 0;
     }
 
-    static inline
+    inline
     int u32_lzcnt(u32 value)
     {
         return int(__clz(value));
@@ -765,7 +765,7 @@ namespace mango
 
 #elif defined(__GNUC__)
 
-    static inline
+    inline
     u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -774,7 +774,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u32 u32_extract_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -782,7 +782,7 @@ namespace mango
         return value ? 1u << (31 - __builtin_clz(value)) : 0;
     }
 
-    static inline
+    inline
     int u32_lzcnt(u32 value)
     {
         // NOTE: returns garbage when value is zero and compiling with -O0
@@ -791,7 +791,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u32 u32_mask_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -804,7 +804,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u32 u32_extract_msb(u32 value)
     {
         // value:  0001xxxxxxxx
@@ -813,7 +813,7 @@ namespace mango
         return value ^ (value >> 1);
     }
 
-    static inline
+    inline
     int u32_lzcnt(u32 value)
     {
         const u32 mask = u32_mask_msb(value);
@@ -829,7 +829,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     int u32_log2(u32 value)
     {
         // NOTE: value 0 is undefined
@@ -838,7 +838,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     int u32_log2(u32 value)
     {
         // NOTE: value 0 is undefined
@@ -849,7 +849,7 @@ namespace mango
 
 #if defined(__aarch64__) && !defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     u32 u32_reverse_bits(u32 value)
     {
         return __rbit(value);
@@ -857,7 +857,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u32 u32_reverse_bits(u32 value)
     {
         value = ((value >> 1) & 0x55555555) | ((value << 1) & 0xaaaaaaaa);
@@ -872,7 +872,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     int u32_popcnt(u32 value)
     {
         return std::popcount(value);
@@ -880,7 +880,7 @@ namespace mango
 
 #elif defined(__POPCNT__)
 
-    static inline
+    inline
     int u32_popcnt(u32 value)
     {
         return _mm_popcnt_u32(value);
@@ -888,7 +888,7 @@ namespace mango
 
 #elif defined(__GNUC__)
 
-    static inline
+    inline
     int u32_popcnt(u32 value)
     {
         return __builtin_popcountl(value);
@@ -896,7 +896,7 @@ namespace mango
 
 #elif defined(__aarch64__)
 
-    static inline
+    inline
     int u32_popcnt(u32 value)
     {
         uint8x8_t count = vcnt_u8(vcreate_u8(u64(value)));
@@ -905,7 +905,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     int u32_popcnt(u32 value)
     {
         value -= (value >> 1) & 0x55555555;
@@ -918,7 +918,7 @@ namespace mango
 
 #if defined(__BMI__)
 
-    static inline
+    inline
     u32 u32_extract_bits(u32 value, u32 offset, u32 size)
     {
         return _bextr_u32(value, offset, size);
@@ -954,7 +954,7 @@ namespace mango
 
 #if defined(__BMI2__)
 
-    static inline
+    inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
         // NOTE: Emulated in microcode on AMD Zen
@@ -965,7 +965,7 @@ namespace mango
 
 #elif defined(__ARM_FEATURE_CRYPTO)
 
-    static inline
+    inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
         poly64_t a = x;
@@ -977,7 +977,7 @@ namespace mango
 
 #elif defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
-    static inline
+    inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
         __m128i value = _mm_set_epi64x(x, y);
@@ -988,7 +988,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u32 u32_interleave_bits(u32 x, u32 y)
     {
         u64 value = ((u64(y) << 32) | x) & 0x0000ffff0000ffff;
@@ -1012,7 +1012,7 @@ namespace mango
 
 #if defined(__BMI2__)
 
-    static inline
+    inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
         // NOTE: Emulated in microcode on AMD Zen
@@ -1022,7 +1022,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     void u32_deinterleave_bits(u32& x, u32& y, u32 value)
     {
         u64 v = ((u64(value) << 31) | value) & 0x5555555555555555;
@@ -1049,19 +1049,19 @@ namespace mango
         return ((value - 0x01010101) & ~value & 0x80808080) != 0;
     }
 
-    static inline
+    inline
     bool u32_is_power_of_two(u32 value)
     {
         return u32_clear_lsb(value) == 0;
     }
 
-    static inline
+    inline
     u32 u32_floor_power_of_two(u32 value)
     {
         return u32_extract_msb(value);
     }
 
-    static inline
+    inline
     u32 u32_ceil_power_of_two(u32 value)
     {
         const u32 mask = u32_mask_msb(value - 1);
@@ -1074,7 +1074,7 @@ namespace mango
         return (value < low) ? low : (high < value) ? high : value;
     }
 
-    static inline
+    inline
     bool u32_is_solid_mask(u32 mask)
     {
         u32 lsb = u32_extract_lsb(mask);
@@ -1144,13 +1144,13 @@ namespace mango
 
 #if defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
-    static inline
+    inline
     u64 u64_extract_lsb(u64 value)
     {
         return _blsi_u64(value);
     }
 
-    static inline
+    inline
     u64 u64_clear_lsb(u64 value)
     {
         return _blsr_u64(value);
@@ -1158,13 +1158,13 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u64 u64_extract_lsb(u64 value)
     {
         return value & (0 - value);
     }
 
-    static inline
+    inline
     u64 u64_clear_lsb(u64 value)
     {
         return value & (value - 1);
@@ -1174,7 +1174,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     int u64_tzcnt(u64 value)
     {
         return std::countr_zero(value);
@@ -1182,7 +1182,7 @@ namespace mango
 
 #elif defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
-    static inline
+    inline
     int u64_tzcnt(u64 value)
     {
         return int(_tzcnt_u64(value));
@@ -1190,7 +1190,7 @@ namespace mango
 
 #elif defined(__aarch64__) && !defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     int u64_tzcnt(u64 value)
     {
         value = __rbitll(value);
@@ -1199,7 +1199,7 @@ namespace mango
 
 #elif defined(__GNUC__)
 
-    static inline
+    inline
     int u64_tzcnt(u64 value)
     {
         return __builtin_ctzll(value);
@@ -1207,7 +1207,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     int u64_tzcnt(u64 value)
     {
         const u64 lsb = u64_extract_lsb(value);
@@ -1225,7 +1225,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     u64 u64_mask_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1234,7 +1234,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u64 u64_extract_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1242,7 +1242,7 @@ namespace mango
         return value ? u64(1) << (63 - std::countl_zero(value)) : 0;
     }
 
-    static inline
+    inline
     int u64_lzcnt(u64 value)
     {
         return int(std::countl_zero(value));
@@ -1250,7 +1250,7 @@ namespace mango
 
 #elif defined(__LZCNT__) && defined(MANGO_CPU_64BIT)
 
-    static inline
+    inline
     u64 u64_mask_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1259,7 +1259,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u64 u64_extract_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1267,7 +1267,7 @@ namespace mango
         return value ? u64(1) << (63 - _lzcnt_u64(value)) : 0;
     }
 
-    static inline
+    inline
     int u64_lzcnt(u64 value)
     {
         return int(_lzcnt_u64(value));
@@ -1275,7 +1275,7 @@ namespace mango
 
 #elif defined(__ARM_FEATURE_CLZ) && !defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     u64 u64_mask_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1284,7 +1284,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u64 u64_extract_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1292,7 +1292,7 @@ namespace mango
         return value ? u64(1) << (63 - __clzll(value)) : 0;
     }
 
-    static inline
+    inline
     int u64_lzcnt(u64 value)
     {
         return int(__clzll(value));
@@ -1300,7 +1300,7 @@ namespace mango
 
 #elif defined(__GNUC__)
 
-    static inline
+    inline
     u64 u64_mask_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1309,7 +1309,7 @@ namespace mango
         return value ? mask | (mask - 1) : 0;
     }
 
-    static inline
+    inline
     u64 u64_extract_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1317,7 +1317,7 @@ namespace mango
         return value ? u64(1) << (63 - __builtin_clzll(value)) : 0;
     }
 
-    static inline
+    inline
     int u64_lzcnt(u64 value)
     {
         return int(__builtin_clzll(value));
@@ -1325,7 +1325,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u64 u64_mask_msb(u64 value)
     {
         value |= value >> 1;
@@ -1337,7 +1337,7 @@ namespace mango
         return value;
     }
 
-    static inline
+    inline
     u64 u64_extract_msb(u64 value)
     {
         // value:  0001xxxxxxxx
@@ -1346,7 +1346,7 @@ namespace mango
         return value ^ (value >> 1);
     }
 
-    static inline
+    inline
     int u64_lzcnt(u64 value)
     {
         const u64 mask = u64_mask_msb(value);
@@ -1364,7 +1364,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     int u64_log2(u64 value)
     {
         // NOTE: value 0 is undefined
@@ -1373,7 +1373,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     int u64_log2(u64 value)
     {
         // NOTE: value 0 is undefined
@@ -1384,7 +1384,7 @@ namespace mango
 
 #if defined(__aarch64__) && !defined(MANGO_COMPILER_GCC)
 
-    static inline
+    inline
     u64 u64_reverse_bits(u64 value)
     {
         return __rbitll(value);
@@ -1392,7 +1392,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u64 u64_reverse_bits(u64 value)
     {
 #if defined(MANGO_CPU_64BIT)
@@ -1416,7 +1416,7 @@ namespace mango
 
 #if MANGO_CPP_VERSION >= 20
 
-    static inline
+    inline
     int u64_popcnt(u64 value)
     {
         return std::popcount(value);
@@ -1424,7 +1424,7 @@ namespace mango
 
 #elif defined(__POPCNT__)
 
-    static inline
+    inline
     int u64_popcnt(u64 value)
     {
     #if defined(MANGO_CPU_64BIT)
@@ -1439,7 +1439,7 @@ namespace mango
 
 #elif defined(__GNUC__)
 
-    static inline
+    inline
     int u64_popcnt(u64 value)
     {
         return __builtin_popcountll(value);
@@ -1447,7 +1447,7 @@ namespace mango
 
 #elif defined(__aarch64__)
 
-    static inline
+    inline
     int u64_popcnt(u64 value)
     {
         uint8x8_t count = vcnt_u8(vcreate_u8(value));
@@ -1456,7 +1456,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     int u64_popcnt(u64 value)
     {
         const u64 c = 0x3333333333333333u;
@@ -1470,7 +1470,7 @@ namespace mango
 
 #if defined(__BMI__) && defined(MANGO_CPU_64BIT)
 
-    static inline
+    inline
     u64 u64_extract_bits(u64 value, u32 offset, u32 size)
     {
         return _bextr_u64(value, offset, size);
@@ -1507,7 +1507,7 @@ namespace mango
 
 #if defined(__BMI2__) && defined(MANGO_CPU_64BIT)
 
-    static inline
+    inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
         // NOTE: Emulated in microcode on AMD Zen
@@ -1518,7 +1518,7 @@ namespace mango
 
 #elif defined(__ARM_FEATURE_CRYPTO)
 
-    static inline
+    inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
         poly64_t a = x;
@@ -1530,7 +1530,7 @@ namespace mango
 
 #elif defined(__PCLMUL__) && defined(MANGO_ENABLE_SSE4_2)
 
-    static inline
+    inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
         __m128i value = _mm_set_epi64x(x, y);
@@ -1541,7 +1541,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     u64 u64_interleave_bits(u64 x, u64 y)
     {
         x = (x | (x << 16)) & 0x0000ffff0000ffff;
@@ -1573,7 +1573,7 @@ namespace mango
 
 #if defined(__BMI2__) && defined(MANGO_CPU_64BIT)
 
-    static inline
+    inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
         // NOTE: Emulated in microcode on AMD Zen
@@ -1583,7 +1583,7 @@ namespace mango
 
 #else
 
-    static inline
+    inline
     void u64_deinterleave_bits(u64& x, u64& y, u64 value)
     {
         x = value & 0x5555555555555555;
@@ -1616,19 +1616,19 @@ namespace mango
         return (~value & (value - 0x0101010101010101) & 0x8080808080808080) != 0;
     }
 
-    static inline
+    inline
     bool u64_is_power_of_two(u64 value)
     {
         return u64_clear_lsb(value) == 0;
     }
 
-    static inline
+    inline
     u64 u64_floor_power_of_two(u64 value)
     {
         return u64_extract_msb(value);
     }
 
-    static inline
+    inline
     u64 u64_ceil_power_of_two(u64 value)
     {
         const u64 mask = u64_mask_msb(value - 1);
@@ -1641,7 +1641,7 @@ namespace mango
         return (value < low) ? low : (high < value) ? high : value;
     }
 
-    static inline
+    inline
     bool u64_is_solid_mask(u64 mask)
     {
         u64 lsb = u64_extract_lsb(mask);
