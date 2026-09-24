@@ -154,11 +154,17 @@ namespace
         u32 number_of_inks = 4;
         u32 dot_range = 2;
 
+        u16 gray_response_unit = 2;
+
         // Chromaticity support
+        bool has_primary_chromaticities = false;
         float32x2 white_point;
         float32x2 red_primary;
         float32x2 green_primary;
         float32x2 blue_primary;
+
+        std::vector<u16> transfer_function;
+        std::vector<u16> gray_response_curve;
 
         // compression 6: JPEG_LEGACY
         u32 jpeg_proc = 0;
@@ -752,6 +758,33 @@ namespace
             TIFF_CASE_UNSIGNED(InkSet, ink_set);
             TIFF_CASE_UNSIGNED(NumberOfInks, number_of_inks);
             TIFF_CASE_UNSIGNED(DotRange, dot_range);
+            TIFF_CASE_UNSIGNED(GrayResponseUnit, gray_response_unit);
+
+            case Tag::GrayResponseCurve:
+            {
+                std::vector<u64> values = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                context.gray_response_curve.resize(values.size());
+                for (size_t i = 0; i < values.size(); ++i)
+                {
+                    context.gray_response_curve[i] = u16(values[i]);
+                }
+                printLine(Print::Debug, "    [GrayResponseCurve]");
+                printLine(Print::Debug, "      entries: {}", context.gray_response_curve.size());
+                break;
+            }
+
+            case Tag::TransferFunction:
+            {
+                std::vector<u64> values = getUnsignedArray(p, memory, type, count, is_big_tiff);
+                context.transfer_function.resize(values.size());
+                for (size_t i = 0; i < values.size(); ++i)
+                {
+                    context.transfer_function[i] = u16(values[i]);
+                }
+                printLine(Print::Debug, "    [TransferFunction]");
+                printLine(Print::Debug, "      entries: {}", context.transfer_function.size());
+                break;
+            }
 
             case Tag::InkNames:
                 context.ink_names = getAscii(p, memory, type, is_big_tiff);
@@ -834,9 +867,13 @@ namespace
             case Tag::PrimaryChromaticities:
             {
                 std::vector<float> values = getRationalArray(p, memory, type, count, is_big_tiff);
-                context.red_primary = float32x2(values[0], values[1]);
-                context.green_primary = float32x2(values[2], values[3]);
-                context.blue_primary = float32x2(values[4], values[5]);
+                if (values.size() >= 6)
+                {
+                    context.has_primary_chromaticities = true;
+                    context.red_primary = float32x2(values[0], values[1]);
+                    context.green_primary = float32x2(values[2], values[3]);
+                    context.blue_primary = float32x2(values[4], values[5]);
+                }
                 printLine(Print::Debug, "    [PrimaryChromaticities]");
                 printLine(Print::Debug, "      red primary: {}, {}", float(context.red_primary.x), float(context.red_primary.y));
                 printLine(Print::Debug, "      green primary: {}, {}", float(context.green_primary.x), float(context.green_primary.y));
@@ -1970,6 +2007,103 @@ namespace
         Z0 = (1.0f - wx - wy) / wy * Y0;
     }
 
+    static u32 tiff_transfer_table_size(const IFDContext& ctx)
+    {
+        if (!ctx.sample_bits || ctx.sample_bits > 8)
+        {
+            return 0;
+        }
+
+        return 1u << ctx.sample_bits;
+    }
+
+    static bool tiff_has_transfer_lut(const IFDContext& ctx)
+    {
+        const u32 table_size = tiff_transfer_table_size(ctx);
+        if (!table_size)
+        {
+            return false;
+        }
+
+        if (!ctx.transfer_function.empty())
+        {
+            const u32 tables =
+                ctx.photometric == u32(PhotometricInterpretation::RGB) ? 3u : 1u;
+            if (ctx.transfer_function.size() >= size_t(tables) * table_size)
+            {
+                return true;
+            }
+        }
+
+        if (ctx.gray_response_curve.size() >= table_size &&
+            (ctx.photometric == u32(PhotometricInterpretation::WHITE_IS_ZERO) ||
+             ctx.photometric == u32(PhotometricInterpretation::BLACK_IS_ZERO)))
+        {
+            return true;
+        }
+
+        return false;
+    }
+
+    static u16 tiff_transfer_lut_entry(const IFDContext& ctx, u32 channel, u32 index)
+    {
+        const u32 table_size = tiff_transfer_table_size(ctx);
+        if (!table_size || index >= table_size)
+        {
+            return u16(index) << 8;
+        }
+
+        if (!ctx.transfer_function.empty())
+        {
+            const size_t lut_index = size_t(channel) * table_size + index;
+            if (lut_index < ctx.transfer_function.size())
+            {
+                return ctx.transfer_function[lut_index];
+            }
+        }
+
+        if (index < ctx.gray_response_curve.size())
+        {
+            return ctx.gray_response_curve[index];
+        }
+
+        return u16(index) << 8;
+    }
+
+    static void tiff_apply_transfer_lut(u8* data, size_t count, const IFDContext& ctx, u32 samples_per_pixel)
+    {
+        if (!tiff_has_transfer_lut(ctx) || !samples_per_pixel)
+        {
+            return;
+        }
+
+        const u32 table_size = tiff_transfer_table_size(ctx);
+        if (!table_size)
+        {
+            return;
+        }
+
+        if (samples_per_pixel == 1)
+        {
+            for (size_t i = 0; i < count; ++i)
+            {
+                data[i] = u8(tiff_transfer_lut_entry(ctx, 0, data[i]) >> 8);
+            }
+            return;
+        }
+
+        const u32 color_channels = std::min(samples_per_pixel, 3u);
+        const size_t pixels = count / samples_per_pixel;
+        for (size_t p = 0; p < pixels; ++p)
+        {
+            u8* pixel = data + p * samples_per_pixel;
+            for (u32 c = 0; c < color_channels; ++c)
+            {
+                pixel[c] = u8(tiff_transfer_lut_entry(ctx, c, pixel[c]) >> 8);
+            }
+        }
+    }
+
     struct Interface : ImageDecodeInterface
     {
         ConstMemory m_memory;
@@ -2093,22 +2227,138 @@ namespace
                    m_context.strip_byte_counts.size() == expected;
         }
 
-        bool suppress_icc_after_decode() const
+        bool shouldApplyCmykIcc() const
         {
-            // Decoded pixels are already display RGBA; don't apply source-space ICC profiles.
+            if (!m_context.icc_profile.size)
+            {
+                return false;
+            }
+
             if (m_context.compression == u32(Compression::JPEG_LEGACY) ||
                 m_context.compression == u32(Compression::JPEG_MODERN))
             {
-                if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) ||
-                    m_context.photometric == u32(PhotometricInterpretation::YCBCR))
+                return false;
+            }
+
+            return m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
+                   m_context.samples_per_pixel == 4 &&
+                   m_context.sample_bits <= 8;
+        }
+
+        static bool decodedToDisplaySrgb(const IFDContext& ctx)
+        {
+            // Pixels are already display-referred sRGB RGBA; do not apply source ICC again.
+            if (ctx.compression == u32(Compression::JPEG_LEGACY) ||
+                ctx.compression == u32(Compression::JPEG_MODERN))
+            {
+                if (ctx.photometric == u32(PhotometricInterpretation::SEPARATED) ||
+                    ctx.photometric == u32(PhotometricInterpretation::YCBCR))
                 {
                     return true;
                 }
             }
 
-            return m_context.photometric == u32(PhotometricInterpretation::CIELAB) ||
-                   m_context.photometric == u32(PhotometricInterpretation::ICCLAB) ||
-                   m_context.photometric == u32(PhotometricInterpretation::ITULAB);
+            if (ctx.photometric == u32(PhotometricInterpretation::CIELAB) ||
+                ctx.photometric == u32(PhotometricInterpretation::ICCLAB) ||
+                ctx.photometric == u32(PhotometricInterpretation::ITULAB))
+            {
+                return true;
+            }
+
+            if (ctx.photometric == u32(PhotometricInterpretation::YCBCR) &&
+                ctx.samples_per_pixel == 3)
+            {
+                return true;
+            }
+
+            if (ctx.photometric == u32(PhotometricInterpretation::SEPARATED) &&
+                ctx.samples_per_pixel == 4)
+            {
+                return true;
+            }
+
+            if (tiff_has_transfer_lut(ctx) &&
+                (ctx.photometric == u32(PhotometricInterpretation::WHITE_IS_ZERO) ||
+                 ctx.photometric == u32(PhotometricInterpretation::BLACK_IS_ZERO) ||
+                 ctx.photometric == u32(PhotometricInterpretation::RGB)))
+            {
+                return true;
+            }
+
+            return false;
+        }
+
+        void resolveColorInfoFromContext(const IFDContext& ctx, bool display_srgb)
+        {
+            ColorInfo& color = header.color;
+            color.has_chromaticities = false;
+            color.gamma = 0.0f;
+            color.primaries = ColorPrimaries::BT709;
+            color.transfer = TransferFunction::sRGB;
+            header.linear = false;
+
+            if (display_srgb)
+            {
+                color.primaries = ColorPrimaries::BT709;
+                color.transfer = TransferFunction::sRGB;
+                header.linear = false;
+                return;
+            }
+
+            if (ctx.icc_profile.size)
+            {
+                color.primaries = ColorPrimaries::Unspecified;
+                color.transfer = TransferFunction::Unspecified;
+                header.linear = false;
+                return;
+            }
+
+            if (ctx.photometric == u32(PhotometricInterpretation::LOGL) ||
+                ctx.photometric == u32(PhotometricInterpretation::LOGLUV) ||
+                ctx.compression == u32(Compression::PIXARLOG))
+            {
+                color.primaries = ColorPrimaries::Unspecified;
+                color.transfer = TransferFunction::Linear;
+                header.linear = true;
+                return;
+            }
+
+            if (header.format.isFloat())
+            {
+                color.primaries = ColorPrimaries::Unspecified;
+                color.transfer = TransferFunction::Linear;
+                header.linear = true;
+                return;
+            }
+
+            if (ctx.has_primary_chromaticities)
+            {
+                color.has_chromaticities = true;
+                if (ctx.white_point.y > 0.0f)
+                {
+                    color.white = { ctx.white_point.x, ctx.white_point.y };
+                }
+                else
+                {
+                    color.white = { 0.3127f, 0.3290f };
+                }
+                color.red   = { ctx.red_primary.x, ctx.red_primary.y };
+                color.green = { ctx.green_primary.x, ctx.green_primary.y };
+                color.blue  = { ctx.blue_primary.x, ctx.blue_primary.y };
+                color.primaries = identifyPrimaries(color.white, color.red, color.green, color.blue);
+            }
+            else if (ctx.white_point.y > 0.0f)
+            {
+                color.has_chromaticities = true;
+                color.white = { ctx.white_point.x, ctx.white_point.y };
+            }
+
+            if (tiff_has_transfer_lut(ctx))
+            {
+                color.transfer = TransferFunction::Unspecified;
+            }
+
+            header.linear = color.isLinear();
         }
 
         u64 tile_data_offset(size_t i) const
@@ -2249,18 +2499,8 @@ namespace
                 header.palette = int(m_context.palette.size);
             }
 
-            icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
-
-            if (m_context.icc_profile.size)
-            {
-                header.color.primaries = ColorPrimaries::Unspecified;
-                header.color.transfer = TransferFunction::Unspecified;
-            }
-            else if (header.format.isFloat())
-            {
-                header.linear = true;
-                header.color.transfer = TransferFunction::Linear;
-            }
+            icc = decodedToDisplaySrgb(m_context) ? ConstMemory() : m_context.icc_profile;
+            resolveColorInfoFromContext(m_context, decodedToDisplaySrgb(m_context));
         }
 
         // Parse one IFD at offset; returns next-IFD offset (0 = end). On failure, header has error.
@@ -2823,15 +3063,27 @@ namespace
             }
             else if (m_context.photometric == u32(PhotometricInterpretation::SEPARATED) &&
                      m_context.planar_configuration == 2 &&
-                     m_context.samples_per_pixel == 4)
+                     m_context.samples_per_pixel == 4 &&
+                     !shouldApplyCmykIcc())
             {
                 convertSeparatedPlanarCmykInBufferToRgba(target, header.width, header.height);
             }
 
             target.resolve();
 
-            // Store ICC profile into the ImageDecodeInterface
-            icc = suppress_icc_after_decode() ? ConstMemory() : m_context.icc_profile;
+            bool display_srgb = decodedToDisplaySrgb(m_context);
+
+            if (shouldApplyCmykIcc())
+            {
+                Surface cmyk_surface(const_cast<Surface&>(dest));
+                if (jpeg::transform_cmyk_surface_to_srgb(cmyk_surface, m_context.icc_profile, true))
+                {
+                    display_srgb = true;
+                }
+            }
+
+            icc = display_srgb ? ConstMemory() : m_context.icc_profile;
+            resolveColorInfoFromContext(m_context, display_srgb);
 
             status.current_frame_index = int(frame_index);
             if (header.frames > 1)
@@ -4256,6 +4508,21 @@ namespace
                 }
             }
 
+            if (m_context.sample_bits <= 8)
+            {
+                const u32 spp = m_context.planar_configuration == 2
+                    ? 1u
+                    : m_context.samples_per_pixel;
+
+                if (spp == 1 ||
+                    m_context.photometric == u32(PhotometricInterpretation::RGB) ||
+                    m_context.photometric == u32(PhotometricInterpretation::WHITE_IS_ZERO) ||
+                    m_context.photometric == u32(PhotometricInterpretation::BLACK_IS_ZERO))
+                {
+                    tiff_apply_transfer_lut(const_cast<u8*>(memory.address), memory.size, m_context, spp);
+                }
+            }
+
             // RGB can be decoded directly, other formats need to be resolved.
             // RGBA (4 samples) used to force the u8 repack path below — wrong for float/half
             // where scanline bytes must be copied as-is into the destination surface.
@@ -4490,6 +4757,7 @@ namespace
                         // Chunky CMYK: full CMYK4 scanline (8 or 16 bits per sample after expand).
                         const u8* lookup = math::get_linear_to_srgb_table();
                         const u32 chunky_bpp = (m_context.samples_per_pixel * expanded_sample_bits) / 8;
+                        const bool cmyk_icc = shouldApplyCmykIcc();
 
                         size_t base = 0;
 
@@ -4497,19 +4765,29 @@ namespace
                         {
                             for (int x = 0; x < width; ++x)
                             {
-                                int C = 255 - scanline[base + 0];
-                                int M = 255 - scanline[base + 1];
-                                int Y = 255 - scanline[base + 2];
-                                int K = 255 - scanline[base + 3];
+                                if (cmyk_icc)
+                                {
+                                    target.image[x * 4 + 0] = scanline[base + 0];
+                                    target.image[x * 4 + 1] = scanline[base + 1];
+                                    target.image[x * 4 + 2] = scanline[base + 2];
+                                    target.image[x * 4 + 3] = scanline[base + 3];
+                                }
+                                else
+                                {
+                                    int C = 255 - scanline[base + 0];
+                                    int M = 255 - scanline[base + 1];
+                                    int Y = 255 - scanline[base + 2];
+                                    int K = 255 - scanline[base + 3];
 
-                                int R = (C * K + 127) / 255;
-                                int G = (M * K + 127) / 255;
-                                int B = (Y * K + 127) / 255;
+                                    int R = (C * K + 127) / 255;
+                                    int G = (M * K + 127) / 255;
+                                    int B = (Y * K + 127) / 255;
 
-                                target.image[x * 4 + 0] = lookup[R];
-                                target.image[x * 4 + 1] = lookup[G];
-                                target.image[x * 4 + 2] = lookup[B];
-                                target.image[x * 4 + 3] = 0xff;
+                                    target.image[x * 4 + 0] = lookup[R];
+                                    target.image[x * 4 + 1] = lookup[G];
+                                    target.image[x * 4 + 2] = lookup[B];
+                                    target.image[x * 4 + 3] = 0xff;
+                                }
 
                                 base += chunky_bpp;
                             }
