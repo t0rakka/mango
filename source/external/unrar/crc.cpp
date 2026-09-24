@@ -150,7 +150,6 @@ uint CRC32(uint StartCRC,const void *Addr,size_t Size)
 }
 
 
-#ifndef SFX_MODULE
 // For RAR 1.4 archives in case somebody still has them.
 ushort Checksum14(ushort StartCRC,const void *Addr,size_t Size)
 {
@@ -162,7 +161,6 @@ ushort Checksum14(ushort StartCRC,const void *Addr,size_t Size)
   }
   return StartCRC;
 }
-#endif
 
 
 

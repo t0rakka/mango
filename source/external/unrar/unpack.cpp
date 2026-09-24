@@ -7,11 +7,9 @@
 #ifdef RAR_SMP
 #include "unpack50mt.cpp"
 #endif
-#ifndef SFX_MODULE
 #include "unpack15.cpp"
 #include "unpack20.cpp"
 #include "unpack30.cpp"
-#endif
 #include "unpack50.cpp"
 #include "unpack50frag.cpp"
 
@@ -38,19 +36,15 @@ Unpack::Unpack(ComprDataIO *DataIO)
   // It prevents crash if first unpacked file has the wrong "true" Solid flag,
   // so first DoUnpack call is made with the wrong "true" Solid value later.
   UnpInitData(false);
-#ifndef SFX_MODULE
   // RAR 1.5 decompression initialization
   UnpInitData15(false);
   InitHuff();
-#endif
 }
 
 
 Unpack::~Unpack()
 {
-#ifndef SFX_MODULE
   InitFilters30(false);
-#endif
 
   Alloc.delete_l<byte>(Window); // delete Window;
 #ifdef RAR_SMP
@@ -164,7 +158,6 @@ void Unpack::DoUnpack(uint Method,bool Solid)
   // just for extra safety.
   switch(Method)
   {
-#ifndef SFX_MODULE
     case 15: // RAR 1.5 compression.
       if (!Fragmented)
         Unpack15(Solid);
@@ -178,7 +171,6 @@ void Unpack::DoUnpack(uint Method,bool Solid)
       if (!Fragmented)
         Unpack29(Solid);
       break;
-#endif
     case VER_PACK5: // 50. RAR 5.0 and 7.0 compression algorithms.
     case VER_PACK7: // 70.
       ExtraDist=(Method==VER_PACK7);
@@ -232,10 +224,8 @@ void Unpack::UnpInitData(bool Solid)
 
   memset(&BlockHeader,0,sizeof(BlockHeader));
   BlockHeader.BlockSize=-1;  // '-1' means not defined yet.
-#ifndef SFX_MODULE
   UnpInitData20(Solid);
   UnpInitData30(Solid);
-#endif
   UnpInitData50(Solid);
 }
 

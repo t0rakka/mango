@@ -83,10 +83,8 @@ void DataHash::Init(HASH_TYPE Type,uint MaxThreads)
 
 void DataHash::Update(const void *Data,size_t DataSize)
 {
-#ifndef SFX_MODULE
   if (HashType==HASH_RAR14)
     CurCRC32=Checksum14((ushort)CurCRC32,Data,DataSize);
-#endif
   if (HashType==HASH_CRC32)
   {
 #ifdef RAR_SMP
