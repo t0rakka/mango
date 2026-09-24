@@ -1,11 +1,14 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <mango/mango.hpp>
 
 using namespace mango;
 using namespace mango::filesystem;
+
+// Enable write mode; with small changes this program could become decompressor utility.
+static bool enable_write = false;
 
 static inline
 std::string tabs(int depth)
@@ -41,6 +44,13 @@ void enumerateDirectory(const Path& path, std::string prefix, int depth)
         {
             printLine("{}- {} ({} KB)", tabs(depth), node.name, node.size / 1024);
             ++g_file_count;
+
+            if (enable_write)
+            {
+                File input(path, node.name);
+                OutputFileStream output(node.name);
+                output.write(input);
+            }
         }
     }
 }

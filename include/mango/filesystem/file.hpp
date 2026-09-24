@@ -63,6 +63,11 @@ namespace mango::filesystem
 
         const std::string& filename() const;
 
+        void write(ConstMemory memory)
+        {
+            write(memory.address, memory.size);
+        }
+
         // interface
         u64 size() const override;
         u64 offset() const override;
