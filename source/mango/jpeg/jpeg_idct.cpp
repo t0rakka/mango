@@ -418,7 +418,7 @@ namespace mango::image::jpeg
             r_xmm3 = _mm_mulhi_epi16(r_xmm3, row2);
             r_xmm5 = _mm_subs_epi16(r_xmm5, row7);
             r_xmm4 = _mm_adds_epi16(r_xmm4, row1);
-            r_xmm2 = _mm_subs_epi16(r_xmm2, r_xmm1);
+            r_xmm2 = _mm_subs_epi16(row5, r_xmm1);
             r_xmm1 = _mm_adds_epi16(r_xmm0, r_xmm4);
             r_xmm1 = _mm_adds_epi16(r_xmm1, one);
             r_xmm4 = _mm_subs_epi16(r_xmm4, r_xmm0);
@@ -717,7 +717,7 @@ namespace mango::image::jpeg
             r_xmm3 = _mm256_mulhi_epi16(r_xmm3, row2);
             r_xmm5 = _mm256_subs_epi16(r_xmm5, row7);
             r_xmm4 = _mm256_adds_epi16(r_xmm4, row1);
-            r_xmm2 = _mm256_subs_epi16(r_xmm2, r_xmm1);
+            r_xmm2 = _mm256_subs_epi16(row5, r_xmm1);
             r_xmm1 = _mm256_adds_epi16(r_xmm0, r_xmm4);
             r_xmm1 = _mm256_adds_epi16(r_xmm1, one);
             r_xmm4 = _mm256_subs_epi16(r_xmm4, r_xmm0);
@@ -1049,7 +1049,7 @@ namespace mango::image::jpeg
             r_xmm3 = _mm512_mulhi_epi16(r_xmm3, row2);
             r_xmm5 = _mm512_subs_epi16(r_xmm5, row7);
             r_xmm4 = _mm512_adds_epi16(r_xmm4, row1);
-            r_xmm2 = _mm512_subs_epi16(r_xmm2, r_xmm1);
+            r_xmm2 = _mm512_subs_epi16(row5, r_xmm1);
             r_xmm1 = _mm512_adds_epi16(r_xmm0, r_xmm4);
             r_xmm1 = _mm512_adds_epi16(r_xmm1, one);
             r_xmm4 = _mm512_subs_epi16(r_xmm4, r_xmm0);
