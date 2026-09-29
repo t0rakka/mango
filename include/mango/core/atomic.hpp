@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2021 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -8,28 +8,105 @@
 #include <thread>
 #include <mango/core/configure.hpp>
 
+#if defined(MANGO_CPU_INTEL) && defined(MANGO_COMPILER_MSVC)
+    #include <intrin.h>
+#endif
+
+#if defined(MANGO_CPU_ARM) && defined(MANGO_COMPILER_MSVC)
+    #if defined(_M_ARM64)
+        #include <arm64intr.h>
+    #elif defined(_M_ARM)
+        #include <armintr.h>
+    #endif
+#endif
+
 namespace mango
 {
 
     // ----------------------------------------------------------------------------
     // pause()
     // ----------------------------------------------------------------------------
+    //
+    // Architecture-specific spin-wait hint for contended atomics (see SpinLock).
+    // Falls back to std::this_thread::yield() only when no suitable hint exists.
 
     inline
     void pause()
     {
 #if defined(MANGO_CPU_INTEL)
-    #if defined(MANGO_COMPILER_CLANG) || defined(MANGO_COMPILER_MSVC)
-        _mm_pause();
-    #else
-        __builtin_ia32_pause();
-    #endif
+
+        #if defined(MANGO_COMPILER_MSVC)
+            _mm_pause();
+        #elif defined(__has_builtin)
+            #if __has_builtin(__builtin_ia32_pause)
+                __builtin_ia32_pause();
+            #else
+                __asm__ __volatile__("pause" ::: "memory");
+            #endif
+        #else
+            __builtin_ia32_pause();
+        #endif
+
 #elif defined(MANGO_CPU_ARM)
-        asm volatile ("yield");
+
+        #if defined(MANGO_COMPILER_MSVC)
+            __yield();
+        #elif defined(__has_builtin)
+            #if __has_builtin(__builtin_arm_yield)
+                __builtin_arm_yield();
+            #elif defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 7)
+                __asm__ __volatile__("yield" ::: "memory");
+            #else
+                __asm__ __volatile__("nop" ::: "memory");
+            #endif
+        #elif defined(__aarch64__) || (defined(__ARM_ARCH) && __ARM_ARCH >= 7)
+            __asm__ __volatile__("yield" ::: "memory");
+        #else
+            __asm__ __volatile__("nop" ::: "memory");
+        #endif
+
+#elif defined(MANGO_CPU_PPC)
+
+        #if defined(__has_builtin) && __has_builtin(__builtin_ppc_yield)
+            __builtin_ppc_yield();
+        #else
+            // POWER thread-yield hint (Linux kernel cpu_relax); safe on older cores as a lightweight barrier.
+            __asm__ __volatile__("or 1,1,1" ::: "memory");
+        #endif
+
 #elif defined(MANGO_CPU_MIPS)
-        __asm__ __volatile__("pause");
+
+        #if ((defined(__mips_isa_rev) && __mips_isa_rev >= 2) || \
+             (defined(_MIPS_ISA_REV) && _MIPS_ISA_REV >= 2))
+            __asm__ __volatile__("pause" ::: "memory");
+        #else
+            __asm__ __volatile__("nop" ::: "memory");
+        #endif
+
+#elif defined(MANGO_CPU_RISCV)
+
+        #if defined(__has_builtin) && __has_builtin(__builtin_riscv_pause)
+            __builtin_riscv_pause();
+        #else
+            __asm__ __volatile__("nop" ::: "memory");
+        #endif
+
+#elif defined(MANGO_CPU_SPARC)
+
+        __asm__ __volatile__("membar #LoadLoad | #LoadStore" ::: "memory");
+
+#elif defined(MANGO_CPU_ALPHA)
+
+        __asm__ __volatile__("" ::: "memory");
+
+#elif defined(MANGO_CPU_M68K)
+
+        __asm__ __volatile__("nop" ::: "memory");
+
 #else
+
         std::this_thread::yield();
+
 #endif
     }
 
@@ -41,6 +118,10 @@ namespace mango
        Atomic locks are implemented as busy loops which potentially consume
        significant amounts of CPU time.
     */
+
+    // Contended spin-lock strategy (acquire/release ordering, test-and-test-and-set,
+    // exponential backoff) after David Álvarez Rosa:
+    // https://david.alvarezrosa.com/posts/optimizing-a-spin-lock/
 
     class SpinLock
     {
@@ -56,12 +137,18 @@ namespace mango
 
         void lock()
         {
-            while(m_locked.exchange(true, std::memory_order_acquire))
+            int backoff = 1;
+            while (m_locked.exchange(true, std::memory_order_acquire))
             {
-                while (m_locked.load(std::memory_order_relaxed))
+                do
                 {
-                    pause();
+                    for (int i = 0; i < backoff; ++i)
+                    {
+                        pause();
+                    }
+                    backoff = backoff < 64 ? backoff << 1 : 64;
                 }
+                while (m_locked.load(std::memory_order_relaxed));
             }
         }
 
