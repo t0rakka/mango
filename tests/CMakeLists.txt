@@ -10,6 +10,7 @@ endif ()
 
 set(MANGO_TESTS
     cache
+    ring_buffer
     threads
     pathtest
     filesystem_path
