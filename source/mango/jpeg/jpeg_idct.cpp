@@ -1176,6 +1176,22 @@ namespace mango::image::jpeg
         15137, 5315, -26722, -15137, 5315, 22654, 22654, -26722
     };
 
+    // SSE PSHUFLW/H imm 0xd8: swap int16 lanes 1<->2 in low / high 64-bit half.
+    static const uint8x16_t perm_swap_i16_12_low  = { 0,1,4,5,2,3,6,7, 8,9,10,11,12,13,14,15 };
+    static const uint8x16_t perm_swap_i16_12_high = { 0,1,2,3,4,5,6,7, 8,9,12,13,10,11,14,15 };
+
+    static inline
+    int16x8_t shuffle_swap_i16_12_low(int16x8_t a)
+    {
+        return vreinterpretq_s16_u8(vqtbl1q_u8(vreinterpretq_u8_s16(a), perm_swap_i16_12_low));
+    }
+
+    static inline
+    int16x8_t shuffle_swap_i16_12_high(int16x8_t a)
+    {
+        return vreinterpretq_s16_u8(vqtbl1q_u8(vreinterpretq_u8_s16(a), perm_swap_i16_12_high));
+    }
+
 #if defined(__aarch64__)
 
     template <unsigned int Index>
@@ -1185,8 +1201,9 @@ namespace mango::image::jpeg
         return vreinterpretq_s16_u32(vdupq_laneq_u32(vreinterpretq_u32_s16(a), Index));
     }
 
+    // SSE PMADDWD: multiply adjacent int16 lanes and pairwise-sum to int32.
     static inline
-    int32x4_t madd_epi16(int16x8_t a, int16x8_t b)
+    int32x4_t pmadd_i16_pairs(int16x8_t a, int16x8_t b)
     {
         int32x4_t low = vmull_s16(vget_low_s16(a), vget_low_s16(b));
         int32x4_t high = vmull_high_s16(a, b);
@@ -1204,7 +1221,7 @@ namespace mango::image::jpeg
     }
 
     static inline
-    int32x4_t madd_epi16(int16x8_t a, int16x8_t b)
+    int32x4_t pmadd_i16_pairs(int16x8_t a, int16x8_t b)
     {
         int32x4_t low = vmull_s16(vget_low_s16(a), vget_low_s16(b));
         int32x4_t high = vmull_s16(vget_high_s16(a), vget_high_s16(b));
@@ -1232,26 +1249,6 @@ namespace mango::image::jpeg
     {
         a = vrev64q_s32(a);
         a = vcombine_s32(vget_high_s32(a), vget_low_s32(a));
-        return a;
-    }
-
-    static inline
-    int16x8_t shufflelo(int16x8_t a)
-    {
-        s16 v1 = vgetq_lane_s16(a, 1);
-        s16 v2 = vgetq_lane_s16(a, 2);
-        a = vsetq_lane_s16(v1, a, 2);
-        a = vsetq_lane_s16(v2, a, 1);
-        return a;
-    }
-
-    static inline
-    int16x8_t shufflehi(int16x8_t a)
-    {
-        s16 v5 = vgetq_lane_s16(a, 5);
-        s16 v6 = vgetq_lane_s16(a, 6);
-        a = vsetq_lane_s16(v5, a, 6);
-        a = vsetq_lane_s16(v6, a, 5);
         return a;
     }
 
@@ -1295,37 +1292,37 @@ namespace mango::image::jpeg
         const int16x8_t* table04 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_04);
         const int16x8_t* table26 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_26);
 
-        w0 = shufflelo(v0);
+        w0 = shuffle_swap_i16_12_low(v0);
         w1 = splat_epi32<0>(w0);
-        t1 = madd_epi16(w1, table04[0]);
+        t1 = pmadd_i16_pairs(w1, table04[0]);
         w3 = splat_epi32<1>(w0);
 
-        w0 = shufflehi(w0);
-        t3 = madd_epi16(w3, table04[2]);
+        w0 = shuffle_swap_i16_12_high(w0);
+        t3 = pmadd_i16_pairs(w3, table04[2]);
         w2 = splat_epi32<2>(w0);
         w0 = splat_epi32<3>(w0);
-        t2 = madd_epi16(w2, table04[1]);
+        t2 = pmadd_i16_pairs(w2, table04[1]);
 
         const int32x4_t round_inv_row = vdupq_n_s32(2048);
 
-        w4 = shufflehi(v2);
+        w4 = shuffle_swap_i16_12_high(v2);
         t1 = vaddq_s32(t1, round_inv_row);
-        w4 = shufflelo(w4);
-        t0 = madd_epi16(w0, table04[3]);
+        w4 = shuffle_swap_i16_12_low(w4);
+        t0 = pmadd_i16_pairs(w0, table04[3]);
         w5 = splat_epi32<0>(w4);
         w6 = splat_epi32<2>(w4);
-        t5 = madd_epi16(w5, table26[0]);
+        t5 = pmadd_i16_pairs(w5, table26[0]);
         t1 = vaddq_s32(t1, t2);
         w7 = splat_epi32<1>(w4);
-        t6 = madd_epi16(w6, table26[1]);
+        t6 = pmadd_i16_pairs(w6, table26[1]);
         t0 = vaddq_s32(t0, t3);
         w4 = splat_epi32<3>(w4);
         t2 = vsubq_s32(t1, t0);
-        t7 = madd_epi16(w7, table26[2]);
+        t7 = pmadd_i16_pairs(w7, table26[2]);
         t0 = vaddq_s32(t0, t1);
         t2 = vshrq_n_s32(t2, 12);
         t5 = vaddq_s32(t5, round_inv_row);
-        t4 = madd_epi16(w4, table26[3]);
+        t4 = pmadd_i16_pairs(w4, table26[3]);
         t5 = vaddq_s32(t5, t6);
         t6 = t5;
         t0 = vshrq_n_s32(t0, 12);
@@ -1342,34 +1339,34 @@ namespace mango::image::jpeg
 
         // row5 and row7
 
-        w0 = shufflelo(v4);
+        w0 = shuffle_swap_i16_12_low(v4);
         w1 = splat_epi32<0>(w0);
-        t1 = madd_epi16(w1, table04[0]);
+        t1 = pmadd_i16_pairs(w1, table04[0]);
         w3 = splat_epi32<1>(w0);
-        w0 = shufflehi(w0);
-        t3 = madd_epi16(w3, table04[2]);
+        w0 = shuffle_swap_i16_12_high(w0);
+        t3 = pmadd_i16_pairs(w3, table04[2]);
         w2 = splat_epi32<2>(w0);
         w0 = splat_epi32<3>(w0);
-        t2 = madd_epi16(w2, table04[1]);
-        w4 = shufflehi(v6);
+        t2 = pmadd_i16_pairs(w2, table04[1]);
+        w4 = shuffle_swap_i16_12_high(v6);
         t1 = vaddq_s32(t1, round_inv_row);
-        w4 = shufflelo(w4);
-        t0 = madd_epi16(w0, table04[3]);
+        w4 = shuffle_swap_i16_12_low(w4);
+        t0 = pmadd_i16_pairs(w0, table04[3]);
         w5 = splat_epi32<0>(w4);
         w6 = splat_epi32<2>(w4);
-        t5 = madd_epi16(w5, table26[0]);
+        t5 = pmadd_i16_pairs(w5, table26[0]);
         t1 = vaddq_s32(t1, t2);
         w7 = splat_epi32<1>(w4);
-        t6 = madd_epi16(w6, table26[1]);
+        t6 = pmadd_i16_pairs(w6, table26[1]);
         t0 = vaddq_s32(t0, t3);
         w4 = splat_epi32<3>(w4);
         t2 = vsubq_s32(t1, t0);
-        t7 = madd_epi16(w7, table26[2]);
+        t7 = pmadd_i16_pairs(w7, table26[2]);
         t0 = vaddq_s32(t0, t1);
 
         t2 = vshrq_n_s32(t2, 12);
         t5 = vaddq_s32(t5, round_inv_row);
-        t4 = madd_epi16(w4, table26[3]);
+        t4 = pmadd_i16_pairs(w4, table26[3]);
         t5 = vaddq_s32(t5, t6);
         t6 = t5;
         t0 = vshrq_n_s32(t0, 12);
@@ -1389,33 +1386,33 @@ namespace mango::image::jpeg
         const int16x8_t* table35 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_35);
         const int16x8_t* table17 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_17);
 
-        w0 = shufflelo(v3);
+        w0 = shuffle_swap_i16_12_low(v3);
         w1 = splat_epi32<0>(w0);
-        t1 = madd_epi16(w1, table35[0]);
+        t1 = pmadd_i16_pairs(w1, table35[0]);
         w3 = splat_epi32<1>(w0);
-        w0 = shufflehi(w0);
-        t3 = madd_epi16(w3, table35[2]);
+        w0 = shuffle_swap_i16_12_high(w0);
+        t3 = pmadd_i16_pairs(w3, table35[2]);
         w2 = splat_epi32<2>(w0);
         w0 = splat_epi32<3>(w0);
-        t2 = madd_epi16(w2, table35[1]);
-        w4 = shufflehi(v1);
+        t2 = pmadd_i16_pairs(w2, table35[1]);
+        w4 = shuffle_swap_i16_12_high(v1);
         t1 = vaddq_s32(t1, round_inv_row);
-        w4 = shufflelo(w4);
-        t0 = madd_epi16(w0, table35[3]);
+        w4 = shuffle_swap_i16_12_low(w4);
+        t0 = pmadd_i16_pairs(w0, table35[3]);
         w5 = splat_epi32<0>(w4);
         w6 = splat_epi32<2>(w4);
-        t5 = madd_epi16(w5, table17[0]);
+        t5 = pmadd_i16_pairs(w5, table17[0]);
         t1 = vaddq_s32(t1, t2);
         w7 = splat_epi32<1>(w4);
-        t6 = madd_epi16(w6, table17[1]);
+        t6 = pmadd_i16_pairs(w6, table17[1]);
         t0 = vaddq_s32(t0, t3);
         w4 = splat_epi32<3>(w4);
         t2 = vsubq_s32(t1, t0);
-        t7 = madd_epi16(w7, table17[2]);
+        t7 = pmadd_i16_pairs(w7, table17[2]);
         t0 = vaddq_s32(t0, t1);
         t2 = vshrq_n_s32(t2, 12);
         t5 = vaddq_s32(t5, round_inv_row);
-        t4 = madd_epi16(w4, table17[3]);
+        t4 = pmadd_i16_pairs(w4, table17[3]);
         t5 = vaddq_s32(t5, t6);
         t0 = vshrq_n_s32(t0, 12);
         t2 = rev_epi32(t2);
@@ -1431,33 +1428,33 @@ namespace mango::image::jpeg
 
         // row6 and row8
 
-        w0 = shufflelo(v5);
+        w0 = shuffle_swap_i16_12_low(v5);
         w1 = splat_epi32<0>(w0);
-        t1 = madd_epi16(w1, table35[0]);
+        t1 = pmadd_i16_pairs(w1, table35[0]);
         w3 = splat_epi32<1>(w0);
-        w0 = shufflehi(w0);
-        t3 = madd_epi16(w3, table35[2]);
+        w0 = shuffle_swap_i16_12_high(w0);
+        t3 = pmadd_i16_pairs(w3, table35[2]);
         w2 = splat_epi32<2>(w0);
         w0 = splat_epi32<3>(w0);
-        t2 = madd_epi16(w2, table35[1]);
-        w4 = shufflehi(v7);
+        t2 = pmadd_i16_pairs(w2, table35[1]);
+        w4 = shuffle_swap_i16_12_high(v7);
         t1 = vaddq_s32(t1, round_inv_row);
-        w4 = shufflelo(w4);
-        t0 = madd_epi16(w0, table35[3]);
+        w4 = shuffle_swap_i16_12_low(w4);
+        t0 = pmadd_i16_pairs(w0, table35[3]);
         w5 = splat_epi32<0>(w4);
         w6 = splat_epi32<2>(w4);
-        t5 = madd_epi16(w5, table17[0]);
+        t5 = pmadd_i16_pairs(w5, table17[0]);
         t1 = vaddq_s32(t1, t2);
         w7 = splat_epi32<1>(w4);
-        t6 = madd_epi16(w6, table17[1]);
+        t6 = pmadd_i16_pairs(w6, table17[1]);
         t0 = vaddq_s32(t0, t3);
         w4 = splat_epi32<3>(w4);
         t2 = vsubq_s32(t1, t0);
-        t7 = madd_epi16(w7, table17[2]);
+        t7 = pmadd_i16_pairs(w7, table17[2]);
         t0 = vaddq_s32(t0, t1);
         t2 = vshrq_n_s32(t2, 12);
         t5 = vaddq_s32(t5, round_inv_row);
-        t4 = madd_epi16(w4, table17[3]);
+        t4 = pmadd_i16_pairs(w4, table17[3]);
         t5 = vaddq_s32(t5, t6);
         t0 = vshrq_n_s32(t0, 12);
         t2 = rev_epi32(t2);
