@@ -840,6 +840,7 @@ namespace mango::image::jpeg
 #if defined(MANGO_ENABLE_NEON)
 
     void idct_neon                      (u8* dest, const s16* data, const s16* qt);
+    void idct_neon_n                    (u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count);
 
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x8_neon);
     JPEG_YCBCR_KERNEL(process_ycbcr_bgra_8x16_neon);

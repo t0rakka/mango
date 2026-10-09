@@ -2190,30 +2190,31 @@ namespace
 
 #if defined(MANGO_ENABLE_NEON)
 
+    static const int16x8_t ycbcr_c076 = vdupq_n_s16(76);
+    static const int16x8_t ycbcr_c151 = vdupq_n_s16(151);
+    static const int16x8_t ycbcr_c029 = vdupq_n_s16(29);
+    static const int16x8_t ycbcr_c182 = vdupq_n_s16(182);
+    static const int16x8_t ycbcr_c144 = vdupq_n_s16(144);
+    static const int16x8_t ycbcr_c128 = vdupq_n_s16(128);
+
     static
     void compute_ycbcr_neon(s16* dest, int16x8_t r, int16x8_t g, int16x8_t b)
     {
-        const int16x8_t c076 = vdupq_n_s16(76);
-        const int16x8_t c151 = vdupq_n_s16(151);
-        const int16x8_t c029 = vdupq_n_s16(29);
-        const int16x8_t c182 = vdupq_n_s16(182);
-        const int16x8_t c144 = vdupq_n_s16(144);
-        const int16x8_t c128 = vdupq_n_s16(128);
 
         // compute luminance
-        int16x8_t s = vmulq_s16(r, c076);
-        s = vmlaq_s16(s, g, c151);
-        s = vmlaq_s16(s, b, c029);
+        int16x8_t s = vmulq_s16(r, ycbcr_c076);
+        s = vmlaq_s16(s, g, ycbcr_c151);
+        s = vmlaq_s16(s, b, ycbcr_c029);
         s = vreinterpretq_s16_u16(vshrq_n_u16(vreinterpretq_u16_s16(s), 8));
 
         // compute chroma
-        int16x8_t cr = vmulq_s16(vsubq_s16(r, s), c182);
-        int16x8_t cb = vmulq_s16(vsubq_s16(b, s), c144);
+        int16x8_t cr = vmulq_s16(vsubq_s16(r, s), ycbcr_c182);
+        int16x8_t cb = vmulq_s16(vsubq_s16(b, s), ycbcr_c144);
         cr = vshrq_n_s16(cr, 8);
         cb = vshrq_n_s16(cb, 8);
 
         // adjust bias
-        s = vsubq_s16(s, c128);
+        s = vsubq_s16(s, ycbcr_c128);
 
         // store
         vst1q_s16(dest +   0, s);
@@ -2227,17 +2228,14 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        const int16x8_t c128 = vdupq_n_s16(128);
-
-        for (int y = 0; y < 8; ++y)
+        for (int y = 0; y < 8; y += 2)
         {
-            uint8x8_t v = vld1_u8(input);
-            int16x8_t s = vreinterpretq_s16_u16(vmovl_u8(v));
-            s = vsubq_s16(s, c128);
-            vst1q_s16(block, s);
-
-            input += stride;
-            block += 8;
+            uint8x8_t v0 = vld1_u8(input + 0 * stride);
+            uint8x8_t v1 = vld1_u8(input + 1 * stride);
+            vst1q_s16(block + 0, vsubq_s16(vreinterpretq_s16_u16(vmovl_u8(v0)), ycbcr_c128));
+            vst1q_s16(block + 8, vsubq_s16(vreinterpretq_s16_u16(vmovl_u8(v1)), ycbcr_c128));
+            input += stride * 2;
+            block += 16;
         }
     }
 
@@ -2247,17 +2245,16 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        for (int y = 0; y < 8; ++y)
+        for (int y = 0; y < 8; y += 2)
         {
-            const uint8x8x4_t temp = vld4_u8(input);
-            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
-            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
-            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
-
-            compute_ycbcr_neon(block, r, g, b);
-
-            input += stride;
-            block += 8;
+            const uint8x8x4_t row0 = vld4_u8(input + 0 * stride);
+            const uint8x8x4_t row1 = vld4_u8(input + 1 * stride);
+            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[2])),
+                vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[0])));
+            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[2])),
+                vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[0])));
+            input += stride * 2;
+            block += 16;
         }
     }
 
@@ -2267,17 +2264,16 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        for (int y = 0; y < 8; ++y)
+        for (int y = 0; y < 8; y += 2)
         {
-            const uint8x8x4_t temp = vld4_u8(input);
-            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
-            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
-            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
-
-            compute_ycbcr_neon(block, r, g, b);
-
-            input += stride;
-            block += 8;
+            const uint8x8x4_t row0 = vld4_u8(input + 0 * stride);
+            const uint8x8x4_t row1 = vld4_u8(input + 1 * stride);
+            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[0])),
+                vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[2])));
+            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[0])),
+                vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[2])));
+            input += stride * 2;
+            block += 16;
         }
     }
 
@@ -2287,17 +2283,16 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        for (int y = 0; y < 8; ++y)
+        for (int y = 0; y < 8; y += 2)
         {
-            const uint8x8x3_t temp = vld3_u8(input);
-            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
-            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
-            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
-
-            compute_ycbcr_neon(block, r, g, b);
-
-            input += stride;
-            block += 8;
+            const uint8x8x3_t row0 = vld3_u8(input + 0 * stride);
+            const uint8x8x3_t row1 = vld3_u8(input + 1 * stride);
+            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[2])),
+                vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[0])));
+            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[2])),
+                vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[0])));
+            input += stride * 2;
+            block += 16;
         }
     }
 
@@ -2307,17 +2302,16 @@ namespace
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
 
-        for (int y = 0; y < 8; ++y)
+        for (int y = 0; y < 8; y += 2)
         {
-            const uint8x8x3_t temp = vld3_u8(input);
-            int16x8_t r = vreinterpretq_s16_u16(vmovl_u8(temp.val[0]));
-            int16x8_t g = vreinterpretq_s16_u16(vmovl_u8(temp.val[1]));
-            int16x8_t b = vreinterpretq_s16_u16(vmovl_u8(temp.val[2]));
-
-            compute_ycbcr_neon(block, r, g, b);
-
-            input += stride;
-            block += 8;
+            const uint8x8x3_t row0 = vld3_u8(input + 0 * stride);
+            const uint8x8x3_t row1 = vld3_u8(input + 1 * stride);
+            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[0])),
+                vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[2])));
+            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[0])),
+                vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[2])));
+            input += stride * 2;
+            block += 16;
         }
     }
 

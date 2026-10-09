@@ -1177,6 +1177,24 @@ namespace mango::image::jpeg
     };
 
     // SSE PSHUFLW/H imm 0xd8: swap int16 lanes 1<->2 in low / high 64-bit half.
+#if defined(__aarch64__)
+
+    static inline
+    int16x8_t shuffle_swap_i16_12_low(int16x8_t a)
+    {
+        int16x8_t b = vsetq_lane_s16(vgetq_lane_s16(a, 2), a, 1);
+        return vsetq_lane_s16(vgetq_lane_s16(a, 1), b, 2);
+    }
+
+    static inline
+    int16x8_t shuffle_swap_i16_12_high(int16x8_t a)
+    {
+        int16x8_t b = vsetq_lane_s16(vgetq_lane_s16(a, 6), a, 5);
+        return vsetq_lane_s16(vgetq_lane_s16(a, 5), b, 6);
+    }
+
+#else
+
     static const uint8x16_t perm_swap_i16_12_low  = { 0,1,4,5,2,3,6,7, 8,9,10,11,12,13,14,15 };
     static const uint8x16_t perm_swap_i16_12_high = { 0,1,2,3,4,5,6,7, 8,9,12,13,10,11,14,15 };
 
@@ -1191,6 +1209,8 @@ namespace mango::image::jpeg
     {
         return vreinterpretq_s16_u8(vqtbl1q_u8(vreinterpretq_u8_s16(a), perm_swap_i16_12_high));
     }
+
+#endif
 
 #if defined(__aarch64__)
 
@@ -1239,6 +1259,12 @@ namespace mango::image::jpeg
     }
 
     static inline
+    int16x8_t mulhi_v(int16x8_t a, int16x8_t c_half)
+    {
+        return vqrdmulhq_s16(a, c_half);
+    }
+
+    static inline
     int16x8_t packs_epi32(int32x4_t a, int32x4_t b)
     {
         return vcombine_s16(vqmovn_s32(a), vqmovn_s32(b));
@@ -1252,45 +1278,40 @@ namespace mango::image::jpeg
         return a;
     }
 
-    void idct_neon(u8* dest, const s16* src, const s16* qt)
+    void idct_neon_n(u8* dest, const s16* src, const s16* const* qt, int blocks, int idx, int count)
     {
-        // load dct coefficients
-        int16x8_t row0 = vld1q_s16(src + 8 * 0);
-        int16x8_t row1 = vld1q_s16(src + 8 * 1);
-        int16x8_t row2 = vld1q_s16(src + 8 * 2);
-        int16x8_t row3 = vld1q_s16(src + 8 * 3);
-        int16x8_t row4 = vld1q_s16(src + 8 * 4);
-        int16x8_t row5 = vld1q_s16(src + 8 * 5);
-        int16x8_t row6 = vld1q_s16(src + 8 * 6);
-        int16x8_t row7 = vld1q_s16(src + 8 * 7);
-
-        // load quantization factors
-        int16x8_t qt0 = vld1q_s16(qt + 8 * 0);
-        int16x8_t qt1 = vld1q_s16(qt + 8 * 1);
-        int16x8_t qt2 = vld1q_s16(qt + 8 * 2);
-        int16x8_t qt3 = vld1q_s16(qt + 8 * 3);
-        int16x8_t qt4 = vld1q_s16(qt + 8 * 4);
-        int16x8_t qt5 = vld1q_s16(qt + 8 * 5);
-        int16x8_t qt6 = vld1q_s16(qt + 8 * 6);
-        int16x8_t qt7 = vld1q_s16(qt + 8 * 7);
-
-        // dequantize
-        int16x8_t v0 = vmulq_s16(row0, qt0);
-        int16x8_t v1 = vmulq_s16(row1, qt1);
-        int16x8_t v2 = vmulq_s16(row2, qt2);
-        int16x8_t v3 = vmulq_s16(row3, qt3);
-        int16x8_t v4 = vmulq_s16(row4, qt4);
-        int16x8_t v5 = vmulq_s16(row5, qt5);
-        int16x8_t v6 = vmulq_s16(row6, qt6);
-        int16x8_t v7 = vmulq_s16(row7, qt7);
-
-        int16x8_t w0, w1, w2, w3, w4, w5, w6, w7;
-        int32x4_t t0, t1, t2, t3, t4, t5, t6, t7;
-
-        // row1 and row3
-
         const int16x8_t* table04 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_04);
         const int16x8_t* table26 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_26);
+        const int16x8_t* table35 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_35);
+        const int16x8_t* table17 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_17);
+        const int32x4_t round_inv_row = vdupq_n_s32(2048);
+        const int16x8_t one = vdupq_n_s16(1);
+        const int16x8_t round_inv_col = vdupq_n_s16(16 + (128 << 5));
+        const int16x8_t round_inv_corr = vqsubq_s16(round_inv_col, one);
+        const int16x8_t tg_m21746 = vdupq_n_s16(s16(-21746 / 2));
+        const int16x8_t tg_13036 = vdupq_n_s16(s16(13036 / 2));
+        const int16x8_t tg_27146 = vdupq_n_s16(s16(27146 / 2));
+        const int16x8_t tg_m19195 = vdupq_n_s16(s16(-19195 / 2));
+
+        for (int n = 0; n < count; ++n)
+        {
+            const int16x8_t* qtable = reinterpret_cast<const int16x8_t*>(qt[idx]);
+
+            // load and dequantize
+            int16x8_t v0 = vmulq_s16(vld1q_s16(src + 8 * 0), qtable[0]);
+            int16x8_t v1 = vmulq_s16(vld1q_s16(src + 8 * 1), qtable[1]);
+            int16x8_t v2 = vmulq_s16(vld1q_s16(src + 8 * 2), qtable[2]);
+            int16x8_t v3 = vmulq_s16(vld1q_s16(src + 8 * 3), qtable[3]);
+            int16x8_t v4 = vmulq_s16(vld1q_s16(src + 8 * 4), qtable[4]);
+            int16x8_t v5 = vmulq_s16(vld1q_s16(src + 8 * 5), qtable[5]);
+            int16x8_t v6 = vmulq_s16(vld1q_s16(src + 8 * 6), qtable[6]);
+            int16x8_t v7 = vmulq_s16(vld1q_s16(src + 8 * 7), qtable[7]);
+
+            int16x8_t row0, row1, row2, row3, row4, row5, row6, row7;
+            int16x8_t w0, w1, w2, w3, w4, w5, w6, w7;
+            int32x4_t t0, t1, t2, t3, t4, t5, t6, t7;
+
+            // row1 and row3
 
         w0 = shuffle_swap_i16_12_low(v0);
         w1 = splat_epi32<0>(w0);
@@ -1302,8 +1323,6 @@ namespace mango::image::jpeg
         w2 = splat_epi32<2>(w0);
         w0 = splat_epi32<3>(w0);
         t2 = pmadd_i16_pairs(w2, table04[1]);
-
-        const int32x4_t round_inv_row = vdupq_n_s32(2048);
 
         w4 = shuffle_swap_i16_12_high(v2);
         t1 = vaddq_s32(t1, round_inv_row);
@@ -1382,9 +1401,6 @@ namespace mango::image::jpeg
         row6 = packs_epi32(t4, t6);
 
         // row4 and row2
-
-        const int16x8_t* table35 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_35);
-        const int16x8_t* table17 = reinterpret_cast<const int16x8_t*>(shortM128_tab_i_17);
 
         w0 = shuffle_swap_i16_12_low(v3);
         w1 = splat_epi32<0>(w0);
@@ -1468,20 +1484,18 @@ namespace mango::image::jpeg
         t6 = rev_epi32(t6);
         row7 = packs_epi32(t4, t6);
 
-        w0 = mulhi(row5, -21746);
-        w1 = mulhi(row3, -21746);
-        w4 = mulhi(row7, 13036);
+        w0 = mulhi_v(row5, tg_m21746);
+        w1 = mulhi_v(row3, tg_m21746);
+        w4 = mulhi_v(row7, tg_13036);
         w0 = vqaddq_s16(w0, row5);
-        w5 = mulhi(row1, 13036);
+        w5 = mulhi_v(row1, tg_13036);
         w1 = vqaddq_s16(w1, row3);
-
-        const int16x8_t one = vdupq_n_s16(1);
 
         w0 = vqaddq_s16(w0, row3);
         w2 = vqsubq_s16(row5, w1);
-        w7 = mulhi(row6, 27146);
+        w7 = mulhi_v(row6, tg_27146);
         w1 = w0;
-        w3 = mulhi(row2, 27146);
+        w3 = mulhi_v(row2, tg_27146);
         w5 = vqsubq_s16(w5, row7);
         w4 = vqaddq_s16(w4, row1);
         w0 = vqaddq_s16(w0, w4);
@@ -1496,10 +1510,10 @@ namespace mango::image::jpeg
 
         w1 = vqsubq_s16(w4, w5);
         w4 = vqaddq_s16(w4, w5);
-        w2 = mulhi(w4, -19195);
+        w2 = mulhi_v(w4, tg_m19195);
         w7 = vqaddq_s16(w7, row2);
         w3 = vqsubq_s16(w3, row6);
-        w0 = mulhi(w1, -19195);
+        w0 = mulhi_v(w1, tg_m19195);
         w0 = vqaddq_s16(w0, w1);
         w5 = vqaddq_s16(row0, row4);
         w6 = vqsubq_s16(row0, row4);
@@ -1507,10 +1521,6 @@ namespace mango::image::jpeg
 
         w4 = vorrq_s16(w4, one);
         w0 = vorrq_s16(w0, one);
-
-        const s16 bias = 128 << 5;
-        const int16x8_t round_inv_col = vdupq_n_s16(16 + bias);
-        const int16x8_t round_inv_corr = vqsubq_s16(round_inv_col, one);
 
         w1 = vqsubq_s16(w6, w3);
         w1 = vqaddq_s16(w1, round_inv_corr);
@@ -1544,11 +1554,26 @@ namespace mango::image::jpeg
         uint8x16_t s2 = vcombine_u8(vqmovun_s16(r4), vqmovun_s16(r5));
         uint8x16_t s3 = vcombine_u8(vqmovun_s16(r6), vqmovun_s16(r7));
 
-        // store
-        vst1q_u8(dest + 16 * 0, s0);
-        vst1q_u8(dest + 16 * 1, s1);
-        vst1q_u8(dest + 16 * 2, s2);
-        vst1q_u8(dest + 16 * 3, s3);
+            // store
+            vst1q_u8(dest + 16 * 0, s0);
+            vst1q_u8(dest + 16 * 1, s1);
+            vst1q_u8(dest + 16 * 2, s2);
+            vst1q_u8(dest + 16 * 3, s3);
+
+            dest += 64;
+            src += 64;
+
+            if (++idx == blocks)
+            {
+                idx = 0;
+            }
+        }
+    }
+
+    void idct_neon(u8* dest, const s16* src, const s16* qt)
+    {
+        const s16* q[2] = { qt, qt };
+        idct_neon_n(dest, src, q, 1, 0, 1);
     }
 
 #endif // MANGO_ENABLE_NEON

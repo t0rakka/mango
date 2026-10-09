@@ -108,19 +108,13 @@ namespace mango::image::jpeg
             }
         }
 #elif defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_NEON)
-        // NEON-optimized path for ARM64
         if (ptr + 8 <= end)
         {
-            uint8x8_t v = vld1_u8(ptr);
-            // Check if any byte is 0xff using NEON
-            uint8x8_t ones = vdup_n_u8(0xff);
-            uint8x8_t cmp = vceq_u8(v, ones);
-            // Reduce to single value: if any byte matches 0xff, result is non-zero
-            u64 mask = vget_lane_u64(vreinterpret_u64_u8(cmp), 0);
-            if (!mask)
+            u64 x = uload64(ptr);
+            constexpr u64 a = 0x0101010101010101ull;
+            constexpr u64 m = 0x8080808080808080ull;
+            if (!((x - a) & ~x & m))
             {
-                // No 0xff bytes - fast path: load 8 bytes, byteswap, shift
-                u64 x = uload64(ptr);
                 data = (data << 48) | (byteswap(x) >> 16);
                 remain += 48;
                 ptr += 6;
@@ -2576,6 +2570,7 @@ namespace mango::image::jpeg
         if (flags & ARM_NEON)
         {
             processState.idct = idct_neon;
+            processState.idct1 = idct_neon_n;
             m_idct_name = "NEON";
         }
 #endif
