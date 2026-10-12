@@ -235,6 +235,11 @@ namespace
         }
     };
 
+    inline u32 expand_5to8(u32 value)
+    {
+        return (value << 3) | (value >> 2);
+    }
+
     bool tga_decompress_RLE(u8* dest, const u8* p, const u8* end, int width, int height, int bpp)
     {
         int x = 0;
@@ -276,16 +281,13 @@ namespace
                     // repeat color
                     for (int i = 0; i < size; ++i)
                     {
-                        for (int j = 0; j < bpp; ++j)
-                        {
-                            scan[j] = color[j]; // <-- read
-                        }
+                        std::memcpy(scan, color, bpp);
                         scan += bpp;
                     }
                 }
                 else
                 {
-                    int bytes = size * bpp;
+                    const int bytes = size * bpp;
                     if (color + bytes > end)
                     {
                         return false;
@@ -490,13 +492,14 @@ namespace
                     {
                         for (u32 i = 0; i < length; ++i)
                         {
+                            // packed: 0BBBBBGGGGGRRRRR
                             u16 color = littleEndian::uload16(p);
                             u32 r = (color >> 0) & 0x1f;
                             u32 g = (color >> 5) & 0x1f;
                             u32 b = (color >> 10) & 0x1f;
-                            r = (r * 255) / 31;
-                            g = (g * 255) / 31;
-                            b = (b * 255) / 31;
+                            r = expand_5to8(r);
+                            g = expand_5to8(g);
+                            b = expand_5to8(b);
                             palette[origin + i] = Color(r, g, b, 0xff);
                             p += 2;
                         }
@@ -505,6 +508,7 @@ namespace
                     {
                         for (u32 i = 0; i < length; ++i)
                         {
+                            // BGR
                             palette[origin + i] = Color(p[2], p[1], p[0], 0xff);
                             p += 3;
                         }
@@ -513,6 +517,7 @@ namespace
                     {
                         for (u32 i = 0; i < length; ++i)
                         {
+                            // BGRA
                             palette[origin + i] = Color(p[2], p[1], p[0], p[3]);
                             p += 4;
                         }
