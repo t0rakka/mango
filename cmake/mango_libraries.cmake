@@ -88,9 +88,19 @@ if (IMAGE_FORMAT_KTX2)
         BASISD_SUPPORT_KTX2_ZSTD=0
     )
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+        set(_basisu_transcoder_copts "-fno-strict-aliasing")
+        if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+            list(APPEND _basisu_transcoder_copts "-Wno-deprecated-anon-enum-enum-conversion")
+        endif ()
         set_source_files_properties(
             "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/basisu_transcoder.cpp"
-            PROPERTIES COMPILE_OPTIONS "-fno-strict-aliasing"
+            PROPERTIES COMPILE_OPTIONS "${_basisu_transcoder_copts}"
+        )
+    endif ()
+    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
+        set_source_files_properties(
+            "${MANGO_SOURCE_DIR}/image/image_ktx2.cpp"
+            PROPERTIES COMPILE_OPTIONS "-Wno-deprecated-anon-enum-enum-conversion"
         )
     endif ()
 endif ()

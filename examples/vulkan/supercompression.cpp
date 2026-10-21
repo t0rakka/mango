@@ -3,9 +3,11 @@
     Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #define MANGO_IMPLEMENT_MAIN
+#include <cmath>
 #include <cstdio>
 #include <cstring>
 #include <functional>
+#include <utility>
 #include <vector>
 
 #include <mango/mango.hpp>
@@ -145,6 +147,80 @@ namespace
         VkFormatProperties props {};
         vkGetPhysicalDeviceFormatProperties(physicalDevice, format, &props);
         return (props.optimalTilingFeatures & VK_FORMAT_FEATURE_SAMPLED_IMAGE_FILTER_LINEAR_BIT) != 0;
+    }
+
+    std::pair<int, int> windowSizeForImage(int width, int height, int maxExtent = 1280)
+    {
+        if (width <= 0 || height <= 0)
+        {
+            return { 640, 480 };
+        }
+
+        const float aspect = float(width) / float(height);
+        int outW;
+        int outH;
+
+        if (width >= height)
+        {
+            outW = std::min(width, maxExtent);
+            outH = int(std::lround(float(outW) / aspect));
+        }
+        else
+        {
+            outH = std::min(height, maxExtent);
+            outW = int(std::lround(float(outH) * aspect));
+        }
+
+        outW = std::max(outW, 64);
+        outH = std::max(outH, 64);
+        return { outW, outH };
+    }
+
+    void aspectFitViewport(VkExtent2D extent, int imageWidth, int imageHeight,
+                           VkViewport& viewport, VkRect2D& scissor)
+    {
+        const float imageAspect = float(imageWidth) / float(imageHeight);
+        const float windowAspect = float(extent.width) / float(extent.height);
+
+        float vpW = float(extent.width);
+        float vpH = float(extent.height);
+        float vpX = 0.0f;
+        float vpY = 0.0f;
+
+        if (windowAspect > imageAspect)
+        {
+            vpW = float(extent.height) * imageAspect;
+            vpX = (float(extent.width) - vpW) * 0.5f;
+        }
+        else if (windowAspect < imageAspect)
+        {
+            vpH = float(extent.width) / imageAspect;
+            vpY = (float(extent.height) - vpH) * 0.5f;
+        }
+
+        viewport =
+        {
+            .x = vpX,
+            .y = vpY,
+            .width = vpW,
+            .height = vpH,
+            .minDepth = 0.0f,
+            .maxDepth = 1.0f,
+        };
+
+        scissor =
+        {
+            .offset =
+            {
+                .x = int32_t(std::floor(vpX)),
+                .y = int32_t(std::floor(vpY)),
+            },
+            .extent =
+            {
+                .width = u32(std::max(1.0f, std::ceil(vpW))),
+                .height = u32(std::max(1.0f, std::ceil(vpH))),
+            },
+        };
     }
 
     static const char* g_vertexShader = R"(#version 450
@@ -910,22 +986,10 @@ namespace
             {
                 vkCmdBindPipeline(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS, m_graphicsPipeline);
 
-                VkViewport viewport =
-                {
-                    .x = 0.0f,
-                    .y = 0.0f,
-                    .width = float(extent.width),
-                    .height = float(extent.height),
-                    .minDepth = 0.0f,
-                    .maxDepth = 1.0f,
-                };
+                VkViewport viewport {};
+                VkRect2D scissor {};
+                aspectFitViewport(extent, m_texture.width, m_texture.height, viewport, scissor);
                 vkCmdSetViewport(commandBuffer, 0, 1, &viewport);
-
-                VkRect2D scissor =
-                {
-                    .offset = { 0, 0 },
-                    .extent = extent,
-                };
                 vkCmdSetScissor(commandBuffer, 0, 1, &scissor);
 
                 vkCmdBindDescriptorSets(commandBuffer, VK_PIPELINE_BIND_POINT_GRAPHICS,
@@ -946,8 +1010,9 @@ namespace
         }
 
     public:
-        SupercompressionWindow(VulkanContext& context, GpuTexture texture, const std::string& summary)
-            : VulkanWindow(context, 1280, 720, 0)
+        SupercompressionWindow(VulkanContext& context, int windowWidth, int windowHeight,
+            GpuTexture texture, const std::string& summary)
+            : VulkanWindow(context, windowWidth, windowHeight, 0)
             , m_texture(std::move(texture))
             , m_summary(summary)
             , m_exposure(texture.hdr ? 1.8f : 0.0f)
@@ -1136,7 +1201,8 @@ int mangoMain(const CommandLine& commands)
     Instance instance(applicationInfo, enabled_layers, enabled_extensions);
     VulkanContext ctx(instance);
 
-    SupercompressionWindow window(ctx, std::move(texture), summary);
+    const auto windowSize = windowSizeForImage(texture.width, texture.height);
+    SupercompressionWindow window(ctx, windowSize.first, windowSize.second, std::move(texture), summary);
     if (!window.isDeviceReady())
     {
         printLine(Print::Error, "Vulkan device/swapchain setup failed (check MoltenVK / GPU drivers).");
