@@ -113,6 +113,12 @@ namespace
             printLine(Print::Debug, "image: {} x {}, bits: {}, chroma: {}, alpha: {}, luma: {}", 
                 width, height, bpp, cbpp, alpha, luma);
 
+            if (!isValidImageDecodeDimensions(width, height))
+            {
+                header.setError("[ImageDecoder.HEIF] Invalid image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             header.width   = width;
             header.height  = height;
             header.depth   = 0;

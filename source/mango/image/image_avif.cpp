@@ -106,7 +106,7 @@ namespace
             // avifDecoderParse enforces libavif's dimension/size limits, but a malformed
             // file can still parse to a degenerate 0-sized image; reject it here so we never
             // allocate or blit a zero/garbage surface.
-            if (!image->width || !image->height)
+            if (!isValidImageDecodeDimensions(image->width, image->height))
             {
                 header.setError("[ImageDecoder.AVIF] Invalid image dimensions ({} x {}).",
                     image->width, image->height);

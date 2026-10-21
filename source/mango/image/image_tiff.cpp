@@ -2402,6 +2402,12 @@ namespace
                 return false;
             }
 
+            if (!isValidImageDecodeDimensions(int(ctx.width), int(ctx.height)))
+            {
+                header.setError("[ImageDecoder.TIFF] Incorrect image dimensions ({} x {}).", ctx.width, ctx.height);
+                return false;
+            }
+
             if (ctx.bits_per_sample.empty())
             {
                 header.setError("[ImageDecoder.TIFF] Missing required bits per sample.");
@@ -2956,7 +2962,15 @@ namespace
     
                     for (size_t i = 0; i < num_tiles; ++i)
                     {
-                        ConstMemory memory(m_memory.address + tile_data_offset(i), tile_data_bytes(i));
+                        const u64 offset = tile_data_offset(i);
+                        const u64 bytes = tile_data_bytes(i);
+                        if (offset > m_memory.size || bytes > m_memory.size - offset)
+                        {
+                            status.setError("[ImageDecoder.TIFF] Tile data out of bounds.");
+                            return status;
+                        }
+
+                        ConstMemory memory(m_memory.address + offset, size_t(bytes));
 
                         u32 x = (u32(i) % xtiles) * tile_width;
                         u32 y = (u32(i) / xtiles) * tile_length;
@@ -2984,7 +2998,15 @@ namespace
                         for (u32 channel = 0; channel < m_context.samples_per_pixel; ++channel)
                         {
                             size_t index = channel * count + i;
-                            ConstMemory memory(m_memory.address + tile_data_offset(index), tile_data_bytes(index));
+                            const u64 offset = tile_data_offset(index);
+                            const u64 bytes = tile_data_bytes(index);
+                            if (offset > m_memory.size || bytes > m_memory.size - offset)
+                            {
+                                status.setError("[ImageDecoder.TIFF] Tile data out of bounds.");
+                                return status;
+                            }
+
+                            ConstMemory memory(m_memory.address + offset, size_t(bytes));
 
                             Surface tile(target, x, y, tile_width, tile_length);
                             decodeRect(status, tile, memory, tile_width, tile_length, channel);
@@ -3014,11 +3036,16 @@ namespace
                     {
                         u32 strip_height = std::min(m_context.rows_per_strip, header.height - y);
     
-                        const u8* src = m_memory.address + m_context.strip_offsets[i];
-                        u32 bytes = m_context.strip_byte_counts[i];
-    
+                        const u64 offset = m_context.strip_offsets[i];
+                        const u64 bytes = m_context.strip_byte_counts[i];
+                        if (offset > m_memory.size || bytes > m_memory.size - offset)
+                        {
+                            status.setError("[ImageDecoder.TIFF] Strip data out of bounds.");
+                            return status;
+                        }
+
                         Surface strip(target, 0, y, header.width, strip_height);
-                        decodeRect(status, strip, ConstMemory(src, bytes), header.width, strip_height);
+                        decodeRect(status, strip, ConstMemory(m_memory.address + offset, size_t(bytes)), header.width, strip_height);
 
                         if (!status)
                             return status;
@@ -3047,11 +3074,16 @@ namespace
                         {
                             size_t strip_index = channel * strips_per_spatial_region + spatial_strip;
 
-                            const u8* src = m_memory.address + m_context.strip_offsets[strip_index];
-                            u32 bytes = m_context.strip_byte_counts[strip_index];
+                            const u64 offset = m_context.strip_offsets[strip_index];
+                            const u64 bytes = m_context.strip_byte_counts[strip_index];
+                            if (offset > m_memory.size || bytes > m_memory.size - offset)
+                            {
+                                status.setError("[ImageDecoder.TIFF] Strip data out of bounds.");
+                                return status;
+                            }
 
                             Surface strip(target, 0, y, header.width, strip_height);
-                            decodeRect(status, strip, ConstMemory(src, bytes), header.width, strip_height, channel);
+                            decodeRect(status, strip, ConstMemory(m_memory.address + offset, size_t(bytes)), header.width, strip_height, channel);
                         }
                     }
                 }

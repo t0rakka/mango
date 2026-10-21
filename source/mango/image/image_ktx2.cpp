@@ -1282,7 +1282,8 @@ namespace
 
             p = memory.address + KTX2_IDENTIFIER_SIZE + 9 * 4;
 
-            if (!ktx2_header.pixelWidth || !ktx2_header.pixelHeight)
+            if (!ktx2_header.pixelWidth || !ktx2_header.pixelHeight ||
+                !isValidImageDecodeDimensions(int(ktx2_header.pixelWidth), int(ktx2_header.pixelHeight)))
             {
                 header.setError("[ImageDecoder.KTX2] Invalid dimensions ({} x {}).",
                     ktx2_header.pixelWidth, ktx2_header.pixelHeight);

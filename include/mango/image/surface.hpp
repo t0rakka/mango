@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -16,6 +16,15 @@
 
 namespace mango::image
 {
+
+    // Upper bound for width/height in decoders
+    constexpr int IMAGE_DECODE_MAX_DIMENSION = 0x100000;
+
+    bool isValidImageDecodeDimension(int value);
+    bool isValidImageDecodeDimensions(int width, int height);
+    size_t imageDecodeStrideBytes(int width, size_t bytes_per_pixel);
+    size_t imageDecodeBufferBytes(size_t stride, int height);
+    size_t imageDecodePixelBufferBytes(int width, int height, size_t bytes_per_pixel);
 
     class Surface
     {

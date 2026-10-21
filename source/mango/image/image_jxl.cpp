@@ -170,6 +170,12 @@ namespace
 
         void readColorEncoding()
         {
+            if (!isValidImageDecodeDimensions(header.width, header.height))
+            {
+                header.setError("[ImageDecoder.JXL] Incorrect image dimensions ({} x {}).", header.width, header.height);
+                return;
+            }
+
             JxlDecoder* decoder = m_decoder.get();
             ColorInfo& color = header.color;
 

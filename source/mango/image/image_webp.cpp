@@ -250,6 +250,12 @@ namespace
                 return;
             }
 
+            if (!isValidImageDecodeDimensions(width, height))
+            {
+                header.setError("[ImageDecoder.WEBP] Incorrect image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             header.width   = width;
             header.height  = height;
             header.depth   = 0;

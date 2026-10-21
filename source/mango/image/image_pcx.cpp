@@ -171,7 +171,7 @@ namespace
 
             // Reject degenerate/inverted bounding boxes (Xmax < Xmin etc.) so later size
             // computations cannot go negative or zero.
-            if (width <= 0 || height <= 0)
+            if (!isValidImageDecodeDimensions(width, height))
             {
                 header.setError("[ImageDecoder.PCX] Invalid image dimensions ({} x {}).", width, height);
                 return;
@@ -497,6 +497,12 @@ namespace
             int scansize = m_pcx_header.NPlanes * bytesPerLine;
 
             const size_t buffer_size = size_t(scansize) * size_t(height);
+            if (!buffer_size || buffer_size / size_t(height) != size_t(scansize))
+            {
+                status.setError("[ImageDecoder.PCX] Image buffer size overflow.");
+                return status;
+            }
+
             Buffer buffer(buffer_size);
 
             // A short/corrupt RLE stream is zero-filled by scanRLE rather than rejected,

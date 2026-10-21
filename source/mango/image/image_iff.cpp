@@ -1469,6 +1469,11 @@ namespace
                             p.read16(); // version
 
                             size_t count = (payload - 2) / 32;
+                            constexpr size_t max_sham_palettes = IMAGE_DECODE_MAX_DIMENSION;
+                            if (count > max_sham_palettes)
+                            {
+                                break;
+                            }
                             m_sham_palettes.resize(count);
 
                             for (size_t i = 0; i < count; ++i)
@@ -2053,8 +2058,21 @@ namespace
 
             if (m_bmhd.compression == 1)
             {
-                size_t scan_size = ((xsize + 15) & ~15) / 8 * (m_bmhd.nplanes + (m_bmhd.masking == 1));
-                size_t bytes = scan_size * ysize;
+                if (m_bmhd.nplanes < 1 || m_bmhd.nplanes > 8)
+                {
+                    status.setError("[ImageDecoder.IFF] Invalid plane count ({}).", m_bmhd.nplanes);
+                    return status;
+                }
+
+                const size_t plane_factor = size_t(m_bmhd.nplanes + (m_bmhd.masking == 1));
+                const size_t scan_size = ((xsize + 15) & ~15) / 8 * plane_factor;
+                const size_t bytes = scan_size * size_t(ysize);
+                if (!isValidImageDecodeDimensions(xsize, ysize) || !scan_size || !bytes ||
+                    bytes / scan_size != size_t(ysize))
+                {
+                    status.setError("[ImageDecoder.IFF] Uncompressed image too large ({} x {}).", xsize, ysize);
+                    return status;
+                }
 
                 allocation.reset(new u8[bytes]);
                 u8* allocated = allocation.get();

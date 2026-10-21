@@ -177,7 +177,7 @@ namespace
         return bytes;
     }
 
-    void qoi_decode(u8* image, const u8* data, size_t size, int width, int height, size_t stride)
+    bool qoi_decode(u8* image, const u8* data, size_t size, int width, int height, size_t stride)
     {
         Color color(0, 0, 0, 0xff);
         Color cache[64] = { 0 };
@@ -194,7 +194,7 @@ namespace
             {
                 if (run > 0)
                 {
-                    run--;
+                    --run;
                 }
                 else if (data < end)
                 {
@@ -202,6 +202,10 @@ namespace
 
                     if (b1 == QOI_OP_RGB)
                     {
+                        if (data + 3 > end)
+                        {
+                            return false;
+                        }
                         color.r = data[0];
                         color.g = data[1];
                         color.b = data[2];
@@ -209,6 +213,10 @@ namespace
                     }
                     else if (b1 == QOI_OP_RGBA)
                     {
+                        if (data + 4 > end)
+                        {
+                            return false;
+                        }
                         color.r = data[0];
                         color.g = data[1];
                         color.b = data[2];
@@ -227,6 +235,10 @@ namespace
                     }
                     else if ((b1 & QOI_MASK_2) == QOI_OP_LUMA)
                     {
+                        if (data >= end)
+                        {
+                            return false;
+                        }
                         int b2 = *data++;
                         int vg = (b1 & 0x3f) - 32;
                         color.r = u8(color.r + vg - 8 + ((b2 >> 4) & 0x0f));
@@ -236,9 +248,18 @@ namespace
                     else if ((b1 & QOI_MASK_2) == QOI_OP_RUN)
                     {
                         run = (b1 & 0x3f);
+                        const int remaining = int(xend - dest) - 1;
+                        if (remaining >= 0 && run > remaining)
+                        {
+                            run = remaining;
+                        }
                     }
 
                     cache[QOI_COLOR_HASH(color) % 64] = color;
+                }
+                else
+                {
+                    return false;
                 }
 
                 *dest++ = color;
@@ -246,6 +267,8 @@ namespace
 
             image += stride;
         }
+
+        return true;
     }
 
     // ------------------------------------------------------------
@@ -303,6 +326,12 @@ namespace
                     return;
             }
 
+            if (!isValidImageDecodeDimensions(int(width), int(height)))
+            {
+                header.setError("[ImageDecoder.QOI] Incorrect image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             header.width   = width;
             header.height  = height;
             header.depth   = 0;
@@ -345,7 +374,11 @@ namespace
             }
 
             DecodeTargetBitmap target(dest, header.width, header.height, header.format);
-            qoi_decode(target.image, m_memory.address, m_memory.size, header.width, header.height, target.stride);
+            if (!qoi_decode(target.image, m_memory.address, m_memory.size, header.width, header.height, target.stride))
+            {
+                status.setError("[ImageDecoder.QOI] Truncated or corrupt image data.");
+                return status;
+            }
             target.resolve();
 
             status.direct = target.isDirect();
@@ -440,6 +473,12 @@ namespace
             m_xtile = xtile;
             m_ytile = ytile;
 
+            if (!isValidImageDecodeDimensions(int(width), int(height)) || !xtile || !ytile)
+            {
+                header.setError("[ImageDecoder.TOI] Incorrect image dimensions ({} x {}, tile {} x {}).", width, height, xtile, ytile);
+                return;
+            }
+
             header.width   = width;
             header.height  = height;
             header.depth   = 0;
@@ -479,13 +518,25 @@ namespace
 
             LittleEndianConstPointer p = m_memory.address;
 
+            const u8* const stream_end = m_memory.end();
+
             for (int y = 0; y < ys; ++y)
             {
                 for (int x = 0; x < xs; ++x)
                 {
+                    if (p + 4 > stream_end)
+                    {
+                        return;
+                    }
+
                     Surface rect(dest, x * m_xtile, y * m_ytile, m_xtile, m_ytile);
 
                     u32 size = p.read32();
+                    if (p + size > stream_end)
+                    {
+                        return;
+                    }
+
                     ConstMemory memory(p, size);
                     p += size;
 

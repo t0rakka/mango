@@ -66,8 +66,7 @@ namespace
                 return;
             }
 
-            // a zero dimension yields an empty surface and no decodable body
-            if (!xsize || !ysize)
+            if (!isValidImageDecodeDimensions(int(xsize), int(ysize)))
             {
                 header.setError("[ImageDecoder.SGI] Invalid image dimensions ({} x {}).", xsize, ysize);
                 return;

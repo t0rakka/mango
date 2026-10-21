@@ -2096,7 +2096,8 @@ ContextEXR::ContextEXR(ConstMemory memory)
     // Reject implausible geometry from corrupt headers before it leads to a
     // huge allocation. The bounds are very generous (256M pixels) so that any
     // realistic image is accepted.
-    if (width < 1 || height < 1 || width > (1 << 18) || height > (1 << 18) ||
+    if (!isValidImageDecodeDimensions(width, height) ||
+        width > (1 << 18) || height > (1 << 18) ||
         u64(width) * u64(height) > (u64(1) << 28))
     {
         m_header.setError("[ImageDecoder.EXR] Incorrect dimensions ({} x {}).", width, height);

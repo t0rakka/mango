@@ -553,10 +553,20 @@ namespace
     {
         if (!stride)
         {
-            stride = width * format.bytes();
+            stride = imageDecodeStrideBytes(width, format.bytes());
+            if (!stride)
+            {
+                MANGO_EXCEPTION("[image] Invalid bitmap dimensions ({} x {}).", width, height);
+            }
         }
 
-        u8* image = new u8[stride * height];
+        const size_t bytes = imageDecodeBufferBytes(stride, height);
+        if (!bytes)
+        {
+            MANGO_EXCEPTION("[image] Invalid bitmap size ({} x {}, stride {}).", width, height, stride);
+        }
+
+        u8* image = new u8[bytes];
 
         Palette* palette = nullptr;
         if (format.isIndexed())
@@ -593,8 +603,21 @@ namespace
 
             surface.width   = header.width;
             surface.height  = header.height;
-            surface.stride  = header.width * surface.format.bytes();
-            surface.image   = new u8[header.height * surface.stride]; // NOTE: not leaking the image is assigned to Bitmap instance
+            surface.stride = imageDecodeStrideBytes(header.width, surface.format.bytes());
+            if (!surface.stride)
+            {
+                printLine(Print::Warning, "Invalid decoded image dimensions ({} x {}).", header.width, header.height);
+                return surface;
+            }
+
+            const size_t bitmap_bytes = imageDecodeBufferBytes(surface.stride, header.height);
+            if (!bitmap_bytes)
+            {
+                printLine(Print::Warning, "Invalid decoded image buffer size ({} x {}).", header.width, header.height);
+                return surface;
+            }
+
+            surface.image = new u8[bitmap_bytes]; // NOTE: not leaking the image is assigned to Bitmap instance
 
             if (surface.format.isIndexed())
             {
@@ -626,6 +649,63 @@ namespace
 
 namespace mango::image
 {
+
+    // ----------------------------------------------------------------------------
+    // decode size limits
+    // ----------------------------------------------------------------------------
+
+    bool isValidImageDecodeDimension(int value)
+    {
+        return value >= 1 && value <= IMAGE_DECODE_MAX_DIMENSION;
+    }
+
+    bool isValidImageDecodeDimensions(int width, int height)
+    {
+        return isValidImageDecodeDimension(width) && isValidImageDecodeDimension(height);
+    }
+
+    size_t imageDecodeStrideBytes(int width, size_t bytes_per_pixel)
+    {
+        if (!isValidImageDecodeDimension(width) || !bytes_per_pixel)
+        {
+            return 0;
+        }
+
+        const size_t stride = size_t(width) * bytes_per_pixel;
+        if (stride / bytes_per_pixel != size_t(width))
+        {
+            return 0;
+        }
+
+        return stride;
+    }
+
+    size_t imageDecodeBufferBytes(size_t stride, int height)
+    {
+        if (!stride || !isValidImageDecodeDimension(height))
+        {
+            return 0;
+        }
+
+        const size_t bytes = stride * size_t(height);
+        if (bytes / stride != size_t(height))
+        {
+            return 0;
+        }
+
+        return bytes;
+    }
+
+    size_t imageDecodePixelBufferBytes(int width, int height, size_t bytes_per_pixel)
+    {
+        const size_t stride = imageDecodeStrideBytes(width, bytes_per_pixel);
+        if (!stride)
+        {
+            return 0;
+        }
+
+        return imageDecodeBufferBytes(stride, height);
+    }
 
     // ----------------------------------------------------------------------------
     // Surface

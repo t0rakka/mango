@@ -691,6 +691,12 @@ namespace
             if (!check(m_converter->GetSize(m_converter, &width, &height), "GetSize", status))
                 return false;
 
+            if (!isValidImageDecodeDimensions(width, height))
+            {
+                status.setError("[JXR] Invalid image dimensions ({} x {}).", width, height);
+                return false;
+            }
+
             header.width = width;
             header.height = height;
             header.format = m_output_format;

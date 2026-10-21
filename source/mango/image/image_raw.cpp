@@ -48,7 +48,7 @@ namespace
             const size_t payload = memory.size - 12;
             const size_t pixels = payload / 4;
 
-            if (!width || !height || (payload & 3) != 0 ||
+            if (!isValidImageDecodeDimensions(int(width), int(height)) || (payload & 3) != 0 ||
                 pixels / width != height || pixels % width != 0)
             {
                 header.setError("[ImageDecoder.FBMP] Incorrect data size.");

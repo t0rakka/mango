@@ -269,6 +269,12 @@ namespace
                 }
                 else if (code <= available)
                 {
+                    if (dest >= dest_end)
+                    {
+                        src = nullptr;
+                        break;
+                    }
+
                     if (oldcode >= 0)
                     {
                         lzw* p = &codes[available++];
@@ -470,9 +476,14 @@ namespace
     {
         int width = image_desc.width;
         int height = image_desc.height;
-        size_t bytes = size_t(width) * size_t(height);
 
-        if (!bytes)
+        if (!isValidImageDecodeDimensions(width, height))
+        {
+            return nullptr;
+        }
+
+        size_t bytes = size_t(width) * size_t(height);
+        if (bytes / size_t(width) != size_t(height))
         {
             return nullptr;
         }
@@ -989,6 +1000,13 @@ namespace
             if (header.success)
             {
                 m_data = m_state.screen_desc.read(m_data, m_end);
+
+                if (!isValidImageDecodeDimensions(m_state.screen_desc.width, m_state.screen_desc.height))
+                {
+                    header.setError("[ImageDecoder.GIF] Incorrect logical screen dimensions ({} x {}).",
+                        m_state.screen_desc.width, m_state.screen_desc.height);
+                    return;
+                }
 
                 m_start = m_data;
 

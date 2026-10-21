@@ -789,6 +789,12 @@ namespace
             u32 height = m_image->y1 - m_image->y0;
             u32 components = m_image->numcomps;
 
+            if (!isValidImageDecodeDimensions(int(width), int(height)))
+            {
+                header.setError("[ImageDecoder.JP2] Incorrect image dimensions ({} x {}).", width, height);
+                return;
+            }
+
             printLine(Print::Debug, "[image]");
             printLine(Print::Debug, "  dimensions: {} x {}", width, height);
             printLine(Print::Debug, "  color space: {}", int(m_image->color_space));

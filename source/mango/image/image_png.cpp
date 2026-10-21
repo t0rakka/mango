@@ -2473,7 +2473,7 @@ namespace
         m_filter = p.read8();
         m_interlace = p.read8();
 
-        if (m_width <= 0 || m_height <= 0)
+        if (!isValidImageDecodeDimensions(m_width, m_height))
         {
             setError(fmt::format("Incorrect dimensions ({} x {}).", m_width, m_height));
             return;

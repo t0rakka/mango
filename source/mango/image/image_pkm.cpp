@@ -137,7 +137,7 @@ namespace
             if (header.success)
             {
                 // dimensions are block-aligned ("extended") and must be non-zero
-                if (!m_pkm_header.extended_width || !m_pkm_header.extended_height)
+                if (!isValidImageDecodeDimensions(m_pkm_header.extended_width, m_pkm_header.extended_height))
                 {
                     header.setError("[ImageDecoder.PKM] Incorrect image dimensions.");
                     return;

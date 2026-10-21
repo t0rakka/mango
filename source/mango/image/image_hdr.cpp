@@ -316,7 +316,7 @@ namespace
 
             // std::atoi can yield zero or a negative value; reject anything non-positive so
             // the surface allocation and decode loops below stay well-defined.
-            if (width <= 0 || height <= 0)
+            if (!isValidImageDecodeDimensions(width, height))
             {
                 header.setError("[ImageDecoder.HDR] Incorrect radiance header (dimensions).");
                 return nullptr;
@@ -402,6 +402,12 @@ namespace
 
                 if (r == 1 && g == 1 && b == 1)
                 {
+                    if (rshift > 24)
+                    {
+                        status.setError("[ImageDecoder.HDR] Corrupt rgbe run-length stream.");
+                        return;
+                    }
+
                     // repeat the previous pixel; clamp the run to the rest of the scanline
                     size_t count = size_t(e) << rshift;
                     if (count > size_t(width - x))

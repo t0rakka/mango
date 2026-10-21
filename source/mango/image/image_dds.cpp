@@ -912,7 +912,8 @@ namespace
         ImageHeader header;
         TextureCompression info;
 
-        const u8* data;
+        const u8* data = nullptr;
+        const u8* data_end = nullptr;
 
         void processDX10(const HeaderDX10& header10)
         {
@@ -980,7 +981,7 @@ namespace
             }
         }
 
-        void read(LittleEndianConstPointer p)
+        void read(LittleEndianConstPointer p, const u8* end)
         {
             u32 magic = p.read32();
             if (magic != FOURCC_DDS)
@@ -1031,6 +1032,13 @@ namespace
             }
 
             data = p;
+            data_end = end;
+
+            if (!isValidImageDecodeDimensions(int(width), int(height)))
+            {
+                header.setError("[ImageDecoder.DDS] Incorrect image dimensions ({} x {}).", width, height);
+                return;
+            }
 
             // Configure header
 
@@ -1136,6 +1144,11 @@ namespace
                         const int ysize = std::max(1, int(height) >> iLevel);
                         const int bytes = getLevelSize(xsize, ysize);
 
+                        if (image + bytes > data_end)
+                        {
+                            return ConstMemory();
+                        }
+
                         if (isDepthFace && iLevel == c_level)
                         {
                             // Store selected address
@@ -1163,7 +1176,7 @@ namespace
         Interface(ConstMemory memory)
         {
             LittleEndianConstPointer p = memory.address;
-            m_dds_header.read(p);
+            m_dds_header.read(p, memory.end());
             header = m_dds_header.header;
         }
 

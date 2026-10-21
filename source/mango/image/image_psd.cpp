@@ -253,6 +253,12 @@ namespace
         const size_t bytes_per_scan = div_ceil(width * bits, 8);
         const size_t plane_size = size_t(height) * bytes_per_scan;
 
+        if (!bytes_per_scan || !plane_size || plane_size / bytes_per_scan != size_t(height))
+        {
+            status.setError("[ImageDecoder.PSD] Channel plane size overflow.");
+            return false;
+        }
+
         if (dest_size < plane_size)
         {
             status.setError("[ImageDecoder.PSD] Channel plane buffer too small.");
@@ -410,7 +416,8 @@ namespace
 
             int height = p.read32();
             int width = p.read32();
-            if (width < 1 || width > width_max || height < 1 || height > height_max)
+            if (width < 1 || width > width_max || height < 1 || height > height_max ||
+                !isValidImageDecodeDimensions(width, height))
             {
                 header.setError("[ImageDecoder.PSD] Incorrect image dimensions ({} x {}).", width, height);
                 return;

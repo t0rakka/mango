@@ -653,6 +653,19 @@ namespace
                 return;
             }
 
+            if (!pixelWidth || !pixelHeight ||
+                !isValidImageDecodeDimensions(int(pixelWidth), int(pixelHeight)))
+            {
+                header.setError("[ImageDecoder.KTX] Invalid dimensions ({} x {}).", pixelWidth, pixelHeight);
+                return;
+            }
+
+            if (memory.size < KTX_HEADER_SIZE + bytesOfKeyValueData)
+            {
+                header.setError("[ImageDecoder.KTX] Truncated key/value data.");
+                return;
+            }
+
             numberOfMipmapLevels = std::max(1U, numberOfMipmapLevels);
 
             Format format;
@@ -701,6 +714,7 @@ namespace
         ConstMemory getMemory(ConstMemory memory, int level, int depth, int face) const
         {
             const u8* address = memory.address;
+            const u8* const end = memory.end();
             address += KTX_HEADER_SIZE + bytesOfKeyValueData;
 
             const int maxLevel = int(numberOfMipmapLevels);
@@ -711,9 +725,19 @@ namespace
 
             for (int iLevel = 0; iLevel < maxLevel; ++iLevel)
             {
+                if (address + 4 > end)
+                {
+                    return ConstMemory();
+                }
+
                 const int imageSize = read32ktx(address);
                 const int imageSizeRounded = (imageSize + 3) & ~3;
                 address += 4;
+
+                if (imageSize < 0 || imageSizeRounded < 0 || address + imageSizeRounded > end)
+                {
+                    return ConstMemory();
+                }
 
                 for (int iFace = 0; iFace < maxFace; ++iFace)
                 {
@@ -722,6 +746,10 @@ namespace
 
                     if (iLevel == level && iFace == face && depth >= 0 && depth < maxDepth)
                     {
+                        if (address + depth * sliceSize + sliceSize > end)
+                        {
+                            return ConstMemory();
+                        }
                         data = ConstMemory(address + depth * sliceSize, sliceSize);
                     }
 

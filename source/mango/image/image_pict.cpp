@@ -167,7 +167,7 @@ namespace
 
         int width = littleEndian::uload32(memory.address + offset + 18);
         int height = littleEndian::uload32(memory.address + offset + 22);
-        if (width < 1 || height < 1 || width > 65535 || height > 65535)
+        if (!isValidImageDecodeDimensions(width, height))
         {
             return false;
         }
@@ -639,13 +639,17 @@ namespace
     static
     std::unique_ptr<Bitmap> decodeChunkyRgbBlock(ConstMemory block, int width, int height, size_t data_offset)
     {
-        if (width < 1 || height < 1)
+        if (!isValidImageDecodeDimensions(width, height))
         {
             return nullptr;
         }
 
-        const size_t stride = size_t(width) * 3;
-        const size_t need = stride * size_t(height);
+        const size_t stride = imageDecodeStrideBytes(width, 3);
+        const size_t need = imageDecodeBufferBytes(stride, height);
+        if (!stride || !need)
+        {
+            return nullptr;
+        }
 
         if (data_offset + need > block.size)
         {

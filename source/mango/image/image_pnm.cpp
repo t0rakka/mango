@@ -320,9 +320,7 @@ namespace
             printLine(Print::Debug, "  image: {} x {}, channels: {}", width, height, channels);
             printLine(Print::Debug, "  maxvalue: {}", maxvalue);
 
-            // 0x100000 (1M) per dimension is far beyond any sane PNM and keeps width *
-            // channels and the byte totals safely inside int / size_t range below.
-            if (width < 1 || height < 1 || width > 0x100000 || height > 0x100000)
+            if (!isValidImageDecodeDimensions(width, height))
             {
                 header.setError("[ImageDecoder.PNM] Incorrect image dimensions ({} x {}).", width, height);
                 return;

@@ -2,6 +2,7 @@
     MANGO Multimedia Development Platform
     Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
+#include <limits>
 #include <map>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
@@ -456,9 +457,27 @@ namespace
 
             if (!imageDataSize)
             {
-                int bytesPerScan = div_ceil(width * bitsPerPixel, 32) * 4;
-                imageDataSize = height * bytesPerScan;
+                const int bytesPerScan = div_ceil(width * bitsPerPixel, 32) * 4;
+                const int64_t computed = int64_t(height) * int64_t(bytesPerScan);
+                if (computed <= 0 || computed > int64_t(std::numeric_limits<int>::max()))
+                {
+                    setError("[ImageDecoder.BMP] Image data size overflow.");
+                    return;
+                }
+                imageDataSize = int(computed);
                 printLine(Print::Debug, "  computed imageDataSize: {}", imageDataSize);
+            }
+
+            if (imageDataSize < 0)
+            {
+                setError("[ImageDecoder.BMP] Incorrect image data size ({}).", imageDataSize);
+                return;
+            }
+
+            if (!isValidImageDecodeDimensions(width, height))
+            {
+                setError("[ImageDecoder.BMP] Incorrect image dimensions ({} x {}).", width, height);
+                return;
             }
 
             if (bitsPerPixel <= 8)
@@ -1669,6 +1688,18 @@ namespace
             {
                 header.setError("[ImageDecoder.BMP] Not enough data.");
                 return;
+            }
+
+            if (m_file_header.offset < 14 || m_file_header.offset > m_memory.size)
+            {
+                header.setError("[ImageDecoder.BMP] Invalid bitmap data offset ({}).", m_file_header.offset);
+                return;
+            }
+
+            if (m_file_header.filesize && m_file_header.filesize > m_memory.size)
+            {
+                printLine(Print::Warning, "[ImageDecoder.BMP] bfSize ({}) exceeds file size ({}).",
+                    m_file_header.filesize, m_memory.size);
             }
 
             switch (m_file_header.magic)

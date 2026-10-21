@@ -142,13 +142,11 @@ namespace
                 }
             }
 
-            /*
-            if (width > 512 || height > 482)
+            if (!isValidImageDecodeDimensions(width, height))
             {
-                error = fmt::format("[ImageDecoder.TGA] Incorrect image dimensions: {} x {} (maximum: 512 x 482).", width, height);
+                error = fmt::format("[ImageDecoder.TGA] Incorrect image dimensions ({} x {}).", width, height);
                 return nullptr;
             }
-            */
 
             // skip idfield (bounded against the end of the buffer)
             if (memory.address + 18 + id_length > memory.end())
@@ -528,7 +526,17 @@ namespace
                 case IMAGETYPE_TRUECOLOR:
                 case IMAGETYPE_RLE_TRUECOLOR:
                 {
-                    p += m_targa_header.colormap_length * ((m_targa_header.colormap_bits + 1) >> 3);
+                    if (m_targa_header.colormap_type)
+                    {
+                        const size_t colormap_bytes = size_t(m_targa_header.colormap_length)
+                            * size_t((m_targa_header.colormap_bits + 1) >> 3);
+                        if (p + colormap_bytes > memory_end)
+                        {
+                            status.setError("[ImageDecoder.TGA] Truncated colormap.");
+                            return status;
+                        }
+                        p += colormap_bytes;
+                    }
                     break;
                 }
             }
@@ -545,8 +553,13 @@ namespace
             const u8* data = p;
             const u8* end = m_memory.end();
 
-            const size_t bytes_per_scan = width * bpp;
-            const size_t bytes_per_image = height * bytes_per_scan;
+            const size_t bytes_per_scan = imageDecodeStrideBytes(width, bpp);
+            const size_t bytes_per_image = imageDecodeBufferBytes(bytes_per_scan, height);
+            if (!bytes_per_scan || !bytes_per_image)
+            {
+                status.setError("[ImageDecoder.TGA] Incorrect image dimensions ({} x {}).", width, height);
+                return status;
+            }
 
             if (m_targa_header.isRLE())
             {
