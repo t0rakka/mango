@@ -32,6 +32,10 @@ set(MANGO_TESTS
     image_inspect_test
 )
 
+if (IMAGE_FORMAT_KTX2)
+    list(APPEND MANGO_TESTS ktx2_memory_test)
+endif ()
+
 if (TARGET mango-window)
     list(APPEND MANGO_TESTS eventloop)
 endif ()

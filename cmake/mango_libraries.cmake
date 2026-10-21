@@ -80,6 +80,21 @@ mango_set_library_properties(mango-image)
 mango_apply_shared_config(mango-image)
 target_link_libraries(mango-image PUBLIC mango-core)
 
+# Vendored basisu transcoder (see source/external/basisu/README.md).
+# KTX2 container + Zstd supercompression are handled in image_ktx2.cpp (mango::zstd).
+if (IMAGE_FORMAT_KTX2)
+    target_compile_definitions(mango-image PRIVATE
+        BASISD_SUPPORT_KTX2=0
+        BASISD_SUPPORT_KTX2_ZSTD=0
+    )
+    if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
+        set_source_files_properties(
+            "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/basisu_transcoder.cpp"
+            PROPERTIES COMPILE_OPTIONS "-fno-strict-aliasing"
+        )
+    endif ()
+endif ()
+
 if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango-core PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()

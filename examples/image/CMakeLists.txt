@@ -6,6 +6,11 @@ add_executable(blitter blitter/blitter.cpp)
 add_executable(palette palette.cpp)
 add_executable(async_decode async_decode.cpp)
 
+if (IMAGE_FORMAT_KTX2)
+    add_executable(ktx2_blocks ktx2_blocks.cpp)
+    set_target_properties(ktx2_blocks PROPERTIES FOLDER "examples/image")
+endif ()
+
 set_target_properties(webp_test PROPERTIES FOLDER "examples/image")
 set_target_properties(bulk_decode PROPERTIES FOLDER "examples/image")
 set_target_properties(icc_p3_test PROPERTIES FOLDER "examples/image")
@@ -87,6 +92,9 @@ target_link_libraries(jpeg_benchmark PRIVATE mango_example_blend2d)
 find_module(jpeg_benchmark JPEG PRIVATE REQUIRED libjpeg JPEG JPEG::JPEG 0)
 
 # webp_test, bulk_decode, icc_p3_test, blitter, palette, async_decode,
-# png_benchmark, jpeg_benchmark
+# png_benchmark, jpeg_benchmark, [ktx2_blocks]
+if (IMAGE_FORMAT_KTX2)
+    math(EXPR _mango_examples_added "${_mango_examples_added} + 1")
+endif ()
 math(EXPR _mango_examples_added "${_mango_examples_added} + 8")
 set(_mango_examples_added ${_mango_examples_added} PARENT_SCOPE)
