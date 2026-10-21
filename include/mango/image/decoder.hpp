@@ -52,11 +52,16 @@ namespace mango::image
         SUPERCOMPRESS_EAC_R11          = 0x00000400,
         SUPERCOMPRESS_PVRTC2_RGBA_4BPP = 0x00000800,
         SUPERCOMPRESS_EAC_RG11         = 0x00001000,
+        // Source markers for KTX2 Basis supercompression (transcode targets are the BC* flags).
         SUPERCOMPRESS_BASISU_ETC1S     = 0x00002000,
         SUPERCOMPRESS_BASISU_UASTC     = 0x00004000,
         SUPERCOMPRESS_ETC2_RGBA        = 0x00008000,
         SUPERCOMPRESS_BC3_UNORM        = 0x00010000,
         SUPERCOMPRESS_BC5_UNORM        = 0x00020000,
+        SUPERCOMPRESS_BC6H_UF16        = 0x00040000,
+        SUPERCOMPRESS_ASTC_HDR_4x4     = 0x00080000, // ASTC 4x4 HDR (TextureCompression::ASTC_FLOAT_4x4)
+        SUPERCOMPRESS_ASTC_HDR_6x6     = 0x00100000, // ASTC 6x6 HDR (TextureCompression::ASTC_FLOAT_6x6)
+        SUPERCOMPRESS_BASISU_UASTC_HDR = 0x00200000, // KTX2 UASTC HDR 4x4 / 6x6i payload (BasisLZ or scheme 4)
     };
 
     struct ImageHeader : Status
@@ -106,9 +111,10 @@ namespace mango::image
         bool jpeg_colorspace_rgb = false; // assumes channel data is RGB instead of YCbCr
 
         // Requested GPU block format for supercompressed sources (Basis/UASTC).
-        // TextureCompression::NONE keeps the default path (RGBA surface decode /
-        // native blocks). A value from ImageHeader::supercompression selects the
-        // GPU upload blob returned by memory(..., options).
+        // TextureCompression::NONE: return native GPU texel data when the file stores
+        // block-compressed levels (BC/ASTC/UASTC, etc.) without expanding to RGBA/float.
+        // For Basis ETC1S, NONE is not valid — pick a target from ImageHeader::supercompression.
+        // Other values select a Basis transcode target (BC7, ETC2, …) supported by the mask.
         u32 compression = TextureCompression::NONE;
     };
 

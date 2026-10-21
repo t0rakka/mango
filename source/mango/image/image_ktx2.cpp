@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <mango/core/pointer.hpp>
@@ -14,9 +14,12 @@
 #include <cstring>
 #include "../../external/basisu/transcoder/basisu_transcoder.h"
 
-// BASIS_LZ / UASTC: GPU path is memory(..., options) with options.compression set to a
-// TextureCompression from header.supercompression — basisu transcodes to that block format.
-// decode() to Surface remains a CPU convenience (RGBA32). Gated by IMAGE_FORMAT_KTX2.
+// GPU upload path: ImageDecoder::memory(level, depth, face, options)
+//   - options.compression == NONE: native level texels (BC/ASTC/UASTC, HDR BC6H, …) after
+//     Zstd/Zlib supercompression; UASTC returns ASTC 4x4 block data without expanding.
+//   - Basis ETC1S / UASTC: options.compression selects an OSS basisu transcode target from
+//     ImageHeader::supercompression (BC7, ETC2, …). ETC1S has no native GPU payload.
+// decode() to Surface remains CPU convenience (RGBA32 / decompress). Gated by IMAGE_FORMAT_KTX2.
 
 namespace
 {
@@ -90,7 +93,9 @@ namespace
         KHR_DF_MODEL_ETC1S         = 163U, // Basis Universal ETC1S Format
         KHR_DF_MODEL_PVRTC         = 164U,
         KHR_DF_MODEL_PVRTC2        = 165U,
-        KDF_DF_MODEL_UASTC         = 166U, // Basis Universal UASTC Format
+        KDF_DF_MODEL_UASTC         = 166U, // Basis Universal UASTC LDR 4x4
+        KDF_DF_MODEL_UASTC_HDR_4X4 = 167U, // Basis Universal UASTC HDR 4x4 (FastHDR)
+        KDF_DF_MODEL_UASTC_HDR_6X6I = 168U, // UASTC HDR 6x6 intermediate (KTX2 supercompression scheme 4)
     };
 
     enum : u8
@@ -381,12 +386,18 @@ namespace
         SUPERCOMPRESSION_BASIS_LZ = 1,
         SUPERCOMPRESSION_ZSTANDARD = 2,
         SUPERCOMPRESSION_ZLIB = 3,
+        SUPERCOMPRESSION_UASTC_HDR_6x6I = 4,
     };
 
     constexpr size_t KTX2_IDENTIFIER_SIZE = 12;
     constexpr size_t KTX2_HEADER_SIZE = KTX2_IDENTIFIER_SIZE + 9 * 4 + 4 * 4 + 8 * 2; // identifier + fields + index
     constexpr size_t KTX2_LEVEL_INDEX_ENTRY_SIZE = 8 * 3;
     constexpr u32 KTX2_MAX_LEVEL_COUNT = 32;
+
+    static Format rgba16fFormat()
+    {
+        return Format(64, Format::FLOAT16, Format::RGBA, 16, 16, 16, 16);
+    }
 
     static
     bool containsRegion(size_t memory_size, u64 offset, u64 length)
@@ -979,7 +990,9 @@ namespace
         basist::basisu_transcoder_init();
     }
 
-    // GPU block formats basisu can emit from ETC1S / UASTC (plus source markers).
+    // All OSS basisu GPU block transcode targets (see transcoder_texture_format).
+    // Viewers pick a format supported by their Vulkan device; BC* is the usual
+    // desktop / MoltenVK subset, ETC/ASTC/PVRTC are mobile or extension-heavy.
     static constexpr u32 BASISU_GPU_TARGET_MASK =
         SUPERCOMPRESS_ETC1_RGB |
         SUPERCOMPRESS_ETC2_RGBA |
@@ -997,6 +1010,11 @@ namespace
         SUPERCOMPRESS_PVRTC2_RGBA_4BPP |
         SUPERCOMPRESS_EAC_R11 |
         SUPERCOMPRESS_EAC_RG11;
+
+    static constexpr u32 BASISU_UASTC_HDR_TARGET_MASK =
+        SUPERCOMPRESS_BC6H_UF16 |
+        SUPERCOMPRESS_ASTC_HDR_4x4 |
+        SUPERCOMPRESS_ASTC_HDR_6x6;
 
     static u32 supercompressFlagFromTextureCompression(u32 compression)
     {
@@ -1018,6 +1036,9 @@ namespace
             case TextureCompression::PVRTC2_RGBA_4BPP:            return SUPERCOMPRESS_PVRTC2_RGBA_4BPP;
             case TextureCompression::EAC_R11:                     return SUPERCOMPRESS_EAC_R11;
             case TextureCompression::EAC_RG11:                    return SUPERCOMPRESS_EAC_RG11;
+            case TextureCompression::BC6H_UF16:                   return SUPERCOMPRESS_BC6H_UF16;
+            case TextureCompression::ASTC_FLOAT_4x4:              return SUPERCOMPRESS_ASTC_HDR_4x4;
+            case TextureCompression::ASTC_FLOAT_6x6:              return SUPERCOMPRESS_ASTC_HDR_6x6;
             default:                                              return 0;
         }
     }
@@ -1073,6 +1094,15 @@ namespace
                 return true;
             case TextureCompression::EAC_RG11:
                 out = basist::transcoder_texture_format::cTFETC2_EAC_RG11;
+                return true;
+            case TextureCompression::BC6H_UF16:
+                out = basist::transcoder_texture_format::cTFBC6H;
+                return true;
+            case TextureCompression::ASTC_FLOAT_4x4:
+                out = basist::transcoder_texture_format::cTFASTC_HDR_4x4_RGBA;
+                return true;
+            case TextureCompression::ASTC_FLOAT_6x6:
+                out = basist::transcoder_texture_format::cTFASTC_HDR_6x6_RGBA;
                 return true;
             default:
                 return false;
@@ -1239,6 +1269,28 @@ namespace
 
         bool m_is_etc1s = false;
         bool m_is_uastc = false;
+        bool m_is_uastc_hdr_4x4 = false;
+        bool m_is_uastc_hdr_6x6i = false;
+        bool m_uses_basis_lz = false;
+
+        int basisSourceBlockWidth() const
+        {
+            return m_is_uastc_hdr_6x6i ? 6 : 4;
+        }
+
+        int basisSourceBlockHeight() const
+        {
+            return m_is_uastc_hdr_6x6i ? 6 : 4;
+        }
+
+        bool isBasisUastcHdr() const
+        {
+            return m_is_uastc_hdr_4x4 || m_is_uastc_hdr_6x6i;
+        }
+
+        // Block format stored in level data (vkFormat / UASTC). Distinct from header.format
+        // used by decode(), which may be RGBA for Basis convenience.
+        u32 m_gpu_compression = TextureCompression::NONE;
 
         u32 m_supercompression = 0;
         Buffer m_buffer;
@@ -1331,6 +1383,7 @@ namespace
             header.faces = ktx2_header.faceCount;
             header.format = desc.format;
             header.compression = desc.compression;
+            m_gpu_compression = desc.compression;
             m_type_size = ktx2_header.typeSize;
 
             if (desc.compression != TextureCompression::NONE)
@@ -1353,11 +1406,12 @@ namespace
                 case SUPERCOMPRESSION_NONE:
                     break;
                 case SUPERCOMPRESSION_BASIS_LZ:
-                    m_is_etc1s = true;
+                case SUPERCOMPRESSION_UASTC_HDR_6x6I:
+                    m_uses_basis_lz = true;
+                    m_gpu_compression = TextureCompression::NONE;
                     header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                     header.linear = false;
                     header.compression = TextureCompression::NONE;
-                    header.supercompression = SUPERCOMPRESS_BASISU_ETC1S | BASISU_GPU_TARGET_MASK;
                     break;
                 case SUPERCOMPRESSION_ZSTANDARD:
                     break;
@@ -1399,7 +1453,7 @@ namespace
                 return;
             }
 
-            if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ && !sgdByteLength)
+            if (m_uses_basis_lz && !sgdByteLength)
             {
                 header.setError("[ImageDecoder.KTX2] Missing BasisLZ global data.");
                 return;
@@ -1500,14 +1554,39 @@ namespace
                     switch (colorModel)
                     {
                         case KHR_DF_MODEL_ETC1S:
-                            // NOTE: This should already have been detected as supercompression
+                            m_is_etc1s = true;
                             break;
                         case KDF_DF_MODEL_UASTC:
                             m_is_uastc = true;
+                            m_gpu_compression = TextureCompression::ASTC_UNORM_4x4;
                             header.format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
                             header.linear = false;
                             header.compression = TextureCompression::NONE;
-                            header.supercompression = SUPERCOMPRESS_BASISU_UASTC | BASISU_GPU_TARGET_MASK;
+                            break;
+                        case KDF_DF_MODEL_UASTC_HDR_4X4:
+                            m_is_uastc_hdr_4x4 = true;
+                            m_gpu_compression = TextureCompression::ASTC_FLOAT_4x4;
+                            header.format = rgba16fFormat();
+                            header.linear = true;
+                            header.compression = TextureCompression::NONE;
+                            header.color.transfer = TransferFunction::Linear;
+                            break;
+                        case KDF_DF_MODEL_UASTC_HDR_6X6I:
+                            m_is_uastc_hdr_6x6i = true;
+                            m_gpu_compression = TextureCompression::ASTC_FLOAT_6x6;
+                            header.format = rgba16fFormat();
+                            header.linear = true;
+                            header.compression = TextureCompression::NONE;
+                            header.color.transfer = TransferFunction::Linear;
+                            break;
+                        case KHR_DF_MODEL_ASTC:
+                            if (ktx2_header.vkFormat == 1000066004u)
+                            {
+                                m_gpu_compression = TextureCompression::ASTC_FLOAT_6x6;
+                                header.format = rgba16fFormat();
+                                header.linear = true;
+                                header.color.transfer = TransferFunction::Linear;
+                            }
                             break;
                     }
 
@@ -1657,18 +1736,83 @@ namespace
             }
 
             // Supercompression Global Data
-            if (sgdByteLength)
+            if (sgdByteLength && m_uses_basis_lz)
             {
-                if (m_supercompression == SUPERCOMPRESSION_BASIS_LZ)
+                int imageCount = std::max(1u, ktx2_header.levelCount) * ktx2_header.faceCount;
+                if (!m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), imageCount))
                 {
-                    int imageCount = std::max(1u, ktx2_header.levelCount) * ktx2_header.faceCount;
-                    if (!m_basis.read(ConstMemory(memory.address + sgdByteOffset, sgdByteLength), imageCount))
-                    {
-                        header.setError("[ImageDecoder.KTX2] Invalid BasisLZ global data.");
-                        return;
-                    }
+                    header.setError("[ImageDecoder.KTX2] Invalid BasisLZ global data.");
+                    return;
                 }
             }
+
+            if (m_uses_basis_lz && !m_is_etc1s && !isBasisUastcHdr())
+            {
+                header.setError("[ImageDecoder.KTX2] Unsupported BasisLZ payload (expected ETC1S or UASTC HDR DFD).");
+                return;
+            }
+
+            if (m_is_uastc_hdr_4x4 && ktx2_header.vkFormat != 1000066000u)
+            {
+                header.setError("[ImageDecoder.KTX2] UASTC HDR 4x4 requires vkFormat ASTC_4x4_SFLOAT_BLOCK.");
+                return;
+            }
+
+            if (m_is_uastc_hdr_6x6i && ktx2_header.vkFormat != 0)
+            {
+                header.setError("[ImageDecoder.KTX2] UASTC HDR 6x6i requires vkFormat VK_FORMAT_UNDEFINED.");
+                return;
+            }
+
+            publishSupercompressionMask();
+        }
+
+        void publishSupercompressionMask()
+        {
+            if (m_is_etc1s)
+            {
+                header.supercompression = SUPERCOMPRESS_BASISU_ETC1S | BASISU_GPU_TARGET_MASK;
+            }
+            else if (m_is_uastc)
+            {
+                header.supercompression = SUPERCOMPRESS_BASISU_UASTC | BASISU_GPU_TARGET_MASK |
+                    SUPERCOMPRESS_ASTC_RGBA_4x4;
+            }
+            else if (isBasisUastcHdr())
+            {
+                header.supercompression = SUPERCOMPRESS_BASISU_UASTC_HDR | BASISU_UASTC_HDR_TARGET_MASK;
+            }
+            else if (m_gpu_compression != TextureCompression::NONE)
+            {
+                const u32 flag = supercompressFlagFromTextureCompression(m_gpu_compression);
+                header.supercompression = flag;
+            }
+        }
+
+        void invalidateTranscodeCache()
+        {
+            m_cached_compression = TextureCompression::NONE;
+            m_cached_level = -1;
+            m_cached_depth = -1;
+            m_cached_face = -1;
+            m_transcode_buffer.resize(0);
+        }
+
+        bool isNativeGpuCompressionRequest(u32 compression) const
+        {
+            if (compression == TextureCompression::NONE)
+            {
+                return m_gpu_compression != TextureCompression::NONE;
+            }
+
+            return compression == m_gpu_compression;
+        }
+
+        ConstMemory nativeGpuLevelMemory(int level, int depth, int face)
+        {
+            invalidateTranscodeCache();
+            header.compression = m_gpu_compression;
+            return sourceLevelMemory(level, depth, face);
         }
 
         ~Interface()
@@ -1677,14 +1821,16 @@ namespace
 
         void populateInspect(ImageInspect& report) const override
         {
-            const bool block_compressed = header.compression != TextureCompression::NONE;
+            const u32 gpu_compression = m_gpu_compression != TextureCompression::NONE
+                ? m_gpu_compression : header.compression;
+            const bool block_compressed = gpu_compression != TextureCompression::NONE;
             report.lossless = block_compressed ? InspectTriState::No : InspectTriState::Yes;
             report.progressive = InspectTriState::No;
             report.tiling.tiled = block_compressed ? InspectTriState::Yes : InspectTriState::No;
 
             if (block_compressed)
             {
-                TextureCompression info(header.compression);
+                TextureCompression info(gpu_compression);
                 report.tiling.width = info.width;
                 report.tiling.height = info.height;
             }
@@ -1696,6 +1842,10 @@ namespace
 
             if (m_is_etc1s)
                 report.encoding = "Basis ETC1S";
+            else if (m_is_uastc_hdr_4x4)
+                report.encoding = "Basis UASTC HDR 4x4";
+            else if (m_is_uastc_hdr_6x6i)
+                report.encoding = "Basis UASTC HDR 6x6i";
             else if (m_is_uastc)
                 report.encoding = "Basis UASTC";
             else if (block_compressed)
@@ -1718,35 +1868,73 @@ namespace
 
         ConstMemory memory(int level, int depth, int face) override
         {
-            return sourceLevelMemory(level, depth, face);
+            ImageDecodeOptions options;
+            return memory(level, depth, face, options);
         }
 
         ConstMemory memory(int level, int depth, int face, const ImageDecodeOptions& options) override
         {
-            if (options.compression == TextureCompression::NONE || (!m_is_etc1s && !m_is_uastc))
+            if (!header.success)
             {
-                return sourceLevelMemory(level, depth, face);
+                return ConstMemory();
             }
 
-            const u32 flag = supercompressFlagFromTextureCompression(options.compression);
+            decompress();
+
+            const bool basis_transcode = m_is_etc1s || isBasisUastcHdr();
+
+            if (!basis_transcode && !m_is_uastc)
+            {
+                if (isNativeGpuCompressionRequest(options.compression))
+                {
+                    return nativeGpuLevelMemory(level, depth, face);
+                }
+
+                return ConstMemory();
+            }
+
+            if (m_is_uastc && isNativeGpuCompressionRequest(options.compression))
+            {
+                return nativeGpuLevelMemory(level, depth, face);
+            }
+
+            u32 requested_compression = options.compression;
+            if (requested_compression == TextureCompression::NONE)
+            {
+                if (m_is_etc1s)
+                {
+                    return ConstMemory();
+                }
+
+                if (isBasisUastcHdr())
+                {
+                    requested_compression = m_gpu_compression;
+                }
+                else
+                {
+                    return ConstMemory();
+                }
+            }
+
+            const u32 flag = supercompressFlagFromTextureCompression(requested_compression);
             if (!flag || (header.supercompression & flag) == 0)
             {
                 return ConstMemory();
             }
 
             basist::transcoder_texture_format fmt;
-            if (!basisuFormatFromTextureCompression(options.compression, fmt))
+            if (!basisuFormatFromTextureCompression(requested_compression, fmt))
             {
                 return ConstMemory();
             }
 
-            if (m_cached_compression == options.compression &&
+            if (m_cached_compression == requested_compression &&
                 m_cached_level == level &&
                 m_cached_depth == depth &&
                 m_cached_face == face &&
                 m_transcode_buffer.size() > 0)
             {
-                header.compression = options.compression;
+                header.compression = requested_compression;
                 return ConstMemory(m_transcode_buffer);
             }
 
@@ -1758,11 +1946,18 @@ namespace
 
             const int width = std::max(1, header.width >> level);
             const int height = std::max(1, header.height >> level);
-            const int block_w = int(basist::basis_get_block_width(fmt));
-            const int block_h = int(basist::basis_get_block_height(fmt));
-            const int xblocks = std::max(1, (width + block_w - 1) / block_w);
-            const int yblocks = std::max(1, (height + block_h - 1) / block_h);
-            const u32 total_blocks = u32(xblocks) * u32(yblocks);
+
+            const int src_bw = isBasisUastcHdr() ? basisSourceBlockWidth() : int(basist::basis_get_block_width(fmt));
+            const int src_bh = isBasisUastcHdr() ? basisSourceBlockHeight() : int(basist::basis_get_block_height(fmt));
+            const int src_xblocks = std::max(1, (width + src_bw - 1) / src_bw);
+            const int src_yblocks = std::max(1, (height + src_bh - 1) / src_bh);
+
+            const int out_bw = int(basist::basis_get_block_width(fmt));
+            const int out_bh = int(basist::basis_get_block_height(fmt));
+            const int out_xblocks = std::max(1, (width + out_bw - 1) / out_bw);
+            const int out_yblocks = std::max(1, (height + out_bh - 1) / out_bh);
+
+            const u32 total_blocks = u32(out_xblocks) * u32(out_yblocks);
             const u32 bytes_per_block = basist::basis_get_bytes_per_block_or_pixel(fmt);
             const size_t output_bytes = size_t(total_blocks) * bytes_per_block;
 
@@ -1790,18 +1985,38 @@ namespace
                 ok = transcoder.transcode_image(fmt,
                     m_transcode_buffer.data(), total_blocks,
                     source.address, u32(source.size),
-                    u32(xblocks), u32(yblocks), u32(width), u32(height),
+                    u32(src_xblocks), u32(src_yblocks), u32(width), u32(height),
                     u32(level),
                     desc.rgbSliceByteOffset, desc.rgbSliceByteLength,
                     desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
             }
-            else // UASTC
+            else if (m_is_uastc)
             {
-                basist::basisu_lowlevel_uastc_transcoder transcoder;
+                basist::basisu_lowlevel_uastc_ldr_4x4_transcoder transcoder;
                 ok = transcoder.transcode_image(fmt,
                     m_transcode_buffer.data(), total_blocks,
                     source.address, u32(source.size),
-                    u32(xblocks), u32(yblocks), u32(width), u32(height),
+                    u32(src_xblocks), u32(src_yblocks), u32(width), u32(height),
+                    u32(level),
+                    0, u32(source.size));
+            }
+            else if (m_is_uastc_hdr_4x4)
+            {
+                basist::basisu_lowlevel_uastc_hdr_4x4_transcoder transcoder;
+                ok = transcoder.transcode_image(fmt,
+                    m_transcode_buffer.data(), total_blocks,
+                    source.address, u32(source.size),
+                    u32(src_xblocks), u32(src_yblocks), u32(width), u32(height),
+                    u32(level),
+                    0, u32(source.size));
+            }
+            else if (m_is_uastc_hdr_6x6i)
+            {
+                basist::basisu_lowlevel_uastc_hdr_6x6_intermediate_transcoder transcoder;
+                ok = transcoder.transcode_image(fmt,
+                    m_transcode_buffer.data(), total_blocks,
+                    source.address, u32(source.size),
+                    u32(src_xblocks), u32(src_yblocks), u32(width), u32(height),
                     u32(level),
                     0, u32(source.size));
             }
@@ -1814,11 +2029,11 @@ namespace
                 return ConstMemory();
             }
 
-            m_cached_compression = options.compression;
+            m_cached_compression = requested_compression;
             m_cached_level = level;
             m_cached_depth = depth;
             m_cached_face = face;
-            header.compression = options.compression;
+            header.compression = requested_compression;
             return ConstMemory(m_transcode_buffer);
         }
 
@@ -1902,8 +2117,8 @@ namespace
                     m_basis.selectorCount, m_basis.selectorsData, m_basis.selectorsByteLength);
                 transcoder.decode_tables(m_basis.tablesData, m_basis.tablesByteLength);
 
-                int xblocks = std::max(1, width / 4);
-                int yblocks = std::max(1, height / 4);
+                const int xblocks = std::max(1, (width + 3) / 4);
+                const int yblocks = std::max(1, (height + 3) / 4);
 
                 const int imageIndex = level * header.faces + face;
                 BasisImageDesc desc;
@@ -1913,7 +2128,7 @@ namespace
                     return status;
                 }
 
-                bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
+                const bool ok = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
                     temp.image, width * height,
                     memory.address, u32(memory.size),
                     xblocks, yblocks, width, height,
@@ -1921,7 +2136,11 @@ namespace
                     desc.rgbSliceByteOffset, desc.rgbSliceByteLength,
                     desc.alphaSliceByteOffset, desc.alphaSliceByteLength);
 
-                MANGO_UNREFERENCED(x);
+                if (!ok)
+                {
+                    status.setError("[ImageDecoder.KTX2] Basis ETC1S transcode to RGBA failed.");
+                    return status;
+                }
 
                 dest.blit(0, 0, temp);
                 if (m_orientation_y)
@@ -1934,21 +2153,72 @@ namespace
                 Bitmap temp(width, height, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
 
                 initialize_basisu_only_once();
-                basist::basisu_lowlevel_uastc_transcoder transcoder;
+                basist::basisu_lowlevel_uastc_ldr_4x4_transcoder transcoder;
 
-                int xblocks = std::max(1, width / 4);
-                int yblocks = std::max(1, height / 4);
+                const int xblocks = std::max(1, (width + 3) / 4);
+                const int yblocks = std::max(1, (height + 3) / 4);
 
                 u32 slice_offset = 0;
                 u32 slice_length = u32(memory.size);
 
-                bool x = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
+                const bool ok = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA32,
                     temp.image, width * height,
                     memory.address, u32(memory.size),
                     xblocks, yblocks, width, height, level,
                     slice_offset, slice_length);
 
-                MANGO_UNREFERENCED(x);
+                if (!ok)
+                {
+                    status.setError("[ImageDecoder.KTX2] Basis UASTC transcode to RGBA failed.");
+                    return status;
+                }
+
+                dest.blit(0, 0, temp);
+                if (m_orientation_y)
+                    dest.yflip();
+            }
+            else if (isBasisUastcHdr())
+            {
+                ConstMemory memory = sourceLevelMemory(level, depth, face);
+
+                Bitmap temp(width, height, rgba16fFormat());
+
+                initialize_basisu_only_once();
+
+                const int bw = basisSourceBlockWidth();
+                const int bh = basisSourceBlockHeight();
+                const int xblocks = std::max(1, (width + bw - 1) / bw);
+                const int yblocks = std::max(1, (height + bh - 1) / bh);
+
+                u32 slice_offset = 0;
+                u32 slice_length = u32(memory.size);
+
+                bool ok = false;
+
+                if (m_is_uastc_hdr_4x4)
+                {
+                    basist::basisu_lowlevel_uastc_hdr_4x4_transcoder transcoder;
+                    ok = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA_HALF,
+                        temp.image, width * height,
+                        memory.address, u32(memory.size),
+                        u32(xblocks), u32(yblocks), u32(width), u32(height), u32(level),
+                        slice_offset, slice_length);
+                }
+                else
+                {
+                    basist::basisu_lowlevel_uastc_hdr_6x6_intermediate_transcoder transcoder;
+                    ok = transcoder.transcode_image(basist::transcoder_texture_format::cTFRGBA_HALF,
+                        temp.image, width * height,
+                        memory.address, u32(memory.size),
+                        u32(xblocks), u32(yblocks), u32(width), u32(height), u32(level),
+                        slice_offset, slice_length);
+                }
+
+                if (!ok)
+                {
+                    status.setError("[ImageDecoder.KTX2] Basis UASTC HDR transcode to RGBA16F failed.");
+                    return status;
+                }
 
                 dest.blit(0, 0, temp);
                 if (m_orientation_y)
@@ -2003,7 +2273,8 @@ namespace
 
         void decompress()
         {
-            if (m_supercompression > SUPERCOMPRESSION_BASIS_LZ)
+            if (m_supercompression == SUPERCOMPRESSION_ZSTANDARD ||
+                m_supercompression == SUPERCOMPRESSION_ZLIB)
             {
                 if (!m_buffer.size())
                 {
