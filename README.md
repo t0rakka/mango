@@ -38,11 +38,11 @@ cmake --build build
 ```cpp
 #include <mango/mango.hpp>
 using namespace mango;
-using namespace mango::filesystem;
+using namespace mango::image;
 
 int main()
 {
-    File file("archive.zip/textures/albedo.png");
+    Bitmap texture("archive.zip/textures/albedo.png, Format(32, Format::RGBA, 8, 8, 8, 8));
     // ...
 }
 ```
@@ -58,10 +58,8 @@ int main()
 Containers look like directories. `Path` keeps container indexes alive so reading many small files stays cheap.
 
 ```cpp
-File file("test.iso/data/image.png");
-
-Path root("test.iso/data/");
-File same(root, "image.png");
+Path path("data.zip/");
+File file(path, "images/test.png");
 ```
 
 ZIP, RAR, 7z, ISO, custom HBS, nested archives → [filesystem examples](docs/examples/filesystem.md).
