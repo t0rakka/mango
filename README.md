@@ -1,12 +1,13 @@
-<img src="docs/mango-logo.png" alt="mango" width="72" align="left"/>
+![mango](docs/mango-logo.png)
 
 # MANGO
 
 **C++20 library — building blocks for your imagination.**
 
-[![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
+![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)
 
-<br clear="left"/>
+  
+
 
 ---
 
@@ -16,17 +17,13 @@ MANGO is a **C++20 foundation framework** — platform abstraction and shared in
 
 The services are the kind you reach for in every real project: **filesystem abstraction** (`game.zip/levels/…` opens like a folder), a **unified compression API** (including streaming), **image decoding and encoding** with **color management**, plus **vector math** and a modern **SIMD** layer that stays friendly to hand-tuned intrinsics. Need windows, GL/Vulkan helpers, or mesh import? Those are **optional modules** on the same foundations — enable them in CMake and they slot in without a second ecosystem.
 
-**Customize the build** to match the job. Run the full stack or a tight subset: `BUILD_MINIMAL`, turn off Vulkan, pick only the `IMAGE_FORMAT_*` codecs you need. HEIC, camera RAW, and friends are deliberately optional — their dependencies are heavy. A desktop image viewer might enable everything; an engine texture path might stay on PNG, JPEG, and KTX2. If a library isn't installed, configure skips that format and keeps going. Details: [installation guide](docs/installation/setup.md).
+**Customize the build** to match the job. Run the full stack or a tight subset: `BUILD_MINIMAL`, turn off Vulkan, pick only the `IMAGE_FORMAT_`* codecs you need. HEIC, camera RAW, and friends are deliberately optional — their dependencies are heavy. A desktop image viewer might enable everything; an engine texture path might stay on PNG, JPEG, and KTX2. If a library isn't installed, configure skips that format and keeps going. Details: [installation guide](docs/installation/setup.md).
 
 ---
 
 ## Quick start
 
-<p align="center">
-  <a href="docs/installation/setup.md">
-    <img src="docs/getting-started-cheatsheet.png" alt="MANGO getting started — clone, configure, build" width="900"/>
-  </a>
-</p>
+![MANGO getting started — clone, configure, build](docs/getting-started-cheatsheet.png)
 
 ```bash
 git clone https://github.com/t0rakka/mango.git
@@ -42,7 +39,7 @@ using namespace mango::image;
 
 int main()
 {
-    Bitmap texture("archive.zip/textures/albedo.png, Format(32, Format::RGBA, 8, 8, 8, 8));
+    Bitmap texture("archive.zip/textures/albedo.png");
     // ...
 }
 ```
@@ -68,13 +65,11 @@ Those paths are not toy parsers: decompressors are **optimized aggressively**, a
 
 ### Images
 
-<p align="center">
-  <img src="docs/decoding.jpg" alt="Image decoding" width="420"/>
-</p>
+![Image decoding](docs/decoding.jpg)
 
 Inspect headers, decode to flexible `Format` layouts, async decode, block compression, ICC, and optional GPU-oriented KTX2 / Basis transcode paths.
 
-**<mark>NEW!</mark>** MANGO now decodes **<mark>HDR PNG</mark>** (PNG 3rd edition signalling: `cICP`, `mDCV`, `cLLI`, 16-bit linear) and **<mark>UltraHDR JPEG</mark>** (ISO 21496-1 / Adobe `hdrgm` gain-map JPEG) — scene-linear fp16 output with HDR metadata preserved.
+**NEW!** MANGO now decodes **HDR PNG** (PNG 3rd edition signalling: `cICP`, `mDCV`, `cLLI`, 16-bit linear) and **UltraHDR JPEG** (ISO 21496-1 / Adobe `hdrgm` gain-map JPEG) — scene-linear fp16 output with HDR metadata preserved.
 
 Benchmarks and format notes → [mango::image](docs/examples/image.md#library-comparisons).
 
@@ -88,16 +83,12 @@ One **unified compression interface** across deflate, zstd, lz4, and the other c
 
 ### Vulkan — glyph rendering *(optional module)*
 
-<p align="center">
-  <img src="docs/vulkan-font-2.png" alt="Vulkan font rendering — ligatures and scaled text" width="600"/>
-</p>
+![Vulkan font rendering — ligatures and scaled text](docs/vulkan-font-2.png)
 
 When `BUILD_VULKAN` is on, **mango::vulkan::FontRenderer** is finely tuned machinery for GPU text: vector outlines, realtime scaling, hinting modes, and OpenType ligatures — not a bolt-on font texture atlas. Try the Vulkan **font** example; it is not part of the core library.
 
 ---
 
-<div align="center">
+
 
 [Installation](docs/installation/setup.md) · [Examples](docs/examples/examples.md) · [Discord](https://discord.gg/E2xuXbK9Kf)
-
-</div>
