@@ -1,5 +1,10 @@
 <h1><img src="../mango-logo.png" alt="logo" width="80"/> MANGO Installation Guide</h1>
 
+<p align="center">
+  <img src="../installation-confused.png" alt="Hold on — the manual is upside down until you pick the right preset" width="360"/>
+</p>
+
+<p align="center"><em>Lots of knobs, but you only need the ones you turn on.</em></p>
 
 ## Background
 
