@@ -272,3 +272,67 @@ Mango's image system is designed for high performance:
 - **Block compression**: Hardware-accelerated texture decompression
 
 The system automatically chooses the fastest available path for each operation, whether it's direct memory access, SIMD-optimized conversion, or multi-threaded processing.
+
+### Library comparisons
+
+Reference numbers from the image codec benchmarks (your mileage may vary). Reproduce with the tools under `tools/` and `examples/image/` when those targets are enabled in your build.
+
+#### PNG
+
+```
+CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
+Image: 2560 x 1600 (3531 KB)
+---------------------------------------------------
+           decode(ms)  encode(ms)   size(KB)
+---------------------------------------------------
+libpng:         57.3       820.5       2843
+lodepng:       105.0       722.6       2624
+stb:            48.6       562.4       3864
+spng:           37.7       215.9       3232
+fpng:            N/A        46.0       3715
+wuffs:          23.9         N/A          0
+mango:           3.2        57.2       3531
+```
+
+```
+CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
+image: 4833 x 5875 (33598 KB)
+---------------------------------------------------
+           decode(ms)  encode(ms)   size(KB)
+---------------------------------------------------
+libpng:        379.5     14051.3      28180
+lodepng:       900.9      4953.5      26318
+stb:           407.2      5249.0      45144
+spng:          296.6      2424.7      34083
+fpng:            N/A       341.0      36958
+wuffs:         165.9         N/A          0
+mango:          53.7       287.0      33598
+```
+
+#### JPEG
+
+```
+CPU: Intel Core i9 8950HK @ 2.90GHz
+image: 5184 x 3456 (12652 KB)
+-----------------------------------------------------
+            decode(ms)    encode(ms)   size(KB)
+-----------------------------------------------------
+libjpeg:        197.8          70.1       6677
+stb:            300.7        1090.9      16784
+toojpeg:          N/A         292.6       5370
+wuffs:          185.9           N/A          0
+mango:           23.3          18.5       6925
+```
+
+```
+CPU: Intel Core i9 8950HK @ 2.90GHz
+image: 2560 x 1600 (683 KB)
+-----------------------------------------------------
+            decode(ms)    encode(ms)   size(KB)
+-----------------------------------------------------
+libjpeg:         32.9          16.3        678
+stb:             54.8         118.9       1607
+toojpeg:          N/A          64.2        618
+wuffs:           29.4           N/A          0
+mango:            3.2           4.3        699
+```

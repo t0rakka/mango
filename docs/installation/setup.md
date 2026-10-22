@@ -1,149 +1,83 @@
 <h1><img src="../mango-logo.png" alt="logo" width="80"/> MANGO Installation Guide</h1>
 
+<p align="center">
+  <img src="../installation-confused.png" alt="Hold on — the manual is upside down until you pick the right preset" width="360"/>
+</p>
+
+<p align="center"><em>Lots of knobs, but you only need the ones you turn on.</em></p>
+
+## Choose your platform
+
+Pick one guide — package lists differ, but configure/build flow is the same everywhere.
+
+| | |
+|---|---|
+| <img src="logo-linux.png" alt="" width="44"/> **[Linux](setup-linux.md)** | **Debian, Ubuntu, Mint, Arch, etc.** |
+| <img src="logo-apple.png" alt="" width="44"/> **[macOS](setup-macos.md)** | `brew` dependencies and build. |
+| <img src="logo-windows.png" alt="" width="44"/> **[Windows](setup-windows.md)** | vcpkg classic vs manifest, CMake presets, WSL notes. |
+| <img src="logo-emscripten.png" alt="" width="44"/> **[Emscripten](setup-emscripten.md)** | EMSDK-only or EMSDK + vcpkg for wasm deps. |
+
+Quick path (any OS with deps installed):
+
+```bash
+git clone https://github.com/t0rakka/mango.git
+cd mango
+cmake --preset default
+cmake --build build
+```
+
+Presets are described on [setup-windows.md](setup-windows.md#building) and [setup-emscripten.md](setup-emscripten.md); Linux and macOS usually start with `default`.
+
+---
+
+## How dependencies work
+
+Mango no longer vendors every third-party library. At **configure** time CMake uses `find_package`, pkg-config, and similar probes. What you get falls into three buckets:
+
+| Category | Behaviour |
+|----------|-----------|
+| **Required** | Must be present (e.g. zlib, fmt). Configure fails if missing. |
+| **Optional** | Image codecs, GL/Vulkan helpers, etc. If not found, CMake **disables that feature** and continues — no extra `-D` needed. |
+| **Examples / tools** | Extra packages only if you turn on `BUILD_EXAMPLES` / benchmarks that need them. |
+
+You tune the **mango** side with `CMakeLists.txt` options (`BUILD_VULKAN`, `IMAGE_FORMAT_JXL`, `BUILD_MINIMAL`, `LIBRARY_DISABLE`, …). Optional libraries you do not install simply stay off.
+
+**Building a dependency yourself** is fine: install to `/usr/local`, a custom prefix, or point CMake at it with `CMAKE_PREFIX_PATH` (and ensure pkg-config can see it if the dependency provides `.pc` files). Re-run configure; if mango’s probe succeeds, the feature turns on.
+
+If you are unsure what was detected, read the configure summary printed to the console (library names and disabled formats).
+
+---
+
+## Manual builds & awkward packages
+
+Most optional codecs are available from distro packages or vcpkg. A few are **missing or too old** in common repos — mango still supports them if **you** supply a new enough build.
+
+### JPEG XL (libjxl)
+
+Mango needs **libjxl ≥ 0.9**. Some distros ship older headers (notably **Ubuntu 24.04 (noble)** `libjxl-dev`). Options:
+
+- Install a newer libjxl (PPA, rolling distro, or [build from source](https://github.com/libjxl/libjxl)).
+- Or disable at configure time: `-DIMAGE_FORMAT_JXL=OFF`.
+
+This is the usual pattern: the format is optional; the fix is upgrade the library or turn the format off.
+
+### JPEG XR (libjxr)
+
+`.jxr` / HD Photo support is enabled when **libjxr** is found. Many systems have no package (Homebrew dropped it; Debian often lacks it). Arch includes `jxrlib` in the [Linux pacman line](setup-linux.md#arch-pacman); Windows can use vcpkg `jxrlib`.
+
+**Build libjxr from source** (any platform where CMake should pick it up after install):
+
+```bash
+git clone https://github.com/cgohlke/jxrlib.git
+cmake -S jxrlib -B jxrlib-build -DCMAKE_BUILD_TYPE=Release
+cmake --build jxrlib-build
+sudo cmake --install jxrlib-build
+```
+
+Re-configure mango; pkg-config (`libjxr`) or installed headers/libs are detected automatically.
+
+---
 
 ## Background
 
-A long time ago MANGO was self-contained source tree where all external libraries were included for maximum comfort. You clone the repo and compile. This is not the way anymore because it means a lot of maintenance work encumbers the developer. The external libraries will be installed by package managers and this varies between platforms, the methods we document below are not the only ones but should get you going.
-
-The external libraries are divided into three categories: REQUIRED libraries MUST be installed. OPTIONAL libraries can be disabled by the build script options and they are also disabled if the libraries cannot be found. The EXAMPLE libraries must be installed if examples are going to be compiled (image codec benchmarks specifically).
-
-### JPEG XR (optional)
-
-JPEG XR (`.jxr`, HD Photo) is compiled in when **libjxr** is found at configure time. If the library is missing, CMake prints `JXR: disabling IMAGE_FORMAT_JXR` and continues — no extra `-D` flag needed.
-
-| Platform | How to enable |
-|----------|---------------|
-| **Arch / pacman** | `jxrlib` in the dependency line below |
-| **Debian / Ubuntu** | `sudo apt-get install libjxr-dev` (when your distro still ships it) |
-| **macOS** | Build from source (Homebrew no longer packages jxrlib) |
-| **Windows / vcpkg** | `jxrlib` in the vcpkg dependency list / manifest `image` feature |
-
-**Build libjxr from source** (macOS, or any platform without a package):
-
-    git clone https://github.com/cgohlke/jxrlib.git
-    cmake -S jxrlib -B jxrlib-build -DCMAKE_BUILD_TYPE=Release
-    cmake --build jxrlib-build
-    sudo cmake --install jxrlib-build
-
-Re-run mango configure afterwards; pkg-config (`libjxr`) or the installed headers/libs are picked up automatically.
-
-
-<h2><img src="logo-linux.png" alt="logo" width="80"/> Debian / Ubuntu (apt)</h2>
-
-
-Debian, Ubuntu, Mint, Raspberry Pi OS, and other apt-based distros.
-
-### Dependencies
-
-    sudo apt-get install cmake ninja-build pkg-config g++ libfmt-dev zlib1g-dev libdeflate-dev libzstd-dev liblcms2-dev libjxl-dev libopenjp2-7-dev libwebp-dev libavif-dev libheif-dev libraw-dev libisal-dev liblz4-dev libbz2-dev mesa-common-dev libgl1-mesa-dev libegl-dev glslang-dev libfreetype-dev libharfbuzz-dev libsimdjson-dev libjpeg-dev libpng-dev libx11-dev libxext-dev libxrandr-dev libx11-xcb-dev libxcb1-dev libxcb-xkb-dev libxcb-keysyms1-dev libxcb-icccm4-dev libxcb-randr0-dev libxcb-sync-dev libxcb-glx0-dev libxkbcommon-dev libxkbcommon-x11-dev libwayland-dev libwayland-bin wayland-protocols libdecor-0-dev libvulkan-dev
-
-**Ubuntu 24.04 (noble):** distro `libjxl-dev` is too old for mango (needs libjxl ≥ 0.9). Use a newer PPA, build JPEG XL from source, or disable `IMAGE_FORMAT_JXL` at configure time.
-
-
-<h2><img src="logo-archlinux.png" alt="logo" width="80"/> Arch / pacman</h2>
-
-
-Arch Linux and other pacman-based distros.
-
-### Dependencies
-
-    sudo pacman -S cmake ninja pkgconf gcc fmt zlib libdeflate zstd lcms2 libjxl openjpeg2 libwebp libavif libheif libraw isa-l lz4 bzip2 jxrlib mesa glu glslang freetype2 harfbuzz simdjson libjpeg-turbo libpng vulkan-headers vulkan-icd-loader libx11 libxext libxrandr libxcb xcb-util-keysyms xcb-util-wm libxkbcommon libxkbcommon-x11 wayland wayland-protocols libdecor
-
-
-### Building (Linux)
-
-    cmake -S . -B build -G "Ninja"
-    cd build
-    ninja
-    sudo ninja install
-
-Above uses ninja as build system, cmake users know what time it is. If you want to use the default (make) just omit the -G "Ninja" parameter. Configure the cmake options before building to tune the library size and dependencies to your taste.
-
-The apt/pacman lines above include Xlib, Xcb, and Wayland. Install them all; backends that are found are compiled in and the active one is chosen at runtime. Wayland is increasingly the default session (e.g. upcoming Linux Mint / Cinnamon), so the Wayland packages are recommended rather than optional extras: `libwayland-dev` + `libwayland-bin` + `wayland-protocols` (+ `libdecor-0-dev`) on apt, or `wayland` + `wayland-protocols` (+ `libdecor`) on pacman. Without them, CMake disables `ENABLE_WAYLAND` and builds X11/Xcb only.
-
-`libdecor-0-dev` / `libdecor` is optional at configure time but needed for window chrome on GNOME Wayland (title bar, move, resize). Hyprland and KWin draw decorations themselves. A successful Wayland+libdecor configure prints `Wayland (libdecor)` under `[WindowSystem]`; `Wayland` alone means libdecor was not found. `libwayland-bin` provides `wayland-scanner`, which the Wayland backend needs at build time.
-
-
-<h2><img src="logo-apple.png" alt="logo" width="80"/> macOS</h2>
-
-
-### Dependencies
-
-    brew install fmt zlib libdeflate zstd lcms2 jpeg-xl openjpeg webp libavif libheif libraw isa-l lz4 bzip2 freetype harfbuzz simdjson libjpeg-turbo libpng
-
-See [JPEG XR (optional)](#jpeg-xr-optional) to add `.jxr` support on macOS.
-
-### Building
-
-On macOS the building is exactly same as it is on Linux.
-
-
-<h2><img src="logo-windows.png" alt="logo" width="80"/> Windows</h2>
-
-
-Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
-
-    VCPKG_ROOT              <vcpkg_root>
-    VCPKG_DEFAULT_TRIPLET   x64-windows
-
-### Dependencies
-
-**Classic mode** (`cmake --preset vcpkg`) — install packages once into the global vcpkg tree; configure stays fast. Re-run when `vcpkg.json` changes:
-
-    vcpkg install pkgconf fmt zlib libdeflate zstd isal lz4 bzip2 simdjson lcms libjxl openjpeg libwebp libavif libheif libraw jxrlib vulkan-headers vulkan-loader glslang freetype harfbuzz libjpeg-turbo libpng blend2d
-
-**Manifest mode** (`cmake --preset vcpkg-manifest`) — skip the command above; vcpkg builds deps from `vcpkg.json` into `build/vcpkg_installed` on configure. Convenient but slow on every configure.
-
-### Building
-
-Presets are toolchain selectors (always Ninja + Release):
-
-    cmake --preset default           # system / find_package deps
-    cmake --preset vcpkg             # classic vcpkg (pre-installed packages)
-    cmake --preset vcpkg-manifest    # manifest vcpkg (builds deps on configure)
-    cmake --preset emscripten        # EMSDK only
-    cmake --preset emscripten-vcpkg  # EMSDK + VCPKG_ROOT (wasm deps)
-
-    cmake --build --preset vcpkg
-    cmake --install build
-
-Override build type on the configure line when needed, e.g. `cmake --preset vcpkg -DCMAKE_BUILD_TYPE=Debug`.
-
-Fine-grained control of what mango itself compiles is via CMake options in `CMakeLists.txt`.
-
-If you are not sure where mango was installed, re-run configure in the build directory and the install prefix is printed to the console.
-
-#### INTEL_DELUXE
-
-The INTEL_DELUXE option uses all the latest ISA extensions except AVX-512. When targeting older processors it is recommended to cherry pick the extensions.
-
-#### WSL
-
-If you are compiling on Windows WSL there is an issue with cmake find_package() not working correctly when VCPKG packages are installed. This is because the WSL adds windows PATH to it's path on startup. This can be mitigated by adding the following lines into /etc/wsl.conf file:
-
-    [interop]
-    appendWindowsPath = false
-
-Don't forget to restart the WSL; "wsl --shutdown" for the setting to take effect.
-
-
-<h2><img src="logo-emscripten.png" alt="logo" width="80"/> Emscripten</h2>
-
-
-The Emscripten build is still work-in-progress but is partially working. Activate the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) so `EMSDK` is set.
-
-### EMSDK only
-
-    cmake --preset emscripten
-    cmake --build --preset emscripten
-
-No vcpkg. Optional codecs that are not available for wasm stay disabled via `find_package`. Fine on Linux/macOS when you only need a core wasm build.
-
-### EMSDK + vcpkg (recommended on Windows)
-
-Needs `EMSDK` and `VCPKG_ROOT`. Manifest mode installs wasm deps (`wasm32-emscripten`):
-
-    cmake --preset emscripten-vcpkg
-    cmake --build --preset emscripten-vcpkg
-
-The target is currently node; the cmake configuration enables native filesystem access for testing.
+A long time ago MANGO was a self-contained tree with every dependency in-tree. That shifted to package managers and optional features so maintenance stays sane. The platform pages above are starting points, not the only way to install dependencies — as long as CMake can find a library, mango can use it.

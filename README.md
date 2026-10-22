@@ -1,175 +1,105 @@
-<h1><img src="docs/mango-logo.png" alt="logo" width="80"/> MANGO - C++20 Graphics Library for the NÖRDS.</h1>
+<img src="docs/mango-logo.png" alt="mango" width="72" align="left"/>
 
-Library for C++ masochists. It does short vector math, SIMD, encodes and decodes images, virtual filesystem and other tricks.
+# MANGO
 
-"We wasted our time so that you don't have to waste yours."
-
+**C++20 library — building blocks for your imagination.**
 
 [![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
 
+<br clear="left"/>
 
-## [Installation Guide](docs/installation/setup.md)
-## [Code Examples](docs/examples/examples.md)
+---
 
+## What is MANGO?
 
-## We load images!
-<h1><img src="docs/decoding.jpg" width="384"/></h1>
+MANGO is a **C++20 foundation framework** — platform abstraction and shared infrastructure, not a game engine. We don't prescribe your architecture; we supply **interlocking building blocks** so you can wire up a viewer, a pipeline, or the low-level half of something bigger. Your design, your rules — we just make the boring parts solid so coding the interesting parts feels good again.
 
-**<mark>NEW!</mark>** MANGO now decodes **HDR PNG** (PNG 3rd edition signalling: `cICP`, `mDCV`, `cLLI`, 16-bit linear) and **UltraHDR JPEG** (ISO 21496-1 / Adobe `hdrgm` gain-map JPEG) — scene-linear fp16 output with HDR metadata preserved.
+The services are the kind you reach for in every real project: **filesystem abstraction** (`game.zip/levels/…` opens like a folder), a **unified compression API** (including streaming), **image decoding and encoding** with **color management**, plus **vector math** and a modern **SIMD** layer that stays friendly to hand-tuned intrinsics. Need windows, GL/Vulkan helpers, or mesh import? Those are **optional modules** on the same foundations — enable them in CMake and they slot in without a second ecosystem.
 
-### PNG library comparison
-```
-CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
-Image: 2560 x 1600 (3531 KB)
----------------------------------------------------
-           decode(ms)  encode(ms)   size(KB)
----------------------------------------------------
-libpng:         57.3       820.5       2843
-lodepng:       105.0       722.6       2624
-stb:            48.6       562.4       3864
-spng:           37.7       215.9       3232
-fpng:            N/A        46.0       3715
-wuffs:          23.9         N/A          0
-mango:           3.2        57.2       3531
-```
+**Customize the build** to match the job. Run the full stack or a tight subset: `BUILD_MINIMAL`, turn off Vulkan, pick only the `IMAGE_FORMAT_*` codecs you need. HEIC, camera RAW, and friends are deliberately optional — their dependencies are heavy. A desktop image viewer might enable everything; an engine texture path might stay on PNG, JPEG, and KTX2. If a library isn't installed, configure skips that format and keeps going. Details: [installation guide](docs/installation/setup.md).
 
-```
-CPU: 11th Gen Intel(R) Core(TM) i7-11800H @ 2.30GHz
-image: 4833 x 5875 (33598 KB)
----------------------------------------------------
-           decode(ms)  encode(ms)   size(KB)
----------------------------------------------------
-libpng:        379.5     14051.3      28180
-lodepng:       900.9      4953.5      26318
-stb:           407.2      5249.0      45144
-spng:          296.6      2424.7      34083
-fpng:            N/A       341.0      36958
-wuffs:         165.9         N/A          0
-mango:          53.7       287.0      33598
-```
+---
 
+## Quick start
 
-### JPEG library comparison
-
-```
-CPU: Intel Core i9 8950HK @ 2.90GHz
-image: 5184 x 3456 (12652 KB)
------------------------------------------------------
-            decode(ms)    encode(ms)   size(KB)  
------------------------------------------------------
-libjpeg:        197.8          70.1       6677
-stb:            300.7        1090.9      16784
-toojpeg:          N/A         292.6       5370
-wuffs:          185.9           N/A          0
-mango:           23.3       18.5 ms       6925
-```
-
-```
-CPU: Intel Core i9 8950HK @ 2.90GHz
-image: 2560 x 1600 (683 KB)
------------------------------------------------------
-            decode(ms)    encode(ms)   size(KB)   
------------------------------------------------------
-libjpeg:         32.9          16.3        678
-stb:             54.8         118.9       1607
-toojpeg:          N/A          64.2        618
-wuffs:           29.4           N/A          0
-mango:            3.2           4.3        699
-```
-
-
-## We multitask!
-<h1><img src="docs/simd.jpg"  width="384"/></h1>
-
-### SIMD abstraction
-
-Portable vector programming abstraction that works seamlessly with native intrinsics.
-
-    float32x4 test(float32x4 a, float32x4 b, float32x4 c)
-    {
-        return a.wwww * b.xxyy + (c.xxzz - a).zzzz * b.w;
-    }
-
-ARM64 GCC 15.2.0 generates the following instructions:
-
-    trn1    v2.4s, v2.4s, v2.4s
-    dup     v3.4s, v1.s[3]
-    zip1    v1.4s, v1.4s, v1.4s
-    fsub    v2.4s, v2.4s, v0.4s
-    fmul    v2.4s, v3.4s, v2.s[2]
-    fmla    v2.4s, v1.4s, v0.4s[3]
-    orr     v0.16b, v2.16b, v2.16b
-
-x86_64 clang 18.1.0 (SSE2):
-
-    shufps    xmm2, xmm2, 160
-    subps     xmm2, xmm0
-    shufps    xmm0, xmm0, 255
-    movaps    xmm3, xmm1
-    unpcklps  xmm3, xmm3
-    mulps     xmm0, xmm3
-    shufps    xmm2, xmm2, 170
-    shufps    xmm1, xmm1, 255
-    mulps     xmm1, xmm2
-    addps     xmm0, xmm1
-
-
-### Easy to use Thread Pool
-```
-ConcurrentQueue queue;
-queue.enqueue([]
-{
-    // your work here
-});
-```
-
-
-## Vulkan text rendering
-
-`mango::vulkan::FontRenderer` is a real-time GPU vector font rasterizer. 
-
-- **Realtime scale** — fractional pixel heights with smooth, unhinted outlines (`FontHinting::None`); ideal for animated UI and zooming body text.
-- **Hinting** — optional Light, Medium, and Mono modes grid-fit stems at integer ppem for crisp static labels.
-- **Ligatures** — OpenType `liga` / `clig` / `dlig` features are enabled when the font provides them (e.g. `ff`, `fi`, `fl`, `ffi`, `ffl`).
-
-<p>
-<img src="docs/vulkan-font-1.png" alt="Font hinting comparison" width="384"/>
-<img src="docs/vulkan-font-2.png" alt="Ligatures and scaled body text" width="384"/>
+<p align="center">
+  <a href="docs/installation/setup.md">
+    <img src="docs/getting-started-cheatsheet.png" alt="MANGO getting started — clone, configure, build" width="900"/>
+  </a>
 </p>
 
-
-## Filesystem Abstraction
-<h1><img src="docs/filesystem.jpg"  width="384"/></h1>
-
-The filesystem abstraction hides away details such as container format, compression and encryption. There is a custom container format which is designed for modern multicore systems where large files are broken into blocks that can be processed in parallel, and small files are combined into blocks for higher compression ratio. The access to small files is through LRU cache so decompression cost is per block not per file (accessing two small files would otherwise cause decopression twice).
-
+```bash
+git clone https://github.com/t0rakka/mango.git
+cd mango
+cmake --preset default
+cmake --build build
 ```
-// accessing file from .iso container
+
+```cpp
+#include <mango/mango.hpp>
+using namespace mango;
+using namespace mango::filesystem;
+
+int main()
+{
+    File file("archive.zip/textures/albedo.png");
+    // ...
+}
+```
+
+---
+
+## Features
+
+*The quick start gets you compiling — here is what the library is for in practice.*
+
+### Filesystem
+
+Containers look like directories. `Path` keeps container indexes alive so reading many small files stays cheap.
+
+```cpp
 File file("test.iso/data/image.png");
-ConstMemory memory = file;
 
-// same as above but using parent path
-Path path("test.iso/data/");
-File file(path, "image.png");
+Path root("test.iso/data/");
+File same(root, "image.png");
 ```
 
-The parent Path is the virtual filesystem mechanism where the path provides filesystem. If no path is given the default is native filesystem. It is also possible to provide memory as path which allows to use Windows Resource Files using the same interface as any other file (this is just example use case for the path backed by raw memory).
+ZIP, RAR, 7z, ISO, custom HBS, nested archives → [filesystem examples](docs/examples/filesystem.md).
 
+Those paths are not toy parsers: decompressors are **optimized aggressively**, and **CI re-opens real archives on every check-in** — many ZIP storages (deflate, deflate64, bzip2, LZMA, PPMd, classic and AES crypto), 7z/LZMA2, solid and password-protected RAR, encrypted HBS — with **checksums verified** against known-good payloads so regressions surface immediately.
 
-<h1><img src="docs/compress.jpg"  width="384"/></h1>
+### Images
 
-Unified interface for large number of supported compression methods.
+<p align="center">
+  <img src="docs/decoding.jpg" alt="Image decoding" width="420"/>
+</p>
 
+Inspect headers, decode to flexible `Format` layouts, async decode, block compression, ICC, and optional GPU-oriented KTX2 / Basis transcode paths.
 
-<h1><img src="docs/encrypt.jpg"  width="384"/></h1>
+**<mark>NEW!</mark>** MANGO now decodes **<mark>HDR PNG</mark>** (PNG 3rd edition signalling: `cICP`, `mDCV`, `cLLI`, 16-bit linear) and **<mark>UltraHDR JPEG</mark>** (ISO 21496-1 / Adobe `hdrgm` gain-map JPEG) — scene-linear fp16 output with HDR metadata preserved.
 
-Unified encryption API with hardware acceleration for Intel AES-NI and ARM Crypto instructions.
+Benchmarks and format notes → [mango::image](docs/examples/image.md#library-comparisons).
 
+### Math & SIMD
 
-## Testimonials
+**C++20 Math** is a concept-driven short-vector layer for the work you do in 3D: matrices, quaternions, cameras, and the usual geometry helpers — with component accessors and swizzles (`a.xyyz + b.xywz`) so vector work stays expressive in plain C++20. Integer, unsigned, and floating-point lanes are all first-class, not an afterthought. Underneath, the **SIMD** machinery maps those types onto NEON, SSE, AVX, and the rest: one portable surface, a direct path to intrinsics when a hot loop needs it.
 
-"I'm skeptical of those benchmarks."
--- randy408
+### Compression & encryption
 
+One **unified compression interface** across deflate, zstd, lz4, and the other codecs mango supports — swap the scheme without rewriting your pipeline; buffers and **streaming** use the same patterns, and the usual foot-guns (undersized output buffers, size checks, codec-specific edge cases) are handled for you. **Checksums and hashes** (CRC32, Adler32, MD5, SHA family, …) use the same philosophy: tuned implementations, validated in tests whenever code lands. Encryption follows the same idea: a single surface with AES-NI / ARM Crypto where the CPU provides it.
 
-## [Discord](https://discord.gg/E2xuXbK9Kf)
+### Vulkan — glyph rendering *(optional module)*
+
+<p align="center">
+  <img src="docs/vulkan-font-2.png" alt="Vulkan font rendering — ligatures and scaled text" width="600"/>
+</p>
+
+When `BUILD_VULKAN` is on, **mango::vulkan::FontRenderer** is finely tuned machinery for GPU text: vector outlines, realtime scaling, hinting modes, and OpenType ligatures — not a bolt-on font texture atlas. Try the Vulkan **font** example; it is not part of the core library.
+
+---
+
+<div align="center">
+
+[Installation](docs/installation/setup.md) · [Examples](docs/examples/examples.md) · [Discord](https://discord.gg/E2xuXbK9Kf)
+
+</div>
