@@ -87,21 +87,29 @@ if (IMAGE_FORMAT_KTX2)
         BASISD_SUPPORT_KTX2=0
         BASISD_SUPPORT_KTX2_ZSTD=0
     )
+    # Upstream BasisU triggers compiler-specific diagnostics; keep these TUs clean.
     if (CMAKE_CXX_COMPILER_ID MATCHES "GNU|Clang|AppleClang")
         set(_basisu_transcoder_copts "-fno-strict-aliasing")
+        set(_basisu_ktx2_copts "")
         if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
             list(APPEND _basisu_transcoder_copts "-Wno-deprecated-anon-enum-enum-conversion")
+            list(APPEND _basisu_ktx2_copts "-Wno-deprecated-anon-enum-enum-conversion")
+        elseif (CMAKE_CXX_COMPILER_ID MATCHES "GNU")
+            list(APPEND _basisu_transcoder_copts
+                "-Wno-deprecated-enum-enum-conversion"
+                "-Wno-stringop-overflow")
+            list(APPEND _basisu_ktx2_copts "-Wno-deprecated-enum-enum-conversion")
         endif ()
         set_source_files_properties(
             "${EXTERNAL_SOURCE_DIR}/basisu/transcoder/basisu_transcoder.cpp"
             PROPERTIES COMPILE_OPTIONS "${_basisu_transcoder_copts}"
         )
-    endif ()
-    if (CMAKE_CXX_COMPILER_ID MATCHES "Clang|AppleClang")
-        set_source_files_properties(
-            "${MANGO_SOURCE_DIR}/image/image_ktx2.cpp"
-            PROPERTIES COMPILE_OPTIONS "-Wno-deprecated-anon-enum-enum-conversion"
-        )
+        if (_basisu_ktx2_copts)
+            set_source_files_properties(
+                "${MANGO_SOURCE_DIR}/image/image_ktx2.cpp"
+                PROPERTIES COMPILE_OPTIONS "${_basisu_ktx2_copts}"
+            )
+        endif ()
     endif ()
 endif ()
 
