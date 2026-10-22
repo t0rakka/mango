@@ -6,9 +6,10 @@
 Enable the pieces you need; skip the rest.
 
 [![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
-· [Installation](docs/installation/setup.md)
-· [Examples](docs/examples/examples.md)
-· [Discord](https://discord.gg/E2xuXbK9Kf)
+
+[Installation](docs/installation/setup.md)  
+[Examples](docs/examples/examples.md)  
+[Discord](https://discord.gg/E2xuXbK9Kf)
 
 <br clear="left"/>
 
