@@ -18,29 +18,11 @@
 
 ## Why MANGO?
 
-| | |
-|---|---|
-| **Paths that behave like folders** | Open `game.zip/assets/level.png`, `disc.iso/data/…`, nested archives — same `File` / `Path` API as the native filesystem. Fast indexing, block-oriented caching (see [filesystem examples](docs/examples/filesystem.md)). |
-| **Compression as plumbing** | One interface for deflate, zstd, lz4, and more — including **streaming** compression and decompression, not a separate API per codec. |
-| **Images when you need them** | Broad decode/encode (built-in PNG/JPEG, optional AVIF, HEIF, JXL, KTX2, camera RAW, …). HDR-aware where it matters (HDR PNG, UltraHDR JPEG, GPU block paths). Details: [mango::image](docs/examples/image.md). |
-| **Math & SIMD** | Short-vector C++20 math and geometry; portable SIMD types that compose cleanly with native intrinsics. Thread pool via `ConcurrentQueue`. |
+MANGO is a **C++20 foundation framework** — platform abstraction and shared infrastructure, not a game engine. We don't prescribe your architecture; we supply **interlocking building blocks** so you can wire up a viewer, a pipeline, or the low-level half of something bigger. Your design, your rules — we just make the boring parts solid so coding the interesting parts feels good again.
 
-**Optional modules** — OpenGL and Vulkan windowing, framebuffers, GPU text, Import3D (glTF, OBJ, …): same types and patterns as the core; enable at CMake time and they plug in without a second toolkit.
+The services are the kind you reach for in every real project: **filesystem abstraction** (`game.zip/levels/…` opens like a folder), a **unified compression API** (including streaming), **image decoding and encoding** with **color management**, plus **vector math** and a modern **SIMD** layer that stays friendly to hand-tuned intrinsics. Need windows, GL/Vulkan helpers, or mesh import? Those are **optional modules** on the same foundations — enable them in CMake and they slot in without a second ecosystem.
 
----
-
-## Build what you actually need
-
-CMake presets and per-format switches let you ship a **small core** or a **full stack**.
-
-| Profile | Typical CMake | You get |
-|---------|----------------|---------|
-| **Default** | `cmake --preset default` | Core + image (+ optional codecs found on the system) + window/GL/Vulkan when dependencies are available |
-| **Minimal** | `-DBUILD_MINIMAL=ON` | Essentials only — no examples, tools, tests, OpenGL, Vulkan, or Import3D |
-| **Image-focused** | `BUILD_VULKAN=OFF`, trim `IMAGE_FORMAT_*` | Decoder/encoder library without the graphics modules |
-| **Everything** | `-DBUILD_ALL=ON` | Turn all optional build targets on |
-
-Optional image formats and third-party libraries are **auto-disabled** if not found; see the [installation guide](docs/installation/setup.md) for platform packages and presets (`default`, `vcpkg`, `vcpkg-manifest`, …).
+**Customize the build** to match the job. Run the full stack or a tight subset: `BUILD_MINIMAL`, turn off Vulkan, pick only the `IMAGE_FORMAT_*` codecs you need. HEIC, camera RAW, and friends are deliberately optional — their dependencies are heavy. A desktop image viewer might enable everything; an engine texture path might stay on PNG, JPEG, and KTX2. If a library isn't installed, configure skips that format and keeps going. Details: [installation guide](docs/installation/setup.md).
 
 ---
 
