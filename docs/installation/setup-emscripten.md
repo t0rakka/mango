@@ -1,6 +1,6 @@
 [← Installation guide](setup.md)
 
-<h1><img src="logo-emscripten.png" alt="logo" width="80"/> Emscripten (wasm, vcpkg)</h1>
+<h1><img src="logo-emscripten.png" alt="logo" width="80"/> Emscripten (wasm)</h1>
 
 Work in progress, but partially working. Activate the [Emscripten SDK](https://emscripten.org/docs/getting_started/downloads.html) so `EMSDK` is set.
 

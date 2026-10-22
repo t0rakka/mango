@@ -15,7 +15,7 @@ Install [vcpkg](https://vcpkg.io/en/getting-started.html), then set:
 
 **Manifest mode** (`cmake --preset vcpkg-manifest`) — skip the command above; vcpkg builds deps from `vcpkg.json` into `build/vcpkg_installed` on configure. Convenient but slow on every configure.
 
-## Building {#building}
+## Building
 
 Presets are toolchain selectors (Ninja + Release by default):
 

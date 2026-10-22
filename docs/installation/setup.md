@@ -12,10 +12,10 @@ Pick one guide — package lists differ, but configure/build flow is the same ev
 
 | | |
 |---|---|
-| <img src="logo-linux.png" alt="" width="44"/> **[Linux](setup-linux.md)** | **Debian, Ubuntu, Mint (apt)** and **Arch (pacman)** on one page; shared build, Wayland, and window-backend notes. |
-| <img src="logo-apple.png" alt="" width="44"/> **[macOS (Homebrew)](setup-macos.md)** | `brew` dependencies and build. |
-| <img src="logo-windows.png" alt="" width="44"/> **[Windows (vcpkg)](setup-windows.md)** | vcpkg classic vs manifest, CMake presets, WSL notes. |
-| <img src="logo-emscripten.png" alt="" width="44"/> **[Emscripten (wasm, vcpkg)](setup-emscripten.md)** | EMSDK-only or EMSDK + vcpkg for wasm deps. |
+| <img src="logo-linux.png" alt="" width="44"/> **[Linux](setup-linux.md)** | **Debian, Ubuntu, Mint, Arch, etc.** |
+| <img src="logo-apple.png" alt="" width="44"/> **[macOS](setup-macos.md)** | `brew` dependencies and build. |
+| <img src="logo-windows.png" alt="" width="44"/> **[Windows](setup-windows.md)** | vcpkg classic vs manifest, CMake presets, WSL notes. |
+| <img src="logo-emscripten.png" alt="" width="44"/> **[Emscripten](setup-emscripten.md)** | EMSDK-only or EMSDK + vcpkg for wasm deps. |
 
 Quick path (any OS with deps installed):
 
@@ -52,7 +52,7 @@ If you are unsure what was detected, read the configure summary printed to the c
 
 Most optional codecs are available from distro packages or vcpkg. A few are **missing or too old** in common repos — mango still supports them if **you** supply a new enough build.
 
-### JPEG XL (libjxl) {#jpeg-xl-libjxl}
+### JPEG XL (libjxl)
 
 Mango needs **libjxl ≥ 0.9**. Some distros ship older headers (notably **Ubuntu 24.04 (noble)** `libjxl-dev`). Options:
 
@@ -61,7 +61,7 @@ Mango needs **libjxl ≥ 0.9**. Some distros ship older headers (notably **Ubunt
 
 This is the usual pattern: the format is optional; the fix is upgrade the library or turn the format off.
 
-### JPEG XR (libjxr) {#jpeg-xr-libjxr}
+### JPEG XR (libjxr)
 
 `.jxr` / HD Photo support is enabled when **libjxr** is found. Many systems have no package (Homebrew dropped it; Debian often lacks it). Arch includes `jxrlib` in the [Linux pacman line](setup-linux.md#arch-pacman); Windows can use vcpkg `jxrlib`.
 
