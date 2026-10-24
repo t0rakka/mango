@@ -3,6 +3,8 @@
 
 [![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
 
+#### [Installation](docs/installation/setup.md) · [Examples](docs/examples/examples.md)
+
 <br clear="left"/>
 
 ---
@@ -95,6 +97,8 @@ With `BUILD_VULKAN` enabled, **mango::vulkan::FontRenderer** is finely tuned mac
 
 ---
 
+<div align="center">
 
+### [Discord](https://discord.gg/E2xuXbK9Kf)
 
-[Installation](docs/installation/setup.md) · [Examples](docs/examples/examples.md) · [Discord](https://discord.gg/E2xuXbK9Kf)
+</div>
