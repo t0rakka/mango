@@ -46,6 +46,8 @@ int main()
 
 *The quick start gets you compiling — here is what the library is for in practice.*
 
+---
+
 ### Filesystem
 
 Containers look like directories. `Path` keeps container indexes alive so reading many small files stays cheap.
