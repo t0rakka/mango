@@ -83,6 +83,16 @@ One **unified compression interface** across deflate, zstd, lz4, and the other c
 
 With `BUILD_VULKAN` enabled, **mango::vulkan::FontRenderer** is finely tuned machinery for GPU text: vector outlines, realtime scaling, hinting modes, and OpenType ligatures — not a bolt-on font texture atlas. Run the Vulkan **font** example to see it in action.
 
+### Built with MANGO
+
+**[iFap](https://github.com/t0rakka/ifap)** — an HDR-capable image viewer built to be **extremely fast**: background decode, GPU upload, Vulkan HDR output, and container-native browsing (ZIP, RAR, 7z, ISO, comic packs) through the same virtual paths MANGO exposes in your own code.
+
+[![iFap — HDR image viewer](docs/app-ifap.png)](https://github.com/t0rakka/ifap)
+
+**[HDR Shadertoy](https://github.com/t0rakka/HDRShadertoy)** — a Vulkan **HDR viewer** for Shadertoy-style effects (compute shaders): render to a float16 target, then resolve to an HDR or SDR swapchain so emissive scenes can use the display’s real range. Windowing, compilation, and the HDR path come from **mango::vulkan**.
+
+[![HDR Shadertoy](docs/app-shadertoy.png)](https://github.com/t0rakka/HDRShadertoy)
+
 ---
 
 
