@@ -1,23 +1,19 @@
-![mango](docs/mango-logo.png)
+<h2><img src="docs/mango-logo.png" alt="logo" width="80"/> MANGO - building blocks for your imagination.</h2>
 
-# MANGO
 
-**C++20 library — building blocks for your imagination.**
+[![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)](https://github.com/t0rakka/mango/actions/workflows/ci.yml)
 
-![CI](https://github.com/t0rakka/mango/actions/workflows/ci.yml/badge.svg?branch=main)
-
-  
-
+<br clear="left"/>
 
 ---
 
 ## What is MANGO?
 
-MANGO is a **C++20 foundation framework** — platform abstraction and shared infrastructure, not a game engine. We don't prescribe your architecture; we supply **interlocking building blocks** so you can wire up a viewer, a pipeline, or the low-level half of something bigger. Your design, your rules — we just make the boring parts solid so coding the interesting parts feels good again.
+MANGO is a **C++20 foundation framework** — platform abstraction and shared infrastructure. We don't prescribe your architecture; we supply **interlocking building blocks** so you can build something bigger. Your design, your rules — we just make the boring parts solid so coding the interesting parts is left to you, or just use functionality you need like encoding and decoding images.
 
 The services are the kind you reach for in every real project: **filesystem abstraction** (`game.zip/levels/…` opens like a folder), a **unified compression API** (including streaming), **image decoding and encoding** with **color management**, plus **vector math** and a modern **SIMD** layer that stays friendly to hand-tuned intrinsics. Need windows, GL/Vulkan helpers, or mesh import? Those are **optional modules** on the same foundations — enable them in CMake and they slot in without a second ecosystem.
 
-**Customize the build** to match the job. Run the full stack or a tight subset: `BUILD_MINIMAL`, turn off Vulkan, pick only the `IMAGE_FORMAT_`* codecs you need. HEIC, camera RAW, and friends are deliberately optional — their dependencies are heavy. A desktop image viewer might enable everything; an engine texture path might stay on PNG, JPEG, and KTX2. If a library isn't installed, configure skips that format and keeps going. Details: [installation guide](docs/installation/setup.md).
+**Customize the build** to match the job. Run the full stack or a tight subset: `BUILD_MINIMAL`, turn off Vulkan, pick only the `IMAGE_FORMAT_*` codecs you need. HEIC, camera RAW, and friends are deliberately optional — their dependencies are heavy. A desktop image viewer might enable everything; an engine texture path might stay on PNG, JPEG, and KTX2. If a library isn't installed, configure skips that format and keeps going. Details: [installation guide](docs/installation/setup.md).
 
 ---
 
