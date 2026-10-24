@@ -81,7 +81,7 @@ One **unified compression interface** across deflate, zstd, lz4, and the other c
 
 ![Vulkan font rendering — ligatures and scaled text](docs/vulkan-font-2.png)
 
-When `BUILD_VULKAN` is on, **mango::vulkan::FontRenderer** is finely tuned machinery for GPU text: vector outlines, realtime scaling, hinting modes, and OpenType ligatures — not a bolt-on font texture atlas. Try the Vulkan **font** example; it is not part of the core library.
+With `BUILD_VULKAN` enabled, **mango::vulkan::FontRenderer** is finely tuned machinery for GPU text: vector outlines, realtime scaling, hinting modes, and OpenType ligatures — not a bolt-on font texture atlas. Run the Vulkan **font** example to see it in action.
 
 ---
 
