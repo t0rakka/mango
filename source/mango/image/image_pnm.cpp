@@ -4,6 +4,7 @@
 */
 #include <cmath>
 #include <cctype>
+#include <memory>
 #include <mango/core/pointer.hpp>
 #include <mango/core/buffer.hpp>
 #include <mango/core/system.hpp>
@@ -665,35 +666,357 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    ImageEncodeStatus imageEncodePFM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    struct PnmRgbUnormSurface
     {
-        MANGO_UNREFERENCED(options);
+        bool valid = false;
+        bool is16bit = false;
+        bool hasAlpha = false;
+    };
 
-        int width = surface.width;
-        int height = surface.height;
+    PnmRgbUnormSurface classifyRgbUnormSurface(const Format& format)
+    {
+        PnmRgbUnormSurface info;
 
-        LittleEndianStream s(stream);
+        if (format.isIndexed() || format.isFloat() || format.isLuminance())
+            return info;
 
-        std::string header = fmt::format("PF\n{} {}\n-1.0\n", width, height);
-        s.write(header.c_str(), header.length());
+        if (format.type != Format::UNORM)
+            return info;
 
-        TemporaryBitmap temp(surface, Format(128, Format::FLOAT32, Format::RGBA, 32, 32, 32, 32));
+        const int red = format.size[Format::RED];
+        const int green = format.size[Format::GREEN];
+        const int blue = format.size[Format::BLUE];
+        const int alpha = format.size[Format::ALPHA];
 
-        for (int y = height - 1; y >= 0; --y)
+        if (!red || green != red || blue != red)
+            return info;
+
+        if (red != 8 && red != 16)
+            return info;
+
+        if (alpha && alpha != red)
+            return info;
+
+        info.valid = true;
+        info.is16bit = red == 16;
+        info.hasAlpha = alpha > 0;
+        return info;
+    }
+
+    static const Format& pnmRgba8Format()
+    {
+        static const Format format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8);
+        return format;
+    }
+
+    bool preparePnmIntegerSurface(const Surface& source, std::unique_ptr<Bitmap>& storage, const Surface*& encodeSurface, PnmRgbUnormSurface& info, ImageEncodeStatus& status)
+    {
+        encodeSurface = &source;
+        storage.reset();
+
+        if (source.format.isLuminance())
         {
-            float* scan = temp.address<float>(0, y);
+            status.setError("[ImageEncoder.PNM] Luminance surfaces are not supported.");
+            return false;
+        }
 
-            for (int x = 0; x < width; ++x)
+        if (source.format.isFloat())
+        {
+            return false;
+        }
+
+        if (source.format.isIndexed())
+        {
+            if (!source.palette)
             {
-                s.write32f(scan[0]);
-                s.write32f(scan[1]);
-                s.write32f(scan[2]);
-                scan += 4;
+                status.setError("[ImageEncoder.PNM] Indexed surface does not have a palette.");
+                return false;
+            }
+
+            storage = std::make_unique<Bitmap>(source.width, source.height, pnmRgba8Format());
+            image::resolve(*storage, source);
+
+            encodeSurface = storage.get();
+            info.valid = true;
+            info.is16bit = false;
+            info.hasAlpha = true;
+            return true;
+        }
+
+        info = classifyRgbUnormSurface(source.format);
+        if (!info.valid)
+        {
+            status.setError("[ImageEncoder.PNM] 8 or 16 bit RGB/RGBA UNORM, or indexed surface required.");
+            return false;
+        }
+
+        return true;
+    }
+
+    ImageEncodeStatus encodePnmP6(Stream& stream, const Surface& surface, const PnmRgbUnormSurface& info)
+    {
+        ImageEncodeStatus status;
+
+        const int width = surface.width;
+        const int height = surface.height;
+        const int maxval = info.is16bit ? 65535 : 255;
+
+        const Format targetFormat = info.is16bit
+            ? Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0)
+            : Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0);
+
+        TemporaryBitmap temp(surface, targetFormat);
+
+        const std::string header = fmt::format("P6\n{} {}\n{}\n", width, height, maxval);
+        stream.write(header.data(), header.size());
+
+        if (info.is16bit)
+        {
+            BigEndianStream out(stream);
+
+            for (int y = 0; y < height; ++y)
+            {
+                for (int x = 0; x < width; ++x)
+                {
+                    const u16* pixel = temp.address<u16>(x, y);
+                    out.write16(pixel[0]);
+                    out.write16(pixel[1]);
+                    out.write16(pixel[2]);
+                }
+            }
+        }
+        else
+        {
+            for (int y = 0; y < height; ++y)
+            {
+                const u8* scan = temp.address<u8>(0, y);
+                stream.write(scan, size_t(width) * 3);
             }
         }
 
-        ImageEncodeStatus status;
         return status;
+    }
+
+    ImageEncodeStatus encodePnmPam(Stream& stream, const Surface& surface, const PnmRgbUnormSurface& info)
+    {
+        ImageEncodeStatus status;
+
+        const int width = surface.width;
+        const int height = surface.height;
+        const int maxval = info.is16bit ? 65535 : 255;
+        const int depth = info.hasAlpha ? 4 : 3;
+        const char* tupltype = info.hasAlpha ? "RGB_ALPHA" : "RGB";
+
+        const Format targetFormat = info.hasAlpha
+            ? (info.is16bit
+                ? Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16)
+                : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8))
+            : (info.is16bit
+                ? Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0)
+                : Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0));
+
+        TemporaryBitmap temp(surface, targetFormat);
+
+        const std::string header = fmt::format(
+            "P7\nWIDTH {}\nHEIGHT {}\nDEPTH {}\nMAXVAL {}\nTUPLTYPE {}\nENDHDR\n",
+            width, height, depth, maxval, tupltype);
+        stream.write(header.data(), header.size());
+
+        if (info.is16bit)
+        {
+            BigEndianStream out(stream);
+
+            for (int y = 0; y < height; ++y)
+            {
+                for (int x = 0; x < width; ++x)
+                {
+                    const u16* pixel = temp.address<u16>(x, y);
+
+                    for (int c = 0; c < depth; ++c)
+                    {
+                        out.write16(pixel[c]);
+                    }
+                }
+            }
+        }
+        else
+        {
+            const int bytes_per_pixel = depth;
+
+            for (int y = 0; y < height; ++y)
+            {
+                const u8* scan = temp.address<u8>(0, y);
+                stream.write(scan, size_t(width) * bytes_per_pixel);
+            }
+        }
+
+        return status;
+    }
+
+    ImageEncodeStatus encodePnmPfm(Stream& stream, const Surface& surface)
+    {
+        ImageEncodeStatus status;
+
+        if (surface.format.isIndexed())
+        {
+            status.setError("[ImageEncoder.PFM] Floating-point surface required.");
+            return status;
+        }
+
+        if (!surface.format.isFloat())
+        {
+            status.setError("[ImageEncoder.PFM] Floating-point surface required.");
+            return status;
+        }
+
+        const int width = surface.width;
+        const int height = surface.height;
+
+        LittleEndianStream out(stream);
+
+        if (surface.format.isLuminance())
+        {
+            TemporaryBitmap temp(surface, LuminanceFormat(32, Format::FLOAT32, 32, 0));
+
+            const std::string header = fmt::format("Pf\n{} {}\n-1.0\n", width, height);
+            out.write(header.data(), header.size());
+
+            for (int y = height - 1; y >= 0; --y)
+            {
+                const float* scan = temp.address<float>(0, y);
+
+                for (int x = 0; x < width; ++x)
+                {
+                    out.write32f(scan[x]);
+                }
+            }
+        }
+        else
+        {
+            TemporaryBitmap temp(surface, Format(96, Format::FLOAT32, Format::RGB, 32, 32, 32, 0));
+
+            const std::string header = fmt::format("PF\n{} {}\n-1.0\n", width, height);
+            out.write(header.data(), header.size());
+
+            for (int y = height - 1; y >= 0; --y)
+            {
+                const float* scan = temp.address<float>(0, y);
+
+                for (int x = 0; x < width; ++x)
+                {
+                    out.write32f(scan[0]);
+                    out.write32f(scan[1]);
+                    out.write32f(scan[2]);
+                    scan += 3;
+                }
+            }
+        }
+
+        return status;
+    }
+
+    ImageEncodeStatus imageEncodePBM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(stream);
+        MANGO_UNREFERENCED(surface);
+        MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
+        status.setError("[ImageEncoder.PBM] 1-bit PBM (P1/P4) encoding is not supported.");
+        return status;
+    }
+
+    ImageEncodeStatus imageEncodePGM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(stream);
+        MANGO_UNREFERENCED(surface);
+        MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
+        status.setError("[ImageEncoder.PGM] Grayscale PNM (P2/P5) encoding is not supported.");
+        return status;
+    }
+
+    ImageEncodeStatus imageEncodePPM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
+
+        if (surface.format.isFloat())
+        {
+            status.setError("[ImageEncoder.PPM] Floating-point surfaces are not supported.");
+            return status;
+        }
+
+        std::unique_ptr<Bitmap> storage;
+        const Surface* encodeSurface = nullptr;
+        PnmRgbUnormSurface info;
+
+        if (!preparePnmIntegerSurface(surface, storage, encodeSurface, info, status))
+        {
+            if (!status.info.empty())
+                return status;
+            status.setError("[ImageEncoder.PPM] 8 or 16 bit RGB/RGBA UNORM, or indexed surface required.");
+            return status;
+        }
+
+        return encodePnmP6(stream, *encodeSurface, info);
+    }
+
+    ImageEncodeStatus imageEncodePAM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(options);
+
+        ImageEncodeStatus status;
+
+        if (surface.format.isFloat())
+        {
+            status.setError("[ImageEncoder.PAM] Floating-point surfaces are not supported.");
+            return status;
+        }
+
+        std::unique_ptr<Bitmap> storage;
+        const Surface* encodeSurface = nullptr;
+        PnmRgbUnormSurface info;
+
+        if (!preparePnmIntegerSurface(surface, storage, encodeSurface, info, status))
+        {
+            if (!status.info.empty())
+                return status;
+            status.setError("[ImageEncoder.PAM] 8 or 16 bit RGB/RGBA UNORM, or indexed surface required.");
+            return status;
+        }
+
+        return encodePnmPam(stream, *encodeSurface, info);
+    }
+
+    ImageEncodeStatus imageEncodePFM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(options);
+        return encodePnmPfm(stream, surface);
+    }
+
+    ImageEncodeStatus imageEncodePNM(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        MANGO_UNREFERENCED(options);
+
+        if (surface.format.isFloat())
+            return encodePnmPfm(stream, surface);
+
+        ImageEncodeStatus status;
+
+        std::unique_ptr<Bitmap> storage;
+        const Surface* encodeSurface = nullptr;
+        PnmRgbUnormSurface info;
+
+        if (!preparePnmIntegerSurface(surface, storage, encodeSurface, info, status))
+            return status;
+
+        if (info.hasAlpha)
+            return encodePnmPam(stream, *encodeSurface, info);
+
+        return encodePnmP6(stream, *encodeSurface, info);
     }
 
     // ------------------------------------------------------------
@@ -746,7 +1069,12 @@ namespace mango::image
         registerImageDecoder(createInterface, ".pnm"); // generic netpbm extension
 
         // encoders
+        registerImageEncoder(imageEncodePBM, ".pbm");
+        registerImageEncoder(imageEncodePGM, ".pgm");
+        registerImageEncoder(imageEncodePPM, ".ppm");
+        registerImageEncoder(imageEncodePAM, ".pam");
         registerImageEncoder(imageEncodePFM, ".pfm");
+        registerImageEncoder(imageEncodePNM, ".pnm");
     }
 
     const char* detectImageCodecPNM(ConstMemory memory)
