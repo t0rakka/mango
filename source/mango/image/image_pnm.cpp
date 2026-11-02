@@ -98,6 +98,21 @@ namespace
         return p;
     }
 
+    // Map a netpbm sample in [0, maxvalue] to 16-bit UNORM (full range when maxvalue < 65535).
+    inline
+    u16 pnmSampleToU16(int value, int maxvalue)
+    {
+        if (value < 0)
+            value = 0;
+        else if (value > maxvalue)
+            value = maxvalue;
+
+        if (maxvalue <= 0)
+            return 0;
+
+        return u16((u32(value) * 65535 + u32(maxvalue / 2)) / u32(maxvalue));
+    }
+
     // ------------------------------------------------------------
     // HeaderPNM
     // ------------------------------------------------------------
@@ -347,12 +362,14 @@ namespace
             }
             else
             {
+                const bool wide = maxvalue > 255;
+
                 switch (channels)
                 {
-                    case 1: format = LuminanceFormat(8, Format::UNORM, 8, 0); break;
-                    case 2: format = LuminanceFormat(16, Format::UNORM, 8, 8); break;
-                    case 3: format = Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
-                    case 4: format = Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
+                    case 1: format = wide ? LuminanceFormat(16, Format::UNORM, 16, 0) : LuminanceFormat(8, Format::UNORM, 8, 0); break;
+                    case 2: format = wide ? LuminanceFormat(32, Format::UNORM, 16, 16) : LuminanceFormat(16, Format::UNORM, 8, 8); break;
+                    case 3: format = wide ? Format(48, Format::UNORM, Format::RGB, 16, 16, 16, 0) : Format(24, Format::UNORM, Format::RGB, 8, 8, 8, 0); break;
+                    case 4: format = wide ? Format(64, Format::UNORM, Format::RGBA, 16, 16, 16, 16) : Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8); break;
                     default:
                         header.setError("[ImageDecoder.PNM] Incorrect number of channels.");
                         return;
@@ -448,26 +465,47 @@ namespace
 
             if (m_pnm_header.is_ascii)
             {
+                const bool wide = maxvalue > 255 && !invert;
+
                 for (int y = 0; y < height; ++y)
                 {
-                    u8* image = dest.address<u8>(0, y);
-
-                    for (int x = 0; x < xcount; ++x)
+                    if (wide)
                     {
-                        int value;
-                        p = nextValue(value, p, end);
-                        if (!p)
+                        u16* image = dest.address<u16>(0, y);
+
+                        for (int x = 0; x < xcount; ++x)
                         {
-                            return false;
+                            int value;
+                            p = nextValue(value, p, end);
+                            if (!p)
+                            {
+                                return false;
+                            }
+
+                            image[x] = pnmSampleToU16(value, maxvalue);
                         }
+                    }
+                    else
+                    {
+                        u8* image = dest.address<u8>(0, y);
 
-                        // clamp to [0, maxvalue] so the scaling cannot overflow
-                        if (value < 0)
-                            value = 0;
-                        else if (value > maxvalue)
-                            value = maxvalue;
+                        for (int x = 0; x < xcount; ++x)
+                        {
+                            int value;
+                            p = nextValue(value, p, end);
+                            if (!p)
+                            {
+                                return false;
+                            }
 
-                        image[x] = u8(value * 255 / maxvalue) ^ invert;
+                            // clamp to [0, maxvalue] so the scaling cannot overflow
+                            if (value < 0)
+                                value = 0;
+                            else if (value > maxvalue)
+                                value = maxvalue;
+
+                            image[x] = u8(value * 255 / maxvalue) ^ invert;
+                        }
                     }
                 }
             }
@@ -564,7 +602,7 @@ namespace
                 }
                 else
                 {
-                    // two bytes per sample
+                    // two bytes per sample (big-endian on wire)
                     if (avail < size_t(xcount) * size_t(height) * 2)
                     {
                         return false;
@@ -574,12 +612,12 @@ namespace
 
                     for (int y = 0; y < height; ++y)
                     {
-                        u8* image = dest.address<u8>(0, y);
+                        u16* image = dest.address<u16>(0, y);
 
                         for (int x = 0; x < xcount; ++x)
                         {
-                            int value = e.read16();
-                            image[x] = u8(value * 255 / m_pnm_header.maxvalue);
+                            const int value = e.read16();
+                            image[x] = pnmSampleToU16(value, maxvalue);
                         }
                     }
                 }
