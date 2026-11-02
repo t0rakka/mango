@@ -517,6 +517,25 @@ namespace
     {
         ImageEncodeStatus status;
 
+        const Surface* encode_surface = &surface;
+        int palette_color_hint = -1;
+        std::unique_ptr<TemporaryBitmap> indexed_rgb;
+
+        if (surface.format.isIndexed())
+        {
+            if (!surface.palette || surface.palette->size < 1)
+            {
+                status.setError("[ImageEncoder.JXL] Indexed surface requires a palette.");
+                return status;
+            }
+
+            indexed_rgb = std::make_unique<TemporaryBitmap>(surface, surface.width, surface.height,
+                Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+            resolve(*indexed_rgb, surface);
+            encode_surface = indexed_rgb.get();
+            palette_color_hint = std::min(256, int(surface.palette->size));
+        }
+
         auto enc = JxlEncoderMake(nullptr);
         auto runner = JxlResizableParallelRunnerMake(nullptr);
 
@@ -526,9 +545,9 @@ namespace
             return status;
         }
 
-        JxlEncodeConfig config = makeEncodeConfig(surface, options.lossless);
+        JxlEncodeConfig config = makeEncodeConfig(*encode_surface, options.lossless);
 
-        Bitmap temp(surface, config.temp_format);
+        Bitmap temp(*encode_surface, config.temp_format);
 
         // Float encode assumes Rec.709 scene-linear input. Surface has no ColorInfo, so
         // callers must linearize and convert wide-gamut sources beforehand (or pass
@@ -626,6 +645,17 @@ namespace
             }
         }
 
+        // libjxl has no indexed pixel API; hint modular palette size when input was indexed.
+        if (palette_color_hint > 0)
+        {
+            if (JxlEncoderFrameSettingsSetOption(frame_settings, JXL_ENC_FRAME_SETTING_PALETTE_COLORS,
+                    palette_color_hint) != JXL_ENC_SUCCESS)
+            {
+                status.setError("JxlEncoderFrameSettingsSetOption(PALETTE_COLORS) : FAILED");
+                return status;
+            }
+        }
+
         if (JxlEncoderAddImageFrame(frame_settings, &config.pixel_format,
                                     reinterpret_cast<void*> (temp.image),
                                     image_bytes) != JXL_ENC_SUCCESS)
@@ -673,6 +703,7 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".jxl");
         registerImageEncoder(imageEncode, ".jxl",
+            ENCODE_CAPABILITY_INDEXED |
             ENCODE_CAPABILITY_ALPHA |
             ENCODE_CAPABILITY_LOSSLESS |
             ENCODE_CAPABILITY_LOSSY);

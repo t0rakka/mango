@@ -4,6 +4,7 @@
 */
 #include <limits>
 #include <map>
+#include <mango/core/buffer.hpp>
 #include <mango/core/pointer.hpp>
 #include <mango/core/system.hpp>
 #include <mango/image/image.hpp>
@@ -1937,7 +1938,127 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    static
+    int bmpBitsPerPixelForPalette(const Palette& palette)
+    {
+        const u32 count = std::max(1u, std::min(palette.size, 256u));
+
+        if (count <= 2)
+            return 1;
+        if (count <= 4)
+            return 2;
+        if (count <= 16)
+            return 4;
+        return 8;
+    }
+
+    static
+    void pack_index_scanline(u8* dest, const u8* src, int width, int bits)
+    {
+        const u32 mask = (1u << bits) - 1;
+        u8 data = 0;
+        int offset = 8 - bits;
+        u8* out = dest;
+
+        for (int x = 0; x < width; ++x)
+        {
+            if (offset < 0)
+            {
+                offset = 8 - bits;
+                *out++ = data;
+                data = 0;
+            }
+
+            data |= u8((src[x] & mask) << offset);
+            offset -= bits;
+        }
+
+        if (offset != 8 - bits)
+        {
+            *out++ = data;
+        }
+    }
+
+    ImageEncodeStatus imageEncodeIndexed(Stream& stream, const Surface& surface)
+    {
+        ImageEncodeStatus status;
+
+        if (!surface.palette || surface.palette->size < 1)
+        {
+            status.setError("[ImageEncoder.BMP] Indexed surface requires a palette.");
+            return status;
+        }
+
+        const Palette& palette = *surface.palette;
+        const int bits = bmpBitsPerPixelForPalette(palette);
+        const u32 table_size = 1u << bits;
+        const int width = surface.width;
+        const int height = surface.height;
+        const int bytes_per_scan = div_ceil(width * bits, 32) * 4;
+
+        const int magicsize = 14;
+        const int headersize = 40;
+        const u32 palette_bytes = table_size * 4;
+        const u32 dataoffset = magicsize + headersize + palette_bytes;
+        const u32 imagesize = u32(height * bytes_per_scan);
+        const u32 filesize = dataoffset + imagesize;
+
+        LittleEndianStream s(stream);
+
+        s.write16(0x4d42);
+        s.write32(filesize);
+        s.write32(0);
+        s.write32(dataoffset);
+        s.write32(headersize);
+        s.write32(width);
+        s.write32(height);
+        s.write16(1);
+        s.write16(u16(bits));
+        s.write32(BIC_RGB);
+        s.write32(imagesize);
+        s.write32(0xb13);
+        s.write32(0xb13);
+        s.write32(palette.size);
+        s.write32(palette.size);
+
+        for (u32 i = 0; i < table_size; ++i)
+        {
+            if (i < palette.size)
+            {
+                s.write8(palette[i].b);
+                s.write8(palette[i].g);
+                s.write8(palette[i].r);
+                s.write8(0);
+            }
+            else
+            {
+                s.write32(0);
+            }
+        }
+
+        Buffer scanline(bytes_per_scan);
+
+        for (int y = height - 1; y >= 0; --y)
+        {
+            const u8* indices = surface.address<u8>(0, y);
+
+            if (bits == 8)
+            {
+                std::memset(scanline, 0, scanline.size());
+                std::memcpy(scanline, indices, size_t(width));
+            }
+            else
+            {
+                pack_index_scanline(scanline, indices, width, bits);
+            }
+
+            s.write(scanline, bytes_per_scan);
+        }
+
+        return status;
+    }
+
+    ImageEncodeStatus imageEncodeTruecolor(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
 
@@ -1988,6 +2109,16 @@ namespace
         return status;
     }
 
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        if (surface.format.isIndexed())
+        {
+            return imageEncodeIndexed(stream, surface);
+        }
+
+        return imageEncodeTruecolor(stream, surface, options);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -1999,6 +2130,7 @@ namespace mango::image
         registerImageDecoder(createInterface, ".ico");
         registerImageDecoder(createInterface, ".cur");
         registerImageEncoder(imageEncode, ".bmp",
+            ENCODE_CAPABILITY_INDEXED |
             ENCODE_CAPABILITY_ALPHA |
             ENCODE_CAPABILITY_LOSSLESS);
     }

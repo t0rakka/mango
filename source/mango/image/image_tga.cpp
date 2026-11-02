@@ -610,7 +610,62 @@ namespace
     // ImageEncoder
     // ------------------------------------------------------------
 
-    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    ImageEncodeStatus imageEncodeIndexed(Stream& stream, const Surface& surface)
+    {
+        ImageEncodeStatus status;
+
+        if (!surface.palette || surface.palette->size < 1)
+        {
+            status.setError("[ImageEncoder.TGA] Indexed surface requires a palette.");
+            return status;
+        }
+
+        if (surface.palette->size > 256)
+        {
+            status.setError("[ImageEncoder.TGA] Palette size must be <= 256.");
+            return status;
+        }
+
+        const Palette& palette = *surface.palette;
+        const int width = surface.width;
+        const int height = surface.height;
+
+        HeaderTGA header;
+
+        header.id_length        = 0;
+        header.colormap_type    = 1;
+        header.image_type       = IMAGETYPE_PALETTE;
+        header.colormap_origin  = 0;
+        header.colormap_length  = u16(palette.size);
+        header.colormap_bits    = 24;
+        header.xoffset          = 0;
+        header.yoffset          = 0;
+        header.width            = u16(width);
+        header.height           = u16(height);
+        header.pixel_size       = 8;
+        header.descriptor       = DESCRIPTOR_ORIGIN_Y;
+
+        header.write(stream);
+
+        LittleEndianStream s(stream);
+
+        for (u32 i = 0; i < palette.size; ++i)
+        {
+            s.write8(palette[i].b);
+            s.write8(palette[i].g);
+            s.write8(palette[i].r);
+        }
+
+        for (int y = 0; y < height; ++y)
+        {
+            const u8* scan = surface.address<u8>(0, y);
+            stream.write(scan, size_t(width));
+        }
+
+        return status;
+    }
+
+    ImageEncodeStatus imageEncodeTruecolor(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
     {
         MANGO_UNREFERENCED(options);
 
@@ -657,6 +712,16 @@ namespace
         return status;
     }
 
+    ImageEncodeStatus imageEncode(Stream& stream, const Surface& surface, const ImageEncodeOptions& options)
+    {
+        if (surface.format.isIndexed())
+        {
+            return imageEncodeIndexed(stream, surface);
+        }
+
+        return imageEncodeTruecolor(stream, surface, options);
+    }
+
 } // namespace
 
 namespace mango::image
@@ -666,6 +731,7 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".tga");
         registerImageEncoder(imageEncode, ".tga",
+            ENCODE_CAPABILITY_INDEXED |
             ENCODE_CAPABILITY_ALPHA |
             ENCODE_CAPABILITY_LOSSLESS);
     }
