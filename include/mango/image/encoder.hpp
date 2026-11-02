@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2022 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #pragma once
 
@@ -40,20 +40,25 @@ namespace mango::image
     };
 
     // Registered per output extension when codecs call registerImageEncoder().
-    enum ImageEncodeCapability : u32
+    enum class ImageEncoderCapability : u32
     {
-        ENCODE_CAPABILITY_INDEXED      = 0x00000001, // accepts indexed surface + palette on encode
-        ENCODE_CAPABILITY_INDEXED_AUTO = 0x00000002, // may quantize truecolor to indexed during encode
-        ENCODE_CAPABILITY_FLOAT        = 0x00000004, // accepts floating-point component surfaces
-        ENCODE_CAPABILITY_UNORM16      = 0x00000008, // accepts 16-bit/component UNORM surfaces
-        ENCODE_CAPABILITY_LUMINANCE    = 0x00000010, // can encode grayscale / I(A) on wire
-        ENCODE_CAPABILITY_ALPHA        = 0x00000020, // alpha channel can be stored on wire
+        INDEXED      = 0x00000001, // accepts indexed surface + palette on encode
+        INDEXED_AUTO = 0x00000002, // may quantize truecolor to indexed during encode
+        FLOAT        = 0x00000004, // accepts floating-point component surfaces
+        UNORM16      = 0x00000008, // accepts 16-bit/component UNORM surfaces
+        LUMINANCE    = 0x00000010, // can encode grayscale / I(A) on wire
+        ALPHA        = 0x00000020, // alpha channel can be stored on wire
 
-        ENCODE_CAPABILITY_LINEAR       = 0x00000100, // linear transfer on wire (not display sRGB)
+        LINEAR       = 0x00000100, // linear transfer on wire (not display sRGB)
 
-        ENCODE_CAPABILITY_LOSSLESS     = 0x00001000, // lossless encode (always or via options.lossless)
-        ENCODE_CAPABILITY_LOSSY        = 0x00002000, // lossy encode (quality-driven)
+        LOSSLESS     = 0x00001000, // lossless encode (always or via options.lossless)
+        LOSSY        = 0x00002000, // lossy encode (quality-driven)
     };
+
+    constexpr ImageEncoderCapability operator | (ImageEncoderCapability a, ImageEncoderCapability b)
+    {
+        return ImageEncoderCapability(u32(a) | u32(b));
+    }
 
     struct ImageEncodeCapabilities
     {
@@ -62,48 +67,53 @@ namespace mango::image
 
         bool indexed() const
         {
-            return (flags & ENCODE_CAPABILITY_INDEXED) != 0;
+            return (flags & u32(ImageEncoderCapability::INDEXED)) != 0;
         }
 
         bool indexedAutoQuantize() const
         {
-            return (flags & ENCODE_CAPABILITY_INDEXED_AUTO) != 0;
+            return (flags & u32(ImageEncoderCapability::INDEXED_AUTO)) != 0;
         }
 
         bool floatFormat() const
         {
-            return (flags & ENCODE_CAPABILITY_FLOAT) != 0;
+            return (flags & u32(ImageEncoderCapability::FLOAT)) != 0;
         }
 
         bool unorm16() const
         {
-            return (flags & ENCODE_CAPABILITY_UNORM16) != 0;
+            return (flags & u32(ImageEncoderCapability::UNORM16)) != 0;
         }
 
         bool luminance() const
         {
-            return (flags & ENCODE_CAPABILITY_LUMINANCE) != 0;
+            return (flags & u32(ImageEncoderCapability::LUMINANCE)) != 0;
         }
 
         bool alpha() const
         {
-            return (flags & ENCODE_CAPABILITY_ALPHA) != 0;
+            return (flags & u32(ImageEncoderCapability::ALPHA)) != 0;
         }
 
         bool linear() const
         {
-            return (flags & ENCODE_CAPABILITY_LINEAR) != 0;
+            return (flags & u32(ImageEncoderCapability::LINEAR)) != 0;
         }
 
         bool lossless() const
         {
-            return (flags & ENCODE_CAPABILITY_LOSSLESS) != 0;
+            return (flags & u32(ImageEncoderCapability::LOSSLESS)) != 0;
         }
 
         bool lossy() const
         {
-            return (flags & ENCODE_CAPABILITY_LOSSY) != 0;
+            return (flags & u32(ImageEncoderCapability::LOSSY)) != 0;
         }
+
+        // require: all set bits must be present
+        // exclude: any set bit must be absent
+        bool matches(u32 require_flags, u32 exclude_flags = 0) const;
+        bool matches(ImageEncoderCapability require, u32 exclude_flags = 0) const;
     };
 
     class ImageEncoder : protected NonCopyable
@@ -121,11 +131,16 @@ namespace mango::image
         EncodeFunc m_encode_func;
     };
 
-    void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension, u32 capabilities = 0);
+    void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension,
+        ImageEncoderCapability capabilities = ImageEncoderCapability(u32(0)));
     bool isImageEncoder(const std::string& extension);
 
     ImageEncodeCapabilities getImageEncodeCapabilities(const std::string& extension);
     bool isImageEncoderIndexed(const std::string& extension);
     std::vector<std::string> listImageEncoderExtensions();
+
+    // Extensions whose registered flags include all require bits and none of exclude.
+    std::vector<std::string> getImageEncoders(u32 require_capability_flags, u32 exclude_capability_flags = 0);
+    std::vector<std::string> getImageEncoders(ImageEncoderCapability require, u32 exclude_capability_flags = 0);
 
 } // namespace mango::image

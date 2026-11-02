@@ -1072,22 +1072,22 @@ namespace mango::image
         registerImageEncoder(imageEncodePBM, ".pbm");
         registerImageEncoder(imageEncodePGM, ".pgm");
         registerImageEncoder(imageEncodePPM, ".ppm",
-            ENCODE_CAPABILITY_UNORM16 |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::UNORM16 |
+            ImageEncoderCapability::LOSSLESS);
         registerImageEncoder(imageEncodePAM, ".pam",
-            ENCODE_CAPABILITY_UNORM16 |
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::UNORM16 |
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS);
         registerImageEncoder(imageEncodePFM, ".pfm",
-            ENCODE_CAPABILITY_FLOAT |
-            ENCODE_CAPABILITY_LINEAR |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::FLOAT |
+            ImageEncoderCapability::LINEAR |
+            ImageEncoderCapability::LOSSLESS);
         registerImageEncoder(imageEncodePNM, ".pnm",
-            ENCODE_CAPABILITY_UNORM16 |
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_FLOAT |
-            ENCODE_CAPABILITY_LINEAR |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::UNORM16 |
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::FLOAT |
+            ImageEncoderCapability::LINEAR |
+            ImageEncoderCapability::LOSSLESS);
     }
 
     const char* detectImageCodecPNM(ConstMemory memory)

@@ -105,11 +105,11 @@ namespace mango::image
         registerImageDecoder(createInterface, ".jpe");
         registerImageDecoder(createInterface, ".jps");
         registerImageEncoder(imageEncode, ".jpg",
-            ENCODE_CAPABILITY_LUMINANCE |
-            ENCODE_CAPABILITY_LOSSY);
+            ImageEncoderCapability::LUMINANCE |
+            ImageEncoderCapability::LOSSY);
         registerImageEncoder(imageEncode, ".jpeg",
-            ENCODE_CAPABILITY_LUMINANCE |
-            ENCODE_CAPABILITY_LOSSY);
+            ImageEncoderCapability::LUMINANCE |
+            ImageEncoderCapability::LOSSY);
     }
 
 } // namespace mango::image

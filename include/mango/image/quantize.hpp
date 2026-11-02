@@ -21,7 +21,7 @@ namespace mango::image
     // Round requested color count for a given output extension.
     IndexedEncodeTarget resolveIndexedEncodeTarget(int requested_colors, const std::string& extension);
 
-    // Build indexed bitmap for encoders that accept ENCODE_CAPABILITY_INDEXED.
+    // Build indexed bitmap for encoders that register ImageEncoderCapability::INDEXED.
     std::unique_ptr<Bitmap> quantizeToIndexedBitmap(const Surface& source, int requested_colors,
         bool dither, float quality, const std::string& extension,
         IndexedEncodeTarget* out_target = nullptr);

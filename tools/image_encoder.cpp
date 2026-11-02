@@ -242,7 +242,7 @@ namespace
                 printEnable(Print::Debug, true);
             });
 
-        commands.flag("--list-encoders", "list registered output formats and indexed encode support",
+        commands.flag("--list-encoders", "list registered output formats and encode capabilities",
             [&]()
             {
                 args.list_encoders = true;

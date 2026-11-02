@@ -703,10 +703,10 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".jxl");
         registerImageEncoder(imageEncode, ".jxl",
-            ENCODE_CAPABILITY_INDEXED |
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS |
-            ENCODE_CAPABILITY_LOSSY);
+            ImageEncoderCapability::INDEXED |
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS |
+            ImageEncoderCapability::LOSSY);
     }
 
 } // namespace mango::image

@@ -262,11 +262,11 @@ namespace mango::image
             m_decoders[s] = func;
         }
 
-        void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension, u32 capabilities = 0)
+        void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension, ImageEncoderCapability capabilities = ImageEncoderCapability(u32(0)))
         {
             std::string s = toLower(extension);
             m_encoders[s] = func;
-            m_encoder_capabilities[s] = capabilities;
+            m_encoder_capabilities[s] = u32(capabilities);
         }
 
         ImageDecoder::CreateDecodeFunc getImageDecoder(const std::string& extension) const
@@ -299,6 +299,33 @@ namespace mango::image
 
             return extensions;
         }
+
+        std::vector<std::string> listImageEncoderExtensions(u32 require_flags, u32 exclude_flags) const
+        {
+            std::vector<std::string> extensions;
+            extensions.reserve(m_encoders.size());
+
+            for (const auto& node : m_encoders)
+            {
+                u32 flags = 0;
+                auto ci = m_encoder_capabilities.find(node.first);
+                if (ci != m_encoder_capabilities.end())
+                {
+                    flags = ci->second;
+                }
+
+                ImageEncodeCapabilities caps;
+                caps.encoder = true;
+                caps.flags = flags;
+
+                if (caps.matches(require_flags, exclude_flags))
+                {
+                    extensions.push_back(node.first);
+                }
+            }
+
+            return extensions;
+        }
     } g_imageServer;
 
     void registerImageDecoder(ImageDecoder::CreateDecodeFunc func, const std::string& extension)
@@ -306,7 +333,7 @@ namespace mango::image
         g_imageServer.registerImageDecoder(func, extension);
     }
 
-    void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension, u32 capabilities)
+    void registerImageEncoder(ImageEncoder::EncodeFunc func, const std::string& extension, ImageEncoderCapability capabilities)
     {
         g_imageServer.registerImageEncoder(func, extension, capabilities);
     }
@@ -335,6 +362,31 @@ namespace mango::image
         return caps;
     }
 
+    bool ImageEncodeCapabilities::matches(u32 require_flags, u32 exclude_flags) const
+    {
+        if (!encoder)
+        {
+            return false;
+        }
+
+        if (require_flags && (flags & require_flags) != require_flags)
+        {
+            return false;
+        }
+
+        if (exclude_flags && (flags & exclude_flags))
+        {
+            return false;
+        }
+
+        return true;
+    }
+
+    bool ImageEncodeCapabilities::matches(ImageEncoderCapability require, u32 exclude_flags) const
+    {
+        return matches(u32(require), exclude_flags);
+    }
+
     bool isImageEncoderIndexed(const std::string& filename)
     {
         return getImageEncodeCapabilities(filename).indexed();
@@ -343,6 +395,16 @@ namespace mango::image
     std::vector<std::string> listImageEncoderExtensions()
     {
         return g_imageServer.listImageEncoderExtensions();
+    }
+
+    std::vector<std::string> getImageEncoders(u32 require_capability_flags, u32 exclude_capability_flags)
+    {
+        return g_imageServer.listImageEncoderExtensions(require_capability_flags, exclude_capability_flags);
+    }
+
+    std::vector<std::string> getImageEncoders(ImageEncoderCapability require, u32 exclude_capability_flags)
+    {
+        return getImageEncoders(u32(require), exclude_capability_flags);
     }
 
     // ----------------------------------------------------------------------------

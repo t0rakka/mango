@@ -220,7 +220,7 @@ namespace mango::image
     void registerImageCodecASTC()
     {
         registerImageDecoder(createInterface, ".astc");
-        registerImageEncoder(imageEncode, ".astc", ENCODE_CAPABILITY_LOSSY);
+        registerImageEncoder(imageEncode, ".astc", ImageEncoderCapability::LOSSY);
     }
 
 } // namespace mango::image

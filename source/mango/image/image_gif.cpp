@@ -1392,10 +1392,10 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".gif");
         registerImageEncoder(imageEncode, ".gif",
-            ENCODE_CAPABILITY_INDEXED |
-            ENCODE_CAPABILITY_INDEXED_AUTO |
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::INDEXED |
+            ImageEncoderCapability::INDEXED_AUTO |
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS);
     }
 
 } // namespace mango::image

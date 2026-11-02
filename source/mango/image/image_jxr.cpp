@@ -905,9 +905,9 @@ namespace mango::image
         registerImageDecoder(createInterface, ".jxr");
         registerImageDecoder(createInterface, ".wdp");
         registerImageEncoder(imageEncode, ".jxr",
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS |
-            ENCODE_CAPABILITY_LOSSY);
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS |
+            ImageEncoderCapability::LOSSY);
     }
 
 } // namespace mango::image

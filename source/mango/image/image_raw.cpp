@@ -134,8 +134,8 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".fbmp");
         registerImageEncoder(imageEncode, ".fbmp",
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS);
     }
 
 } // namespace mango::image

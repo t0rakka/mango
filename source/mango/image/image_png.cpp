@@ -4910,11 +4910,11 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".png");
         registerImageEncoder(imageEncode, ".png",
-            ENCODE_CAPABILITY_INDEXED |
-            ENCODE_CAPABILITY_UNORM16 |
-            ENCODE_CAPABILITY_LUMINANCE |
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::INDEXED |
+            ImageEncoderCapability::UNORM16 |
+            ImageEncoderCapability::LUMINANCE |
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS);
     }
 
 } // namespace mango::image

@@ -642,11 +642,11 @@ namespace mango::image
         registerImageDecoder(create_decoder_qoi, ".qoi");
         registerImageDecoder(create_decoder_toi, ".toi");
         registerImageEncoder(encode_qoi, ".qoi",
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS);
         registerImageEncoder(encode_toi, ".toi",
-            ENCODE_CAPABILITY_ALPHA |
-            ENCODE_CAPABILITY_LOSSLESS);
+            ImageEncoderCapability::ALPHA |
+            ImageEncoderCapability::LOSSLESS);
     }
 
 } // namespace mango::image
