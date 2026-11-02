@@ -133,7 +133,9 @@ namespace mango::image
     void registerImageCodecRAW()
     {
         registerImageDecoder(createInterface, ".fbmp");
-        registerImageEncoder(imageEncode, ".fbmp");
+        registerImageEncoder(imageEncode, ".fbmp",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS);
     }
 
 } // namespace mango::image

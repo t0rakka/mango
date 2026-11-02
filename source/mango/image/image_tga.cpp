@@ -665,7 +665,9 @@ namespace mango::image
     void registerImageCodecTGA()
     {
         registerImageDecoder(createInterface, ".tga");
-        registerImageEncoder(imageEncode, ".tga");
+        registerImageEncoder(imageEncode, ".tga",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS);
     }
 
 } // namespace mango::image

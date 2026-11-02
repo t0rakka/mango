@@ -8,6 +8,7 @@
 */
 #include <mango/math/math.hpp>
 #include <mango/image/quantize.hpp>
+#include <algorithm>
 
 namespace
 {
@@ -329,22 +330,28 @@ namespace mango::image
 
     ColorQuantizer::ColorQuantizer(const Palette& palette)
     {
-        if (palette.size != 256)
+        if (palette.size < 1 || palette.size > 256)
         {
-            MANGO_EXCEPTION("[ColorQuantizer] The palette size must be 256.");
+            MANGO_EXCEPTION("[ColorQuantizer] The palette size must be between 1 and 256.");
         }
 
-        m_palette = palette;
+        m_palette.size = palette.size;
 
-        for (int i = 0; i < NETSIZE; ++i)
+        for (u32 i = 0; i < palette.size; ++i)
         {
-            m_network[i][0] = palette[i].r;
-            m_network[i][1] = palette[i].g;
-            m_network[i][2] = palette[i].b;
-            m_network[i][3] = i;
+            const Color& c = palette[i];
+            m_palette[i] = c;
+
+            m_network[i][0] = c.r;
+            m_network[i][1] = c.g;
+            m_network[i][2] = c.b;
+            m_network[i][3] = int(i);
         }
 
-        buildIndex();
+        if (palette.size >= NETSIZE)
+        {
+            buildIndex();
+        }
     }
 
     ColorQuantizer::~ColorQuantizer()
@@ -478,6 +485,30 @@ namespace mango::image
 
     int ColorQuantizer::getIndex(int r, int g, int b) const
     {
+        const int lookup = int(m_palette.size);
+
+        if (lookup > 0 && lookup < NETSIZE)
+        {
+            int bestd = 1000;
+            int best = 0;
+
+            for (int i = 0; i < lookup; ++i)
+            {
+                const int* p = m_network[i];
+                const int dist = std::abs(p[0] - r) +
+                                 std::abs(p[1] - g) +
+                                 std::abs(p[2] - b);
+
+                if (dist < bestd)
+                {
+                    bestd = dist;
+                    best = i;
+                }
+            }
+
+            return best;
+        }
+
         int	bestd = 1000;
         int	best = -1;
         int	i = m_netindex[g];
@@ -566,6 +597,256 @@ namespace mango::image
 
     QuantizedBitmap::~QuantizedBitmap()
     {
+    }
+
+    static
+    int pngIndexBitDepthFromTableSize(int table_size)
+    {
+        switch (table_size)
+        {
+            case 2: return 1;
+            case 4: return 2;
+            case 16: return 4;
+            case 256: return 8;
+            default: return 8;
+        }
+    }
+
+    static
+    int colorDistance(const Color& a, const Color& b)
+    {
+        return std::abs(int(a.r) - int(b.r)) +
+               std::abs(int(a.g) - int(b.g)) +
+               std::abs(int(a.b) - int(b.b));
+    }
+
+    static
+    Color meanImageColor(const Surface& rgba)
+    {
+        u64 sum_r = 0;
+        u64 sum_g = 0;
+        u64 sum_b = 0;
+        u64 count = 0;
+
+        for (int y = 0; y < rgba.height; ++y)
+        {
+            const Color* scan = rgba.address<Color>(0, y);
+
+            for (int x = 0; x < rgba.width; ++x)
+            {
+                sum_r += scan[x].r;
+                sum_g += scan[x].g;
+                sum_b += scan[x].b;
+                ++count;
+            }
+        }
+
+        if (!count)
+        {
+            return Color(0, 0, 0, 0xff);
+        }
+
+        return Color(u8(sum_r / count), u8(sum_g / count), u8(sum_b / count), 0xff);
+    }
+
+    static
+    Palette selectRepresentativeColors(const Surface& rgba, const Palette& learned, int color_count)
+    {
+        Palette selected;
+        selected.size = u32(color_count);
+
+        if (color_count <= 0)
+        {
+            return selected;
+        }
+
+        if (color_count == 1)
+        {
+            const Color mean = meanImageColor(rgba);
+            int best = 0;
+            int bestd = colorDistance(mean, learned[0]);
+
+            for (int i = 1; i < NETSIZE; ++i)
+            {
+                const int dist = colorDistance(mean, learned[i]);
+                if (dist < bestd)
+                {
+                    bestd = dist;
+                    best = i;
+                }
+            }
+
+            selected[0] = learned[best];
+            return selected;
+        }
+
+        bool used[NETSIZE] {};
+
+        int first = 0;
+        int first_score = -1;
+
+        for (int i = 0; i < NETSIZE; ++i)
+        {
+            int score = 0;
+
+            for (int j = 0; j < NETSIZE; ++j)
+            {
+                score = std::max(score, colorDistance(learned[i], learned[j]));
+            }
+
+            if (score > first_score)
+            {
+                first_score = score;
+                first = i;
+            }
+        }
+
+        selected[0] = learned[first];
+        used[first] = true;
+
+        for (int k = 1; k < color_count; ++k)
+        {
+            int pick = -1;
+            int pick_dist = -1;
+
+            for (int i = 0; i < NETSIZE; ++i)
+            {
+                if (used[i])
+                {
+                    continue;
+                }
+
+                int min_dist = colorDistance(learned[i], selected[0]);
+
+                for (int j = 1; j < k; ++j)
+                {
+                    min_dist = std::min(min_dist, colorDistance(learned[i], selected[j]));
+                }
+
+                if (min_dist > pick_dist)
+                {
+                    pick_dist = min_dist;
+                    pick = i;
+                }
+            }
+
+            if (pick < 0)
+            {
+                pick = k;
+            }
+
+            selected[k] = learned[pick];
+            used[pick] = true;
+        }
+
+        return selected;
+    }
+
+    static
+    int pngTableSizeFromColorCount(int color_count)
+    {
+        if (color_count <= 2)
+            return 2;
+        if (color_count <= 4)
+            return 4;
+        if (color_count <= 16)
+            return 16;
+        return 256;
+    }
+
+    static
+    int gifTableSizeFromColorCount(int color_count)
+    {
+        int table_size = 2;
+        while (table_size < color_count && table_size < 256)
+        {
+            table_size <<= 1;
+        }
+        return table_size;
+    }
+
+    static
+    int indexBitDepthFromTableSize(int table_size)
+    {
+        int bits = 0;
+        for (int size = table_size; size > 1; size >>= 1)
+        {
+            ++bits;
+        }
+        return bits;
+    }
+
+    IndexedEncodeTarget resolveIndexedEncodeTarget(int requested_colors, const std::string& extension)
+    {
+        IndexedEncodeTarget target;
+
+        target.color_count = std::max(1, std::min(requested_colors, 256));
+
+        if (extension == ".gif")
+        {
+            target.table_size = gifTableSizeFromColorCount(target.color_count);
+            target.index_bit_depth = indexBitDepthFromTableSize(target.table_size);
+        }
+        else
+        {
+            // PNG and other 1/2/4/8-bit indexed encoders use PNG-style rounding.
+            MANGO_UNREFERENCED(extension);
+            target.table_size = pngTableSizeFromColorCount(target.color_count);
+            target.index_bit_depth = pngIndexBitDepthFromTableSize(target.table_size);
+        }
+
+        return target;
+    }
+
+    std::unique_ptr<Bitmap> quantizeToIndexedBitmap(const Surface& source, int requested_colors,
+        bool dither, float quality, const std::string& extension,
+        IndexedEncodeTarget* out_target)
+    {
+        IndexedEncodeTarget target = resolveIndexedEncodeTarget(requested_colors, extension);
+
+        if (out_target)
+        {
+            *out_target = target;
+        }
+
+        TemporaryBitmap rgba(source, Format(32, Format::UNORM, Format::RGBA, 8, 8, 8, 8));
+
+        ColorQuantizer trainer(rgba, quality);
+        const Palette& learned = trainer.getPalette();
+
+        const Palette selected = selectRepresentativeColors(rgba, learned, target.color_count);
+
+        Palette quant_palette;
+        quant_palette.size = u32(target.color_count);
+
+        for (int i = 0; i < target.color_count; ++i)
+        {
+            quant_palette[i] = selected[i];
+        }
+
+        Palette fixed;
+        fixed.size = u32(target.table_size);
+
+        for (int i = 0; i < target.table_size; ++i)
+        {
+            if (i < target.color_count)
+            {
+                fixed[i] = selected[i];
+            }
+            else
+            {
+                fixed[i] = Color(0, 0, 0, 0);
+            }
+        }
+
+        auto bitmap = std::make_unique<Bitmap>(source.width, source.height, IndexedFormat(8));
+
+        ColorQuantizer quantizer(quant_palette);
+        quantizer.quantize(*bitmap, rgba, dither);
+
+        *bitmap->palette = fixed;
+
+        return bitmap;
     }
 
 } // namespace mango::image

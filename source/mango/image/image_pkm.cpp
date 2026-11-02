@@ -285,7 +285,7 @@ namespace mango::image
     void registerImageCodecPKM()
     {
         registerImageDecoder(createInterface, ".pkm");
-        registerImageEncoder(imageEncode, ".pkm");
+        registerImageEncoder(imageEncode, ".pkm", ENCODE_CAPABILITY_LOSSY);
     }
 
 } // namespace mango::image

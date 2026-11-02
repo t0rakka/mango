@@ -1998,7 +1998,9 @@ namespace mango::image
         registerImageDecoder(createInterface, ".bmp");
         registerImageDecoder(createInterface, ".ico");
         registerImageDecoder(createInterface, ".cur");
-        registerImageEncoder(imageEncode, ".bmp");
+        registerImageEncoder(imageEncode, ".bmp",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS);
     }
 
 } // namespace mango::image

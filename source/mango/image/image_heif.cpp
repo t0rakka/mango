@@ -477,8 +477,14 @@ namespace mango::image
     {
         registerImageDecoder(createInterface, ".heif");
         registerImageDecoder(createInterface, ".heic");
-        registerImageEncoder(imageEncode, ".heif");
-        registerImageEncoder(imageEncode, ".heic");
+        registerImageEncoder(imageEncode, ".heif",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS |
+            ENCODE_CAPABILITY_LOSSY);
+        registerImageEncoder(imageEncode, ".heic",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS |
+            ENCODE_CAPABILITY_LOSSY);
     }
 
 } // namespace mango::image

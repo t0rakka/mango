@@ -1252,7 +1252,10 @@ namespace mango::image
         registerImageDecoder(createInterface, ".jph");
         registerImageDecoder(createInterface, ".jhc");
 
-        registerImageEncoder(imageEncode, ".jp2");
+        registerImageEncoder(imageEncode, ".jp2",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS |
+            ENCODE_CAPABILITY_LOSSY);
     }
 
 } // namespace mango::image

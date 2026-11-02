@@ -1273,9 +1273,39 @@ namespace
         s.write8(0); // image block terminator
     }
 
+    static
+    int indexBitDepthFromTableSize(int table_size)
+    {
+        int bits = 0;
+
+        for (int size = table_size; size > 1; size >>= 1)
+        {
+            ++bits;
+        }
+
+        return std::max(bits, 1);
+    }
+
     void gif_encode_file(Stream& stream, const Surface& surface)
     {
         LittleEndianStream s = stream;
+
+        if (!surface.palette)
+        {
+            return;
+        }
+
+        const Palette& palette = *surface.palette;
+
+        u32 table_size = palette.size;
+
+        if (table_size < 2)
+            table_size = 2;
+        if (table_size > 256)
+            table_size = 256;
+
+        const int index_bits = indexBitDepthFromTableSize(int(table_size));
+        const u8 color_table_field = u8(index_bits - 1);
 
         // identifier
         s.write("GIF89a", 6);
@@ -1285,18 +1315,15 @@ namespace
         s.write16(surface.height);
 
         u8 packed = 0;
-        packed |= 0x7; // color table size as log2(size) - 1 (0 -> 2 colors, 7 -> 256 colors)
+        packed |= color_table_field; // color table size: 2^(field + 1)
         packed |= 0x80; // color table present
-        packed |= (0x7 << 4); // color resolution as bits - 1 (0 -> 1 bit, 7 -> 8 bits)
+        packed |= u8((index_bits - 1) << 4); // color resolution as bits - 1
         s.write8(packed);
 
-        s.write8(255); // background color
+        s.write8(0); // background color
         s.write8(0); // aspect ratio
 
-        // palette
-        const Palette& palette = surface;
-
-        for (int i = 0; i < 256; ++i)
+        for (u32 i = 0; i < table_size; ++i)
         {
             s.write8(palette[i].r);
             s.write8(palette[i].g);
@@ -1305,7 +1332,6 @@ namespace
 
         // NOTE: If we ever add support for encoding gif animations this is the section that would write the individual frames.
         {
-            // image descriptor
             s.write8(GIF_IMAGE);
 
             s.write16(0);
@@ -1313,14 +1339,12 @@ namespace
             s.write16(surface.width);
             s.write16(surface.height);
 
-            // local palette
             u8 field = 0;
             s.write8(field);
 
-            gif_encode_image_block(s, 8, surface);
+            gif_encode_image_block(s, index_bits, surface);
         }
 
-        // end of file
         s.write8(GIF_TERMINATE);
     }
 
@@ -1367,7 +1391,11 @@ namespace mango::image
     void registerImageCodecGIF()
     {
         registerImageDecoder(createInterface, ".gif");
-        registerImageEncoder(imageEncode, ".gif");
+        registerImageEncoder(imageEncode, ".gif",
+            ENCODE_CAPABILITY_INDEXED |
+            ENCODE_CAPABILITY_INDEXED_AUTO |
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS);
     }
 
 } // namespace mango::image

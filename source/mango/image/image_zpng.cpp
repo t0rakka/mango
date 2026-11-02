@@ -185,7 +185,9 @@ namespace mango::image
     void registerImageCodecZPNG()
     {
         registerImageDecoder(createInterface, ".zpng");
-        registerImageEncoder(imageEncode, ".zpng");
+        registerImageEncoder(imageEncode, ".zpng",
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS);
     }
 
 } // namespace mango::image

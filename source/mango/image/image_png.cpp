@@ -4218,11 +4218,11 @@ namespace
     static
     void write_PLTE(Stream& stream, const Palette& palette)
     {
-        constexpr size_t count = 256;
+        const u32 count = std::max(1u, std::min(palette.size, 256u));
 
         Buffer buffer(count * 3);
 
-        for (size_t i = 0; i < count; ++i)
+        for (u32 i = 0; i < count; ++i)
         {
             buffer[i * 3 + 0] = palette[i].r;
             buffer[i * 3 + 1] = palette[i].g;
@@ -4230,6 +4230,47 @@ namespace
         }
 
         write_chunk(stream, u32_mask_rev('P', 'L', 'T', 'E'), buffer);
+    }
+
+    static
+    void pack_palette_scanline(u8* dest, const u8* src, int width, int bits)
+    {
+        const u32 mask = (1u << bits) - 1;
+        u8 data = 0;
+        int offset = 8 - bits;
+        u8* out = dest;
+
+        for (int x = 0; x < width; ++x)
+        {
+            if (offset < 0)
+            {
+                offset = 8 - bits;
+                *out++ = data;
+                data = 0;
+            }
+
+            data |= u8((src[x] & mask) << offset);
+            offset -= bits;
+        }
+
+        if (offset != 8 - bits)
+        {
+            *out++ = data;
+        }
+    }
+
+    static
+    u8 pngIndexBitDepthForPalette(const Palette& palette)
+    {
+        const u32 count = std::max(1u, std::min(palette.size, 256u));
+
+        if (count <= 2)
+            return 1;
+        if (count <= 4)
+            return 2;
+        if (count <= 16)
+            return 4;
+        return 8;
     }
 
     static
@@ -4273,21 +4314,40 @@ namespace
     static
     void filter_range(u8* buffer, const Surface& surface, int color_bits, int y0, int y1)
     {
-        const int bpp = surface.format.bytes();
-        const int bytes_per_scan = surface.width * bpp;
+        const bool pack_indices = surface.format.isIndexed() && color_bits < 8;
+        const int pixel_bytes = surface.format.bytes();
+        const int bytes_per_scan = surface.width * pixel_bytes;
+        const int packed_scan = pack_indices ? (surface.width * color_bits + 7) / 8 : bytes_per_scan;
 
         u8* image = surface.address(0, y0);
+        Buffer pack_buffer(pack_indices ? size_t(packed_scan) : 0);
 
         for (int y = y0; y < y1; ++y)
         {
             *buffer++ = FILTER_SUB;
-            write_filter_sub(buffer, image, bpp, bytes_per_scan);
+
+            if (pack_indices)
+            {
+                pack_palette_scanline(pack_buffer, image, surface.width, color_bits);
+                write_filter_sub(buffer, pack_buffer, 1, packed_scan);
 
 #ifdef MANGO_LITTLE_ENDIAN
-            byteswap(Memory(buffer, bytes_per_scan), color_bits);
+                byteswap(Memory(buffer, packed_scan), color_bits);
 #endif
 
-            buffer += bytes_per_scan;
+                buffer += packed_scan;
+            }
+            else
+            {
+                write_filter_sub(buffer, image, pixel_bytes, bytes_per_scan);
+
+#ifdef MANGO_LITTLE_ENDIAN
+                byteswap(Memory(buffer, bytes_per_scan), color_bits);
+#endif
+
+                buffer += bytes_per_scan;
+            }
+
             image += surface.stride;
         }
     }
@@ -4295,8 +4355,11 @@ namespace
     static
     void compress_serial(Stream& stream, ImageEncodeStatus& status, const Surface& surface, int color_bits, const ImageEncodeOptions& options)
     {
-        const int bpp = surface.format.bytes();
-        const int bytes_per_scan = surface.width * bpp + 1;
+        const bool pack_indices = surface.format.isIndexed() && color_bits < 8;
+        const int scan_bytes = pack_indices
+            ? (surface.width * color_bits + 7) / 8
+            : surface.width * surface.format.bytes();
+        const int bytes_per_scan = scan_bytes + 1;
 
         Buffer buffer(bytes_per_scan * surface.height);
 
@@ -4758,16 +4821,15 @@ namespace
 
         if (surface.format.isIndexed())
         {
-            const Palette& palette = surface;
-
-            if (palette.size != 256)
+            if (!surface.palette || surface.palette->size < 1)
             {
-                status.setError("[ImageEncoder.PNG] Incorrect palette size - must be 0 or 256 (size: {}).", palette.size);
+                status.setError("[ImageEncoder.PNG] Indexed surface requires a palette.");
                 return status;
             }
 
-            // encode indexed color image
-            write_png(stream, status, surface, 8, COLOR_TYPE_PALETTE, options);
+            const u8 color_bits = pngIndexBitDepthForPalette(*surface.palette);
+
+            write_png(stream, status, surface, color_bits, COLOR_TYPE_PALETTE, options);
 
             return status;
         }
@@ -4847,7 +4909,12 @@ namespace mango::image
     void registerImageCodecPNG()
     {
         registerImageDecoder(createInterface, ".png");
-        registerImageEncoder(imageEncode, ".png");
+        registerImageEncoder(imageEncode, ".png",
+            ENCODE_CAPABILITY_INDEXED |
+            ENCODE_CAPABILITY_UNORM16 |
+            ENCODE_CAPABILITY_LUMINANCE |
+            ENCODE_CAPABILITY_ALPHA |
+            ENCODE_CAPABILITY_LOSSLESS);
     }
 
 } // namespace mango::image
