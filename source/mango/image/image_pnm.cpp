@@ -1,6 +1,6 @@
 /*
     MANGO Multimedia Development Platform
-    Copyright (C) 2012-2025 Twilight Finland 3D Oy Ltd. All rights reserved.
+    Copyright (C) 2012-2026 Twilight Finland 3D Oy Ltd. All rights reserved.
 */
 #include <cmath>
 #include <cctype>
@@ -662,12 +662,14 @@ namespace
     // Detect PNM format extension
     // ------------------------------------------------------------
 
-    static bool isPnmWhitespace(u8 c)
+    static
+    bool isWhitespacePNM(u8 c)
     {
         return c == ' ' || c == '\t' || c == '\n' || c == '\r';
     }
 
-    static const char* getFormatExtensionPNM(ConstMemory memory)
+    static
+    const char* getFormatExtensionPNM(ConstMemory memory)
     {
         if (memory.size < 3)
             return nullptr;
@@ -676,7 +678,7 @@ namespace
         if (p[0] != 'P')
             return nullptr;
 
-        if (!isPnmWhitespace(p[2]))
+        if (!isWhitespacePNM(p[2]))
             return nullptr;
 
         switch (p[1])
@@ -698,12 +700,12 @@ namespace mango::image
     void registerImageCodecPNM()
     {
         // decoders
-        registerImageDecoder(createInterface, ".pbm");
-        registerImageDecoder(createInterface, ".pgm");
-        registerImageDecoder(createInterface, ".ppm");
-        registerImageDecoder(createInterface, ".pnm");
-        registerImageDecoder(createInterface, ".pam");
-        registerImageDecoder(createInterface, ".pfm");
+        registerImageDecoder(createInterface, ".pbm"); // P1, P4: 1 bit per pixel (black and white)
+        registerImageDecoder(createInterface, ".pgm"); // P2, P5: 1 channel of 8 or 16 bit unorm (luminance)
+        registerImageDecoder(createInterface, ".ppm"); // P3, P6: 3 channels of 8 or 16 bit unorm (RGB)
+        registerImageDecoder(createInterface, ".pam"); // P7: 1-4 channels of 8 or 16 bit unorm
+        registerImageDecoder(createInterface, ".pfm"); // PF/Pf: 1 or 3 channels of float
+        registerImageDecoder(createInterface, ".pnm"); // generic netpbm extension
 
         // encoders
         registerImageEncoder(imageEncodePFM, ".pfm");
