@@ -184,10 +184,30 @@ namespace
                 args.options.compression = value;
             });
 
-        commands.optionInt("--quality", "quality level (0..100)",
+        commands.optionInt("--quality", "quality level 0..100 (jpg, png quantize, ...)",
             [&](int value)
             {
+                if (value < 0 || value > 100)
+                {
+                    args.error = fmt::format("Invalid --quality {} (use 0..100)", value);
+                    return;
+                }
                 args.options.quality = value / 100.0f;
+            });
+
+        commands.option("--subsampling", "JPEG MCU size: 8x8, 16x8, 8x16, 16x16 (default 8x8)",
+            [&](std::string_view value)
+            {
+                if (value == "8x8")
+                    args.options.subsampling = SubSampling::MCU_8x8;
+                else if (value == "16x8")
+                    args.options.subsampling = SubSampling::MCU_16x8;
+                else if (value == "8x16")
+                    args.options.subsampling = SubSampling::MCU_8x16;
+                else if (value == "16x16")
+                    args.options.subsampling = SubSampling::MCU_16x16;
+                else
+                    args.error = fmt::format("Invalid --subsampling \"{}\" (use 8x8, 16x8, 8x16, or 16x16)", value);
             });
 
         commands.option2D("--astc", "ASTC block size (e.g. 4x4)",

@@ -399,7 +399,49 @@ namespace
         bool multithread = true;
         bool tracing = false;
         bool mango_only = false;
+        float quality = 0.70f;
+        SubSampling subsampling = SubSampling::MCU_8x8;
+        std::string error;
     };
+
+    bool parseSubSampling(std::string_view value, SubSampling& out, std::string& error)
+    {
+        if (value == "8x8")
+        {
+            out = SubSampling::MCU_8x8;
+            return true;
+        }
+        if (value == "16x8")
+        {
+            out = SubSampling::MCU_16x8;
+            return true;
+        }
+        if (value == "8x16")
+        {
+            out = SubSampling::MCU_8x16;
+            return true;
+        }
+        if (value == "16x16")
+        {
+            out = SubSampling::MCU_16x16;
+            return true;
+        }
+
+        error = fmt::format("Invalid --subsampling \"{}\" (use 8x8, 16x8, 8x16, or 16x16)", value);
+        return false;
+    }
+
+    const char* subsamplingName(SubSampling s)
+    {
+        switch (s)
+        {
+            case SubSampling::MCU_8x8:   return "8x8";
+            case SubSampling::MCU_16x8:  return "16x8";
+            case SubSampling::MCU_8x16:  return "8x16";
+            case SubSampling::MCU_16x16: return "16x16";
+        }
+        return "?";
+    }
 
     void configureParser(const CommandLine& commands, JpegBenchmarkArgs& args)
     {
@@ -441,6 +483,23 @@ namespace
                 args.test_count = value;
             });
 
+        commands.optionInt("--quality", "encode quality 0..100 (default 70)",
+            [&](int value)
+            {
+                if (value < 0 || value > 100)
+                {
+                    args.error = fmt::format("Invalid --quality {} (use 0..100)", value);
+                    return;
+                }
+                args.quality = value / 100.0f;
+            });
+
+        commands.option("--subsampling", "MCU size: 8x8, 16x8, 8x16, 16x16 (default 8x8)",
+            [&](std::string_view value)
+            {
+                parseSubSampling(value, args.subsampling, args.error);
+            });
+
         commands.positional([&](std::string_view token)
         {
             args.filename = token;
@@ -467,6 +526,12 @@ int main(int argc, const char* argv[])
         return 1;
     }
 
+    if (!args.error.empty())
+    {
+        printLine("{}", args.error);
+        return 1;
+    }
+
     if (args.filename.empty())
     {
         printLine("Missing filename.");
@@ -481,6 +546,8 @@ int main(int argc, const char* argv[])
 
     printLine(getSystemInfo());
     warmup(filename);
+    printLine("encode: quality={}, subsampling={}",
+        int(args.quality * 100.0f + 0.5f), subsamplingName(args.subsampling));
 
     printLine("-----------------------------------------------------");
     printLine("           decode(ms)   encode(ms)   size(KB)        ");
@@ -587,7 +654,8 @@ int main(int argc, const char* argv[])
     decode_options.multithread = multithread;
 
     ImageEncodeOptions encode_options;
-    encode_options.quality = 0.70f;
+    encode_options.quality = args.quality;
+    encode_options.subsampling = args.subsampling;
     encode_options.simd = true;
     encode_options.multithread = multithread;
 
