@@ -4,6 +4,7 @@
 */
 #include <mango/core/pointer.hpp>
 #include "jpeg.hpp"
+#include <algorithm>
 #include <cstring>
 
 namespace
@@ -333,7 +334,13 @@ namespace
             const u16* ac_size;
         };
         Channel channel[3];
-        int components;
+        int components;          // SOF component count (1 or 3)
+        int blocks_in_mcu;       // 1, 3, 4, or 6
+        u8 block_channel[6];     // channel[] index per MCU block
+        u8 y_sampling;           // SOF Y sampling: 0x11 / 0x21 / 0x12 / 0x22
+        int bytes_per_pixel;
+        int tiles_x;             // 8x8 tiles per MCU horizontally
+        int tiles_y;             // 8x8 tiles per MCU vertically
 
         std::string info;
 
@@ -341,9 +348,12 @@ namespace
         std::vector<u32> restart_offsets;
 
         using ReadFunc = void (*)(s16*, const u8*, size_t, int, int);
+        // Writes Cb[64], Cr[64] only — Y stays in tiles[i] (first plane of each 444 tile).
+        using SubsampleFunc = void (*)(s16* chroma, const s16* tiles);
 
         void (*read_8x8) (s16* block, const u8* input, size_t stride, int rows, int cols);
-        void (*read)     (s16* block, const u8* input, size_t stride, int rows, int cols);
+        void (*read_clip)(s16* block, const u8* input, size_t stride, int rows, int cols);
+        SubsampleFunc subsample; // nullptr when MCU is a single 8x8 tile
         void (*fdct)     (s16* dest, const s16* data, const s16* qtable);
         u8*  (*encode)   (HuffmanEncoder& encoder, u8* p, const s16* input, const Channel& channel);
 
@@ -352,7 +362,7 @@ namespace
 
         void writeMarkers(BigEndianStream& p, int interval);
 
-        void encodeScan(Buffer& buffer, HuffmanEncoder& huffman, const u8* src, size_t stride, ReadFunc read_func, int rows);
+        void encodeScan(Buffer& buffer, HuffmanEncoder& huffman, const u8* src, size_t stride, int rows);
         void encodeInterval(Buffer& buffer, int y0, int y1, int restartCounter, const u8* image, size_t stride);
         ImageEncodeStatus encodeImage(Stream& stream);
     };
@@ -1748,7 +1758,7 @@ namespace
     // ----------------------------------------------------------------------------
 
     static
-    void compute_ycbcr(s16* dest, int r, int g, int b)
+    void compute_1x1_ycbcr(s16* dest, int r, int g, int b)
     {
         int y = (76 * r + 151 * g + 29 * b) >> 8;
         int cr = ((r - y) * 182) >> 8;
@@ -1759,7 +1769,7 @@ namespace
     }
 
     static
-    void read_y_format(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_y_format_clip(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int y = 0; y < rows; ++y)
         {
@@ -1788,7 +1798,7 @@ namespace
     }
 
     static
-    void read_bgr_format(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_bgr_format_clip(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int y = 0; y < rows; ++y)
         {
@@ -1799,7 +1809,7 @@ namespace
                 int r = scan[2];
                 int g = scan[1];
                 int b = scan[0];
-                compute_ycbcr(block, r, g, b);
+                compute_1x1_ycbcr(block, r, g, b);
                 ++block;
                 scan += 3;
             }
@@ -1828,7 +1838,7 @@ namespace
     }
 
     static
-    void read_rgb_format(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_rgb_format_clip(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int y = 0; y < rows; ++y)
         {
@@ -1838,7 +1848,7 @@ namespace
                 int r = scan[0];
                 int g = scan[1];
                 int b = scan[2];
-                compute_ycbcr(block, r, g, b);
+                compute_1x1_ycbcr(block, r, g, b);
                 ++block;
                 scan += 3;
             }
@@ -1867,7 +1877,7 @@ namespace
     }
 
     static
-    void read_bgra_format(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_bgra_format_clip(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int y = 0; y < rows; ++y)
         {
@@ -1877,7 +1887,7 @@ namespace
                 s16 r = scan[2];
                 s16 g = scan[1];
                 s16 b = scan[0];
-                compute_ycbcr(block, r, g, b);
+                compute_1x1_ycbcr(block, r, g, b);
                 ++block;
                 scan += 4;
             }
@@ -1906,7 +1916,7 @@ namespace
     }
 
     static
-    void read_rgba_format(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_rgba_format_clip(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         for (int y = 0; y < rows; ++y)
         {
@@ -1916,7 +1926,7 @@ namespace
                 int r = scan[0];
                 int g = scan[1];
                 int b = scan[2];
-                compute_ycbcr(block, r, g, b);
+                compute_1x1_ycbcr(block, r, g, b);
                 ++block;
                 scan += 4;
             }
@@ -1947,7 +1957,7 @@ namespace
 #if defined(MANGO_ENABLE_SSE2) || defined(MANGO_ENABLE_SSE4_1)
 
     static
-    void compute_ycbcr_sse2(s16* dest, __m128i r, __m128i g, __m128i b)
+    void compute_1x1_ycbcr_sse2(s16* dest, __m128i r, __m128i g, __m128i b)
     {
         const __m128i c076 = _mm_set1_epi16(76);
         const __m128i c151 = _mm_set1_epi16(151);
@@ -1986,7 +1996,7 @@ namespace
 #if defined(MANGO_ENABLE_SSE2)
 
     static
-    void read_y_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_y_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2047,7 +2057,7 @@ namespace
     }
 
     static
-    void read_bgra_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_bgra_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2074,7 +2084,7 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
-            compute_ycbcr_sse2(block, r, g, b);
+            compute_1x1_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2082,7 +2092,7 @@ namespace
     }
 
     static
-    void read_rgba_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_rgba_format_sse2(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2109,7 +2119,7 @@ namespace
             __m128i g = _mm_packs_epi32(g0, g1);
             __m128i r = _mm_packs_epi32(r0, r1);
 
-            compute_ycbcr_sse2(block, r, g, b);
+            compute_1x1_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2121,7 +2131,7 @@ namespace
 #if defined(MANGO_ENABLE_SSE4_1)
 
     static
-    void read_bgr_format_sse41(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_bgr_format_sse41(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2146,7 +2156,7 @@ namespace
            __m128i g = _mm_or_si128(g0, g1);
            __m128i r = _mm_or_si128(r0, r1);
 
-            compute_ycbcr_sse2(block, r, g, b);
+            compute_1x1_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2154,7 +2164,7 @@ namespace
     }
 
     static
-    void read_rgb_format_sse41(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_rgb_format_sse41(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2179,7 +2189,7 @@ namespace
            __m128i g = _mm_or_si128(g0, g1);
            __m128i r = _mm_or_si128(r0, r1);
 
-            compute_ycbcr_sse2(block, r, g, b);
+            compute_1x1_ycbcr_sse2(block, r, g, b);
 
             block += 8;
             input += stride;
@@ -2198,7 +2208,7 @@ namespace
     static const int16x8_t ycbcr_c128 = vdupq_n_s16(128);
 
     static
-    void compute_ycbcr_neon(s16* dest, int16x8_t r, int16x8_t g, int16x8_t b)
+    void compute_1x1_ycbcr_neon(s16* dest, int16x8_t r, int16x8_t g, int16x8_t b)
     {
 
         // compute luminance
@@ -2223,7 +2233,7 @@ namespace
     }
 
     static
-    void read_y_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_y_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2240,7 +2250,7 @@ namespace
     }
 
     static
-    void read_bgra_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_bgra_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2249,9 +2259,9 @@ namespace
         {
             const uint8x8x4_t row0 = vld4_u8(input + 0 * stride);
             const uint8x8x4_t row1 = vld4_u8(input + 1 * stride);
-            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[2])),
+            compute_1x1_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[2])),
                 vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[0])));
-            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[2])),
+            compute_1x1_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[2])),
                 vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[0])));
             input += stride * 2;
             block += 16;
@@ -2259,7 +2269,7 @@ namespace
     }
 
     static
-    void read_rgba_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_rgba_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2268,9 +2278,9 @@ namespace
         {
             const uint8x8x4_t row0 = vld4_u8(input + 0 * stride);
             const uint8x8x4_t row1 = vld4_u8(input + 1 * stride);
-            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[0])),
+            compute_1x1_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[0])),
                 vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[2])));
-            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[0])),
+            compute_1x1_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[0])),
                 vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[2])));
             input += stride * 2;
             block += 16;
@@ -2278,7 +2288,7 @@ namespace
     }
 
     static
-    void read_bgr_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_bgr_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2287,9 +2297,9 @@ namespace
         {
             const uint8x8x3_t row0 = vld3_u8(input + 0 * stride);
             const uint8x8x3_t row1 = vld3_u8(input + 1 * stride);
-            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[2])),
+            compute_1x1_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[2])),
                 vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[0])));
-            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[2])),
+            compute_1x1_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[2])),
                 vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[0])));
             input += stride * 2;
             block += 16;
@@ -2297,7 +2307,7 @@ namespace
     }
 
     static
-    void read_rgb_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
+    void read_8x8_rgb_format_neon(s16* block, const u8* input, size_t stride, int rows, int cols)
     {
         MANGO_UNREFERENCED(rows);
         MANGO_UNREFERENCED(cols);
@@ -2306,9 +2316,9 @@ namespace
         {
             const uint8x8x3_t row0 = vld3_u8(input + 0 * stride);
             const uint8x8x3_t row1 = vld3_u8(input + 1 * stride);
-            compute_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[0])),
+            compute_1x1_ycbcr_neon(block + 0, vreinterpretq_s16_u16(vmovl_u8(row0.val[0])),
                 vreinterpretq_s16_u16(vmovl_u8(row0.val[1])), vreinterpretq_s16_u16(vmovl_u8(row0.val[2])));
-            compute_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[0])),
+            compute_1x1_ycbcr_neon(block + 8, vreinterpretq_s16_u16(vmovl_u8(row1.val[0])),
                 vreinterpretq_s16_u16(vmovl_u8(row1.val[1])), vreinterpretq_s16_u16(vmovl_u8(row1.val[2])));
             input += stride * 2;
             block += 16;
@@ -2316,6 +2326,218 @@ namespace
     }
 
 #endif // MANGO_ENABLE_NEON
+
+    // ----------------------------------------------------------------------------
+    // chroma subsample adapters (444 tiles -> MCU block layout)
+    // ----------------------------------------------------------------------------
+
+    static constexpr int TILE_SAMPLES = BLOCK_SIZE * 3; // Y|Cb|Cr per 8x8 tile
+    static constexpr int MAX_TILES = 4;
+    static constexpr int MAX_BLOCKS_IN_MCU = 6; // 16x16: Y0..Y3 + Cb + Cr
+
+    static
+    void average_chroma_v(s16* out, const s16* top, const s16* bot)
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            for (int x = 0; x < 8; ++x)
+            {
+                const int i = (y * 2) * 8 + x;
+                out[y * 8 + x] = s16((top[i] + top[i + 8] + 1) >> 1);
+                out[(y + 4) * 8 + x] = s16((bot[i] + bot[i + 8] + 1) >> 1);
+            }
+        }
+    }
+
+    static
+    void average_chroma_h(s16* out, const s16* left, const s16* right)
+    {
+        for (int y = 0; y < 8; ++y)
+        {
+            for (int x = 0; x < 4; ++x)
+            {
+                const int i = y * 8 + x * 2;
+                out[y * 8 + x] = s16((left[i] + left[i + 1] + 1) >> 1);
+                out[y * 8 + x + 4] = s16((right[i] + right[i + 1] + 1) >> 1);
+            }
+        }
+    }
+
+    static
+    void average_chroma_hv(s16* out, const s16* t0, const s16* t1, const s16* t2, const s16* t3)
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            for (int x = 0; x < 4; ++x)
+            {
+                const int i = (y * 2) * 8 + (x * 2);
+                const int s0 = t0[i] + t0[i + 1] + t0[i + 8] + t0[i + 9];
+                const int s1 = t1[i] + t1[i + 1] + t1[i + 8] + t1[i + 9];
+                const int s2 = t2[i] + t2[i + 1] + t2[i + 8] + t2[i + 9];
+                const int s3 = t3[i] + t3[i + 1] + t3[i + 8] + t3[i + 9];
+                out[y * 8 + x] = s16((s0 + 2) >> 2);
+                out[y * 8 + x + 4] = s16((s1 + 2) >> 2);
+                out[(y + 4) * 8 + x] = s16((s2 + 2) >> 2);
+                out[(y + 4) * 8 + x + 4] = s16((s3 + 2) >> 2);
+            }
+        }
+    }
+
+    // tiles: top, bottom — Y stays in tiles; chroma: Cb, Cr
+    static
+    void subsample_8x16(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+
+        average_chroma_v(chroma + 0 * BLOCK_SIZE, t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE);
+        average_chroma_v(chroma + 1 * BLOCK_SIZE, t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE);
+    }
+
+    // tiles: left, right — Y stays in tiles; chroma: Cb, Cr
+    static
+    void subsample_16x8(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+
+        average_chroma_h(chroma + 0 * BLOCK_SIZE, t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE);
+        average_chroma_h(chroma + 1 * BLOCK_SIZE, t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE);
+    }
+
+    // tiles: TL, TR, BL, BR — Y stays in tiles; chroma: Cb, Cr
+    static
+    void subsample_16x16(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+        const s16* t2 = tiles + 2 * TILE_SAMPLES;
+        const s16* t3 = tiles + 3 * TILE_SAMPLES;
+
+        average_chroma_hv(chroma + 0 * BLOCK_SIZE,
+            t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE,
+            t2 + 1 * BLOCK_SIZE, t3 + 1 * BLOCK_SIZE);
+        average_chroma_hv(chroma + 1 * BLOCK_SIZE,
+            t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE,
+            t2 + 2 * BLOCK_SIZE, t3 + 2 * BLOCK_SIZE);
+    }
+
+#if defined(MANGO_ENABLE_SSE2)
+
+    // Vertical pair-avg: (a + b + 1) >> 1 across a full 8-wide row.
+    static
+    void average_chroma_v_sse2(s16* out, const s16* top, const s16* bot)
+    {
+        const __m128i bias = _mm_set1_epi16(1);
+
+        for (int y = 0; y < 4; ++y)
+        {
+            const int row = y * 2 * 8;
+
+            __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i*>(top + row));
+            __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(top + row + 8));
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(out + y * 8),
+                _mm_srai_epi16(_mm_add_epi16(_mm_add_epi16(a, b), bias), 1));
+
+            a = _mm_loadu_si128(reinterpret_cast<const __m128i*>(bot + row));
+            b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(bot + row + 8));
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(out + (y + 4) * 8),
+                _mm_srai_epi16(_mm_add_epi16(_mm_add_epi16(a, b), bias), 1));
+        }
+    }
+
+    // Horizontal pair-avg via pmaddwd×1: one 8-wide row -> 4 averages (low 64 bits).
+    static inline
+    __m128i average_chroma_h_row_sse2(const s16* row)
+    {
+        const __m128i ones = _mm_set1_epi16(1);
+        const __m128i bias = _mm_set1_epi32(1);
+
+        __m128i sum = _mm_madd_epi16(_mm_loadu_si128(reinterpret_cast<const __m128i*>(row)), ones);
+        sum = _mm_srai_epi32(_mm_add_epi32(sum, bias), 1);
+        return _mm_packs_epi32(sum, _mm_setzero_si128());
+    }
+
+    static
+    void average_chroma_h_sse2(s16* out, const s16* left, const s16* right)
+    {
+        for (int y = 0; y < 8; ++y)
+        {
+            __m128i lo = average_chroma_h_row_sse2(left + y * 8);
+            __m128i hi = average_chroma_h_row_sse2(right + y * 8);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(out + y * 8), _mm_unpacklo_epi64(lo, hi));
+        }
+    }
+
+    // 2x2 box-avg: (a0+a1 + b0+b1 + 2) >> 2 per pair — matches scalar average_chroma_hv.
+    static inline
+    __m128i average_chroma_2x2_row_sse2(const s16* row0, const s16* row1)
+    {
+        const __m128i ones = _mm_set1_epi16(1);
+        const __m128i bias = _mm_set1_epi32(2);
+
+        __m128i a = _mm_loadu_si128(reinterpret_cast<const __m128i*>(row0));
+        __m128i b = _mm_loadu_si128(reinterpret_cast<const __m128i*>(row1));
+        __m128i sum = _mm_add_epi32(_mm_madd_epi16(a, ones), _mm_madd_epi16(b, ones));
+        sum = _mm_srai_epi32(_mm_add_epi32(sum, bias), 2);
+        return _mm_packs_epi32(sum, _mm_setzero_si128());
+    }
+
+    static
+    void average_chroma_hv_sse2(s16* out, const s16* t0, const s16* t1, const s16* t2, const s16* t3)
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            const int row = y * 2 * 8;
+            __m128i left  = average_chroma_2x2_row_sse2(t0 + row, t0 + row + 8);
+            __m128i right = average_chroma_2x2_row_sse2(t1 + row, t1 + row + 8);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(out + y * 8), _mm_unpacklo_epi64(left, right));
+
+            left  = average_chroma_2x2_row_sse2(t2 + row, t2 + row + 8);
+            right = average_chroma_2x2_row_sse2(t3 + row, t3 + row + 8);
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(out + (y + 4) * 8), _mm_unpacklo_epi64(left, right));
+        }
+    }
+
+    // SIMD MCU adapters: box-filter Cb/Cr only (Y remains in tiles).
+
+    static
+    void subsample_8x16_sse2(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+
+        average_chroma_v_sse2(chroma + 0 * BLOCK_SIZE, t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE);
+        average_chroma_v_sse2(chroma + 1 * BLOCK_SIZE, t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE);
+    }
+
+    static
+    void subsample_16x8_sse2(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+
+        average_chroma_h_sse2(chroma + 0 * BLOCK_SIZE, t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE);
+        average_chroma_h_sse2(chroma + 1 * BLOCK_SIZE, t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE);
+    }
+
+    static
+    void subsample_16x16_sse2(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+        const s16* t2 = tiles + 2 * TILE_SAMPLES;
+        const s16* t3 = tiles + 3 * TILE_SAMPLES;
+
+        average_chroma_hv_sse2(chroma + 0 * BLOCK_SIZE,
+            t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE,
+            t2 + 1 * BLOCK_SIZE, t3 + 1 * BLOCK_SIZE);
+        average_chroma_hv_sse2(chroma + 1 * BLOCK_SIZE,
+            t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE,
+            t2 + 2 * BLOCK_SIZE, t3 + 2 * BLOCK_SIZE);
+    }
+
+#endif // MANGO_ENABLE_SSE2
 
     // ----------------------------------------------------------------------------
     // jpegEncoder
@@ -2351,8 +2573,10 @@ namespace
         channel[2].ac_code = g_chrominance_ac_code_table;
         channel[2].ac_size = g_chrominance_ac_size_table;
 
-        int bytes_per_pixel = 0;
+        bytes_per_pixel = 0;
         read_8x8 = nullptr;
+        read_clip = nullptr;
+        subsample = nullptr;
 
         u64 flags = options.simd ? cpu::getFlags() : 0;
         MANGO_UNREFERENCED(flags);
@@ -2367,18 +2591,18 @@ namespace
 #if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
-                    read_8x8 = read_y_format_sse2;
+                    read_8x8 = read_8x8_y_format_sse2;
                     sampler_name = "Y 8x8 SSE2";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
-                    read_8x8 = read_y_format_neon;
+                    read_8x8 = read_8x8_y_format_neon;
                     sampler_name = "Y 8x8 NEON";
                 }
 #endif
-                read = read_y_format;
+                read_clip = read_8x8_y_format_clip;
                 bytes_per_pixel = 1;
                 components = 1;
                 break;
@@ -2387,18 +2611,18 @@ namespace
 #if defined(MANGO_ENABLE_SSE4_1)
                 if (flags & INTEL_SSE4_1)
                 {
-                    read_8x8 = read_bgr_format_sse41;
+                    read_8x8 = read_8x8_bgr_format_sse41;
                     sampler_name = "BGR 8x8 SSE4.1";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
-                    read_8x8 = read_bgr_format_neon;
+                    read_8x8 = read_8x8_bgr_format_neon;
                     sampler_name = "BGR 8x8 NEON";
                 }
 #endif
-                read = read_bgr_format;
+                read_clip = read_8x8_bgr_format_clip;
                 bytes_per_pixel = 3;
                 components = 3;
                 break;
@@ -2407,18 +2631,18 @@ namespace
 #if defined(MANGO_ENABLE_SSE4_1)
                 if (flags & INTEL_SSE4_1)
                 {
-                    read_8x8 = read_rgb_format_sse41;
+                    read_8x8 = read_8x8_rgb_format_sse41;
                     sampler_name = "RGB 8x8 SSE4.1";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
-                    read_8x8 = read_rgb_format_neon;
+                    read_8x8 = read_8x8_rgb_format_neon;
                     sampler_name = "RGB 8x8 NEON";
                 }
 #endif
-                read = read_rgb_format;
+                read_clip = read_8x8_rgb_format_clip;
                 bytes_per_pixel = 3;
                 components = 3;
                 break;
@@ -2427,18 +2651,18 @@ namespace
 #if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
-                    read_8x8 = read_bgra_format_sse2;
+                    read_8x8 = read_8x8_bgra_format_sse2;
                     sampler_name = "BGRA 8x8 SSE2";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
-                    read_8x8 = read_bgra_format_neon;
+                    read_8x8 = read_8x8_bgra_format_neon;
                     sampler_name = "BGRA 8x8 NEON";
                 }
 #endif
-                read = read_bgra_format;
+                read_clip = read_8x8_bgra_format_clip;
                 bytes_per_pixel = 4;
                 components = 3;
                 break;
@@ -2447,18 +2671,18 @@ namespace
 #if defined(MANGO_ENABLE_SSE2)
                 if (flags & INTEL_SSE2)
                 {
-                    read_8x8 = read_rgba_format_sse2;
+                    read_8x8 = read_8x8_rgba_format_sse2;
                     sampler_name = "RGBA 8x8 SSE2";
                 }
 #endif
 #if defined(MANGO_ENABLE_NEON)
                 if (flags & ARM_NEON)
                 {
-                    read_8x8 = read_rgba_format_neon;
+                    read_8x8 = read_8x8_rgba_format_neon;
                     sampler_name = "RGBA 8x8 NEON";
                 }
 #endif
-                read = read_rgba_format;
+                read_clip = read_8x8_rgba_format_clip;
                 bytes_per_pixel = 4;
                 components = 3;
                 break;
@@ -2467,7 +2691,7 @@ namespace
         if (!read_8x8)
         {
             // no accelerated 8x8 sampler found; use the default
-            read_8x8 = read;
+            read_8x8 = read_clip;
         }
 
         // select fdct
@@ -2526,6 +2750,89 @@ namespace
         }
 #endif
 
+        // MCU geometry (grayscale stays 8x8)
+        mcu_width = 8;
+        mcu_height = 8;
+        subsample = nullptr;
+        const char* subsample_name = nullptr;
+
+        if (components == 3)
+        {
+            switch (m_options.subsampling)
+            {
+                case SubSampling::MCU_8x8: // 4:4:4
+                    break;
+                case SubSampling::MCU_16x8: // 4:2:2
+                    mcu_width = 16;
+                    mcu_height = 8;
+                    subsample = subsample_16x8;
+                    subsample_name = "16x8";
+#if defined(MANGO_ENABLE_SSE2)
+                    if (flags & INTEL_SSE2)
+                    {
+                        subsample = subsample_16x8_sse2;
+                        subsample_name = "16x8 SSE2";
+                    }
+#endif
+                    break;
+                case SubSampling::MCU_8x16: // 4:4:0
+                    mcu_width = 8;
+                    mcu_height = 16;
+                    subsample = subsample_8x16;
+                    subsample_name = "8x16";
+#if defined(MANGO_ENABLE_SSE2)
+                    if (flags & INTEL_SSE2)
+                    {
+                        subsample = subsample_8x16_sse2;
+                        subsample_name = "8x16 SSE2";
+                    }
+#endif
+                    break;
+                case SubSampling::MCU_16x16: // 4:2:0
+                    mcu_width = 16;
+                    mcu_height = 16;
+                    subsample = subsample_16x16;
+                    subsample_name = "16x16";
+#if defined(MANGO_ENABLE_SSE2)
+                    if (flags & INTEL_SSE2)
+                    {
+                        subsample = subsample_16x16_sse2;
+                        subsample_name = "16x16 SSE2";
+                    }
+#endif
+                    break;
+            }
+        }
+
+        tiles_x = mcu_width / 8;
+        tiles_y = mcu_height / 8;
+        y_sampling = u8((tiles_x << 4) | tiles_y);
+
+        if (components == 1)
+        {
+            blocks_in_mcu = 1;
+            block_channel[0] = 0;
+        }
+        else
+        {
+            const int ny = tiles_x * tiles_y;
+            blocks_in_mcu = ny + 2; // Y tiles + Cb + Cr
+            for (int i = 0; i < ny; ++i)
+            {
+                block_channel[i] = 0;
+            }
+            block_channel[ny + 0] = 1;
+            block_channel[ny + 1] = 2;
+        }
+
+        horizontal_mcus = (m_surface.width + mcu_width - 1) / mcu_width;
+        vertical_mcus   = (m_surface.height + mcu_height - 1) / mcu_height;
+
+        rows_in_bottom_mcus = m_surface.height - (vertical_mcus - 1) * mcu_height;
+        cols_in_right_mcus  = m_surface.width  - (horizontal_mcus - 1) * mcu_width;
+
+        mcu_stride = mcu_width * bytes_per_pixel;
+
         // build encoder info string
         info = "fDCT: ";
         info += fdct_name;
@@ -2536,16 +2843,12 @@ namespace
         info += ", Encoder: ";
         info += encode_name;
 
-        mcu_width = 8;
-        mcu_height = 8;
-
-        horizontal_mcus = (m_surface.width + mcu_width - 1) >> 3;
-        vertical_mcus   = (m_surface.height + mcu_height - 1) >> 3;
-
-        rows_in_bottom_mcus = m_surface.height - (vertical_mcus - 1) * mcu_height;
-        cols_in_right_mcus  = m_surface.width  - (horizontal_mcus - 1) * mcu_width;
-
-        mcu_stride = mcu_width * bytes_per_pixel;
+        info += fmt::format(", MCU: {}x{}", mcu_width, mcu_height);
+        if (subsample_name)
+        {
+            info += ", Subsample: ";
+            info += subsample_name;
+        }
 
         // initialize quantization tables
 
@@ -2672,16 +2975,25 @@ namespace
         p.write16(u16(m_surface.width)); // image width
         p.write8(number_of_components); // Nf
 
-        const u8 nfdata[] =
+        // Y sampling from MCU size; Cb/Cr always 0x11
+        if (number_of_components == 1)
         {
-            0x01, 0x11, 0x00, // component 1
-            0x00, 0x00, 0x00, // padding
-            0x01, 0x11, 0x00, // component 1
-            0x02, 0x11, 0x01, // component 2
-            0x03, 0x11, 0x01, // component 3
-        };
-
-        p.write(nfdata + (number_of_components - 1) * 3, number_of_components * 3);
+            p.write8(0x01);
+            p.write8(0x11);
+            p.write8(0x00);
+        }
+        else
+        {
+            p.write8(0x01);
+            p.write8(y_sampling);
+            p.write8(0x00);
+            p.write8(0x02);
+            p.write8(0x11);
+            p.write8(0x01);
+            p.write8(0x03);
+            p.write8(0x11);
+            p.write8(0x01);
+        }
 
         // huffman table (DHT)
         p.write(g_marker_data, sizeof(g_marker_data));
@@ -2709,39 +3021,90 @@ namespace
         p.write8(0x00);
     }
 
-    void jpegEncoder::encodeScan(Buffer& buffer, HuffmanEncoder& huffman, const u8* image, size_t stride, ReadFunc read_func, int rows)
+    void jpegEncoder::encodeScan(Buffer& buffer, HuffmanEncoder& huffman, const u8* image, size_t stride, int rows)
     {
         const int right_mcu = horizontal_mcus - 1;
 
-        constexpr int buffer_size = 4096;
-        constexpr int flush_threshold = buffer_size - 1024;
+        constexpr int buffer_size = 8192;
+        constexpr int flush_threshold = buffer_size - 2048;
 
         u8 temp[buffer_size]; // encoding buffer
         u8* ptr = temp;
 
+        // 8x8 path: one contiguous Y|Cb|Cr (or Y) MCU.
+        // Subsampled: 444 tiles stay in place for Y; only Cb/Cr are filtered out.
+        s16 tiles[MAX_TILES * TILE_SAMPLES];
+        s16 chroma[2 * BLOCK_SIZE];
+        const s16* block_ptr[MAX_BLOCKS_IN_MCU];
+
         int cols = mcu_width;
-        auto reader = read_func;
 
         for (int x = 0; x < horizontal_mcus; ++x)
         {
             if (x >= right_mcu)
             {
-                // horizontal clipping
                 cols = cols_in_right_mcus;
-                reader = read; // clipping reader
             }
 
-            // read MCU data
-            s16 block[BLOCK_SIZE * 3];
-            reader(block, image, stride, rows, cols);
-
-            // encode the data in MCU
-            for (int i = 0; i < components; ++i)
+            if (!subsample)
             {
-                ptr = encode(huffman, ptr, block + i * BLOCK_SIZE, channel[i]);
+                ReadFunc reader = (rows < 8 || cols < 8) ? read_clip : read_8x8;
+                reader(tiles, image, stride, rows, cols);
+
+                for (int i = 0; i < blocks_in_mcu; ++i)
+                {
+                    block_ptr[i] = tiles + i * BLOCK_SIZE;
+                }
+            }
+            else
+            {
+                for (int ty = 0; ty < tiles_y; ++ty)
+                {
+                    for (int tx = 0; tx < tiles_x; ++tx)
+                    {
+                        const int ox = tx * 8;
+                        const int oy = ty * 8;
+                        const int tc = std::min(8, std::max(0, cols - ox));
+                        const int tr = std::min(8, std::max(0, rows - oy));
+                        const int index = ty * tiles_x + tx;
+                        s16* tile = tiles + index * TILE_SAMPLES;
+
+                        if (tr > 0 && tc > 0)
+                        {
+                            ReadFunc reader = (tr < 8 || tc < 8) ? read_clip : read_8x8;
+                            reader(tile, image + oy * stride + ox * bytes_per_pixel, stride, tr, tc);
+                        }
+                        else if (tx > 0)
+                        {
+                            std::memcpy(tile, tiles + (index - 1) * TILE_SAMPLES, TILE_SAMPLES * sizeof(s16));
+                        }
+                        else if (ty > 0)
+                        {
+                            std::memcpy(tile, tiles + (index - tiles_x) * TILE_SAMPLES, TILE_SAMPLES * sizeof(s16));
+                        }
+                        else
+                        {
+                            std::memset(tile, 0, TILE_SAMPLES * sizeof(s16));
+                        }
+                    }
+                }
+
+                subsample(chroma, tiles);
+
+                const int ny = tiles_x * tiles_y;
+                for (int i = 0; i < ny; ++i)
+                {
+                    block_ptr[i] = tiles + i * TILE_SAMPLES; // Y plane at start of each tile
+                }
+                block_ptr[ny + 0] = chroma + 0 * BLOCK_SIZE;
+                block_ptr[ny + 1] = chroma + 1 * BLOCK_SIZE;
             }
 
-            // flush encoding buffer
+            for (int i = 0; i < blocks_in_mcu; ++i)
+            {
+                ptr = encode(huffman, ptr, block_ptr[i], channel[block_channel[i]]);
+            }
+
             if (ptr - temp > flush_threshold)
             {
                 buffer.append(temp, ptr - temp);
@@ -2751,7 +3114,6 @@ namespace
             image += mcu_stride;
         }
 
-        // flush encoding buffer
         buffer.append(temp, ptr - temp);
     }
 
@@ -2763,16 +3125,13 @@ namespace
         for (int y = y0; y < y1; ++y)
         {
             int rows = mcu_height;
-            auto read_func = read_8x8; // default: optimized 8x8 reader
 
             if (y >= vertical_mcus - 1)
             {
-                // vertical clipping
                 rows = rows_in_bottom_mcus;
-                read_func = read; // clipping reader
             }
 
-            encodeScan(buffer, huffman, image, stride, read_func, rows);
+            encodeScan(buffer, huffman, image, stride, rows);
             image += stride * mcu_height;
         }
 

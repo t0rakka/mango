@@ -22,6 +22,15 @@ namespace mango::image
         bool direct = false;
     };
 
+    // jpg: MCU size selects chroma subsampling
+    enum class SubSampling
+    {
+        MCU_8x8,    // 4:4:4
+        MCU_16x8,   // 4:2:2
+        MCU_8x16,   // 4:4:0
+        MCU_16x16,  // 4:2:0
+    };
+
     struct ImageEncodeOptions
     {
         ConstMemory icc;          // jpg, png, jp2, jxl
@@ -37,6 +46,7 @@ namespace mango::image
 
         bool simd = true;         // jpg
         bool multithread = true;  // jpg, jp2
+        SubSampling subsampling = SubSampling::MCU_8x8; // jpg
     };
 
     // Registered per output extension when codecs call registerImageEncoder().
