@@ -2539,6 +2539,106 @@ namespace
 
 #endif // MANGO_ENABLE_SSE2
 
+#if defined(MANGO_ENABLE_NEON)
+
+    static
+    void average_chroma_v_neon(s16* out, const s16* top, const s16* bot)
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            const int row = y * 2 * 8;
+
+            int16x8_t a = vld1q_s16(top + row);
+            int16x8_t b = vld1q_s16(top + row + 8);
+            vst1q_s16(out + y * 8, vrhaddq_s16(a, b));
+
+            a = vld1q_s16(bot + row);
+            b = vld1q_s16(bot + row + 8);
+            vst1q_s16(out + (y + 4) * 8, vrhaddq_s16(a, b));
+        }
+    }
+
+    static inline
+    int16x4_t average_chroma_h_row_neon(const s16* row)
+    {
+        int32x4_t sum = vpaddlq_s16(vld1q_s16(row));
+        sum = vshrq_n_s32(vaddq_s32(sum, vdupq_n_s32(1)), 1);
+        return vqmovn_s32(sum);
+    }
+
+    static
+    void average_chroma_h_neon(s16* out, const s16* left, const s16* right)
+    {
+        for (int y = 0; y < 8; ++y)
+        {
+            int16x4_t lo = average_chroma_h_row_neon(left + y * 8);
+            int16x4_t hi = average_chroma_h_row_neon(right + y * 8);
+            vst1q_s16(out + y * 8, vcombine_s16(lo, hi));
+        }
+    }
+
+    static inline
+    int16x4_t average_chroma_2x2_row_neon(const s16* row0, const s16* row1)
+    {
+        int32x4_t sum = vaddq_s32(vpaddlq_s16(vld1q_s16(row0)), vpaddlq_s16(vld1q_s16(row1)));
+        sum = vshrq_n_s32(vaddq_s32(sum, vdupq_n_s32(2)), 2);
+        return vqmovn_s32(sum);
+    }
+
+    static
+    void average_chroma_hv_neon(s16* out, const s16* t0, const s16* t1, const s16* t2, const s16* t3)
+    {
+        for (int y = 0; y < 4; ++y)
+        {
+            const int row = y * 2 * 8;
+            int16x4_t left  = average_chroma_2x2_row_neon(t0 + row, t0 + row + 8);
+            int16x4_t right = average_chroma_2x2_row_neon(t1 + row, t1 + row + 8);
+            vst1q_s16(out + y * 8, vcombine_s16(left, right));
+
+            left  = average_chroma_2x2_row_neon(t2 + row, t2 + row + 8);
+            right = average_chroma_2x2_row_neon(t3 + row, t3 + row + 8);
+            vst1q_s16(out + (y + 4) * 8, vcombine_s16(left, right));
+        }
+    }
+
+    static
+    void subsample_8x16_neon(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+
+        average_chroma_v_neon(chroma + 0 * BLOCK_SIZE, t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE);
+        average_chroma_v_neon(chroma + 1 * BLOCK_SIZE, t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE);
+    }
+
+    static
+    void subsample_16x8_neon(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+
+        average_chroma_h_neon(chroma + 0 * BLOCK_SIZE, t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE);
+        average_chroma_h_neon(chroma + 1 * BLOCK_SIZE, t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE);
+    }
+
+    static
+    void subsample_16x16_neon(s16* chroma, const s16* tiles)
+    {
+        const s16* t0 = tiles + 0 * TILE_SAMPLES;
+        const s16* t1 = tiles + 1 * TILE_SAMPLES;
+        const s16* t2 = tiles + 2 * TILE_SAMPLES;
+        const s16* t3 = tiles + 3 * TILE_SAMPLES;
+
+        average_chroma_hv_neon(chroma + 0 * BLOCK_SIZE,
+            t0 + 1 * BLOCK_SIZE, t1 + 1 * BLOCK_SIZE,
+            t2 + 1 * BLOCK_SIZE, t3 + 1 * BLOCK_SIZE);
+        average_chroma_hv_neon(chroma + 1 * BLOCK_SIZE,
+            t0 + 2 * BLOCK_SIZE, t1 + 2 * BLOCK_SIZE,
+            t2 + 2 * BLOCK_SIZE, t3 + 2 * BLOCK_SIZE);
+    }
+
+#endif // MANGO_ENABLE_NEON
+
     // ----------------------------------------------------------------------------
     // jpegEncoder
     // ----------------------------------------------------------------------------
@@ -2774,6 +2874,13 @@ namespace
                         subsample_name = "16x8 SSE2";
                     }
 #endif
+#if defined(MANGO_ENABLE_NEON)
+                    if (flags & ARM_NEON)
+                    {
+                        subsample = subsample_16x8_neon;
+                        subsample_name = "16x8 NEON";
+                    }
+#endif
                     break;
                 case SubSampling::MCU_8x16: // 4:4:0
                     mcu_width = 8;
@@ -2787,6 +2894,13 @@ namespace
                         subsample_name = "8x16 SSE2";
                     }
 #endif
+#if defined(MANGO_ENABLE_NEON)
+                    if (flags & ARM_NEON)
+                    {
+                        subsample = subsample_8x16_neon;
+                        subsample_name = "8x16 NEON";
+                    }
+#endif
                     break;
                 case SubSampling::MCU_16x16: // 4:2:0
                     mcu_width = 16;
@@ -2798,6 +2912,13 @@ namespace
                     {
                         subsample = subsample_16x16_sse2;
                         subsample_name = "16x16 SSE2";
+                    }
+#endif
+#if defined(MANGO_ENABLE_NEON)
+                    if (flags & ARM_NEON)
+                    {
+                        subsample = subsample_16x16_neon;
+                        subsample_name = "16x16 NEON";
                     }
 #endif
                     break;
