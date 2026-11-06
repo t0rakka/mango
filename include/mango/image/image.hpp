@@ -11,6 +11,7 @@
 #include <mango/image/compression.hpp>
 #include <mango/image/decoder.hpp>
 #include <mango/image/inspect.hpp>
+#include <mango/image/jpeg.hpp>
 #include <mango/image/encoder.hpp>
 #include <mango/image/blitter.hpp>
 #include <mango/image/surface.hpp>

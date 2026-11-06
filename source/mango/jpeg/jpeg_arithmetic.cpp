@@ -214,134 +214,157 @@ namespace mango::image::jpeg
         }
     }
 
-    void arith_decode_mcu(s16* output, DecodeState* state)
+    namespace
     {
-        ArithmeticDecoder& arithmetic = state->arithmetic;
-        BitBuffer& buffer = state->buffer;
-        DecodeBlock* block = state->block;
-
-        std::memset(output, 0, state->blocks * 64 * sizeof(s16));
-
-        const int end = state->spectral_end;
-
-        for (int j = 0; j < state->blocks; ++j)
+        template <bool Spectral>
+        void arith_decode_mcu_t(s16* output, DecodeState* state)
         {
-            const int ci = block->pred;
+            ArithmeticDecoder& arithmetic = state->arithmetic;
+            BitBuffer& buffer = state->buffer;
+            DecodeBlock* block = state->block;
 
-            // DC
-            int tbl = block->dc;
-            u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
+            std::memset(output, 0, state->blocks * 64 * sizeof(s16));
 
-            if (arith_decode(arithmetic, buffer, st) == 0)
+            const int end = state->spectral_end;
+
+            for (int j = 0; j < state->blocks; ++j)
             {
-                arithmetic.dc_context[ci] = 0;
-            }
-            else
-            {
-                int sign;
-                int v, m;
+                const int ci = block->pred;
 
-                sign = arith_decode(arithmetic, buffer, st + 1);
-                st += 2;
-                st += sign;
+                // DC
+                int tbl = block->dc;
+                u8* st = arithmetic.dc_stats[tbl] + arithmetic.dc_context[ci];
 
-                if ((m = arith_decode(arithmetic, buffer, st)) != 0)
+                if (arith_decode(arithmetic, buffer, st) == 0)
                 {
-                    st = arithmetic.dc_stats[tbl] + 20;
-                    while (arith_decode(arithmetic, buffer, st))
-                    {
-                        m <<= 1;
-                        ++st;
-                    }
-                }
-
-                if (m < (int) ((1L << arithmetic.dc_L[tbl]) >> 1))
-                {
-                    // zero diff category
                     arithmetic.dc_context[ci] = 0;
-                }
-                else if (m > (int) ((1L << arithmetic.dc_U[tbl]) >> 1))
-                {
-                    // large diff category
-                    arithmetic.dc_context[ci] = 12 + (sign * 4);
                 }
                 else
                 {
-                    // small diff category
-                    arithmetic.dc_context[ci] = 4 + (sign * 4);
-                }
+                    int sign;
+                    int v, m;
 
-                v = m;
+                    sign = arith_decode(arithmetic, buffer, st + 1);
+                    st += 2;
+                    st += sign;
 
-                st += 14;
-                while (m >>= 1)
-                {
-                    if (arith_decode(arithmetic, buffer, st))
-                        v |= m;
-                }
-
-                v += 1; if (sign) v = -v;
-                arithmetic.last_dc_value[ci] += v;
-            }
-
-            output[0] = s16(arithmetic.last_dc_value[ci]);
-
-            // AC
-            tbl = block->ac;
-            u8* ac_stats = arithmetic.ac_stats[tbl];
-            u8 ac_K = arithmetic.ac_K[tbl];
-
-            for (int k = 1; k <= end; k++)
-            {
-                int sign;
-                int v, m;
-
-                st = ac_stats + 3 * (k - 1);
-
-                if (arith_decode(arithmetic, buffer, st))
-                    break;
-
-                while (arith_decode(arithmetic, buffer, st + 1) == 0)
-                {
-                    st += 3;
-                    ++k;
-                }
-
-                sign = arith_decode(arithmetic, buffer, arithmetic.fixed_bin);
-                st += 2;
-
-                if ((m = arith_decode(arithmetic, buffer, st)) != 0)
-                {
-                    if (arith_decode(arithmetic, buffer, st))
+                    if ((m = arith_decode(arithmetic, buffer, st)) != 0)
                     {
-                        m <<= 1;
-                        st = ac_stats + (k <= ac_K ? 189 : 217);
-
+                        st = arithmetic.dc_stats[tbl] + 20;
                         while (arith_decode(arithmetic, buffer, st))
                         {
                             m <<= 1;
                             ++st;
                         }
                     }
-                }
-                v = m;
 
-                st += 14;
-                while (m >>= 1)
-                {
-                    if (arith_decode(arithmetic, buffer, st))
+                    if (m < (int) ((1L << arithmetic.dc_L[tbl]) >> 1))
                     {
-                        v |= m;
+                        // zero diff category
+                        arithmetic.dc_context[ci] = 0;
+                    }
+                    else if (m > (int) ((1L << arithmetic.dc_U[tbl]) >> 1))
+                    {
+                        // large diff category
+                        arithmetic.dc_context[ci] = 12 + (sign * 4);
+                    }
+                    else
+                    {
+                        // small diff category
+                        arithmetic.dc_context[ci] = 4 + (sign * 4);
+                    }
+
+                    v = m;
+
+                    st += 14;
+                    while (m >>= 1)
+                    {
+                        if (arith_decode(arithmetic, buffer, st))
+                            v |= m;
+                    }
+
+                    v += 1; if (sign) v = -v;
+                    arithmetic.last_dc_value[ci] += v;
+                }
+
+                output[0] = s16(arithmetic.last_dc_value[ci]);
+
+                // AC
+                tbl = block->ac;
+                u8* ac_stats = arithmetic.ac_stats[tbl];
+                u8 ac_K = arithmetic.ac_K[tbl];
+
+                for (int k = 1; k <= end; k++)
+                {
+                    int sign;
+                    int v, m;
+
+                    st = ac_stats + 3 * (k - 1);
+
+                    if (arith_decode(arithmetic, buffer, st))
+                        break;
+
+                    while (arith_decode(arithmetic, buffer, st + 1) == 0)
+                    {
+                        st += 3;
+                        ++k;
+                    }
+
+                    sign = arith_decode(arithmetic, buffer, arithmetic.fixed_bin);
+                    st += 2;
+
+                    if ((m = arith_decode(arithmetic, buffer, st)) != 0)
+                    {
+                        if (arith_decode(arithmetic, buffer, st))
+                        {
+                            m <<= 1;
+                            st = ac_stats + (k <= ac_K ? 189 : 217);
+
+                            while (arith_decode(arithmetic, buffer, st))
+                            {
+                                m <<= 1;
+                                ++st;
+                            }
+                        }
+                    }
+                    v = m;
+
+                    st += 14;
+                    while (m >>= 1)
+                    {
+                        if (arith_decode(arithmetic, buffer, st))
+                        {
+                            v |= m;
+                        }
+                    }
+                    v += 1; if (sign) v = -v;
+
+                    if constexpr (Spectral)
+                    {
+                        output[k] = s16(v);
+                    }
+                    else
+                    {
+                        output[zigzagTable[k]] = s16(v);
                     }
                 }
-                v += 1; if (sign) v = -v;
 
-                output[zigzagTable[k]] = s16(v);
+                ++block;
+                output += 64;
             }
-
-            ++block;
-            output += 64;
         }
+    } // namespace
+
+    void arith_decode_mcu(s16* output, DecodeState* state)
+    {
+        // write coefficients in linear order
+        arith_decode_mcu_t<false>(output, state);
+    }
+
+    void arith_decode_mcu_spectral(s16* output, DecodeState* state)
+    {
+        // write coefficients in natural zigzag order
+        arith_decode_mcu_t<true>(output, state);
     }
 
     void arith_decode_dc_first(s16* output, DecodeState* state)

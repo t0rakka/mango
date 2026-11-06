@@ -180,6 +180,130 @@ namespace mango::image::jpeg
 
     StreamDecoder::~StreamDecoder()
     {
+        for (s16* p : m_coeff_pool)
+        {
+            aligned_free(p);
+        }
+        m_coeff_pool.clear();
+    }
+
+    void StreamDecoder::setCoeffOrder(CoeffOrder order)
+    {
+        m_coeff_order = order;
+        if (order == CoeffOrder::Spectral)
+        {
+            ensureSpectralQuantTables();
+        }
+    }
+
+    void StreamDecoder::setCoeffSink(CoeffSink sink)
+    {
+        m_coeff_sink = std::move(sink);
+    }
+
+    void StreamDecoder::ensureSpectralQuantTables()
+    {
+        if (quantSpectralVector.size() == quantTableVector.size() && quantSpectralVector.size() > 0)
+        {
+            return;
+        }
+
+        quantSpectralVector.resize(quantTableVector.size());
+        for (int t = 0; t < JPEG_MAX_COMPS_IN_SCAN; ++t)
+        {
+            const s16* natural = quantTable[t].table;
+            s16* spectral = quantSpectralVector.data() + t * 64;
+            for (int i = 0; i < 64; ++i)
+            {
+                // DQT file order i landed in natural[zigzag[i]]
+                spectral[i] = natural[zigzagTable[i]];
+            }
+        }
+    }
+
+    const s16* StreamDecoder::spectralQuantTable(int index) const
+    {
+        if (index < 0 || index >= JPEG_MAX_COMPS_IN_SCAN || quantSpectralVector.size() == 0)
+        {
+            return nullptr;
+        }
+        return quantSpectralVector.data() + index * 64;
+    }
+
+    void StreamDecoder::selectEntropyDecode()
+    {
+        // Progressive / multiscan accumulate into blockVector in Natural order.
+        // Baseline Spectral coeff path uses *_spectral MCU writers (no zigzag scatter).
+        const bool spectral = m_coefficients_only &&
+            m_coeff_order == CoeffOrder::Spectral &&
+            !is_progressive && !is_multiscan;
+
+        if (decodeState.is_arithmetic)
+        {
+            decodeState.decode = spectral ? arith_decode_mcu_spectral : arith_decode_mcu;
+        }
+        else
+        {
+            decodeState.decode = spectral ? huff_decode_mcu_spectral : huff_decode_mcu;
+        }
+    }
+
+    s16* StreamDecoder::acquireCoeffBuffer(size_t samples)
+    {
+        const size_t bytes = samples * sizeof(s16);
+        std::lock_guard<std::mutex> lock(m_coeff_pool_mutex);
+
+        if (bytes > m_coeff_pool_bytes)
+        {
+            for (s16* p : m_coeff_pool)
+            {
+                aligned_free(p);
+            }
+            m_coeff_pool.clear();
+            m_coeff_pool_bytes = bytes;
+        }
+
+        if (!m_coeff_pool.empty())
+        {
+            s16* p = m_coeff_pool.back();
+            m_coeff_pool.pop_back();
+            return p;
+        }
+
+        return reinterpret_cast<s16*>(aligned_malloc(m_coeff_pool_bytes, 64));
+    }
+
+    void StreamDecoder::releaseCoeffBuffer(s16* data)
+    {
+        if (!data)
+        {
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(m_coeff_pool_mutex);
+        m_coeff_pool.push_back(data);
+    }
+
+    void StreamDecoder::emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last)
+    {
+        if (!m_coeff_sink || !data)
+        {
+            releaseCoeffBuffer(data);
+            return;
+        }
+
+        CoeffBand band;
+        band.samples = samples;
+        band.mcu_y0 = mcu_y0;
+        band.mcu_y1 = mcu_y1;
+        band.last = last;
+        band.data = std::unique_ptr<s16, std::function<void(s16*)>>(data,
+            [this](s16* p) { releaseCoeffBuffer(p); });
+
+        // Index + sink under lock so Mango1 Huffman workers can emit safely.
+        std::lock_guard<std::mutex> lock(m_coeff_emit_mutex);
+        band.index = m_coeff_band_index++;
+        m_coeff_sink(std::move(band));
     }
 
     // ----------------------------------------------------------------------------
@@ -1926,7 +2050,7 @@ namespace mango::image::jpeg
             }
             else if (is_multiscan)
             {
-                decodeState.decode = arith_decode_mcu;
+                selectEntropyDecode();
                 decodeMultiScan();
             }
             else if (is_progressive)
@@ -1962,7 +2086,7 @@ namespace mango::image::jpeg
             }
             else
             {
-                decodeState.decode = arith_decode_mcu;
+                selectEntropyDecode();
                 decodeSequential();
             }
 
@@ -1985,7 +2109,7 @@ namespace mango::image::jpeg
             }
             else if (is_multiscan)
             {
-                decodeState.decode = huff_decode_mcu;
+                selectEntropyDecode();
                 decodeMultiScan();
             }
             else if (is_progressive)
@@ -2021,7 +2145,7 @@ namespace mango::image::jpeg
             }
             else
             {
-                decodeState.decode = huff_decode_mcu;
+                selectEntropyDecode();
                 decodeSequential();
             }
 
@@ -3104,6 +3228,81 @@ namespace mango::image::jpeg
         return m_decode_status;
     }
 
+    ImageDecodeStatus StreamDecoder::decodeCoefficients(const ImageDecodeOptions& options)
+    {
+        m_decode_status = ImageDecodeStatus();
+        m_coeff_band_index = 0;
+
+        if (!m_coeff_sink)
+        {
+            m_decode_status.setError("Coefficient sink is not registered.");
+            return m_decode_status;
+        }
+
+        if (!scan_memory.address || !header)
+        {
+            m_decode_status.setError(header.info);
+            return m_decode_status;
+        }
+
+        if (is_lossless)
+        {
+            m_decode_status.setError("Lossless JPEG has no DCT coefficients.");
+            return m_decode_status;
+        }
+
+        if (m_coeff_order == CoeffOrder::Spectral)
+        {
+            ensureSpectralQuantTables();
+        }
+
+        if (is_progressive || is_multiscan)
+        {
+            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
+            blockVector.resize(num_blocks * 64);
+            std::memset(blockVector, 0, blockVector.size() * sizeof(s16));
+        }
+
+        // Coefficient path: Spectral MCU writes. Parallel Huffman when the scan
+        // has independent restart segments (Mango1 offsets, or DRI with
+        // restartInterval == xmcu — same rules as decodeSequentialMT).
+        m_coefficients_only = true;
+        m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
+        m_sink.interface = m_interface;
+        m_sink.target = nullptr;
+        m_sink.surface = nullptr;
+        m_sink.direct = true;
+
+        parse(scan_memory, true);
+
+        if (!header)
+        {
+            blockVector.resize(0);
+            m_coefficients_only = false;
+            m_decode_status.setError(header.info);
+            return m_decode_status;
+        }
+
+        if (m_interface && m_interface->cancelled)
+        {
+            blockVector.resize(0);
+            m_coefficients_only = false;
+            m_decode_status.info = getInfo();
+            return m_decode_status;
+        }
+
+        if ((is_progressive || is_multiscan) && !is_lossless)
+        {
+            finishProgressive();
+        }
+
+        blockVector.resize(0);
+        m_coefficients_only = false;
+        m_decode_status.direct = true;
+        m_decode_status.info = getInfo();
+        return m_decode_status;
+    }
+
     std::string StreamDecoder::chromaSubsampling() const
     {
         if (m_components <= 1)
@@ -3148,11 +3347,30 @@ namespace mango::image::jpeg
 
     int StreamDecoder::getTaskSize(int tasks) const
     {
+        // Cap concurrency for scheduling; keep each queue job fat enough that
+        // Huffman ≫ enqueue overhead (64+ core boxes otherwise get N≈1..2).
         constexpr int max_threads = 64;
+        constexpr int min_rows_per_task = 8;
         const int threads = std::min(m_hardware_concurrency, max_threads);
-        const int tasks_per_thread = threads > 1 ? std::max(tasks / threads, 1) : 0;
-        //printf("Scheduling %d tasks in %d threads (%d tasks/thread)\n", tasks, threads, tasks_per_thread);
-        return tasks_per_thread;
+        if (threads <= 1)
+        {
+            return 0;
+        }
+        return std::min(tasks, std::max(tasks / threads, min_rows_per_task));
+    }
+
+    const u8* StreamDecoder::skipRestartMarkers(const u8* p, const u8* end, int count) const
+    {
+        for (int n = 0; n < count; ++n)
+        {
+            p = seekMarker(p, end);
+            if (!isRestartMarker(p))
+            {
+                return end;
+            }
+            p += 2;
+        }
+        return p;
     }
 
     void StreamDecoder::decodeLossless()
@@ -3316,6 +3534,12 @@ namespace mango::image::jpeg
 
     void StreamDecoder::decodeSequential()
     {
+        if (m_coefficients_only)
+        {
+            decodeSequentialCoefficients();
+            return;
+        }
+
         if (m_hardware_concurrency > 1)
         {
             int n = getTaskSize(ymcu);
@@ -3325,6 +3549,334 @@ namespace mango::image::jpeg
         {
             decodeSequentialST();
         }
+    }
+
+    void StreamDecoder::decodeSequentialCoefficients()
+    {
+        const int mcu_data_size = blocks_in_mcu * 64;
+
+        auto emitRows = [&](int y0, int y1, const u8* row0_ptr, auto advance_row)
+        {
+            const int rows = y1 - y0;
+            const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+            const bool last = (y1 >= ymcu);
+
+            s16* data = acquireCoeffBuffer(samples);
+            if (!data)
+            {
+                header.setError("Coefficient band allocation failed.");
+                return false;
+            }
+
+            std::memset(data, 0, samples * sizeof(s16));
+
+            const u8* ptr = row0_ptr;
+            s16* out = data;
+
+            for (int row = y0; row < y1; ++row)
+            {
+                DecodeState state = decodeState;
+                state.buffer.ptr = ptr;
+
+                for (int x = 0; x < xmcu; ++x)
+                {
+                    state.decode(out, &state);
+                    out += mcu_data_size;
+                }
+
+                ptr = advance_row(state.buffer.ptr, row);
+                if (!ptr)
+                {
+                    releaseCoeffBuffer(data);
+                    header.setError("Coefficient restart segment truncated.");
+                    return false;
+                }
+            }
+
+            emitCoeffBand(data, samples, y0, y1, last);
+            return true;
+        };
+
+        // -----------------------------------------------------------------
+        // Mango1: APP14 offsets → independent MCU-row entropy (same as pixel MT)
+        // -----------------------------------------------------------------
+        if (!m_restart_offsets.empty())
+        {
+            if (m_restart_offsets.size() < size_t(ymcu))
+            {
+                header.setError("Mango1 restart offset table is shorter than ymcu.");
+                return;
+            }
+
+            const u32* offsets = m_restart_offsets.data();
+            const u8* scan_start = decodeState.buffer.ptr;
+            const int N = (m_hardware_concurrency > 1) ? std::max(getTaskSize(ymcu), 1) : ymcu;
+
+            if (m_hardware_concurrency > 1 && N < ymcu)
+            {
+                ConcurrentQueue queue("jpeg.coeff.mango1");
+
+                for (int y = 0; y < ymcu; y += N)
+                {
+                    if (m_interface && m_interface->cancelled)
+                    {
+                        queue.cancel();
+                        break;
+                    }
+
+                    const int y0 = y;
+                    const int y1 = std::min(y + N, ymcu);
+                    const int rows = y1 - y0;
+                    const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+                    const bool last = (y1 >= ymcu);
+                    const u8* row0_ptr = (y0 == 0) ? scan_start : (m_memory.address + offsets[y0 - 1]);
+
+                    s16* data = acquireCoeffBuffer(samples);
+                    if (!data)
+                    {
+                        header.setError("Coefficient band allocation failed.");
+                        queue.cancel();
+                        return;
+                    }
+
+                    std::memset(data, 0, samples * sizeof(s16));
+
+                    queue.enqueue([=, this]
+                    {
+                        if (m_interface && m_interface->cancelled)
+                        {
+                            releaseCoeffBuffer(data);
+                            return;
+                        }
+
+                        const u8* ptr = row0_ptr;
+                        s16* out = data;
+
+                        for (int row = y0; row < y1; ++row)
+                        {
+                            if (m_interface && m_interface->cancelled)
+                            {
+                                releaseCoeffBuffer(data);
+                                return;
+                            }
+
+                            // Fresh state each row: DC predictors restart at segment boundary
+                            // (offsets point past each RST; same model as decodeSequentialMT).
+                            DecodeState state = decodeState;
+                            state.buffer.ptr = ptr;
+                            ptr = m_memory.address + offsets[row];
+
+                            for (int x = 0; x < xmcu; ++x)
+                            {
+                                state.decode(out, &state);
+                                out += mcu_data_size;
+                            }
+                        }
+
+                        emitCoeffBand(data, samples, y0, y1, last);
+                    });
+                }
+
+                queue.wait();
+            }
+            else
+            {
+                for (int y = 0; y < ymcu; )
+                {
+                    if (m_interface && m_interface->cancelled)
+                        break;
+
+                    const int y0 = y;
+                    const int y1 = std::min(y + std::max(N, 1), ymcu);
+                    const u8* row0_ptr = (y0 == 0) ? scan_start : (m_memory.address + offsets[y0 - 1]);
+
+                    if (!emitRows(y0, y1, row0_ptr, [&](const u8*, int row) -> const u8*
+                    {
+                        return m_memory.address + offsets[row];
+                    }))
+                    {
+                        return;
+                    }
+
+                    y = y1;
+                }
+            }
+
+            decodeState.buffer.ptr = m_memory.address + offsets[ymcu - 1];
+            return;
+        }
+
+        // -----------------------------------------------------------------
+        // Standard DRI with one restart per MCU row → parallel (pixel MT twin)
+        // -----------------------------------------------------------------
+        if (restartInterval == xmcu && m_hardware_concurrency > 1)
+        {
+            ConcurrentQueue queue("jpeg.coeff.dri");
+            const int N = std::max(getTaskSize(ymcu), 1);
+            const u8* p = decodeState.buffer.ptr;
+
+            for (int y = 0; y < ymcu; y += N)
+            {
+                if (m_interface && m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
+                const int y0 = y;
+                const int y1 = std::min(y + N, ymcu);
+                const int rows = y1 - y0;
+                const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+                const bool last = (y1 >= ymcu);
+
+                s16* data = acquireCoeffBuffer(samples);
+                if (!data)
+                {
+                    header.setError("Coefficient band allocation failed.");
+                    queue.cancel();
+                    return;
+                }
+
+                std::memset(data, 0, samples * sizeof(s16));
+
+                queue.enqueue([=, this] (const u8* p_start)
+                {
+                    if (m_interface && m_interface->cancelled)
+                    {
+                        releaseCoeffBuffer(data);
+                        return;
+                    }
+
+                    const u8* ptr = p_start;
+                    s16* out = data;
+
+                    for (int row = y0; row < y1; ++row)
+                    {
+                        if (m_interface && m_interface->cancelled)
+                        {
+                            releaseCoeffBuffer(data);
+                            return;
+                        }
+
+                        // Fresh state each row — DC cleared; RST skipped after the row.
+                        DecodeState state = decodeState;
+                        state.buffer.ptr = ptr;
+
+                        for (int x = 0; x < xmcu; ++x)
+                        {
+                            state.decode(out, &state);
+                            out += mcu_data_size;
+                        }
+
+                        ptr = seekMarker(state.buffer.ptr, state.buffer.end);
+                        if (isRestartMarker(ptr))
+                        {
+                            ptr += 2;
+                        }
+
+                        if (ptr >= state.buffer.end)
+                        {
+                            releaseCoeffBuffer(data);
+                            return;
+                        }
+                    }
+
+                    emitCoeffBand(data, samples, y0, y1, last);
+                }, p);
+
+                // One walk to the N-th RST → start of the next task's first row.
+                p = skipRestartMarkers(p, decodeState.buffer.end, y1 - y0);
+                if (p >= decodeState.buffer.end)
+                {
+                    break;
+                }
+            }
+
+            queue.wait();
+            p = seekMarker(p - 12, decodeState.buffer.end);
+            decodeState.buffer.ptr = p;
+            return;
+        }
+
+        // -----------------------------------------------------------------
+        // Serial entropy → recycled coeff bands (no DRI, or odd DRI spacing)
+        // -----------------------------------------------------------------
+        // Matches decodeSequentialST restart handling: count MCUs, restart(),
+        // seekMarker, skip RSTn. Correct for any restartInterval including
+        // mid-row markers (spec-violating but tolerated).
+        const int N = 8;
+        int restart_counter = 0;
+
+        for (int y = 0; y < ymcu; y += N)
+        {
+            if (m_interface && m_interface->cancelled)
+            {
+                break;
+            }
+
+            const int y0 = y;
+            const int y1 = std::min(y + N, ymcu);
+            const int rows = y1 - y0;
+            const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+            const bool last = (y1 >= ymcu);
+
+            s16* data = acquireCoeffBuffer(samples);
+            if (!data)
+            {
+                header.setError("Coefficient band allocation failed.");
+                return;
+            }
+
+            std::memset(data, 0, samples * sizeof(s16));
+
+            s16* out = data;
+            bool out_of_data = false;
+
+            for (int row = y0; row < y1 && !out_of_data; ++row)
+            {
+                for (int x = 0; x < xmcu; ++x)
+                {
+                    decodeState.decode(out, &decodeState);
+                    out += mcu_data_size;
+
+                    if (restartInterval && ++restart_counter == restartInterval)
+                    {
+                        decodeState.restart();
+                        restart_counter = 0;
+
+                        const u8* p = decodeState.buffer.ptr;
+                        p = seekMarker(p, decodeState.buffer.end);
+                        if (isRestartMarker(p))
+                        {
+                            p += 2;
+                        }
+
+                        if (p >= decodeState.buffer.end)
+                        {
+                            out_of_data = true;
+                            break;
+                        }
+
+                        decodeState.buffer.ptr = p;
+                    }
+                }
+
+                if (decodeState.buffer.ptr >= decodeState.buffer.end)
+                {
+                    out_of_data = true;
+                }
+            }
+
+            emitCoeffBand(data, samples, y0, y1, last || out_of_data);
+
+            if (out_of_data)
+            {
+                break;
+            }
+        }
+
+        const u8* p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
+        decodeState.buffer.ptr = p;
     }
 
     void StreamDecoder::decodeSequentialST()
@@ -3692,15 +4244,7 @@ namespace mango::image::jpeg
                 }, p);
 
                 // skip N restart intervals (handled by the task queue)
-                for (int i = y0; i < y1; ++i)
-                {
-                    p = seekMarker(p, decodeState.buffer.end);
-                    if (isRestartMarker(p))
-                    {
-                        p += 2;
-                    }
-                }
-
+                p = skipRestartMarkers(p, decodeState.buffer.end, y1 - y0);
                 if (p >= decodeState.buffer.end)
                 {
                     // out of data
@@ -3987,6 +4531,22 @@ namespace mango::image::jpeg
 
     void StreamDecoder::finishProgressive()
     {
+        if (m_coefficients_only)
+        {
+            // Progressive blockVector is always Natural order (spectral scatter during scans).
+            const size_t samples = blockVector.size();
+            s16* data = acquireCoeffBuffer(samples);
+            if (!data)
+            {
+                header.setError("Coefficient band allocation failed.");
+                return;
+            }
+
+            std::memcpy(data, blockVector.data(), samples * sizeof(s16));
+            emitCoeffBand(data, samples, 0, ymcu, true);
+            return;
+        }
+
         int n = getTaskSize(ymcu);
         if (n)
         {
