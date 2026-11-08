@@ -4,7 +4,6 @@
 */
 #pragma once
 
-#include <functional>
 #include <memory>
 #include <string>
 #include <vector>
@@ -83,25 +82,20 @@ namespace mango::image::jpeg
         CoeffOrder coeff_order = CoeffOrder::Natural;
     };
 
-    // One finished entropy work unit (MCU row band). Ownership of 'data' is
-    // transferred to the recipient; destroying the unique_ptr returns the
-    // storage to the decoder's recycle pool (no new/delete on the hot path).
-    struct CoeffBand
+    // Non-owning view of one finished entropy segment inside setCoeffStorage().
+    // The decoder does not read or write these samples after the callback returns.
+    // The receiver must not free data. It stays valid until the caller frees the storage.
+    struct CoeffView
     {
-        // Custom deleter returns storage to the decoder recycle pool.
-        std::unique_ptr<s16, std::function<void(s16*)>> data;
-        size_t samples = 0;   // number of s16 values (MCU rows * xmcu * blocks_in_mcu * 64)
-
+        const s16* data = nullptr;
+        size_t samples = 0;   // s16 count (MCU rows * xmcu * blocks_in_mcu * 64)
         int mcu_y0 = 0;       // first MCU row (inclusive)
         int mcu_y1 = 0;       // last MCU row (exclusive)
-        int index = 0;        // band index in decode order
+        int index = 0;        // completion order, not MCU order
         bool last = false;
-
-        s16* ptr() const { return data.get(); }
-        explicit operator bool() const { return data != nullptr; }
     };
 
-    using CoeffSink = std::function<void(CoeffBand&& band)>;
+    using CoeffSink = void (*)(const CoeffView& view, void* user);
 
     class JpegDecoder : private NonCopyable
     {
@@ -118,13 +112,19 @@ namespace mango::image::jpeg
         CoeffOrder coeffOrder() const;
 
         // Register coefficient handoff. Required for decodeCoefficients().
-        void setCoeffSink(CoeffSink sink);
+        // sink may be null. user is passed through unchanged.
+        void setCoeffSink(CoeffSink sink, void* user);
+
+        // Full-frame destination for decodeCoefficients(). Required.
+        // Spectral workers write their MCU strips here. Progressive scans accumulate here.
+        // samples is ymcu * xmcu * blocks_in_mcu * 64. Not used by decodePixels().
+        void setCoeffStorage(s16* data, size_t samples);
 
         // Full CPU decode into a Surface (existing ImageDecoder behaviour).
         ImageDecodeStatus decodePixels(const Surface& dest,
             const ImageDecodeOptions& options = ImageDecodeOptions());
 
-        // Entropy only → CoeffSink bands. Skips IDCT/color. Uses setCoeffOrder().
+        // Entropy only → CoeffView callbacks. Skips IDCT/color. Uses setCoeffOrder().
         // Progressive: one band with the full coefficient buffer after the last scan.
         // Sequential: one band per MCU-row strip (and at DRI / Mango1 boundaries).
         ImageDecodeStatus decodeCoefficients(

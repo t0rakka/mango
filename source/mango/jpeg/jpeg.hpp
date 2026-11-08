@@ -556,13 +556,16 @@ namespace mango::image::jpeg
         std::vector<u32> m_restart_offsets;
 
         CoeffOrder m_coeff_order = CoeffOrder::Natural;
-        CoeffSink m_coeff_sink;
+        CoeffSink m_coeff_sink = nullptr;
+        void* m_coeff_sink_user = nullptr;
+        s16* m_coeff_storage = nullptr;
+        size_t m_coeff_storage_samples = 0;
         bool m_coefficients_only = false;
         int m_coeff_band_index = 0;
 
         // Recycled s16 bands for coefficient handoff (no new/delete on hot path).
         std::mutex m_coeff_pool_mutex;
-        std::mutex m_coeff_emit_mutex; // serializes sink (GPU submit) across Huffman workers
+        std::mutex m_coeff_emit_mutex; // assigns CoeffView::index across Huffman workers
         std::vector<s16*> m_coeff_pool;
         size_t m_coeff_pool_bytes = 0;
 
@@ -657,9 +660,18 @@ namespace mango::image::jpeg
         void decodeProgressiveAC();
         void finishProgressive();
 
+        struct CoeffSpan
+        {
+            s16* data = nullptr;
+            bool recycle = false;
+        };
+
         s16* acquireCoeffBuffer(size_t samples);
         void releaseCoeffBuffer(s16* data);
-        void emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last);
+        CoeffSpan bindCoeffSpan(int mcu_y0, size_t samples);
+        void discardCoeffSpan(CoeffSpan span);
+        s16* progressiveCoeffBase();
+        void emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last, bool recycle = true);
         void ensureSpectralQuantTables();
         void selectEntropyDecode();
 
@@ -764,7 +776,8 @@ namespace mango::image::jpeg
 
         void setCoeffOrder(CoeffOrder order);
         CoeffOrder coeffOrder() const { return m_coeff_order; }
-        void setCoeffSink(CoeffSink sink);
+        void setCoeffSink(CoeffSink sink, void* user);
+        void setCoeffStorage(s16* data, size_t samples);
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
         ImageDecodeStatus decodeCoefficients(const ImageDecodeOptions& options);

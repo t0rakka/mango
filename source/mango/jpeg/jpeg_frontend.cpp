@@ -115,9 +115,14 @@ namespace mango::image::jpeg
         return m->parser.base().coeffOrder();
     }
 
-    void JpegDecoder::setCoeffSink(CoeffSink sink)
+    void JpegDecoder::setCoeffSink(CoeffSink sink, void* user)
     {
-        m->parser.base().setCoeffSink(std::move(sink));
+        m->parser.base().setCoeffSink(sink, user);
+    }
+
+    void JpegDecoder::setCoeffStorage(s16* data, size_t samples)
+    {
+        m->parser.base().setCoeffStorage(data, samples);
     }
 
     ImageDecodeStatus JpegDecoder::decodePixels(const Surface& dest, const ImageDecodeOptions& options)

@@ -196,9 +196,39 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::setCoeffSink(CoeffSink sink)
+    void StreamDecoder::setCoeffSink(CoeffSink sink, void* user)
     {
-        m_coeff_sink = std::move(sink);
+        m_coeff_sink = sink;
+        m_coeff_sink_user = user;
+    }
+
+    void StreamDecoder::setCoeffStorage(s16* data, size_t samples)
+    {
+        m_coeff_storage = data;
+        m_coeff_storage_samples = data ? samples : 0;
+    }
+
+    StreamDecoder::CoeffSpan StreamDecoder::bindCoeffSpan(int mcu_y0, size_t samples)
+    {
+        const size_t stride = size_t(xmcu) * size_t(blocks_in_mcu) * 64;
+        const size_t offset = size_t(mcu_y0) * stride;
+        if (!m_coeff_storage || offset + samples > m_coeff_storage_samples)
+            return {};
+        // *_spectral / arithmetic MCU writers zero each MCU. No band memset.
+        return { m_coeff_storage + offset, false };
+    }
+
+    void StreamDecoder::discardCoeffSpan(CoeffSpan span)
+    {
+        if (span.recycle && span.data)
+            releaseCoeffBuffer(span.data);
+    }
+
+    s16* StreamDecoder::progressiveCoeffBase()
+    {
+        if (m_coefficients_only && m_coeff_storage)
+            return m_coeff_storage;
+        return blockVector.data();
     }
 
     void StreamDecoder::ensureSpectralQuantTables()
@@ -284,26 +314,34 @@ namespace mango::image::jpeg
         m_coeff_pool.push_back(data);
     }
 
-    void StreamDecoder::emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last)
+    void StreamDecoder::emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last, bool recycle)
     {
         if (!m_coeff_sink || !data)
         {
-            releaseCoeffBuffer(data);
+            if (recycle)
+                releaseCoeffBuffer(data);
             return;
         }
 
-        CoeffBand band;
-        band.samples = samples;
-        band.mcu_y0 = mcu_y0;
-        band.mcu_y1 = mcu_y1;
-        band.last = last;
-        band.data = std::unique_ptr<s16, std::function<void(s16*)>>(data,
-            [this](s16* p) { releaseCoeffBuffer(p); });
+        CoeffView view;
+        view.data = data;
+        view.samples = samples;
+        view.mcu_y0 = mcu_y0;
+        view.mcu_y1 = mcu_y1;
+        view.last = last;
 
-        // Index + sink under lock so Mango1 Huffman workers can emit safely.
-        std::lock_guard<std::mutex> lock(m_coeff_emit_mutex);
-        band.index = m_coeff_band_index++;
-        m_coeff_sink(std::move(band));
+        // Index under the lock. The sink runs unlocked so workers that finish
+        // out of order can publish their own coefficient ranges concurrently.
+        {
+            std::lock_guard<std::mutex> lock(m_coeff_emit_mutex);
+            view.index = m_coeff_band_index++;
+        }
+        m_coeff_sink(view, m_coeff_sink_user);
+
+        // Internal bands are reusable once the callback returns. Caller storage
+        // (setCoeffStorage) is never recycled here.
+        if (recycle)
+            releaseCoeffBuffer(data);
     }
 
     // ----------------------------------------------------------------------------
@@ -3251,6 +3289,13 @@ namespace mango::image::jpeg
             return m_decode_status;
         }
 
+        const size_t frame_samples = size_t(xmcu) * size_t(ymcu) * size_t(blocks_in_mcu) * 64;
+        if (!m_coeff_storage || m_coeff_storage_samples < frame_samples)
+        {
+            m_decode_status.setError("decodeCoefficients requires setCoeffStorage() for the full frame.");
+            return m_decode_status;
+        }
+
         if (m_coeff_order == CoeffOrder::Spectral)
         {
             ensureSpectralQuantTables();
@@ -3258,9 +3303,7 @@ namespace mango::image::jpeg
 
         if (is_progressive || is_multiscan)
         {
-            size_t num_blocks = size_t(mcus) * blocks_in_mcu;
-            blockVector.resize(num_blocks * 64);
-            std::memset(blockVector, 0, blockVector.size() * sizeof(s16));
+            std::memset(m_coeff_storage, 0, frame_samples * sizeof(s16));
         }
 
         // Coefficient path: Spectral MCU writes. Parallel Huffman when the scan
@@ -3561,17 +3604,15 @@ namespace mango::image::jpeg
             const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
             const bool last = (y1 >= ymcu);
 
-            s16* data = acquireCoeffBuffer(samples);
-            if (!data)
+            CoeffSpan span = bindCoeffSpan(y0, samples);
+            if (!span.data)
             {
                 header.setError("Coefficient band allocation failed.");
                 return false;
             }
 
-            std::memset(data, 0, samples * sizeof(s16));
-
             const u8* ptr = row0_ptr;
-            s16* out = data;
+            s16* out = span.data;
 
             for (int row = y0; row < y1; ++row)
             {
@@ -3587,13 +3628,13 @@ namespace mango::image::jpeg
                 ptr = advance_row(state.buffer.ptr, row);
                 if (!ptr)
                 {
-                    releaseCoeffBuffer(data);
+                    discardCoeffSpan(span);
                     header.setError("Coefficient restart segment truncated.");
                     return false;
                 }
             }
 
-            emitCoeffBand(data, samples, y0, y1, last);
+            emitCoeffBand(span.data, samples, y0, y1, last, span.recycle);
             return true;
         };
 
@@ -3631,32 +3672,30 @@ namespace mango::image::jpeg
                     const bool last = (y1 >= ymcu);
                     const u8* row0_ptr = (y0 == 0) ? scan_start : (m_memory.address + offsets[y0 - 1]);
 
-                    s16* data = acquireCoeffBuffer(samples);
-                    if (!data)
+                    CoeffSpan span = bindCoeffSpan(y0, samples);
+                    if (!span.data)
                     {
                         header.setError("Coefficient band allocation failed.");
                         queue.cancel();
                         return;
                     }
 
-                    std::memset(data, 0, samples * sizeof(s16));
-
                     queue.enqueue([=, this]
                     {
                         if (m_interface && m_interface->cancelled)
                         {
-                            releaseCoeffBuffer(data);
+                            discardCoeffSpan(span);
                             return;
                         }
 
                         const u8* ptr = row0_ptr;
-                        s16* out = data;
+                        s16* out = span.data;
 
                         for (int row = y0; row < y1; ++row)
                         {
                             if (m_interface && m_interface->cancelled)
                             {
-                                releaseCoeffBuffer(data);
+                                discardCoeffSpan(span);
                                 return;
                             }
 
@@ -3673,7 +3712,7 @@ namespace mango::image::jpeg
                             }
                         }
 
-                        emitCoeffBand(data, samples, y0, y1, last);
+                        emitCoeffBand(span.data, samples, y0, y1, last, span.recycle);
                     });
                 }
 
@@ -3729,32 +3768,30 @@ namespace mango::image::jpeg
                 const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
                 const bool last = (y1 >= ymcu);
 
-                s16* data = acquireCoeffBuffer(samples);
-                if (!data)
+                CoeffSpan span = bindCoeffSpan(y0, samples);
+                if (!span.data)
                 {
                     header.setError("Coefficient band allocation failed.");
                     queue.cancel();
                     return;
                 }
 
-                std::memset(data, 0, samples * sizeof(s16));
-
                 queue.enqueue([=, this] (const u8* p_start)
                 {
                     if (m_interface && m_interface->cancelled)
                     {
-                        releaseCoeffBuffer(data);
+                        discardCoeffSpan(span);
                         return;
                     }
 
                     const u8* ptr = p_start;
-                    s16* out = data;
+                    s16* out = span.data;
 
                     for (int row = y0; row < y1; ++row)
                     {
                         if (m_interface && m_interface->cancelled)
                         {
-                            releaseCoeffBuffer(data);
+                            discardCoeffSpan(span);
                             return;
                         }
 
@@ -3776,12 +3813,12 @@ namespace mango::image::jpeg
 
                         if (ptr >= state.buffer.end)
                         {
-                            releaseCoeffBuffer(data);
+                            discardCoeffSpan(span);
                             return;
                         }
                     }
 
-                    emitCoeffBand(data, samples, y0, y1, last);
+                    emitCoeffBand(span.data, samples, y0, y1, last, span.recycle);
                 }, p);
 
                 // One walk to the N-th RST → start of the next task's first row.
@@ -3820,16 +3857,14 @@ namespace mango::image::jpeg
             const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
             const bool last = (y1 >= ymcu);
 
-            s16* data = acquireCoeffBuffer(samples);
-            if (!data)
+            CoeffSpan span = bindCoeffSpan(y0, samples);
+            if (!span.data)
             {
                 header.setError("Coefficient band allocation failed.");
                 return;
             }
 
-            std::memset(data, 0, samples * sizeof(s16));
-
-            s16* out = data;
+            s16* out = span.data;
             bool out_of_data = false;
 
             for (int row = y0; row < y1 && !out_of_data; ++row)
@@ -3867,7 +3902,7 @@ namespace mango::image::jpeg
                 }
             }
 
-            emitCoeffBand(data, samples, y0, y1, last || out_of_data);
+            emitCoeffBand(span.data, samples, y0, y1, last || out_of_data, span.recycle);
 
             if (out_of_data)
             {
@@ -4305,7 +4340,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::decodeMultiScan()
     {
-        s16* data = blockVector;
+        s16* data = progressiveCoeffBase();
         data += decodeState.block[0].offset;
 
         for (int y = 0; y < ymcu; ++y)
@@ -4355,7 +4390,7 @@ namespace mango::image::jpeg
     {
         if (restartInterval)
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             const u8* p = decodeState.buffer.ptr;
 
@@ -4400,7 +4435,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             for (int i = 0; i < mcus; ++i)
             {
@@ -4419,7 +4454,7 @@ namespace mango::image::jpeg
     {
         if (restartInterval)
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             const int hsf = scanFrame->hsf;
             const int vsf = scanFrame->vsf;
@@ -4492,7 +4527,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             const int hsf = scanFrame->hsf;
             const int vsf = scanFrame->vsf;
@@ -4533,17 +4568,9 @@ namespace mango::image::jpeg
     {
         if (m_coefficients_only)
         {
-            // Progressive blockVector is always Natural order (spectral scatter during scans).
-            const size_t samples = blockVector.size();
-            s16* data = acquireCoeffBuffer(samples);
-            if (!data)
-            {
-                header.setError("Coefficient band allocation failed.");
-                return;
-            }
-
-            std::memcpy(data, blockVector.data(), samples * sizeof(s16));
-            emitCoeffBand(data, samples, 0, ymcu, true);
+            // Progressive scans already accumulated in the caller storage.
+            const size_t samples = size_t(mcus) * size_t(blocks_in_mcu) * 64;
+            emitCoeffBand(m_coeff_storage, samples, 0, ymcu, true, false);
             return;
         }
 
@@ -4578,7 +4605,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
             process_range(0, ymcu, data);
         }
     }
