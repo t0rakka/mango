@@ -93,12 +93,20 @@ namespace mango::image::jpeg
 
     void BitBuffer::fill()
     {
+        // Six entropy bytes. A 0x00 is the second half of a stuffed 0xFF00, and a
+        // 0xFF starts either that pair or a marker (RST). The slow path leaves ptr
+        // on the marker so the caller can skip it. Swallowing 0xFF here steps past
+        // the marker and the next seek lands on the one after, so every other MCU
+        // row is dropped inside a restart task.
 #if defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_SSE2)
         if (ptr + 8 <= end)
         {
             u64 x = uload64(ptr);
-            const __m128i ref = _mm_cmpeq_epi8(_mm_setzero_si128(), _mm_setzero_si128());
-            u32 mask = _mm_movemask_epi8(_mm_cmpeq_epi8(_mm_set_epi64x(0, x), ref));
+            const __m128i bytes = _mm_set_epi64x(0, x);
+            const __m128i special = _mm_or_si128(
+                _mm_cmpeq_epi8(bytes, _mm_setzero_si128()),
+                _mm_cmpeq_epi8(bytes, _mm_set1_epi8(char(0xff))));
+            const u32 mask = _mm_movemask_epi8(special) & 0x3f;
             if (!mask)
             {
                 data = (data << 48) | (byteswap(x) >> 16);
@@ -110,10 +118,14 @@ namespace mango::image::jpeg
 #elif defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_NEON)
         if (ptr + 8 <= end)
         {
-            u64 x = uload64(ptr);
+            const u64 x = uload64(ptr);
             constexpr u64 a = 0x0101010101010101ull;
             constexpr u64 m = 0x8080808080808080ull;
-            if (!((x - a) & ~x & m))
+            constexpr u64 consumed = 0x0000ffffffffffffull;
+            const u64 low = x & consumed;
+            const u64 has0 = (low - a) & ~low & m;
+            const u64 hasFF = ((~x) - a) & x & m & consumed;
+            if (!(has0 | hasFF))
             {
                 data = (data << 48) | (byteswap(x) >> 16);
                 remain += 48;
