@@ -69,25 +69,27 @@ function (mango_apply_isa_to_target target)
             endif ()
 
             # MSVC does not predefine __SSE2__ / __SSE4_2__ / __AVX2__ the way GCC and
-            # Clang do via -msse* / -mavx*. Vendored astcenc (and similar third-party
-            # code that never includes mango/configure.hpp) selects its SIMD backend
-            # from these macros in astcenc_mathlib.h. Without them, astcenc falls
-            # back to the scalar path while optional ISA macros (__F16C__, etc.) may
-            # still be set, which breaks the build.
+            # Clang do via -msse* / -mavx*. Vendored astcenc (in mango-image only)
+            # selects its SIMD backend from these macros in astcenc_mathlib.h.
             #
-            # mango/configure.hpp uses #ifndef guards for the same names, so defining
-            # them here does not conflict with mango headers.
-            if (ENABLE_SSE2 OR ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
-                target_compile_definitions(${target} PUBLIC "__SSE2__")
-            endif ()
-            if (ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
-                target_compile_definitions(${target} PUBLIC "__SSE4_1__" "__SSE4_2__")
-            endif ()
-            if (ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
-                target_compile_definitions(${target} PUBLIC "__AVX__")
-            endif ()
-            if (ENABLE_AVX2 OR ENABLE_AVX512)
-                target_compile_definitions(${target} PUBLIC "__AVX2__")
+            # Keep them PRIVATE and scoped to mango-image. If they are PUBLIC (or set
+            # on mango-import3d), simdjson (pulled in via fastgltf) sees __SSE2__ and
+            # takes a key-selector path that calls GCC's __builtin_ctz — which MSVC
+            # does not provide (C3861). mango/configure.hpp already #ifndef-defines
+            # the same names for mango's own TUs.
+            if (${target} STREQUAL "mango-image")
+                if (ENABLE_SSE2 OR ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                    target_compile_definitions(${target} PRIVATE "__SSE2__")
+                endif ()
+                if (ENABLE_SSE4 OR ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                    target_compile_definitions(${target} PRIVATE "__SSE4_1__" "__SSE4_2__")
+                endif ()
+                if (ENABLE_AVX OR ENABLE_AVX2 OR ENABLE_AVX512)
+                    target_compile_definitions(${target} PRIVATE "__AVX__")
+                endif ()
+                if (ENABLE_AVX2 OR ENABLE_AVX512)
+                    target_compile_definitions(${target} PRIVATE "__AVX2__")
+                endif ()
             endif ()
 
             # enable only one (the most recent) SIMD extension
