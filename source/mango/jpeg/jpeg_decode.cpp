@@ -178,6 +178,17 @@ namespace mango::image::jpeg
             quantTable[i].table = quantTableVector.data() + i * 64;
         }
 
+        // Slots DHT never fills would otherwise have a garbage code-length
+        // count. extractEntropy memcpy's that many bytes into a 256-byte table.
+        for (int tc = 0; tc < 2; ++tc)
+        {
+            for (int th = 0; th < JPEG_MAX_COMPS_IN_SCAN; ++th)
+            {
+                std::memset(decodeState.huffman.table[tc][th].size, 0,
+                    sizeof(decodeState.huffman.table[tc][th].size));
+            }
+        }
+
         m_sink.surface = nullptr;
 
         if (isJPEG(m_memory))
@@ -2083,6 +2094,14 @@ namespace mango::image::jpeg
 
         restartCounter = restartInterval;
 
+        // GPU ingest: DHT/SOS are bound, entropy starts at p. Do not decode.
+        if (m_bind_scan_only)
+        {
+            decodeState.buffer.ptr = p;
+            decodeState.buffer.end = end;
+            return p;
+        }
+
         if (decodeState.is_arithmetic)
         {
             ArithmeticDecoder& arithmetic = decodeState.arithmetic;
@@ -2684,6 +2703,8 @@ namespace mango::image::jpeg
                     if (decode)
                     {
                         p = processSOS(p, end);
+                        if (m_bind_scan_only)
+                            return;
                     }
                     else
                     {
@@ -4740,6 +4761,258 @@ namespace mango::image::jpeg
     void StreamDecoder::blit_and_update(const ImageDecodeRect& rect)
     {
         m_sink.finalize(rect);
+    }
+
+    EntropyStream StreamDecoder::extractEntropy()
+    {
+        EntropyStream out;
+
+        if (!header)
+        {
+            out.error = header.info.empty() ? "JPEG header is not valid" : header.info;
+            return out;
+        }
+        if (is_progressive || is_lossless || is_differential || decodeState.is_arithmetic)
+        {
+            out.error = "entropy extract supports baseline Huffman only";
+            return out;
+        }
+        if (!scan_memory.address || !scan_memory.size)
+        {
+            out.error = "JPEG scan is missing";
+            return out;
+        }
+        if (ymcu <= 0 || xmcu <= 0)
+        {
+            out.error = "JPEG MCU grid is missing";
+            return out;
+        }
+
+        const bool mango = hasMango1();
+        if (mango)
+        {
+            if (m_decode_interval <= 0)
+            {
+                out.error = "Mango1 interval is missing";
+                return out;
+            }
+            const int rows_per_segment = m_decode_interval;
+            const int segment_count = (ymcu + rows_per_segment - 1) / rows_per_segment;
+            if (m_restart_offsets.size() != size_t(segment_count))
+            {
+                out.error = "Mango1 offset count does not match the interval";
+                return out;
+            }
+        }
+
+        m_bind_scan_only = true;
+        parse(scan_memory, true);
+        m_bind_scan_only = false;
+
+        if (!header)
+        {
+            out.error = header.info.empty() ? "failed to bind SOS" : header.info;
+            return out;
+        }
+
+        const u8* const base = m_memory.address;
+        const u8* const file_end = base + m_memory.size;
+        const u8* const entropy = decodeState.buffer.ptr;
+        if (!entropy || entropy < base || entropy >= file_end)
+        {
+            out.error = "entropy start is outside the file";
+            return out;
+        }
+        if (decodeState.blocks <= 0 || decodeState.blocks > 10)
+        {
+            out.error = "unsupported MCU block count";
+            return out;
+        }
+
+        int rows_per_segment = 0;
+        size_t packed = 0;
+
+        if (mango)
+        {
+            rows_per_segment = m_decode_interval;
+            const int segment_count = (ymcu + rows_per_segment - 1) / rows_per_segment;
+            out.segments.reserve(size_t(segment_count));
+
+            for (int s = 0; s < segment_count; ++s)
+            {
+                const int y0 = s * rows_per_segment;
+                const int y1 = std::min(y0 + rows_per_segment, ymcu);
+                const u8* begin = (s == 0) ? entropy : (base + m_restart_offsets[size_t(s - 1)]);
+                const u8* end = base + m_restart_offsets[size_t(s)];
+
+                if (begin < base || end > file_end || begin >= end)
+                {
+                    out.error = "Mango1 segment is outside the file";
+                    out.segments.clear();
+                    return out;
+                }
+                if ((end - begin) < 2 || !isRestartMarker(end - 2))
+                {
+                    out.error = "Mango1 segment is missing its trailing RST marker";
+                    out.segments.clear();
+                    return out;
+                }
+                end -= 2;
+
+                EntropySegment seg;
+                seg.bytes = ConstMemory(begin, size_t(end - begin));
+                seg.mcu_y0 = y0;
+                seg.mcu_y1 = y1;
+                seg.mcus = (y1 - y0) * xmcu;
+                seg.packed_offset = packed;
+                packed += seg.bytes.size;
+                out.segments.push_back(seg);
+            }
+        }
+        else if (restartInterval > 0)
+        {
+            // Same shape as Mango1: each interval is a whole number of MCU rows.
+            // The CPU decoder already locates RSTn with seekMarker (0xFF00 stuffed).
+            if (restartInterval % xmcu != 0)
+            {
+                out.error = "restart interval does not end on an MCU row";
+                return out;
+            }
+
+            rows_per_segment = restartInterval / xmcu;
+            const int total_mcus = xmcu * ymcu;
+            const int segment_count = (total_mcus + restartInterval - 1) / restartInterval;
+            const u8* const scan_end = decodeState.buffer.end;
+            const u8* cursor = entropy;
+            bool last_was_rst = false;
+            const u8* last_rst = nullptr;
+
+            out.segments.reserve(size_t(segment_count));
+            for (int s = 0; s < segment_count; ++s)
+            {
+                const bool last = (s + 1 == segment_count);
+                const u8* marker = seekMarker(cursor, scan_end);
+                const bool rst = (marker + 1 < scan_end) && isRestartMarker(marker);
+                if (!last && !rst)
+                {
+                    out.error = "restart marker is missing";
+                    out.segments.clear();
+                    return out;
+                }
+
+                const u8* seg_end = rst ? marker : (marker < scan_end ? marker : scan_end);
+                if (cursor < entropy || seg_end > scan_end || cursor >= seg_end)
+                {
+                    out.error = "restart segment is outside the scan";
+                    out.segments.clear();
+                    return out;
+                }
+
+                const int y0 = s * rows_per_segment;
+                const int y1 = std::min(y0 + rows_per_segment, ymcu);
+                EntropySegment seg;
+                seg.bytes = ConstMemory(cursor, size_t(seg_end - cursor));
+                seg.mcu_y0 = y0;
+                seg.mcu_y1 = y1;
+                seg.mcus = (y1 - y0) * xmcu;
+                seg.packed_offset = packed;
+                packed += seg.bytes.size;
+                out.segments.push_back(seg);
+
+                if (rst)
+                {
+                    last_was_rst = true;
+                    last_rst = marker;
+                    cursor = marker + 2;
+                }
+                else
+                {
+                    last_was_rst = false;
+                }
+            }
+
+            if (last_was_rst)
+            {
+                const u8* extra = seekMarker(last_rst + 2, scan_end);
+                if ((extra + 1 < scan_end) && isRestartMarker(extra))
+                {
+                    out.error = "too many restart markers";
+                    out.segments.clear();
+                    return out;
+                }
+            }
+        }
+        else
+        {
+            // No restart markers. One segment is the whole scan; the GPU
+            // overlaps chunks inside it and self-synchronizes.
+            rows_per_segment = ymcu;
+            const u8* const scan_end = decodeState.buffer.end;
+            const u8* marker = seekMarker(entropy, scan_end);
+            const u8* seg_end = (marker < scan_end) ? marker : scan_end;
+            if (seg_end <= entropy)
+            {
+                out.error = "entropy scan is empty";
+                return out;
+            }
+
+            EntropySegment seg;
+            seg.bytes = ConstMemory(entropy, size_t(seg_end - entropy));
+            seg.mcu_y0 = 0;
+            seg.mcu_y1 = ymcu;
+            seg.mcus = ymcu * xmcu;
+            seg.packed_offset = 0;
+            packed = seg.bytes.size;
+            out.segments.push_back(seg);
+        }
+
+        out.packed_bytes = packed;
+        out.blocks_in_mcu = decodeState.blocks;
+        for (int i = 0; i < decodeState.blocks; ++i)
+        {
+            out.block[i].component = decodeState.block[i].pred;
+            out.block[i].dc = decodeState.block[i].dc;
+            out.block[i].ac = decodeState.block[i].ac;
+        }
+
+        const HuffmanDecoder& huff = decodeState.huffman;
+        for (int tc = 0; tc < 2; ++tc)
+        {
+            for (int th = 0; th < 4; ++th)
+            {
+                const HuffmanTable& table = huff.table[tc][th];
+                int count = 0;
+                for (int len = 1; len <= 16; ++len)
+                    count += table.size[len];
+                if (count <= 0 || count > 256)
+                    continue;
+
+                HuffmanCodeTable codes;
+                codes.cls = tc;
+                codes.id = th;
+                codes.nvalues = count;
+                for (int len = 0; len < 16; ++len)
+                    codes.bits[len] = table.size[len + 1];
+                std::memcpy(codes.values, table.value, size_t(count));
+                out.huffman.push_back(codes);
+            }
+        }
+        if (out.huffman.empty())
+        {
+            out.error = "no Huffman tables in scan";
+            out.segments.clear();
+            return out;
+        }
+
+        out.width = m_width;
+        out.height = m_height;
+        out.xblock = xblock;
+        out.yblock = yblock;
+        out.xmcu = xmcu;
+        out.ymcu = ymcu;
+        out.rows_per_segment = rows_per_segment;
+        out.ok = true;
+        return out;
     }
 
 } // namespace mango::image::jpeg

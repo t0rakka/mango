@@ -554,6 +554,7 @@ namespace mango::image::jpeg
 
         int m_decode_interval;
         std::vector<u32> m_restart_offsets;
+        bool m_bind_scan_only = false; // processSOS: stop at entropy, do not decode
 
         CoeffOrder m_coeff_order = CoeffOrder::Natural;
         CoeffSink m_coeff_sink = nullptr;
@@ -781,6 +782,7 @@ namespace mango::image::jpeg
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
         ImageDecodeStatus decodeCoefficients(const ImageDecodeOptions& options);
+        EntropyStream extractEntropy();
     };
 
     // ----------------------------------------------------------------------------
