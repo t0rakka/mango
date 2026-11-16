@@ -4851,13 +4851,23 @@ namespace mango::image::jpeg
                     out.segments.clear();
                     return out;
                 }
-                if ((end - begin) < 2 || !isRestartMarker(end - 2))
+
+                // Older files end every interval, including the last, with RSTn and
+                // the offset points just past it. New files replace the final RSTn
+                // with EOI and store that offset on the EOI byte, so the last
+                // segment has no marker to strip.
+                const bool last = (s + 1 == segment_count);
+                const bool eoi = last && (end + 2 <= file_end) && bigEndian::uload16(end) == MARKER_EOI;
+                if ((end - begin) >= 2 && isRestartMarker(end - 2))
+                {
+                    end -= 2;
+                }
+                else if (!eoi)
                 {
                     out.error = "Mango1 segment is missing its trailing RST marker";
                     out.segments.clear();
                     return out;
                 }
-                end -= 2;
 
                 EntropySegment seg;
                 seg.bytes = ConstMemory(begin, size_t(end - begin));

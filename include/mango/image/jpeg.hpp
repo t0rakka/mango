@@ -186,7 +186,8 @@ namespace mango::image::jpeg
             const ImageDecodeOptions& options = ImageDecodeOptions());
 
         // Binds DHT + SOS, then returns entropy views. Does not Huffman-decode.
-        // Mango1 uses the stored offsets, one view per interval, trailing RSTn stripped.
+        // Mango1 uses the stored offsets, one view per interval. A trailing RSTn is
+        // stripped. The last interval may instead end on EOI, which is not included.
         // DRI walks the scan with seekMarker (the CPU decoder's marker scan) and
         // requires intervals that end on an MCU row.
         // No restarts: one view of the whole scan, up to the next marker.

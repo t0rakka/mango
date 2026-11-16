@@ -3340,7 +3340,15 @@ namespace
             }
         }
 
-        // EOI marker
+        // Write EOI marker
+        if (!restart_offsets.empty())
+        {
+            // Each interval ends with RSTn and its Mango1 offset is the first byte
+            // after that marker. The final RSTn is replaced by EOI, and that last
+            // offset is moved back onto the EOI.
+            s.seek(-2, Stream::SeekMode::Current);
+            restart_offsets.back() -= 2;
+        }
         s.write16(MARKER_EOI);
 
         // patch restart offsets
