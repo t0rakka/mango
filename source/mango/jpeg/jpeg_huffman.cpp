@@ -303,14 +303,10 @@ namespace mango::image::jpeg
 
         inline int huff_extend(int value, int nbits)
         {
-            // Unsigned so the mask stays a 32-bit bzhi. The signed form collapsed
+            // Unsigned so the mask stays 32-bit. The signed form collapsed
             // to a 16-bit variable shift on the AC path.
             const unsigned v = unsigned(value);
-#if defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_AVX2)
-            const unsigned mask = _bzhi_u32(~0u, unsigned(nbits));
-#else
-            const unsigned mask = (1u << unsigned(nbits)) - 1u;
-#endif
+            const unsigned mask = mango::u32_extract_bits(~0u, 0, unsigned(nbits));
             const unsigned top = v >> (unsigned(nbits) - 1u);
             return int(v - (mask & (top - 1u)));
         }
