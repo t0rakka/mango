@@ -636,15 +636,15 @@ namespace mango::image::jpeg
         void processRES(const u8* p);
         void processJPG(const u8* p);
         void processJPG(const u8* p, u16 marker);
-        void processAPP(const u8* p, u16 marker);
-        void processSOF(const u8* p, u16 marker);
-        void processDQT(const u8* p);
-        void processDNL(const u8* p);
-        void processDRI(const u8* p);
+        void processAPP(const u8* p, const u8* end, u16 marker);
+        void processSOF(const u8* p, const u8* end, u16 marker);
+        void processDQT(const u8* p, const u8* end);
+        void processDNL(const u8* p, const u8* end);
+        void processDRI(const u8* p, const u8* end);
         void processDHT(const u8* p, const u8* end);
-        void processDAC(const u8* p);
-        void processDHP(const u8* p);
-        void processEXP(const u8* p);
+        void processDAC(const u8* p, const u8* end);
+        void processDHP(const u8* p, const u8* end);
+        void processEXP(const u8* p, const u8* end);
 
         void parse(ConstMemory memory, bool decode);
 

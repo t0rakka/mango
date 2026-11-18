@@ -62,9 +62,9 @@ namespace
             return 0;
 
         u8 value = *buffer.ptr++;
-        if (value == 0xff)
+        if (value == 0xff && buffer.ptr < buffer.end)
         {
-            // skip stuff byte (0x00)
+            // skip stuff byte (0x00). A truncated stream has no byte to skip.
             ++buffer.ptr;
         }
 

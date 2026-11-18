@@ -1401,6 +1401,34 @@ namespace mango::image::jpeg
         return true;
     }
 
+    // p points at the marker length word.
+    // span.end is the first byte after the segment. span.next is where parsing
+    // resumes, including the ancient (0xff, 0xff, id) skip. Both are null when
+    // the segment is truncated.
+    struct MarkerSpan
+    {
+        const u8* end = nullptr;
+        const u8* next = nullptr;
+    };
+
+    static
+    MarkerSpan spanMarker(const u8* p, const u8* end)
+    {
+        MarkerSpan span;
+        if (size_t(end - p) < 2)
+            return span;
+
+        const u32 size = bigEndian::uload16(p);
+        if (size < 2 || size > size_t(end - p))
+            return span;
+
+        span.end = p + size;
+        span.next = span.end;
+        if (size_t(end - span.next) >= 2 && span.next[1] == 0xff)
+            ++span.next;
+        return span;
+    }
+
     const u8* StreamDecoder::stepMarker(const u8* p, const u8* end) const
     {
         if (p + 2 > end)
@@ -1503,12 +1531,23 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(marker);
     }
 
-    void StreamDecoder::processAPP(const u8* p, u16 marker)
+    void StreamDecoder::processAPP(const u8* p, const u8* end, u16 marker)
     {
         printLine(Print::Debug, "[ APP{} ]", marker - MARKER_APP0);
 
+        if (size_t(end - p) < 2)
+        {
+            header.setError("Truncated JPEG marker.");
+            return;
+        }
+
         int size = bigEndian::uload16(p) - 2;
         p += 2;
+        if (size < 0 || size > int(end - p))
+        {
+            header.setError("Truncated JPEG marker.");
+            return;
+        }
 
         switch (marker)
         {
@@ -1518,7 +1557,8 @@ namespace mango::image::jpeg
                 const u8 magicJFXX [] = { 0x4a, 0x46, 0x58, 0x58, 0 }; // 'JFXX', 0
                 const size_t magicJFIF_length = 5;
 
-                if (size >= magicJFIF_length &&
+                // 5 byte id + version, units, density, thumbnail size
+                if (size >= 14 &&
                     (!std::memcmp(p, magicJFIF, magicJFIF_length) || !std::memcmp(p, magicJFXX, magicJFIF_length)))
                 {
                     // Skip the identifier
@@ -1593,7 +1633,7 @@ namespace mango::image::jpeg
             {
                 const u8 magicICC[] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
 
-                if (!std::memcmp(p, magicICC, 12))
+                if (size >= 14 && !std::memcmp(p, magicICC, 12))
                 {
                     // skip magic
                     p += 12;
@@ -1621,7 +1661,7 @@ namespace mango::image::jpeg
                 const u8 magicMETA[] = { 0x4d, 0x45, 0x54, 0x41, 0, 0 }; // 'META', 0, 0
                 const u8 magicMeta[] = { 0x4d, 0x65, 0x74, 0x61, 0, 0 }; // 'Meta', 0, 0
 
-                if (!std::memcmp(p, magicMETA, 6) || !std::memcmp(p, magicMeta, 6))
+                if (size >= 6 && (!std::memcmp(p, magicMETA, 6) || !std::memcmp(p, magicMeta, 6)))
                 {
                     p += 6;
                     size -= 6;
@@ -1652,7 +1692,7 @@ namespace mango::image::jpeg
                     MANGO_UNREFERENCED(version);
                     MANGO_UNREFERENCED(color_transform);
                 }
-                else if (!std::memcmp(p, magic_mango, 6))
+                else if (size >= 10 && !std::memcmp(p, magic_mango, 6))
                 {
                     m_decode_interval = bigEndian::uload32(p + 6);
                     p += 10;
@@ -1670,9 +1710,15 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processSOF(const u8* p, u16 marker)
+    void StreamDecoder::processSOF(const u8* p, const u8* end, u16 marker)
     {
         printLine(Print::Debug, "[ SOF{} ]", marker - MARKER_SOF0);
+
+        if (size_t(end - p) < 8)
+        {
+            header.setError("Truncated SOF marker.");
+            return;
+        }
 
         is_baseline = (marker == MARKER_SOF0);
         is_progressive = false;
@@ -1681,6 +1727,12 @@ namespace mango::image::jpeg
         is_differential = false;
 
         u16 length = bigEndian::uload16(p + 0);
+        if (length < 8 || size_t(length) > size_t(end - p))
+        {
+            header.setError("Truncated SOF marker.");
+            return;
+        }
+
         m_precision = p[2];
         decodeState.precision = m_precision;
         m_height = bigEndian::uload16(p + 3);
@@ -2226,66 +2278,76 @@ namespace mango::image::jpeg
         return p;
     }
 
-    void StreamDecoder::processDQT(const u8* p)
+    void StreamDecoder::processDQT(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DQT ]");
 
-        u16 Lq = bigEndian::uload16(p); // Quantization table definition length
+        if (size_t(end - p) < 2)
+        {
+            header.setError("Truncated DQT marker.");
+            return;
+        }
+
+        int Lq = bigEndian::uload16(p); // Quantization table definition length
         p += 2;
         Lq -= 2;
+        if (Lq < 0 || Lq > int(end - p))
+        {
+            header.setError("Truncated DQT marker.");
+            return;
+        }
 
-        for ( ; Lq > 0; )
+        while (Lq > 0)
         {
             u8 x = *p++;
+            --Lq;
             u8 Pq = (x >> 4) & 0xf; // Quantization table element precision (0 = 8 bits, 1 = 16 bits)
             u8 Tq = (x >> 0) & 0xf; // Quantization table destination identifier (0..3)
 
             const int bits = (Pq + 1) * 8;
             printLine(Print::Debug, "  Quantization table #{} element precision: {} bits", Tq, bits);
 
-            if (!is_lossless)
+            //const u8 max_pq = is_baseline ? 0 : 1;
+            const u8 max_pq = 1; // relaxed limit; lots of non-conforming files out in the wild
+            if (Pq > max_pq)
             {
-                //const u8 max_pq = is_baseline ? 0 : 1;
-                const u8 max_pq = 1; // relaxed limit; lots of non-conforming files out in the wild
+                header.setError("Incorrect quantization table element precision ({})", Pq);
+                return;
+            }
 
-                if (Pq > max_pq)
-                {
-                    header.setError("Incorrect quantization table element precision ({})", Pq);
-                    return;
-                }
+            if (Tq > 3)
+            {
+                header.setError("Incorrect quantization table ({})", Tq);
+                return;
+            }
 
-                if (Tq > 3)
-                {
-                    header.setError("Incorrect quantization table ({})", Tq);
-                    return;
-                }
+            const int bytes = (Pq + 1) * 64;
+            if (Lq < bytes)
+            {
+                header.setError("Truncated DQT marker.");
+                return;
             }
 
             QuantTable& table = quantTable[Tq];
             table.bits = bits;
 
-            switch (Pq)
+            if (Pq == 0)
             {
-                case 0:
-                    for (int i = 0; i < 64; ++i)
-                    {
-                        table.table[zigzagTable[i]] = *p++;
-                    }
-                    break;
-
-                case 1:
-                    for (int i = 0; i < 64; ++i)
-                    {
-                        table.table[zigzagTable[i]] = bigEndian::uload16(p);
-                        p += 2;
-                    }
-                    break;
-
-                default:
-                    break;
+                for (int i = 0; i < 64; ++i)
+                {
+                    table.table[zigzagTable[i]] = *p++;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 64; ++i)
+                {
+                    table.table[zigzagTable[i]] = bigEndian::uload16(p);
+                    p += 2;
+                }
             }
 
-            Lq -= (1 + (Pq + 1) * 64);
+            Lq -= bytes;
         }
     }
 
@@ -2326,7 +2388,7 @@ namespace mango::image::jpeg
 
             printLine(Print::Debug, "  Huffman table #{} table class: {}", Th, Tc);
 
-            if (p >= end - 17)
+            if (size_t(end - p) < 17)
             {
                 header.setError("Data overflow.");
                 return;
@@ -2355,7 +2417,7 @@ namespace mango::image::jpeg
                 return;
             }
 
-            if (p >= end - count)
+            if (size_t(end - p) < size_t(count))
             {
                 header.setError("Data overflow.");
                 return;
@@ -2391,11 +2453,22 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processDAC(const u8* p)
+    void StreamDecoder::processDAC(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DAC ]");
 
+        if (size_t(end - p) < 2)
+        {
+            header.setError("Truncated DAC marker.");
+            return;
+        }
+
         u16 La = bigEndian::uload16(p); // Arithmetic coding conditioning definition length
+        if (La < 2 || size_t(La) > size_t(end - p))
+        {
+            header.setError("Truncated DAC marker.");
+            return;
+        }
         p += 2;
 
         if (is_baseline)
@@ -2461,9 +2534,15 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processDNL(const u8* p)
+    void StreamDecoder::processDNL(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DNL ]");
+
+        if (size_t(end - p) < 4)
+        {
+            header.setError("Truncated DNL marker.");
+            return;
+        }
 
         u16 Ld = bigEndian::uload16(p + 0); // Define number of lines segment length
         u16 NL = bigEndian::uload16(p + 2); // Number of lines
@@ -2473,9 +2552,15 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(Ld);
     }
 
-    void StreamDecoder::processDRI(const u8* p)
+    void StreamDecoder::processDRI(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DRI ]");
+
+        if (size_t(end - p) < 4)
+        {
+            header.setError("Truncated DRI marker.");
+            return;
+        }
 
         int Lh = bigEndian::uload16(p + 0); // length
         if (Lh != 4)
@@ -2487,14 +2572,25 @@ namespace mango::image::jpeg
         printLine(Print::Debug, "  Restart interval: {}", restartInterval);
     }
 
-    void StreamDecoder::processDHP(const u8* p)
+    void StreamDecoder::processDHP(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DHP ]");
 
         // NOTE: This marker is parsed but not used
 
+        if (size_t(end - p) < 4)
+        {
+            header.setError("Truncated DHP marker.");
+            return;
+        }
+
         // Get length of DHP segment (includes the length bytes)
         const int length = bigEndian::uload16(p) - 2;
+        if (length < 2 || p + 2 + length > end)
+        {
+            header.setError("Truncated DHP marker.");
+            return;
+        }
         p += 2;
 
         // Get precision (usually 8 or 12 bits)
@@ -2505,6 +2601,12 @@ namespace mango::image::jpeg
 
         printLine(Print::Debug, "  Precision: {}", precision);
         printLine(Print::Debug, "  Components: {}", ncomponents);
+
+        if (2 + 3 * ncomponents > length)
+        {
+            header.setError("Truncated DHP marker.");
+            return;
+        }
 
         // Parse component specifications
         for (int i = 0; i < ncomponents; ++i)
@@ -2522,9 +2624,15 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processEXP(const u8* p)
+    void StreamDecoder::processEXP(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ EXP ]");
+
+        if (size_t(end - p) < 3)
+        {
+            header.setError("Truncated EXP marker.");
+            return;
+        }
 
         u16 Le = bigEndian::uload16(p); // Expand reference components segment length
         u8 x = p[2];
@@ -2573,56 +2681,15 @@ namespace mango::image::jpeg
                     break;
 
                 case MARKER_DHT:
-                    processDHT(p, end);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DAC:
-                    processDAC(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DQT:
-                    processDQT(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DNL:
-                    processDNL(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DRI:
-                    processDRI(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DHP:
-                    processDHP(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_EXP:
-                    processEXP(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_COM:
-                    processCOM(p);
-                    p = stepMarker(p, end);
-                    p = seekMarker(p, end);
-                    break;
-
                 case MARKER_TEM:
-                    processTEM(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_RES:
-                    processRES(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_APP0:
                 case MARKER_APP1:
                 case MARKER_APP2:
@@ -2639,15 +2706,7 @@ namespace mango::image::jpeg
                 case MARKER_APP13:
                 case MARKER_APP14:
                 case MARKER_APP15:
-                    processAPP(p, marker);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_JPG:
-                    processJPG(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_JPG0:
                 case MARKER_JPG1:
                 case MARKER_JPG2:
@@ -2662,10 +2721,6 @@ namespace mango::image::jpeg
                 case MARKER_JPG11:
                 case MARKER_JPG12:
                 case MARKER_JPG13:
-                    processJPG(p, marker);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_SOF0:
                 case MARKER_SOF1:
                 case MARKER_SOF2:
@@ -2679,15 +2734,64 @@ namespace mango::image::jpeg
                 case MARKER_SOF13:
                 case MARKER_SOF14:
                 case MARKER_SOF15:
-                    processSOF(p, marker);
-                    p = stepMarker(p, end);
-                    if (!decode)
+                {
+                    const MarkerSpan span = spanMarker(p, end);
+                    if (!span.next)
+                    {
+                        header.setError("Truncated JPEG marker.");
+                        p = end;
+                        break;
+                    }
+
+                    bool sof = false;
+                    switch (marker)
+                    {
+                        case MARKER_DHT: processDHT(p, span.end); break;
+                        case MARKER_DAC: processDAC(p, span.end); break;
+                        case MARKER_DQT: processDQT(p, span.end); break;
+                        case MARKER_DNL: processDNL(p, span.end); break;
+                        case MARKER_DRI: processDRI(p, span.end); break;
+                        case MARKER_DHP: processDHP(p, span.end); break;
+                        case MARKER_EXP: processEXP(p, span.end); break;
+                        case MARKER_COM: processCOM(p); break;
+                        case MARKER_TEM: processTEM(p); break;
+                        case MARKER_RES: processRES(p); break;
+                        case MARKER_JPG: processJPG(p); break;
+                        case MARKER_SOF0:
+                        case MARKER_SOF1:
+                        case MARKER_SOF2:
+                        case MARKER_SOF3:
+                        case MARKER_SOF5:
+                        case MARKER_SOF6:
+                        case MARKER_SOF7:
+                        case MARKER_SOF9:
+                        case MARKER_SOF10:
+                        case MARKER_SOF11:
+                        case MARKER_SOF13:
+                        case MARKER_SOF14:
+                        case MARKER_SOF15:
+                            processSOF(p, span.end, marker);
+                            sof = true;
+                            break;
+                        default:
+                            if (marker >= MARKER_APP0 && marker <= MARKER_APP15)
+                                processAPP(p, span.end, marker);
+                            else
+                                processJPG(p, marker);
+                            break;
+                    }
+
+                    p = span.next;
+                    if (marker == MARKER_COM)
+                        p = seekMarker(p, end);
+                    if (sof && !decode)
                     {
                         // parse header mode (no decoding)
                         scan_memory = ConstMemory(p, end - p);
-                        p = end; // terminate parsing
+                        p = end;
                     }
                     break;
+                }
 
                 case MARKER_RST0:
                 case MARKER_RST1:

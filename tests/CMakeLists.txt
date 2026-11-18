@@ -30,6 +30,7 @@ set(MANGO_TESTS
     core_checksum
     core_commandline
     image_inspect_test
+    jpeg_marker_test
 )
 
 if (IMAGE_FORMAT_KTX2)
