@@ -292,6 +292,84 @@ namespace mango::image::jpeg
 
     namespace
     {
+
+#if !defined(JPEG_ENABLE_IGJ_HUFFMAN)
+
+#if defined(_MSC_VER)
+#define JPEG_HUFF_NOINLINE __declspec(noinline)
+#else
+#define JPEG_HUFF_NOINLINE __attribute__((noinline))
+#endif
+
+        inline int huff_extend(int value, int nbits)
+        {
+            // Unsigned so the mask stays a 32-bit bzhi. The signed form collapsed
+            // to a 16-bit variable shift on the AC path.
+            const unsigned v = unsigned(value);
+#if defined(MANGO_CPU_64BIT) && defined(MANGO_ENABLE_AVX2)
+            const unsigned mask = _bzhi_u32(~0u, unsigned(nbits));
+#else
+            const unsigned mask = (1u << unsigned(nbits)) - 1u;
+#endif
+            const unsigned top = v >> (unsigned(nbits) - 1u);
+            return int(v - (mask & (top - 1u)));
+        }
+
+        // Next bits sit at the top of the register, so a 9-bit peek is a constant
+        // shift. remain == 0 and remain == 64 would shift by 64, which is undefined.
+        // Out of line: inlined, the 0 and 64 live in callee-saved registers for the
+        // whole MCU and push a lookup pointer onto the stack.
+        JPEG_HUFF_NOINLINE
+        HuffmanType huff_align(HuffmanType data, int remain)
+        {
+            if (remain <= 0 || remain >= JPEG_REGISTER_BITS)
+                return remain == JPEG_REGISTER_BITS ? data : 0;
+            return data << (JPEG_REGISTER_BITS - remain);
+        }
+
+        JPEG_HUFF_NOINLINE
+        HuffmanType huff_realign(HuffmanType top, int remain)
+        {
+            if (remain <= 0 || remain >= JPEG_REGISTER_BITS)
+                return remain == JPEG_REGISTER_BITS ? top : 0;
+            return top >> (JPEG_REGISTER_BITS - remain);
+        }
+
+        // ptr stays in the buffer: only fill() advances it. Writes buffer.remain.
+        JPEG_HUFF_NOINLINE
+        HuffmanType huff_refill(BitBuffer& buffer, HuffmanType top, int remain)
+        {
+            buffer.data = huff_realign(top, remain);
+            buffer.remain = remain;
+            buffer.fill();
+            return huff_align(buffer.data, buffer.remain);
+        }
+
+        // Codes longer than the 9-bit lookup. Out of line so maxcode and valueOffset
+        // are not live on the fast path. top is already left-justified.
+        // Returns the symbol in bits 0..7 and the code length in bits 8..15.
+        JPEG_HUFF_NOINLINE
+        int huff_decode_long(const HuffmanTable& table, HuffmanType top, int size)
+        {
+            while (top > table.maxcode[size])
+            {
+                ++size;
+            }
+
+            HuffmanType offset = (top >> (JPEG_REGISTER_BITS - size)) + table.valueOffset[size];
+            int symbol = table.value[offset];
+            return symbol | (size << 8);
+        }
+
+#define JPEG_HUFF_REFILL()                         \
+        do                                         \
+        {                                          \
+            top = huff_refill(buffer, top, remain); \
+            remain = buffer.remain;                \
+        } while (0)
+
+#endif
+
         template <bool Spectral>
         void huff_decode_mcu_t(s16* output, DecodeState* state)
         {
@@ -300,6 +378,7 @@ namespace mango::image::jpeg
 
             std::memset(output, 0, state->blocks * 64 * sizeof(s16));
 
+#if defined(JPEG_ENABLE_IGJ_HUFFMAN)
             for (int j = 0; j < state->blocks; ++j)
             {
                 const DecodeBlock* block = state->block + j;
@@ -322,7 +401,6 @@ namespace mango::image::jpeg
                 // AC
                 for (int i = 1; i < 64; )
                 {
-#if defined(JPEG_ENABLE_IGJ_HUFFMAN)
                     int symbol;
 
                     buffer.ensure();
@@ -345,32 +423,6 @@ namespace mango::image::jpeg
                         else
                             symbol = ac->value[(s + ac->valoffset[nb]) & 0xff];
                     }
-#else
-                    buffer.ensure();
-
-                    int index = buffer.peekBits(JPEG_HUFF_LOOKUP_BITS);
-                    int size = ac->lookupSize[index];
-
-                    int symbol;
-
-                    if (size <= JPEG_HUFF_LOOKUP_BITS)
-                    {
-                        symbol = ac->lookupValue[index];
-                    }
-                    else
-                    {
-                        HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
-                        while (x > ac->maxcode[size])
-                        {
-                            ++size;
-                        }
-
-                        HuffmanType offset = (x >> (JPEG_REGISTER_BITS - size)) + ac->valueOffset[size];
-                        symbol = ac->value[offset];
-                    }
-
-                    buffer.remain -= size;
-#endif
 
                     if (symbol)
                     {
@@ -403,7 +455,139 @@ namespace mango::image::jpeg
 
                 output += 64;
             }
+#else
+            // Left-justified window. A 9-bit peek is "top >> 55", and fill() runs
+            // only when fewer than 16 bits remain, the same edge ensure() used.
+            int remain = buffer.remain;
+            HuffmanType top = huff_align(buffer.data, remain);
+
+            for (int j = 0; j < state->blocks; ++j)
+            {
+                const DecodeBlock* block = state->block + j;
+                const int dcIndex = block->dc;
+                const int acIndex = block->ac;
+                const int pred = block->pred;
+                const u8* dcSize = huffman.table[0][dcIndex].lookupSize;
+                const u8* dcValue = huffman.table[0][dcIndex].lookupValue;
+                const u8* acSize = huffman.table[1][acIndex].lookupSize;
+                const u8* acValue = huffman.table[1][acIndex].lookupValue;
+
+                // DC
+                if (remain < 16) [[unlikely]]
+                {
+                    JPEG_HUFF_REFILL();
+                }
+
+                int index = int(top >> (JPEG_REGISTER_BITS - JPEG_HUFF_LOOKUP_BITS));
+                int size = dcSize[index];
+                int symbol;
+
+                if (size <= JPEG_HUFF_LOOKUP_BITS) [[likely]]
+                {
+                    symbol = dcValue[index];
+                }
+                else
+                {
+                    const int packed = huff_decode_long(huffman.table[0][dcIndex], top, size);
+                    symbol = packed & 0xff;
+                    size = packed >> 8;
+                }
+
+                top <<= unsigned(size);
+                remain -= size;
+
+                if (symbol)
+                {
+                    if (remain < symbol) [[unlikely]]
+                    {
+                        JPEG_HUFF_REFILL();
+                    }
+
+                    const int magnitude = int(top >> (JPEG_REGISTER_BITS - symbol));
+                    top <<= unsigned(symbol);
+                    remain -= symbol;
+                    symbol = huff_extend(magnitude, symbol);
+                }
+
+                symbol += huffman.last_dc_value[pred];
+                huffman.last_dc_value[pred] = symbol;
+
+                output[0] = s16(symbol);
+
+                // AC. The two byte loads are independent, so they overlap.
+                for (int i = 1; i < 64; )
+                {
+                    if (remain < 16) [[unlikely]]
+                    {
+                        JPEG_HUFF_REFILL();
+                    }
+
+                    index = int(top >> (JPEG_REGISTER_BITS - JPEG_HUFF_LOOKUP_BITS));
+                    size = acSize[index];
+
+                    if (size <= JPEG_HUFF_LOOKUP_BITS) [[likely]]
+                    {
+                        symbol = acValue[index];
+                    }
+                    else
+                    {
+                        const int packed = huff_decode_long(huffman.table[1][acIndex], top, size);
+                        symbol = packed & 0xff;
+                        size = packed >> 8;
+                    }
+
+                    top <<= unsigned(size);
+                    remain -= size;
+
+                    if (!symbol)
+                    {
+                        // EOB (End of Block)
+                        break;
+                    }
+
+                    const int bits = symbol & 15;
+                    if (!bits)
+                    {
+                        // ZRL (sixteen zeroes)
+                        i += 16;
+                        continue;
+                    }
+
+                    i += symbol >> 4;
+
+                    if (remain < bits) [[unlikely]]
+                    {
+                        JPEG_HUFF_REFILL();
+                    }
+
+                    int magnitude = int(top >> (JPEG_REGISTER_BITS - bits));
+                    top <<= unsigned(bits);
+                    remain -= bits;
+                    magnitude = huff_extend(magnitude, bits);
+
+                    if constexpr (Spectral)
+                    {
+                        output[i++] = s16(magnitude);
+                    }
+                    else
+                    {
+                        output[zigzagTable[i++]] = s16(magnitude);
+                    }
+                }
+
+                output += 64;
+            }
+
+            buffer.data = huff_realign(top, remain);
+            buffer.remain = remain;
+#endif
         }
+
+#if !defined(JPEG_ENABLE_IGJ_HUFFMAN)
+#undef JPEG_HUFF_REFILL
+#undef JPEG_HUFF_NOINLINE
+#endif
+
     } // namespace
 
     void huff_decode_mcu(s16* output, DecodeState* state)
