@@ -655,9 +655,11 @@ namespace mango
     {
         if (!--task->count)
         {
-            if (!task->func)
+            // Dropped without consume(): let the ticket thread move on.
+            if (!task->ready.load(std::memory_order_relaxed))
             {
-                task->promise.set_value();
+                task->ready.store(true, std::memory_order_release);
+                task->ready.notify_one();
             }
         }
     }
@@ -674,9 +676,10 @@ namespace mango
         {
             if (!--task->count)
             {
-                if (!task->func)
+                if (!task->ready.load(std::memory_order_relaxed))
                 {
-                    task->promise.set_value();
+                    task->ready.store(true, std::memory_order_release);
+                    task->ready.notify_one();
                 }
             }
 
@@ -734,8 +737,11 @@ namespace mango
         SharedTask task;
         if (m_queue->tasks.try_dequeue(task))
         {
-            std::future<void> future = task->promise.get_future();
-            future.wait();
+            // Already published: a load. Otherwise block on this ticket only.
+            if (!task->ready.load(std::memory_order_acquire))
+            {
+                task->ready.wait(false, std::memory_order_acquire);
+            }
 
             if (task->func)
             {
@@ -756,25 +762,34 @@ namespace mango
 
     TicketQueue::Ticket TicketQueue::acquire()
     {
-        std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
-        ++m_ticket_counter;
         Ticket ticket;
-        m_queue->tasks.enqueue(ticket.task);
+        {
+            std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
+            ++m_ticket_counter;
+            m_queue->tasks.enqueue(ticket.task);
+        }
+
+        // Same mutex the consumer holds across its empty-queue wait, so the
+        // notify cannot land between the predicate check and the sleep.
+        std::lock_guard<std::mutex> lock(m_consume_mutex);
         m_consume_condition.notify_one();
         return ticket;
     }
 
     std::vector<TicketQueue::Ticket> TicketQueue::acquire(size_t count)
     {
-        std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
-        m_ticket_counter += count;
         std::vector<TicketQueue::Ticket> tickets(count);
-
-        for (size_t i = 0; i < count; ++i)
         {
-            m_queue->tasks.enqueue(tickets[i].task);
+            std::lock_guard<std::mutex> wait_lock(m_wait_mutex);
+            m_ticket_counter += count;
+
+            for (size_t i = 0; i < count; ++i)
+            {
+                m_queue->tasks.enqueue(tickets[i].task);
+            }
         }
 
+        std::lock_guard<std::mutex> lock(m_consume_mutex);
         m_consume_condition.notify_one();
 
         return tickets;
