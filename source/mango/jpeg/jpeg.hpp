@@ -7,8 +7,11 @@
 #include <vector>
 #include <string>
 #include <memory>
+#include <functional>
+#include <mutex>
 #include <mango/core/core.hpp>
 #include <mango/image/image.hpp>
+#include <mango/image/jpeg.hpp>
 #include <mango/math/math.hpp>
 
 namespace mango::image::jpeg
@@ -547,9 +550,25 @@ namespace mango::image::jpeg
 
         AlignedStorage<s16> quantTableVector;
         AlignedStorage<s16> blockVector;
+        AlignedStorage<s16> quantSpectralVector; // zigzag/file order QT mirror for GPU path
 
         int m_decode_interval;
         std::vector<u32> m_restart_offsets;
+        bool m_bind_scan_only = false; // processSOS: stop at entropy, do not decode
+
+        CoeffOrder m_coeff_order = CoeffOrder::Natural;
+        CoeffSink m_coeff_sink = nullptr;
+        void* m_coeff_sink_user = nullptr;
+        s16* m_coeff_storage = nullptr;
+        size_t m_coeff_storage_samples = 0;
+        bool m_coefficients_only = false;
+        int m_coeff_band_index = 0;
+
+        // Recycled s16 bands for coefficient handoff (no new/delete on hot path).
+        std::mutex m_coeff_pool_mutex;
+        std::mutex m_coeff_emit_mutex; // assigns CoeffView::index across Huffman workers
+        std::vector<s16*> m_coeff_pool;
+        size_t m_coeff_pool_bytes = 0;
 
         std::vector<Frame> frames;
         Frame* scanFrame = nullptr; // current Progressive AC scan frame
@@ -606,6 +625,8 @@ namespace mango::image::jpeg
 
         const u8* stepMarker(const u8* p, const u8* end) const;
         const u8* seekMarker(const u8* p, const u8* end) const;
+        // Advance past 'count' RSTn markers (row-aligned DRI task scheduling).
+        const u8* skipRestartMarkers(const u8* p, const u8* end, int count) const;
         const u8* processSOS(const u8* p, const u8* end);
 
         void processSOI();
@@ -615,15 +636,15 @@ namespace mango::image::jpeg
         void processRES(const u8* p);
         void processJPG(const u8* p);
         void processJPG(const u8* p, u16 marker);
-        void processAPP(const u8* p, u16 marker);
-        void processSOF(const u8* p, u16 marker);
-        void processDQT(const u8* p);
-        void processDNL(const u8* p);
-        void processDRI(const u8* p);
+        void processAPP(const u8* p, const u8* end, u16 marker);
+        void processSOF(const u8* p, const u8* end, u16 marker);
+        void processDQT(const u8* p, const u8* end);
+        void processDNL(const u8* p, const u8* end);
+        void processDRI(const u8* p, const u8* end);
         void processDHT(const u8* p, const u8* end);
-        void processDAC(const u8* p);
-        void processDHP(const u8* p);
-        void processEXP(const u8* p);
+        void processDAC(const u8* p, const u8* end);
+        void processDHP(const u8* p, const u8* end);
+        void processEXP(const u8* p, const u8* end);
 
         void parse(ConstMemory memory, bool decode);
 
@@ -633,11 +654,27 @@ namespace mango::image::jpeg
         void decodeSequential();
         void decodeSequentialST();
         void decodeSequentialMT(int N);
+        void decodeSequentialCoefficients();
         void decodeMultiScan();
         void decodeProgressive();
         void decodeProgressiveDC();
         void decodeProgressiveAC();
         void finishProgressive();
+
+        struct CoeffSpan
+        {
+            s16* data = nullptr;
+            bool recycle = false;
+        };
+
+        s16* acquireCoeffBuffer(size_t samples);
+        void releaseCoeffBuffer(s16* data);
+        CoeffSpan bindCoeffSpan(int mcu_y0, size_t samples);
+        void discardCoeffSpan(CoeffSpan span);
+        s16* progressiveCoeffBase();
+        void emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last, bool recycle = true);
+        void ensureSpectralQuantTables();
+        void selectEntropyDecode();
 
         void process_range(int y0, int y1, const s16* data);
         void process_and_clip(u8* dest, size_t stride, const s16* data, int width, int height);
@@ -693,7 +730,59 @@ namespace mango::image::jpeg
             return m_components;
         }
 
+        int precision() const
+        {
+            return m_precision;
+        }
+
+        bool isArithmetic() const
+        {
+            return decodeState.is_arithmetic;
+        }
+
+        bool isDifferential() const
+        {
+            return is_differential;
+        }
+
+        bool isMultiscan() const
+        {
+            return is_multiscan;
+        }
+
+        bool isBaseline() const
+        {
+            return is_baseline;
+        }
+
+        bool hasMango1() const
+        {
+            return !m_restart_offsets.empty();
+        }
+
+        bool hasRestartInterval() const
+        {
+            return restartInterval > 0;
+        }
+
+        int mcuWidth() const { return xblock; }
+        int mcuHeight() const { return yblock; }
+        int mcuColumns() const { return xmcu; }
+        int mcuRows() const { return ymcu; }
+        int blocksInMcu() const { return blocks_in_mcu; }
+
+        const Frame* componentFrames() const { return processState.frame; }
+        const QuantTable* quantizationTables() const { return quantTable; }
+        const s16* spectralQuantTable(int index) const;
+
+        void setCoeffOrder(CoeffOrder order);
+        CoeffOrder coeffOrder() const { return m_coeff_order; }
+        void setCoeffSink(CoeffSink sink, void* user);
+        void setCoeffStorage(s16* data, size_t samples);
+
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
+        ImageDecodeStatus decodeCoefficients(const ImageDecodeOptions& options);
+        EntropyStream extractEntropy();
     };
 
     // ----------------------------------------------------------------------------
@@ -766,6 +855,14 @@ namespace mango::image::jpeg
             return m_base.components();
         }
 
+        StreamDecoder& base() { return m_base; }
+        const StreamDecoder& base() const { return m_base; }
+
+        bool hasGainMap() const
+        {
+            return m_gainmap_kind != GainMapKind::None;
+        }
+
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
     };
 
@@ -775,6 +872,7 @@ namespace mango::image::jpeg
 
     void huff_decode_mcu_lossless       (s32* output, DecodeState* state);
     void huff_decode_mcu                (s16* output, DecodeState* state);
+    void huff_decode_mcu_spectral       (s16* output, DecodeState* state);
     void huff_decode_dc_first           (s16* output, DecodeState* state);
     void huff_decode_dc_refine          (s16* output, DecodeState* state);
     void huff_decode_ac_first           (s16* output, DecodeState* state);
@@ -782,6 +880,7 @@ namespace mango::image::jpeg
 
     void arith_decode_mcu_lossless      (s32* output, DecodeState* state);
     void arith_decode_mcu               (s16* output, DecodeState* state);
+    void arith_decode_mcu_spectral      (s16* output, DecodeState* state);
     void arith_decode_dc_first          (s16* output, DecodeState* state);
     void arith_decode_dc_refine         (s16* output, DecodeState* state);
     void arith_decode_ac_first          (s16* output, DecodeState* state);
