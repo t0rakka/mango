@@ -178,6 +178,17 @@ namespace mango::image::jpeg
             quantTable[i].table = quantTableVector.data() + i * 64;
         }
 
+        // Slots DHT never fills would otherwise have a garbage code-length
+        // count. extractEntropy memcpy's that many bytes into a 256-byte table.
+        for (int tc = 0; tc < 2; ++tc)
+        {
+            for (int th = 0; th < JPEG_MAX_COMPS_IN_SCAN; ++th)
+            {
+                std::memset(decodeState.huffman.table[tc][th].size, 0,
+                    sizeof(decodeState.huffman.table[tc][th].size));
+            }
+        }
+
         m_sink.surface = nullptr;
 
         if (isJPEG(m_memory))
@@ -192,6 +203,168 @@ namespace mango::image::jpeg
 
     StreamDecoder::~StreamDecoder()
     {
+        for (s16* p : m_coeff_pool)
+        {
+            aligned_free(p);
+        }
+        m_coeff_pool.clear();
+    }
+
+    void StreamDecoder::setCoeffOrder(CoeffOrder order)
+    {
+        m_coeff_order = order;
+        if (order == CoeffOrder::Spectral)
+        {
+            ensureSpectralQuantTables();
+        }
+    }
+
+    void StreamDecoder::setCoeffSink(CoeffSink sink, void* user)
+    {
+        m_coeff_sink = sink;
+        m_coeff_sink_user = user;
+    }
+
+    void StreamDecoder::setCoeffStorage(s16* data, size_t samples)
+    {
+        m_coeff_storage = data;
+        m_coeff_storage_samples = data ? samples : 0;
+    }
+
+    StreamDecoder::CoeffSpan StreamDecoder::bindCoeffSpan(int mcu_y0, size_t samples)
+    {
+        const size_t stride = size_t(xmcu) * size_t(blocks_in_mcu) * 64;
+        const size_t offset = size_t(mcu_y0) * stride;
+        if (!m_coeff_storage || offset + samples > m_coeff_storage_samples)
+            return {};
+        // *_spectral / arithmetic MCU writers zero each MCU. No band memset.
+        return { m_coeff_storage + offset, false };
+    }
+
+    void StreamDecoder::discardCoeffSpan(CoeffSpan span)
+    {
+        if (span.recycle && span.data)
+            releaseCoeffBuffer(span.data);
+    }
+
+    s16* StreamDecoder::progressiveCoeffBase()
+    {
+        if (m_coefficients_only && m_coeff_storage)
+            return m_coeff_storage;
+        return blockVector.data();
+    }
+
+    void StreamDecoder::ensureSpectralQuantTables()
+    {
+        if (quantSpectralVector.size() == quantTableVector.size() && quantSpectralVector.size() > 0)
+        {
+            return;
+        }
+
+        quantSpectralVector.resize(quantTableVector.size());
+        for (int t = 0; t < JPEG_MAX_COMPS_IN_SCAN; ++t)
+        {
+            const s16* natural = quantTable[t].table;
+            s16* spectral = quantSpectralVector.data() + t * 64;
+            for (int i = 0; i < 64; ++i)
+            {
+                // DQT file order i landed in natural[zigzag[i]]
+                spectral[i] = natural[zigzagTable[i]];
+            }
+        }
+    }
+
+    const s16* StreamDecoder::spectralQuantTable(int index) const
+    {
+        if (index < 0 || index >= JPEG_MAX_COMPS_IN_SCAN || quantSpectralVector.size() == 0)
+        {
+            return nullptr;
+        }
+        return quantSpectralVector.data() + index * 64;
+    }
+
+    void StreamDecoder::selectEntropyDecode()
+    {
+        // Progressive / multiscan accumulate into blockVector in Natural order.
+        // Baseline Spectral coeff path uses *_spectral MCU writers (no zigzag scatter).
+        const bool spectral = m_coefficients_only &&
+            m_coeff_order == CoeffOrder::Spectral &&
+            !is_progressive && !is_multiscan;
+
+        if (decodeState.is_arithmetic)
+        {
+            decodeState.decode = spectral ? arith_decode_mcu_spectral : arith_decode_mcu;
+        }
+        else
+        {
+            decodeState.decode = spectral ? huff_decode_mcu_spectral : huff_decode_mcu;
+        }
+    }
+
+    s16* StreamDecoder::acquireCoeffBuffer(size_t samples)
+    {
+        const size_t bytes = samples * sizeof(s16);
+        std::lock_guard<std::mutex> lock(m_coeff_pool_mutex);
+
+        if (bytes > m_coeff_pool_bytes)
+        {
+            for (s16* p : m_coeff_pool)
+            {
+                aligned_free(p);
+            }
+            m_coeff_pool.clear();
+            m_coeff_pool_bytes = bytes;
+        }
+
+        if (!m_coeff_pool.empty())
+        {
+            s16* p = m_coeff_pool.back();
+            m_coeff_pool.pop_back();
+            return p;
+        }
+
+        return reinterpret_cast<s16*>(aligned_malloc(m_coeff_pool_bytes, 64));
+    }
+
+    void StreamDecoder::releaseCoeffBuffer(s16* data)
+    {
+        if (!data)
+        {
+            return;
+        }
+
+        std::lock_guard<std::mutex> lock(m_coeff_pool_mutex);
+        m_coeff_pool.push_back(data);
+    }
+
+    void StreamDecoder::emitCoeffBand(s16* data, size_t samples, int mcu_y0, int mcu_y1, bool last, bool recycle)
+    {
+        if (!m_coeff_sink || !data)
+        {
+            if (recycle)
+                releaseCoeffBuffer(data);
+            return;
+        }
+
+        CoeffView view;
+        view.data = data;
+        view.samples = samples;
+        view.mcu_y0 = mcu_y0;
+        view.mcu_y1 = mcu_y1;
+        view.last = last;
+
+        // Index under the lock. The sink runs unlocked so workers that finish
+        // out of order can publish their own coefficient ranges concurrently.
+        {
+            std::lock_guard<std::mutex> lock(m_coeff_emit_mutex);
+            view.index = m_coeff_band_index++;
+        }
+        m_coeff_sink(view, m_coeff_sink_user);
+
+        // Internal bands are reusable once the callback returns. Caller storage
+        // (setCoeffStorage) is never recycled here.
+        if (recycle)
+            releaseCoeffBuffer(data);
     }
 
     // ----------------------------------------------------------------------------
@@ -1228,6 +1401,34 @@ namespace mango::image::jpeg
         return true;
     }
 
+    // p points at the marker length word.
+    // span.end is the first byte after the segment. span.next is where parsing
+    // resumes, including the ancient (0xff, 0xff, id) skip. Both are null when
+    // the segment is truncated.
+    struct MarkerSpan
+    {
+        const u8* end = nullptr;
+        const u8* next = nullptr;
+    };
+
+    static
+    MarkerSpan spanMarker(const u8* p, const u8* end)
+    {
+        MarkerSpan span;
+        if (size_t(end - p) < 2)
+            return span;
+
+        const u32 size = bigEndian::uload16(p);
+        if (size < 2 || size > size_t(end - p))
+            return span;
+
+        span.end = p + size;
+        span.next = span.end;
+        if (size_t(end - span.next) >= 2 && span.next[1] == 0xff)
+            ++span.next;
+        return span;
+    }
+
     const u8* StreamDecoder::stepMarker(const u8* p, const u8* end) const
     {
         if (p + 2 > end)
@@ -1330,12 +1531,23 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(marker);
     }
 
-    void StreamDecoder::processAPP(const u8* p, u16 marker)
+    void StreamDecoder::processAPP(const u8* p, const u8* end, u16 marker)
     {
         printLine(Print::Debug, "[ APP{} ]", marker - MARKER_APP0);
 
+        if (size_t(end - p) < 2)
+        {
+            header.setError("Truncated JPEG marker.");
+            return;
+        }
+
         int size = bigEndian::uload16(p) - 2;
         p += 2;
+        if (size < 0 || size > int(end - p))
+        {
+            header.setError("Truncated JPEG marker.");
+            return;
+        }
 
         switch (marker)
         {
@@ -1345,7 +1557,8 @@ namespace mango::image::jpeg
                 const u8 magicJFXX [] = { 0x4a, 0x46, 0x58, 0x58, 0 }; // 'JFXX', 0
                 const size_t magicJFIF_length = 5;
 
-                if (size >= magicJFIF_length &&
+                // 5 byte id + version, units, density, thumbnail size
+                if (size >= 14 &&
                     (!std::memcmp(p, magicJFIF, magicJFIF_length) || !std::memcmp(p, magicJFXX, magicJFIF_length)))
                 {
                     // Skip the identifier
@@ -1420,7 +1633,7 @@ namespace mango::image::jpeg
             {
                 const u8 magicICC[] = { 0x49, 0x43, 0x43, 0x5f, 0x50, 0x52, 0x4f, 0x46, 0x49, 0x4c, 0x45, 0 }; // 'ICC_PROFILE', 0
 
-                if (!std::memcmp(p, magicICC, 12))
+                if (size >= 14 && !std::memcmp(p, magicICC, 12))
                 {
                     // skip magic
                     p += 12;
@@ -1448,7 +1661,7 @@ namespace mango::image::jpeg
                 const u8 magicMETA[] = { 0x4d, 0x45, 0x54, 0x41, 0, 0 }; // 'META', 0, 0
                 const u8 magicMeta[] = { 0x4d, 0x65, 0x74, 0x61, 0, 0 }; // 'Meta', 0, 0
 
-                if (!std::memcmp(p, magicMETA, 6) || !std::memcmp(p, magicMeta, 6))
+                if (size >= 6 && (!std::memcmp(p, magicMETA, 6) || !std::memcmp(p, magicMeta, 6)))
                 {
                     p += 6;
                     size -= 6;
@@ -1479,7 +1692,7 @@ namespace mango::image::jpeg
                     MANGO_UNREFERENCED(version);
                     MANGO_UNREFERENCED(color_transform);
                 }
-                else if (!std::memcmp(p, magic_mango, 6))
+                else if (size >= 10 && !std::memcmp(p, magic_mango, 6))
                 {
                     m_decode_interval = bigEndian::uload32(p + 6);
                     p += 10;
@@ -1497,9 +1710,15 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processSOF(const u8* p, u16 marker)
+    void StreamDecoder::processSOF(const u8* p, const u8* end, u16 marker)
     {
         printLine(Print::Debug, "[ SOF{} ]", marker - MARKER_SOF0);
+
+        if (size_t(end - p) < 8)
+        {
+            header.setError("Truncated SOF marker.");
+            return;
+        }
 
         is_baseline = (marker == MARKER_SOF0);
         is_progressive = false;
@@ -1508,6 +1727,12 @@ namespace mango::image::jpeg
         is_differential = false;
 
         u16 length = bigEndian::uload16(p + 0);
+        if (length < 8 || size_t(length) > size_t(end - p))
+        {
+            header.setError("Truncated SOF marker.");
+            return;
+        }
+
         m_precision = p[2];
         decodeState.precision = m_precision;
         m_height = bigEndian::uload16(p + 3);
@@ -1921,6 +2146,14 @@ namespace mango::image::jpeg
 
         restartCounter = restartInterval;
 
+        // GPU ingest: DHT/SOS are bound, entropy starts at p. Do not decode.
+        if (m_bind_scan_only)
+        {
+            decodeState.buffer.ptr = p;
+            decodeState.buffer.end = end;
+            return p;
+        }
+
         if (decodeState.is_arithmetic)
         {
             ArithmeticDecoder& arithmetic = decodeState.arithmetic;
@@ -1938,7 +2171,7 @@ namespace mango::image::jpeg
             }
             else if (is_multiscan)
             {
-                decodeState.decode = arith_decode_mcu;
+                selectEntropyDecode();
                 decodeMultiScan();
             }
             else if (is_progressive)
@@ -1974,7 +2207,7 @@ namespace mango::image::jpeg
             }
             else
             {
-                decodeState.decode = arith_decode_mcu;
+                selectEntropyDecode();
                 decodeSequential();
             }
 
@@ -1997,7 +2230,7 @@ namespace mango::image::jpeg
             }
             else if (is_multiscan)
             {
-                decodeState.decode = huff_decode_mcu;
+                selectEntropyDecode();
                 decodeMultiScan();
             }
             else if (is_progressive)
@@ -2033,7 +2266,7 @@ namespace mango::image::jpeg
             }
             else
             {
-                decodeState.decode = huff_decode_mcu;
+                selectEntropyDecode();
                 decodeSequential();
             }
 
@@ -2045,66 +2278,76 @@ namespace mango::image::jpeg
         return p;
     }
 
-    void StreamDecoder::processDQT(const u8* p)
+    void StreamDecoder::processDQT(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DQT ]");
 
-        u16 Lq = bigEndian::uload16(p); // Quantization table definition length
+        if (size_t(end - p) < 2)
+        {
+            header.setError("Truncated DQT marker.");
+            return;
+        }
+
+        int Lq = bigEndian::uload16(p); // Quantization table definition length
         p += 2;
         Lq -= 2;
+        if (Lq < 0 || Lq > int(end - p))
+        {
+            header.setError("Truncated DQT marker.");
+            return;
+        }
 
-        for ( ; Lq > 0; )
+        while (Lq > 0)
         {
             u8 x = *p++;
+            --Lq;
             u8 Pq = (x >> 4) & 0xf; // Quantization table element precision (0 = 8 bits, 1 = 16 bits)
             u8 Tq = (x >> 0) & 0xf; // Quantization table destination identifier (0..3)
 
             const int bits = (Pq + 1) * 8;
             printLine(Print::Debug, "  Quantization table #{} element precision: {} bits", Tq, bits);
 
-            if (!is_lossless)
+            //const u8 max_pq = is_baseline ? 0 : 1;
+            const u8 max_pq = 1; // relaxed limit; lots of non-conforming files out in the wild
+            if (Pq > max_pq)
             {
-                //const u8 max_pq = is_baseline ? 0 : 1;
-                const u8 max_pq = 1; // relaxed limit; lots of non-conforming files out in the wild
+                header.setError("Incorrect quantization table element precision ({})", Pq);
+                return;
+            }
 
-                if (Pq > max_pq)
-                {
-                    header.setError("Incorrect quantization table element precision ({})", Pq);
-                    return;
-                }
+            if (Tq > 3)
+            {
+                header.setError("Incorrect quantization table ({})", Tq);
+                return;
+            }
 
-                if (Tq > 3)
-                {
-                    header.setError("Incorrect quantization table ({})", Tq);
-                    return;
-                }
+            const int bytes = (Pq + 1) * 64;
+            if (Lq < bytes)
+            {
+                header.setError("Truncated DQT marker.");
+                return;
             }
 
             QuantTable& table = quantTable[Tq];
             table.bits = bits;
 
-            switch (Pq)
+            if (Pq == 0)
             {
-                case 0:
-                    for (int i = 0; i < 64; ++i)
-                    {
-                        table.table[zigzagTable[i]] = *p++;
-                    }
-                    break;
-
-                case 1:
-                    for (int i = 0; i < 64; ++i)
-                    {
-                        table.table[zigzagTable[i]] = bigEndian::uload16(p);
-                        p += 2;
-                    }
-                    break;
-
-                default:
-                    break;
+                for (int i = 0; i < 64; ++i)
+                {
+                    table.table[zigzagTable[i]] = *p++;
+                }
+            }
+            else
+            {
+                for (int i = 0; i < 64; ++i)
+                {
+                    table.table[zigzagTable[i]] = bigEndian::uload16(p);
+                    p += 2;
+                }
             }
 
-            Lq -= (1 + (Pq + 1) * 64);
+            Lq -= bytes;
         }
     }
 
@@ -2145,7 +2388,7 @@ namespace mango::image::jpeg
 
             printLine(Print::Debug, "  Huffman table #{} table class: {}", Th, Tc);
 
-            if (p >= end - 17)
+            if (size_t(end - p) < 17)
             {
                 header.setError("Data overflow.");
                 return;
@@ -2174,7 +2417,7 @@ namespace mango::image::jpeg
                 return;
             }
 
-            if (p >= end - count)
+            if (size_t(end - p) < size_t(count))
             {
                 header.setError("Data overflow.");
                 return;
@@ -2210,11 +2453,22 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processDAC(const u8* p)
+    void StreamDecoder::processDAC(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DAC ]");
 
+        if (size_t(end - p) < 2)
+        {
+            header.setError("Truncated DAC marker.");
+            return;
+        }
+
         u16 La = bigEndian::uload16(p); // Arithmetic coding conditioning definition length
+        if (La < 2 || size_t(La) > size_t(end - p))
+        {
+            header.setError("Truncated DAC marker.");
+            return;
+        }
         p += 2;
 
         if (is_baseline)
@@ -2280,9 +2534,15 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processDNL(const u8* p)
+    void StreamDecoder::processDNL(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DNL ]");
+
+        if (size_t(end - p) < 4)
+        {
+            header.setError("Truncated DNL marker.");
+            return;
+        }
 
         u16 Ld = bigEndian::uload16(p + 0); // Define number of lines segment length
         u16 NL = bigEndian::uload16(p + 2); // Number of lines
@@ -2292,9 +2552,15 @@ namespace mango::image::jpeg
         MANGO_UNREFERENCED(Ld);
     }
 
-    void StreamDecoder::processDRI(const u8* p)
+    void StreamDecoder::processDRI(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DRI ]");
+
+        if (size_t(end - p) < 4)
+        {
+            header.setError("Truncated DRI marker.");
+            return;
+        }
 
         int Lh = bigEndian::uload16(p + 0); // length
         if (Lh != 4)
@@ -2306,14 +2572,25 @@ namespace mango::image::jpeg
         printLine(Print::Debug, "  Restart interval: {}", restartInterval);
     }
 
-    void StreamDecoder::processDHP(const u8* p)
+    void StreamDecoder::processDHP(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ DHP ]");
 
         // NOTE: This marker is parsed but not used
 
+        if (size_t(end - p) < 4)
+        {
+            header.setError("Truncated DHP marker.");
+            return;
+        }
+
         // Get length of DHP segment (includes the length bytes)
         const int length = bigEndian::uload16(p) - 2;
+        if (length < 2 || p + 2 + length > end)
+        {
+            header.setError("Truncated DHP marker.");
+            return;
+        }
         p += 2;
 
         // Get precision (usually 8 or 12 bits)
@@ -2324,6 +2601,12 @@ namespace mango::image::jpeg
 
         printLine(Print::Debug, "  Precision: {}", precision);
         printLine(Print::Debug, "  Components: {}", ncomponents);
+
+        if (2 + 3 * ncomponents > length)
+        {
+            header.setError("Truncated DHP marker.");
+            return;
+        }
 
         // Parse component specifications
         for (int i = 0; i < ncomponents; ++i)
@@ -2341,9 +2624,15 @@ namespace mango::image::jpeg
         }
     }
 
-    void StreamDecoder::processEXP(const u8* p)
+    void StreamDecoder::processEXP(const u8* p, const u8* end)
     {
         printLine(Print::Debug, "[ EXP ]");
+
+        if (size_t(end - p) < 3)
+        {
+            header.setError("Truncated EXP marker.");
+            return;
+        }
 
         u16 Le = bigEndian::uload16(p); // Expand reference components segment length
         u8 x = p[2];
@@ -2392,56 +2681,15 @@ namespace mango::image::jpeg
                     break;
 
                 case MARKER_DHT:
-                    processDHT(p, end);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DAC:
-                    processDAC(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DQT:
-                    processDQT(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DNL:
-                    processDNL(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DRI:
-                    processDRI(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_DHP:
-                    processDHP(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_EXP:
-                    processEXP(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_COM:
-                    processCOM(p);
-                    p = stepMarker(p, end);
-                    p = seekMarker(p, end);
-                    break;
-
                 case MARKER_TEM:
-                    processTEM(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_RES:
-                    processRES(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_APP0:
                 case MARKER_APP1:
                 case MARKER_APP2:
@@ -2458,15 +2706,7 @@ namespace mango::image::jpeg
                 case MARKER_APP13:
                 case MARKER_APP14:
                 case MARKER_APP15:
-                    processAPP(p, marker);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_JPG:
-                    processJPG(p);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_JPG0:
                 case MARKER_JPG1:
                 case MARKER_JPG2:
@@ -2481,10 +2721,6 @@ namespace mango::image::jpeg
                 case MARKER_JPG11:
                 case MARKER_JPG12:
                 case MARKER_JPG13:
-                    processJPG(p, marker);
-                    p = stepMarker(p, end);
-                    break;
-
                 case MARKER_SOF0:
                 case MARKER_SOF1:
                 case MARKER_SOF2:
@@ -2498,15 +2734,64 @@ namespace mango::image::jpeg
                 case MARKER_SOF13:
                 case MARKER_SOF14:
                 case MARKER_SOF15:
-                    processSOF(p, marker);
-                    p = stepMarker(p, end);
-                    if (!decode)
+                {
+                    const MarkerSpan span = spanMarker(p, end);
+                    if (!span.next)
+                    {
+                        header.setError("Truncated JPEG marker.");
+                        p = end;
+                        break;
+                    }
+
+                    bool sof = false;
+                    switch (marker)
+                    {
+                        case MARKER_DHT: processDHT(p, span.end); break;
+                        case MARKER_DAC: processDAC(p, span.end); break;
+                        case MARKER_DQT: processDQT(p, span.end); break;
+                        case MARKER_DNL: processDNL(p, span.end); break;
+                        case MARKER_DRI: processDRI(p, span.end); break;
+                        case MARKER_DHP: processDHP(p, span.end); break;
+                        case MARKER_EXP: processEXP(p, span.end); break;
+                        case MARKER_COM: processCOM(p); break;
+                        case MARKER_TEM: processTEM(p); break;
+                        case MARKER_RES: processRES(p); break;
+                        case MARKER_JPG: processJPG(p); break;
+                        case MARKER_SOF0:
+                        case MARKER_SOF1:
+                        case MARKER_SOF2:
+                        case MARKER_SOF3:
+                        case MARKER_SOF5:
+                        case MARKER_SOF6:
+                        case MARKER_SOF7:
+                        case MARKER_SOF9:
+                        case MARKER_SOF10:
+                        case MARKER_SOF11:
+                        case MARKER_SOF13:
+                        case MARKER_SOF14:
+                        case MARKER_SOF15:
+                            processSOF(p, span.end, marker);
+                            sof = true;
+                            break;
+                        default:
+                            if (marker >= MARKER_APP0 && marker <= MARKER_APP15)
+                                processAPP(p, span.end, marker);
+                            else
+                                processJPG(p, marker);
+                            break;
+                    }
+
+                    p = span.next;
+                    if (marker == MARKER_COM)
+                        p = seekMarker(p, end);
+                    if (sof && !decode)
                     {
                         // parse header mode (no decoding)
                         scan_memory = ConstMemory(p, end - p);
-                        p = end; // terminate parsing
+                        p = end;
                     }
                     break;
+                }
 
                 case MARKER_RST0:
                 case MARKER_RST1:
@@ -2522,6 +2807,8 @@ namespace mango::image::jpeg
                     if (decode)
                     {
                         p = processSOS(p, end);
+                        if (m_bind_scan_only)
+                            return;
                     }
                     else
                     {
@@ -3116,6 +3403,86 @@ namespace mango::image::jpeg
         return m_decode_status;
     }
 
+    ImageDecodeStatus StreamDecoder::decodeCoefficients(const ImageDecodeOptions& options)
+    {
+        m_decode_status = ImageDecodeStatus();
+        m_coeff_band_index = 0;
+
+        if (!m_coeff_sink)
+        {
+            m_decode_status.setError("Coefficient sink is not registered.");
+            return m_decode_status;
+        }
+
+        if (!scan_memory.address || !header)
+        {
+            m_decode_status.setError(header.info);
+            return m_decode_status;
+        }
+
+        if (is_lossless)
+        {
+            m_decode_status.setError("Lossless JPEG has no DCT coefficients.");
+            return m_decode_status;
+        }
+
+        const size_t frame_samples = size_t(xmcu) * size_t(ymcu) * size_t(blocks_in_mcu) * 64;
+        if (!m_coeff_storage || m_coeff_storage_samples < frame_samples)
+        {
+            m_decode_status.setError("decodeCoefficients requires setCoeffStorage() for the full frame.");
+            return m_decode_status;
+        }
+
+        if (m_coeff_order == CoeffOrder::Spectral)
+        {
+            ensureSpectralQuantTables();
+        }
+
+        if (is_progressive || is_multiscan)
+        {
+            std::memset(m_coeff_storage, 0, frame_samples * sizeof(s16));
+        }
+
+        // Coefficient path: Spectral MCU writes. Parallel Huffman when the scan
+        // has independent restart segments (Mango1 offsets, or DRI with
+        // restartInterval == xmcu — same rules as decodeSequentialMT).
+        m_coefficients_only = true;
+        m_hardware_concurrency = int(options.multithread ? ThreadPool::getHardwareConcurrency() : 1);
+        m_sink.interface = m_interface;
+        m_sink.target = nullptr;
+        m_sink.surface = nullptr;
+        m_sink.direct = true;
+
+        parse(scan_memory, true);
+
+        if (!header)
+        {
+            blockVector.resize(0);
+            m_coefficients_only = false;
+            m_decode_status.setError(header.info);
+            return m_decode_status;
+        }
+
+        if (m_interface && m_interface->cancelled)
+        {
+            blockVector.resize(0);
+            m_coefficients_only = false;
+            m_decode_status.info = getInfo();
+            return m_decode_status;
+        }
+
+        if ((is_progressive || is_multiscan) && !is_lossless)
+        {
+            finishProgressive();
+        }
+
+        blockVector.resize(0);
+        m_coefficients_only = false;
+        m_decode_status.direct = true;
+        m_decode_status.info = getInfo();
+        return m_decode_status;
+    }
+
     std::string StreamDecoder::chromaSubsampling() const
     {
         if (m_components <= 1)
@@ -3160,11 +3527,30 @@ namespace mango::image::jpeg
 
     int StreamDecoder::getTaskSize(int tasks) const
     {
+        // Cap concurrency for scheduling; keep each queue job fat enough that
+        // Huffman ≫ enqueue overhead (64+ core boxes otherwise get N≈1..2).
         constexpr int max_threads = 64;
+        constexpr int min_rows_per_task = 8;
         const int threads = std::min(m_hardware_concurrency, max_threads);
-        const int tasks_per_thread = threads > 1 ? std::max(tasks / threads, 1) : 0;
-        //printf("Scheduling %d tasks in %d threads (%d tasks/thread)\n", tasks, threads, tasks_per_thread);
-        return tasks_per_thread;
+        if (threads <= 1)
+        {
+            return 0;
+        }
+        return std::min(tasks, std::max(tasks / threads, min_rows_per_task));
+    }
+
+    const u8* StreamDecoder::skipRestartMarkers(const u8* p, const u8* end, int count) const
+    {
+        for (int n = 0; n < count; ++n)
+        {
+            p = seekMarker(p, end);
+            if (!isRestartMarker(p))
+            {
+                return end;
+            }
+            p += 2;
+        }
+        return p;
     }
 
     void StreamDecoder::decodeLossless()
@@ -3328,6 +3714,12 @@ namespace mango::image::jpeg
 
     void StreamDecoder::decodeSequential()
     {
+        if (m_coefficients_only)
+        {
+            decodeSequentialCoefficients();
+            return;
+        }
+
         if (m_hardware_concurrency > 1)
         {
             int n = getTaskSize(ymcu);
@@ -3337,6 +3729,326 @@ namespace mango::image::jpeg
         {
             decodeSequentialST();
         }
+    }
+
+    void StreamDecoder::decodeSequentialCoefficients()
+    {
+        const int mcu_data_size = blocks_in_mcu * 64;
+
+        auto emitRows = [&](int y0, int y1, const u8* row0_ptr, auto advance_row)
+        {
+            const int rows = y1 - y0;
+            const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+            const bool last = (y1 >= ymcu);
+
+            CoeffSpan span = bindCoeffSpan(y0, samples);
+            if (!span.data)
+            {
+                header.setError("Coefficient band allocation failed.");
+                return false;
+            }
+
+            const u8* ptr = row0_ptr;
+            s16* out = span.data;
+
+            for (int row = y0; row < y1; ++row)
+            {
+                DecodeState state = decodeState;
+                state.buffer.ptr = ptr;
+
+                for (int x = 0; x < xmcu; ++x)
+                {
+                    state.decode(out, &state);
+                    out += mcu_data_size;
+                }
+
+                ptr = advance_row(state.buffer.ptr, row);
+                if (!ptr)
+                {
+                    discardCoeffSpan(span);
+                    header.setError("Coefficient restart segment truncated.");
+                    return false;
+                }
+            }
+
+            emitCoeffBand(span.data, samples, y0, y1, last, span.recycle);
+            return true;
+        };
+
+        // -----------------------------------------------------------------
+        // Mango1: APP14 offsets → independent MCU-row entropy (same as pixel MT)
+        // -----------------------------------------------------------------
+        if (!m_restart_offsets.empty())
+        {
+            if (m_restart_offsets.size() < size_t(ymcu))
+            {
+                header.setError("Mango1 restart offset table is shorter than ymcu.");
+                return;
+            }
+
+            const u32* offsets = m_restart_offsets.data();
+            const u8* scan_start = decodeState.buffer.ptr;
+            const int N = (m_hardware_concurrency > 1) ? std::max(getTaskSize(ymcu), 1) : ymcu;
+
+            if (m_hardware_concurrency > 1 && N < ymcu)
+            {
+                ConcurrentQueue queue("jpeg.coeff.mango1");
+
+                for (int y = 0; y < ymcu; y += N)
+                {
+                    if (m_interface && m_interface->cancelled)
+                    {
+                        queue.cancel();
+                        break;
+                    }
+
+                    const int y0 = y;
+                    const int y1 = std::min(y + N, ymcu);
+                    const int rows = y1 - y0;
+                    const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+                    const bool last = (y1 >= ymcu);
+                    const u8* row0_ptr = (y0 == 0) ? scan_start : (m_memory.address + offsets[y0 - 1]);
+
+                    CoeffSpan span = bindCoeffSpan(y0, samples);
+                    if (!span.data)
+                    {
+                        header.setError("Coefficient band allocation failed.");
+                        queue.cancel();
+                        return;
+                    }
+
+                    queue.enqueue([=, this]
+                    {
+                        if (m_interface && m_interface->cancelled)
+                        {
+                            discardCoeffSpan(span);
+                            return;
+                        }
+
+                        const u8* ptr = row0_ptr;
+                        s16* out = span.data;
+
+                        for (int row = y0; row < y1; ++row)
+                        {
+                            if (m_interface && m_interface->cancelled)
+                            {
+                                discardCoeffSpan(span);
+                                return;
+                            }
+
+                            // Fresh state each row: DC predictors restart at segment boundary
+                            // (offsets point past each RST; same model as decodeSequentialMT).
+                            DecodeState state = decodeState;
+                            state.buffer.ptr = ptr;
+                            ptr = m_memory.address + offsets[row];
+
+                            for (int x = 0; x < xmcu; ++x)
+                            {
+                                state.decode(out, &state);
+                                out += mcu_data_size;
+                            }
+                        }
+
+                        emitCoeffBand(span.data, samples, y0, y1, last, span.recycle);
+                    });
+                }
+
+                queue.wait();
+            }
+            else
+            {
+                for (int y = 0; y < ymcu; )
+                {
+                    if (m_interface && m_interface->cancelled)
+                        break;
+
+                    const int y0 = y;
+                    const int y1 = std::min(y + std::max(N, 1), ymcu);
+                    const u8* row0_ptr = (y0 == 0) ? scan_start : (m_memory.address + offsets[y0 - 1]);
+
+                    if (!emitRows(y0, y1, row0_ptr, [&](const u8*, int row) -> const u8*
+                    {
+                        return m_memory.address + offsets[row];
+                    }))
+                    {
+                        return;
+                    }
+
+                    y = y1;
+                }
+            }
+
+            decodeState.buffer.ptr = m_memory.address + offsets[ymcu - 1];
+            return;
+        }
+
+        // -----------------------------------------------------------------
+        // Standard DRI with one restart per MCU row → parallel (pixel MT twin)
+        // -----------------------------------------------------------------
+        if (restartInterval == xmcu && m_hardware_concurrency > 1)
+        {
+            ConcurrentQueue queue("jpeg.coeff.dri");
+            const int N = std::max(getTaskSize(ymcu), 1);
+            const u8* p = decodeState.buffer.ptr;
+
+            for (int y = 0; y < ymcu; y += N)
+            {
+                if (m_interface && m_interface->cancelled)
+                {
+                    queue.cancel();
+                    break;
+                }
+
+                const int y0 = y;
+                const int y1 = std::min(y + N, ymcu);
+                const int rows = y1 - y0;
+                const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+                const bool last = (y1 >= ymcu);
+
+                CoeffSpan span = bindCoeffSpan(y0, samples);
+                if (!span.data)
+                {
+                    header.setError("Coefficient band allocation failed.");
+                    queue.cancel();
+                    return;
+                }
+
+                queue.enqueue([=, this] (const u8* p_start)
+                {
+                    if (m_interface && m_interface->cancelled)
+                    {
+                        discardCoeffSpan(span);
+                        return;
+                    }
+
+                    const u8* ptr = p_start;
+                    s16* out = span.data;
+
+                    for (int row = y0; row < y1; ++row)
+                    {
+                        if (m_interface && m_interface->cancelled)
+                        {
+                            discardCoeffSpan(span);
+                            return;
+                        }
+
+                        // Fresh state each row — DC cleared; RST skipped after the row.
+                        DecodeState state = decodeState;
+                        state.buffer.ptr = ptr;
+
+                        for (int x = 0; x < xmcu; ++x)
+                        {
+                            state.decode(out, &state);
+                            out += mcu_data_size;
+                        }
+
+                        ptr = seekMarker(state.buffer.ptr, state.buffer.end);
+                        if (isRestartMarker(ptr))
+                        {
+                            ptr += 2;
+                        }
+
+                        if (ptr >= state.buffer.end)
+                        {
+                            discardCoeffSpan(span);
+                            return;
+                        }
+                    }
+
+                    emitCoeffBand(span.data, samples, y0, y1, last, span.recycle);
+                }, p);
+
+                // One walk to the N-th RST → start of the next task's first row.
+                p = skipRestartMarkers(p, decodeState.buffer.end, y1 - y0);
+                if (p >= decodeState.buffer.end)
+                {
+                    break;
+                }
+            }
+
+            queue.wait();
+            p = seekMarker(p - 12, decodeState.buffer.end);
+            decodeState.buffer.ptr = p;
+            return;
+        }
+
+        // -----------------------------------------------------------------
+        // Serial entropy → recycled coeff bands (no DRI, or odd DRI spacing)
+        // -----------------------------------------------------------------
+        // Matches decodeSequentialST restart handling: count MCUs, restart(),
+        // seekMarker, skip RSTn. Correct for any restartInterval including
+        // mid-row markers (spec-violating but tolerated).
+        const int N = 8;
+        int restart_counter = 0;
+
+        for (int y = 0; y < ymcu; y += N)
+        {
+            if (m_interface && m_interface->cancelled)
+            {
+                break;
+            }
+
+            const int y0 = y;
+            const int y1 = std::min(y + N, ymcu);
+            const int rows = y1 - y0;
+            const size_t samples = size_t(rows) * size_t(xmcu) * size_t(mcu_data_size);
+            const bool last = (y1 >= ymcu);
+
+            CoeffSpan span = bindCoeffSpan(y0, samples);
+            if (!span.data)
+            {
+                header.setError("Coefficient band allocation failed.");
+                return;
+            }
+
+            s16* out = span.data;
+            bool out_of_data = false;
+
+            for (int row = y0; row < y1 && !out_of_data; ++row)
+            {
+                for (int x = 0; x < xmcu; ++x)
+                {
+                    decodeState.decode(out, &decodeState);
+                    out += mcu_data_size;
+
+                    if (restartInterval && ++restart_counter == restartInterval)
+                    {
+                        decodeState.restart();
+                        restart_counter = 0;
+
+                        const u8* p = decodeState.buffer.ptr;
+                        p = seekMarker(p, decodeState.buffer.end);
+                        if (isRestartMarker(p))
+                        {
+                            p += 2;
+                        }
+
+                        if (p >= decodeState.buffer.end)
+                        {
+                            out_of_data = true;
+                            break;
+                        }
+
+                        decodeState.buffer.ptr = p;
+                    }
+                }
+
+                if (decodeState.buffer.ptr >= decodeState.buffer.end)
+                {
+                    out_of_data = true;
+                }
+            }
+
+            emitCoeffBand(span.data, samples, y0, y1, last || out_of_data, span.recycle);
+
+            if (out_of_data)
+            {
+                break;
+            }
+        }
+
+        const u8* p = seekMarker(decodeState.buffer.ptr - 12, decodeState.buffer.end);
+        decodeState.buffer.ptr = p;
     }
 
     void StreamDecoder::decodeSequentialST()
@@ -3704,15 +4416,7 @@ namespace mango::image::jpeg
                 }, p);
 
                 // skip N restart intervals (handled by the task queue)
-                for (int i = y0; i < y1; ++i)
-                {
-                    p = seekMarker(p, decodeState.buffer.end);
-                    if (isRestartMarker(p))
-                    {
-                        p += 2;
-                    }
-                }
-
+                p = skipRestartMarkers(p, decodeState.buffer.end, y1 - y0);
                 if (p >= decodeState.buffer.end)
                 {
                     // out of data
@@ -3773,7 +4477,7 @@ namespace mango::image::jpeg
 
     void StreamDecoder::decodeMultiScan()
     {
-        s16* data = blockVector;
+        s16* data = progressiveCoeffBase();
         data += decodeState.block[0].offset;
 
         for (int y = 0; y < ymcu; ++y)
@@ -3823,7 +4527,7 @@ namespace mango::image::jpeg
     {
         if (restartInterval)
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             const u8* p = decodeState.buffer.ptr;
 
@@ -3868,7 +4572,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             for (int i = 0; i < mcus; ++i)
             {
@@ -3887,7 +4591,7 @@ namespace mango::image::jpeg
     {
         if (restartInterval)
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             const int hsf = scanFrame->hsf;
             const int vsf = scanFrame->vsf;
@@ -3960,7 +4664,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
 
             const int hsf = scanFrame->hsf;
             const int vsf = scanFrame->vsf;
@@ -3999,6 +4703,14 @@ namespace mango::image::jpeg
 
     void StreamDecoder::finishProgressive()
     {
+        if (m_coefficients_only)
+        {
+            // Progressive scans already accumulated in the caller storage.
+            const size_t samples = size_t(mcus) * size_t(blocks_in_mcu) * 64;
+            emitCoeffBand(m_coeff_storage, samples, 0, ymcu, true, false);
+            return;
+        }
+
         int n = getTaskSize(ymcu);
         if (n)
         {
@@ -4030,7 +4742,7 @@ namespace mango::image::jpeg
         }
         else
         {
-            s16* data = blockVector;
+            s16* data = progressiveCoeffBase();
             process_range(0, ymcu, data);
         }
     }
@@ -4153,6 +4865,268 @@ namespace mango::image::jpeg
     void StreamDecoder::blit_and_update(const ImageDecodeRect& rect)
     {
         m_sink.finalize(rect);
+    }
+
+    EntropyStream StreamDecoder::extractEntropy()
+    {
+        EntropyStream out;
+
+        if (!header)
+        {
+            out.error = header.info.empty() ? "JPEG header is not valid" : header.info;
+            return out;
+        }
+        if (is_progressive || is_lossless || is_differential || decodeState.is_arithmetic)
+        {
+            out.error = "entropy extract supports baseline Huffman only";
+            return out;
+        }
+        if (!scan_memory.address || !scan_memory.size)
+        {
+            out.error = "JPEG scan is missing";
+            return out;
+        }
+        if (ymcu <= 0 || xmcu <= 0)
+        {
+            out.error = "JPEG MCU grid is missing";
+            return out;
+        }
+
+        const bool mango = hasMango1();
+        if (mango)
+        {
+            if (m_decode_interval <= 0)
+            {
+                out.error = "Mango1 interval is missing";
+                return out;
+            }
+            const int rows_per_segment = m_decode_interval;
+            const int segment_count = (ymcu + rows_per_segment - 1) / rows_per_segment;
+            if (m_restart_offsets.size() != size_t(segment_count))
+            {
+                out.error = "Mango1 offset count does not match the interval";
+                return out;
+            }
+        }
+
+        m_bind_scan_only = true;
+        parse(scan_memory, true);
+        m_bind_scan_only = false;
+
+        if (!header)
+        {
+            out.error = header.info.empty() ? "failed to bind SOS" : header.info;
+            return out;
+        }
+
+        const u8* const base = m_memory.address;
+        const u8* const file_end = base + m_memory.size;
+        const u8* const entropy = decodeState.buffer.ptr;
+        if (!entropy || entropy < base || entropy >= file_end)
+        {
+            out.error = "entropy start is outside the file";
+            return out;
+        }
+        if (decodeState.blocks <= 0 || decodeState.blocks > 10)
+        {
+            out.error = "unsupported MCU block count";
+            return out;
+        }
+
+        int rows_per_segment = 0;
+        size_t packed = 0;
+
+        if (mango)
+        {
+            rows_per_segment = m_decode_interval;
+            const int segment_count = (ymcu + rows_per_segment - 1) / rows_per_segment;
+            out.segments.reserve(size_t(segment_count));
+
+            for (int s = 0; s < segment_count; ++s)
+            {
+                const int y0 = s * rows_per_segment;
+                const int y1 = std::min(y0 + rows_per_segment, ymcu);
+                const u8* begin = (s == 0) ? entropy : (base + m_restart_offsets[size_t(s - 1)]);
+                const u8* end = base + m_restart_offsets[size_t(s)];
+
+                if (begin < base || end > file_end || begin >= end)
+                {
+                    out.error = "Mango1 segment is outside the file";
+                    out.segments.clear();
+                    return out;
+                }
+
+                // Older files end every interval, including the last, with RSTn and
+                // the offset points just past it. New files replace the final RSTn
+                // with EOI and store that offset on the EOI byte, so the last
+                // segment has no marker to strip.
+                const bool last = (s + 1 == segment_count);
+                const bool eoi = last && (end + 2 <= file_end) && bigEndian::uload16(end) == MARKER_EOI;
+                if ((end - begin) >= 2 && isRestartMarker(end - 2))
+                {
+                    end -= 2;
+                }
+                else if (!eoi)
+                {
+                    out.error = "Mango1 segment is missing its trailing RST marker";
+                    out.segments.clear();
+                    return out;
+                }
+
+                EntropySegment seg;
+                seg.bytes = ConstMemory(begin, size_t(end - begin));
+                seg.mcu_y0 = y0;
+                seg.mcu_y1 = y1;
+                seg.mcus = (y1 - y0) * xmcu;
+                seg.packed_offset = packed;
+                packed += seg.bytes.size;
+                out.segments.push_back(seg);
+            }
+        }
+        else if (restartInterval > 0)
+        {
+            // Same shape as Mango1: each interval is a whole number of MCU rows.
+            // The CPU decoder already locates RSTn with seekMarker (0xFF00 stuffed).
+            if (restartInterval % xmcu != 0)
+            {
+                out.error = "restart interval does not end on an MCU row";
+                return out;
+            }
+
+            rows_per_segment = restartInterval / xmcu;
+            const int total_mcus = xmcu * ymcu;
+            const int segment_count = (total_mcus + restartInterval - 1) / restartInterval;
+            const u8* const scan_end = decodeState.buffer.end;
+            const u8* cursor = entropy;
+            bool last_was_rst = false;
+            const u8* last_rst = nullptr;
+
+            out.segments.reserve(size_t(segment_count));
+            for (int s = 0; s < segment_count; ++s)
+            {
+                const bool last = (s + 1 == segment_count);
+                const u8* marker = seekMarker(cursor, scan_end);
+                const bool rst = (marker + 1 < scan_end) && isRestartMarker(marker);
+                if (!last && !rst)
+                {
+                    out.error = "restart marker is missing";
+                    out.segments.clear();
+                    return out;
+                }
+
+                const u8* seg_end = rst ? marker : (marker < scan_end ? marker : scan_end);
+                if (cursor < entropy || seg_end > scan_end || cursor >= seg_end)
+                {
+                    out.error = "restart segment is outside the scan";
+                    out.segments.clear();
+                    return out;
+                }
+
+                const int y0 = s * rows_per_segment;
+                const int y1 = std::min(y0 + rows_per_segment, ymcu);
+                EntropySegment seg;
+                seg.bytes = ConstMemory(cursor, size_t(seg_end - cursor));
+                seg.mcu_y0 = y0;
+                seg.mcu_y1 = y1;
+                seg.mcus = (y1 - y0) * xmcu;
+                seg.packed_offset = packed;
+                packed += seg.bytes.size;
+                out.segments.push_back(seg);
+
+                if (rst)
+                {
+                    last_was_rst = true;
+                    last_rst = marker;
+                    cursor = marker + 2;
+                }
+                else
+                {
+                    last_was_rst = false;
+                }
+            }
+
+            if (last_was_rst)
+            {
+                const u8* extra = seekMarker(last_rst + 2, scan_end);
+                if ((extra + 1 < scan_end) && isRestartMarker(extra))
+                {
+                    out.error = "too many restart markers";
+                    out.segments.clear();
+                    return out;
+                }
+            }
+        }
+        else
+        {
+            // No restart markers. One segment is the whole scan; the GPU
+            // overlaps chunks inside it and self-synchronizes.
+            rows_per_segment = ymcu;
+            const u8* const scan_end = decodeState.buffer.end;
+            const u8* marker = seekMarker(entropy, scan_end);
+            const u8* seg_end = (marker < scan_end) ? marker : scan_end;
+            if (seg_end <= entropy)
+            {
+                out.error = "entropy scan is empty";
+                return out;
+            }
+
+            EntropySegment seg;
+            seg.bytes = ConstMemory(entropy, size_t(seg_end - entropy));
+            seg.mcu_y0 = 0;
+            seg.mcu_y1 = ymcu;
+            seg.mcus = ymcu * xmcu;
+            seg.packed_offset = 0;
+            packed = seg.bytes.size;
+            out.segments.push_back(seg);
+        }
+
+        out.packed_bytes = packed;
+        out.blocks_in_mcu = decodeState.blocks;
+        for (int i = 0; i < decodeState.blocks; ++i)
+        {
+            out.block[i].component = decodeState.block[i].pred;
+            out.block[i].dc = decodeState.block[i].dc;
+            out.block[i].ac = decodeState.block[i].ac;
+        }
+
+        const HuffmanDecoder& huff = decodeState.huffman;
+        for (int tc = 0; tc < 2; ++tc)
+        {
+            for (int th = 0; th < 4; ++th)
+            {
+                const HuffmanTable& table = huff.table[tc][th];
+                int count = 0;
+                for (int len = 1; len <= 16; ++len)
+                    count += table.size[len];
+                if (count <= 0 || count > 256)
+                    continue;
+
+                HuffmanCodeTable codes;
+                codes.cls = tc;
+                codes.id = th;
+                codes.nvalues = count;
+                for (int len = 0; len < 16; ++len)
+                    codes.bits[len] = table.size[len + 1];
+                std::memcpy(codes.values, table.value, size_t(count));
+                out.huffman.push_back(codes);
+            }
+        }
+        if (out.huffman.empty())
+        {
+            out.error = "no Huffman tables in scan";
+            out.segments.clear();
+            return out;
+        }
+
+        out.width = m_width;
+        out.height = m_height;
+        out.xblock = xblock;
+        out.yblock = yblock;
+        out.xmcu = xmcu;
+        out.ymcu = ymcu;
+        out.rows_per_segment = rows_per_segment;
+        out.ok = true;
+        return out;
     }
 
 } // namespace mango::image::jpeg

@@ -12,7 +12,6 @@
 #include <mutex>
 #include <functional>
 #include <condition_variable>
-#include <future>
 #include <mango/core/exception.hpp>
 #include <mango/core/memory.hpp>
 #include <mango/core/atomic.hpp>
@@ -294,7 +293,8 @@ namespace mango
         {
             std::atomic<int> count { 1 };
             std::function<void()> func;
-            std::promise<void> promise;
+            // Published by consume(), or by the last Ticket if consume() never runs.
+            std::atomic<bool> ready { false };
         };
 
     public:
@@ -318,7 +318,8 @@ namespace mango
             void consume(F&& f, Args&&... args) const
             {
                 task->func = std::bind_front(std::forward<F>(f), std::forward<Args>(args)...);
-                task->promise.set_value();
+                task->ready.store(true, std::memory_order_release);
+                task->ready.notify_one();
             }
         };
 
