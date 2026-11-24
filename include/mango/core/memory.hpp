@@ -13,6 +13,14 @@
     #include <span>
 #endif
 
+#if defined(MANGO_COMPILER_MSVC)
+    #if defined(MANGO_CPU_INTEL)
+        #include <xmmintrin.h>
+    #elif defined(MANGO_CPU_ARM)
+        #include <intrin.h>
+    #endif
+#endif
+
 namespace mango::detail
 {
 
@@ -175,6 +183,27 @@ namespace mango
     {
         void* ptr = aligned_malloc(count * sizeof(T), alignment);
         return reinterpret_cast<T*>(ptr);
+    }
+
+    // -----------------------------------------------------------------------
+    // prefetch
+    // -----------------------------------------------------------------------
+
+    // Hint that the cache line at address will be read soon. Worth it when the
+    // next addresses are known but not sequential (tables, offset lists, tree
+    // nodes); the hardware prefetcher already covers linear streams. Never faults.
+
+    inline void prefetch(const void* address)
+    {
+#if defined(MANGO_COMPILER_MSVC) && defined(MANGO_CPU_INTEL)
+        _mm_prefetch(reinterpret_cast<const char*>(address), _MM_HINT_T0);
+#elif defined(MANGO_COMPILER_MSVC) && defined(MANGO_CPU_ARM)
+        __prefetch(address);
+#elif defined(MANGO_COMPILER_GCC) || defined(MANGO_COMPILER_CLANG)
+        __builtin_prefetch(address, 0, 3);
+#else
+        (void)address;
+#endif
     }
 
     // -----------------------------------------------------------------------
