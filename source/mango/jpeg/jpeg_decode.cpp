@@ -699,32 +699,27 @@ namespace mango::image::jpeg
 
                 while (p < end)
                 {
-                    if (p[0] == 0xff)
+                    p = reinterpret_cast<const u8*>(std::memchr(p, 0xff, size_t(end - p)));
+                    if (!p || p + 1 >= end)
+                        return end;
+
+                    const u8 mm = p[1];
+
+                    if (mm == 0x00 || mm == 0xff || (mm >= 0xd0 && mm <= 0xd7))
                     {
-                        if (p + 1 >= end)
-                            return end;
-
-                        const u8 mm = p[1];
-
-                        if (mm == 0x00 || mm == 0xff || (mm >= 0xd0 && mm <= 0xd7))
-                        {
-                            p += 2; // stuffed byte / fill / RSTn
-                            continue;
-                        }
-
-                        if (mm == 0xd9)
-                            return p + 2; // EOI
-
-                        // another scan or tables between scans
-                        if (p + 4 > end)
-                            return end;
-
-                        const u32 l2 = (u32(p[2]) << 8) | p[3];
-                        p = p + 2 + l2;
+                        p += 2; // stuffed byte / fill / RSTn
                         continue;
                     }
 
-                    ++p;
+                    if (mm == 0xd9)
+                        return p + 2; // EOI
+
+                    // another scan or tables between scans
+                    if (p + 4 > end)
+                        return end;
+
+                    const u32 l2 = (u32(p[2]) << 8) | p[3];
+                    p = p + 2 + l2;
                 }
 
                 return end;
