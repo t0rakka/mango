@@ -46,6 +46,12 @@ struct FileEntry
     u64 size = 0;
 };
 
+struct Failure
+{
+    std::string path;
+    std::string reason;
+};
+
 struct Stats
 {
     std::mutex mutex;
@@ -67,6 +73,8 @@ struct Stats
 
     double min_ready_ms = 1e300;
     double max_ready_ms = 0.0;
+
+    std::vector<Failure> failures;
 };
 
 std::string megabytes(size_t bytes)
@@ -235,8 +243,7 @@ private:
         ConstMemory memory = *file;
         if (!memory.size)
         {
-            std::lock_guard lock(m_stats.mutex);
-            ++m_stats.failed;
+            recordFailure(entry.path, "empty file / unreadable");
             ++m_completed;
             return;
         }
@@ -250,11 +257,9 @@ private:
 
         if (!texture)
         {
-            std::lock_guard lock(m_stats.mutex);
-            ++m_stats.failed;
+            recordFailure(entry.path,
+                texture.error.empty() ? "decode() rejected (header/format)" : texture.error);
             ++m_completed;
-            if (m_args.verbose)
-                printLine("header FAIL: {} ({})", entry.path, texture.error);
             return;
         }
 
@@ -316,12 +321,15 @@ private:
             {
                 ++m_stats.cancelled;
             }
-            else
-            {
-                ++m_stats.failed;
-                if (m_args.verbose)
-                    printLine("FAIL: {} ({})", path.empty() ? "?" : path, result.error);
-            }
+        }
+
+        if (result.status != TextureStatus::Ready && result.status != TextureStatus::Cancelled)
+        {
+            // Outside the stats lock — recordFailure takes it.
+            const std::string reason = result.error.empty()
+                ? std::string(getString(result.status))
+                : result.error;
+            recordFailure(path.empty() ? "?" : path, reason);
         }
 
         // Drop the VkImage immediately — this bench measures READY throughput,
@@ -330,6 +338,17 @@ private:
             m_allocator->destroyImage(result.image);
 
         ++m_completed;
+    }
+
+    void recordFailure(const std::string& path, const std::string& reason)
+    {
+        Failure failure { path, reason };
+        {
+            std::lock_guard lock(m_stats.mutex);
+            ++m_stats.failed;
+            m_stats.failures.push_back(failure);
+        }
+        printLine("FAIL: {} ({})", path, reason);
     }
 
     void finish()
@@ -376,11 +395,22 @@ private:
         summary += fmt::format(
             "  throughput : {:.1f} images/s, {:.0f} MP/s  ({:.1f} MP total)\n"
             "  image mem  : {} total allocations (destroyed on Ready)\n"
-            "  peak RSS   : {}\n"
-            "==================================================\n",
+            "  peak RSS   : {}\n",
             ips, mps, m_stats.sum_megapixels,
             megabytes(size_t(m_stats.sum_image_bytes)),
             megabytes(processPeakBytes()));
+
+        if (!m_stats.failures.empty())
+        {
+            summary += fmt::format("  failures   : {}\n", m_stats.failures.size());
+            for (const Failure& failure : m_stats.failures)
+            {
+                summary += fmt::format("    - {}  ({})\n",
+                    failure.path, failure.reason);
+            }
+        }
+
+        summary += "==================================================\n";
 
         printLine("{}", summary);
         requestQuit();
