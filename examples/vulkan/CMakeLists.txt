@@ -4,6 +4,7 @@ list(APPEND EXAMPLES
     wobble
     font
     vkimageview
+    vkjpegbench
 )
 
 if (IMAGE_FORMAT_KTX2)
