@@ -217,4 +217,12 @@ namespace mango::vulkan
         }
     }
 
+    void Allocator::invalidate(VmaAllocation allocation, VkDeviceSize offset, VkDeviceSize size)
+    {
+        if (m_allocator != VK_NULL_HANDLE && allocation != VK_NULL_HANDLE)
+        {
+            vmaInvalidateAllocation(m_allocator, allocation, offset, size);
+        }
+    }
+
 } // namespace mango::vulkan

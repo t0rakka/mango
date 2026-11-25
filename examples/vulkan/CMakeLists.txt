@@ -3,6 +3,7 @@ list(APPEND EXAMPLES
     vkbasic
     wobble
     font
+    vkimageview
 )
 
 if (IMAGE_FORMAT_KTX2)

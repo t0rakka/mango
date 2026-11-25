@@ -91,6 +91,7 @@ namespace mango::vulkan
         // Flush a host-visible, non-coherent range to the device (cheap no-op on
         // HOST_COHERENT memory). offset/size are relative to the allocation.
         void flush(VmaAllocation allocation, VkDeviceSize offset, VkDeviceSize size);
+        void invalidate(VmaAllocation allocation, VkDeviceSize offset, VkDeviceSize size);
 
         // Escape hatch: the underlying VMA allocator for fine-grained use.
         VmaAllocator handle() const

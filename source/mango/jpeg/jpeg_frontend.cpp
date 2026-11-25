@@ -55,6 +55,7 @@ namespace mango::image::jpeg
 
             cached.restart_intervals = d.hasRestartInterval();
             cached.mango1 = d.hasMango1();
+            cached.rgb = d.isRgbColorspace();
 
             cached.encoding = d.encoding();
             cached.compression = d.isArithmetic() ? "Arithmetic" : "Huffman";

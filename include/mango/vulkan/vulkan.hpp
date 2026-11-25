@@ -293,3 +293,4 @@ namespace mango::vulkan
 #include <mango/vulkan/render_target.hpp>
 #include <mango/vulkan/framebuffer.hpp>
 #include <mango/vulkan/font.hpp>
+#include <mango/vulkan/texture_decoder.hpp>

@@ -117,6 +117,16 @@ if (CMAKE_THREAD_LIBS_INIT)
     target_link_libraries(mango-core PUBLIC "${CMAKE_THREAD_LIBS_INIT}")
 endif ()
 
+if (WIN32)
+    # GetProcessMemoryInfo (ProcessMemory::peak_bytes / resident / virtual)
+    target_link_libraries(mango-core PUBLIC Psapi)
+endif ()
+
+if (APPLE)
+    # gpuUtilization() reads IOAccelerator PerformanceStatistics
+    target_link_libraries(mango-core PUBLIC "-framework IOKit" "-framework CoreFoundation")
+endif ()
+
 # ------------------------------------------------------------------------------
 # mango-window
 # ------------------------------------------------------------------------------

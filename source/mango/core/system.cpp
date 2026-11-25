@@ -8,7 +8,28 @@
 #include <mango/core/thread.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/simd/simd.hpp>
+#include <algorithm>
+#include <cstdio>
+#include <cstring>
+#include <mutex>
 #include <sstream>
+#include <thread>
+
+#if defined(MANGO_PLATFORM_WINDOWS)
+    #include <psapi.h>
+#if defined(_MSC_VER)
+    #pragma comment(lib, "Psapi.lib")
+#endif
+#endif
+
+#if defined(MANGO_PLATFORM_UNIX) && !defined(MANGO_PLATFORM_EMSCRIPTEN)
+    #include <sys/resource.h>
+#if defined(MANGO_PLATFORM_MACOS) || defined(MANGO_PLATFORM_IOS)
+    #include <mach/mach.h>
+    #include <IOKit/IOKitLib.h>
+    #include <CoreFoundation/CoreFoundation.h>
+#endif
+#endif
 
 #if defined(WIN32)
 
@@ -290,6 +311,216 @@ namespace mango
         info << "Build: " << __DATE__ << "  " << __TIME__ << std::endl;
 
         return info.str();
+    }
+
+    // ----------------------------------------------------------------------------
+    // getProcessMemory()
+    // ----------------------------------------------------------------------------
+
+    ProcessMemory getProcessMemory()
+    {
+        ProcessMemory memory;
+
+#if defined(MANGO_PLATFORM_WINDOWS)
+
+        PROCESS_MEMORY_COUNTERS_EX counters {};
+        counters.cb = sizeof(counters);
+        if (GetProcessMemoryInfo(GetCurrentProcess(),
+                reinterpret_cast<PROCESS_MEMORY_COUNTERS*>(&counters), sizeof(counters)))
+        {
+            memory.peak_bytes = u64(counters.PeakWorkingSetSize);
+            memory.resident_bytes = u64(counters.WorkingSetSize);
+            memory.virtual_bytes = u64(counters.PrivateUsage);
+        }
+
+#elif defined(MANGO_PLATFORM_MACOS) || defined(MANGO_PLATFORM_IOS)
+
+        task_vm_info_data_t vm {};
+        mach_msg_type_number_t count = TASK_VM_INFO_COUNT;
+        if (task_info(mach_task_self(), TASK_VM_INFO,
+                reinterpret_cast<task_info_t>(&vm), &count) == KERN_SUCCESS)
+        {
+            memory.resident_bytes = u64(vm.resident_size);
+            memory.virtual_bytes = u64(vm.virtual_size);
+            memory.peak_bytes = u64(vm.resident_size_peak);
+        }
+
+        // Fall back to getrusage for peak if task_info omitted it.
+        if (!memory.peak_bytes)
+        {
+            rusage usage {};
+            if (getrusage(RUSAGE_SELF, &usage) == 0)
+                memory.peak_bytes = u64(usage.ru_maxrss); // Darwin: bytes
+        }
+
+#elif defined(MANGO_PLATFORM_UNIX) && !defined(MANGO_PLATFORM_EMSCRIPTEN)
+
+        // Linux / Android / BSD: /proc gives current + HWM when present.
+        if (FILE* status = std::fopen("/proc/self/status", "r"))
+        {
+            char line[256];
+            while (std::fgets(line, sizeof(line), status))
+            {
+                unsigned long long kb = 0;
+                if (std::sscanf(line, "VmHWM: %llu", &kb) == 1)
+                    memory.peak_bytes = u64(kb) * 1024ull;
+                else if (std::sscanf(line, "VmRSS: %llu", &kb) == 1)
+                    memory.resident_bytes = u64(kb) * 1024ull;
+                else if (std::sscanf(line, "VmSize: %llu", &kb) == 1)
+                    memory.virtual_bytes = u64(kb) * 1024ull;
+            }
+            std::fclose(status);
+        }
+
+        if (!memory.peak_bytes)
+        {
+            rusage usage {};
+            if (getrusage(RUSAGE_SELF, &usage) == 0)
+            {
+                // Linux / Android / BSD: ru_maxrss is kilobytes.
+                memory.peak_bytes = u64(usage.ru_maxrss) * 1024ull;
+            }
+        }
+
+#else
+        // WASM / unknown: leave zeros.
+#endif
+
+        return memory;
+    }
+
+    // ----------------------------------------------------------------------------
+    // processCpuUtilization() / gpuUtilization()
+    // ----------------------------------------------------------------------------
+
+    namespace
+    {
+        std::mutex g_process_cpu_mutex;
+        u64 g_process_cpu_stamp_ns = 0;
+        u64 g_process_cpu_time_ns = 0;
+
+        u64 readProcessCpuTimeNs()
+        {
+#if defined(MANGO_PLATFORM_WINDOWS)
+            FILETIME create {}, exit {}, kernel {}, user {};
+            if (!GetProcessTimes(GetCurrentProcess(), &create, &exit, &kernel, &user))
+                return 0;
+            auto fileTimeToNs = [](const FILETIME& ft) -> u64
+            {
+                ULARGE_INTEGER value;
+                value.LowPart = ft.dwLowDateTime;
+                value.HighPart = ft.dwHighDateTime;
+                return u64(value.QuadPart) * 100ull; // 100 ns units
+            };
+            return fileTimeToNs(kernel) + fileTimeToNs(user);
+#elif defined(MANGO_PLATFORM_UNIX) && !defined(MANGO_PLATFORM_EMSCRIPTEN)
+            rusage usage {};
+            if (getrusage(RUSAGE_SELF, &usage) != 0)
+                return 0;
+            auto timevalToNs = [](const timeval& tv) -> u64
+            {
+                return u64(tv.tv_sec) * 1000000000ull + u64(tv.tv_usec) * 1000ull;
+            };
+            return timevalToNs(usage.ru_utime) + timevalToNs(usage.ru_stime);
+#else
+            return 0;
+#endif
+        }
+    } // namespace
+
+    float processCpuUtilization()
+    {
+        const u64 now_ns = Time::ns();
+        const u64 cpu_ns = readProcessCpuTimeNs();
+
+        std::lock_guard<std::mutex> lock(g_process_cpu_mutex);
+
+        if (g_process_cpu_stamp_ns == 0 || !cpu_ns)
+        {
+            g_process_cpu_stamp_ns = now_ns;
+            g_process_cpu_time_ns = cpu_ns;
+            return 0.0f;
+        }
+
+        const u64 wall_ns = now_ns - g_process_cpu_stamp_ns;
+        const u64 delta_cpu = cpu_ns >= g_process_cpu_time_ns ? cpu_ns - g_process_cpu_time_ns : 0;
+        g_process_cpu_stamp_ns = now_ns;
+        g_process_cpu_time_ns = cpu_ns;
+
+        if (!wall_ns)
+            return 0.0f;
+
+        const unsigned cores = std::max(1u, std::thread::hardware_concurrency());
+        float util = float(delta_cpu) / float(wall_ns * u64(cores));
+        if (util < 0.0f) util = 0.0f;
+        if (util > 1.0f) util = 1.0f;
+        return util;
+    }
+
+    float gpuUtilization()
+    {
+#if defined(MANGO_PLATFORM_MACOS) || defined(MANGO_PLATFORM_IOS)
+        CFMutableDictionaryRef matching = IOServiceMatching("IOAccelerator");
+        if (!matching)
+            return 0.0f;
+
+        io_iterator_t iterator = IO_OBJECT_NULL;
+        if (IOServiceGetMatchingServices(kIOMainPortDefault, matching, &iterator) != KERN_SUCCESS)
+            return 0.0f;
+
+        float best = 0.0f;
+        io_registry_entry_t entry = IO_OBJECT_NULL;
+        while ((entry = IOIteratorNext(iterator)) != IO_OBJECT_NULL)
+        {
+            CFMutableDictionaryRef properties = nullptr;
+            if (IORegistryEntryCreateCFProperties(entry, &properties, kCFAllocatorDefault, kNilOptions) == KERN_SUCCESS
+                && properties)
+            {
+                auto stats = static_cast<CFDictionaryRef>(
+                    CFDictionaryGetValue(properties, CFSTR("PerformanceStatistics")));
+                if (stats)
+                {
+                    auto number = static_cast<CFNumberRef>(
+                        CFDictionaryGetValue(stats, CFSTR("Device Utilization %")));
+                    if (number)
+                    {
+                        double percent = 0.0;
+                        if (CFNumberGetValue(number, kCFNumberDoubleType, &percent))
+                            best = std::max(best, float(percent) * 0.01f);
+                    }
+                }
+                CFRelease(properties);
+            }
+            IOObjectRelease(entry);
+        }
+        IOObjectRelease(iterator);
+
+        if (best < 0.0f) best = 0.0f;
+        if (best > 1.0f) best = 1.0f;
+        return best;
+
+#elif defined(MANGO_PLATFORM_LINUX) || defined(MANGO_PLATFORM_ANDROID)
+        float best = 0.0f;
+        for (int card = 0; card < 16; ++card)
+        {
+            char path[64];
+            std::snprintf(path, sizeof(path),
+                "/sys/class/drm/card%d/device/gpu_busy_percent", card);
+            if (FILE* file = std::fopen(path, "r"))
+            {
+                unsigned value = 0;
+                if (std::fscanf(file, "%u", &value) == 1)
+                    best = std::max(best, float(value) * 0.01f);
+                std::fclose(file);
+            }
+        }
+        if (best < 0.0f) best = 0.0f;
+        if (best > 1.0f) best = 1.0f;
+        return best;
+
+#else
+        return 0.0f;
+#endif
     }
 
     // ----------------------------------------------------------------------------

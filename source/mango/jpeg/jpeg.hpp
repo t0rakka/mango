@@ -765,6 +765,11 @@ namespace mango::image::jpeg
             return restartInterval > 0;
         }
 
+        bool isRgbColorspace() const
+        {
+            return m_rgb_colorspace;
+        }
+
         int mcuWidth() const { return xblock; }
         int mcuHeight() const { return yblock; }
         int mcuColumns() const { return xmcu; }

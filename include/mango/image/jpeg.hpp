@@ -59,6 +59,7 @@ namespace mango::image::jpeg
 
         bool restart_intervals = false; // DRI
         bool mango1 = false;            // APP14:'Mango1' parallel offsets
+        bool rgb = false;               // 3 components stored as RGB (no YCbCr transform)
 
         std::string encoding;           // e.g. "Baseline DCT"
         std::string compression;        // "Huffman" / "Arithmetic"

@@ -86,6 +86,35 @@ namespace mango
     std::string getPlatformInfo();
     std::string getSystemInfo();
 
+    // Process memory snapshot. Overlap across Win32 / macOS / iOS / Linux /
+    // Android / BSD. Fields that the platform cannot report stay 0 (WASM).
+    struct ProcessMemory
+    {
+        u64 peak_bytes = 0;      // peak resident / working set (ru_maxrss / PeakWorkingSet)
+        u64 resident_bytes = 0;  // current resident / working set
+        u64 virtual_bytes = 0;   // current virtual / private commit
+    };
+
+    ProcessMemory getProcessMemory();
+
+    inline u64 processPeakBytes()
+    {
+        return getProcessMemory().peak_bytes;
+    }
+
+    // Process CPU duty cycle in [0, 1] since the previous call (0 on the first
+    // call). Normalized by wall time * hardware_concurrency so 1.0 means every
+    // logical core was busy with this process. Same pulse style as
+    // ThreadPool::utilization() — ~10 Hz is enough for a HUD graph. No sampler
+    // thread; the OS already accumulates user+kernel time.
+    float processCpuUtilization();
+
+    // Instantaneous adapter GPU busy fraction in [0, 1] when the OS exposes it
+    // (macOS/iOS IOAccelerator "Device Utilization %", Linux drm
+    // gpu_busy_percent). 0 if unavailable (Windows/WASM today). No sampler
+    // thread — one registry/sysfs read per call.
+    float gpuUtilization();
+
     void startTrace(Stream* stream);
     void stopTrace();
 
