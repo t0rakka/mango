@@ -161,8 +161,10 @@ namespace mango::vulkan
 
         // Compute decodes recorded but not yet retired. Each owns a slot of device
         // buffers sized to the largest JPEG it has decoded (132 bytes per 8x8
-        // block, roughly 75 MB for a 24 MP 4:2:0 frame).
-        int max_inflight_compute = 2;
+        // block, roughly 75 MB for a 24 MP 4:2:0 frame). Default 6 matches the
+        // throughput sweet spot on high-end GPUs (vkjpegbench / RTX 4090); beyond
+        // that READY grows with little wall-time gain.
+        int max_inflight_compute = 6;
 
         // Concurrent CPU decodes. Each one is multithreaded internally.
         int max_concurrent_cpu = 2;

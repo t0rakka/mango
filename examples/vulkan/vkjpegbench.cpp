@@ -34,7 +34,7 @@ struct Args
     bool cpu = false;              // force CPU path
     bool wait_pipelines = true;    // default on for compute timing honesty
     float min_mp = 0.0f;           // 0 = send every JPEG to compute when enabled
-    int inflight = 4;              // max_inflight_compute
+    int inflight = 6;              // max_inflight_compute (TextureDecoder default)
     int cpu_jobs = 0;              // max_concurrent_cpu (0 = auto from HW threads)
     int loops = 1;                 // repeat the whole set
     int depth = 64;                // target in-flight decodes (submit window)
@@ -69,6 +69,13 @@ struct Stats
     double sum_gpu_ms = 0.0;
     double sum_decode_ms = 0.0;
     double sum_prepare_ms = 0.0;
+    double sum_prepare_parse_ms = 0.0;
+    double sum_prepare_extract_ms = 0.0;
+    double sum_prepare_unstuff_ms = 0.0;
+    double sum_prepare_tables_ms = 0.0;
+    double sum_prepare_pipelines_ms = 0.0;
+    double sum_prepare_alloc_ms = 0.0;
+    double sum_prepare_upload_ms = 0.0;
     double sum_megapixels = 0.0;
     u64 sum_image_bytes = 0;
 
@@ -310,7 +317,16 @@ private:
                 m_stats.max_ready_ms = std::max(m_stats.max_ready_ms, r.ready_ms);
 
                 if (r.path == TextureDecodePath::Compute)
+                {
                     ++m_stats.compute;
+                    m_stats.sum_prepare_parse_ms += r.prepare_parse_ms;
+                    m_stats.sum_prepare_extract_ms += r.prepare_extract_ms;
+                    m_stats.sum_prepare_unstuff_ms += r.prepare_unstuff_ms;
+                    m_stats.sum_prepare_tables_ms += r.prepare_tables_ms;
+                    m_stats.sum_prepare_pipelines_ms += r.prepare_pipelines_ms;
+                    m_stats.sum_prepare_alloc_ms += r.prepare_alloc_ms;
+                    m_stats.sum_prepare_upload_ms += r.prepare_upload_ms;
+                }
                 else if (r.path == TextureDecodePath::Cpu)
                     ++m_stats.cpu;
 
@@ -389,8 +405,21 @@ private:
 
         if (m_stats.compute)
         {
+            const double n = double(m_stats.compute);
             summary += fmt::format("  GPU avg    : {:.2f} ms  (compute timestamps)\n",
-                m_stats.sum_gpu_ms / double(m_stats.compute));
+                m_stats.sum_gpu_ms / n);
+            summary += fmt::format("  prepare avg: {:.2f} ms  (host, per compute job)\n",
+                m_stats.sum_prepare_ms / n);
+            summary += fmt::format(
+                "    parse {:.2f}  extract {:.2f}  unstuff {:.2f}  tables {:.2f}\n"
+                "    pipelines {:.2f}  alloc {:.2f}  upload {:.2f}\n",
+                m_stats.sum_prepare_parse_ms / n,
+                m_stats.sum_prepare_extract_ms / n,
+                m_stats.sum_prepare_unstuff_ms / n,
+                m_stats.sum_prepare_tables_ms / n,
+                m_stats.sum_prepare_pipelines_ms / n,
+                m_stats.sum_prepare_alloc_ms / n,
+                m_stats.sum_prepare_upload_ms / n);
         }
         if (m_stats.cpu)
         {
@@ -456,7 +485,7 @@ int mangoMain(const mango::CommandLine& commands)
         [&] { args.wait_pipelines = false; });
     commands.optionFloat("--min-mp", "smallest JPEG (megapixels) for compute (default 0 = all)",
         [&] (float value) { args.min_mp = std::max(value, 0.0f); });
-    commands.optionInt("--inflight", "TextureDecoder max_inflight_compute (default 4)",
+    commands.optionInt("--inflight", "TextureDecoder max_inflight_compute (default 6)",
         [&] (int value) { args.inflight = std::max(value, 1); });
     commands.optionInt("--cpu-jobs", "TextureDecoder max_concurrent_cpu (default: HW/2, clamped 2..16)",
         [&] (int value) { args.cpu_jobs = std::max(value, 1); });
@@ -482,7 +511,7 @@ int mangoMain(const mango::CommandLine& commands)
         printLine("  and measures READY throughput with a deep in-flight pipeline.");
         printLine("");
         printLine("  tuning:");
-        printLine("    --inflight N   compute slots (device buffers; ~75 MB @ 24 MP each)");
+        printLine("    --inflight N   compute slots (default 6; ~75 MB @ 24 MP each)");
         printLine("    --cpu-jobs N   concurrent CPU decodes");
         printLine("    --depth N      how many decodes to keep pending");
         printLine("    --cpu          force CPU path");
