@@ -554,6 +554,8 @@ struct TextureDecoder::Impl
 
     u32 m_max_dimension = 0;
     bool m_storage_supported = false;
+    std::unique_ptr<StagingArena> m_staging;
+    std::future<void> m_staging_reserve;
     std::unique_ptr<detail::JpegCompute> m_compute;
 
     // owner thread resources
@@ -606,10 +608,23 @@ struct TextureDecoder::Impl
 
         if (m_config.compute)
         {
-            m_compute = std::make_unique<detail::JpegCompute>(physicalDevice, device, allocator, m_config.max_inflight_compute);
+            m_staging = std::make_unique<StagingArena>(allocator, m_config.staging);
+            m_compute = std::make_unique<detail::JpegCompute>(physicalDevice, device, allocator,
+                *m_staging, m_config.max_inflight_compute);
             m_storage_supported = m_compute->supported();
             if (!m_storage_supported)
+            {
                 m_compute.reset();
+                m_staging.reset();
+            }
+            else
+            {
+                // The first chunk costs tens of ms on some drivers; keep it off the first decode.
+                m_staging_reserve = std::async(std::launch::async, [this]
+                {
+                    m_staging->reserve(m_config.staging.initial_chunk);
+                });
+            }
         }
 
         m_worker = std::thread([this] { workerMain(); });
@@ -643,7 +658,21 @@ struct TextureDecoder::Impl
         if (m_command_pool)
             vkDestroyCommandPool(m_device, m_command_pool, nullptr);
 
+        if (m_staging_reserve.valid())
+            m_staging_reserve.wait();
         m_compute.reset();
+        m_staging.reset();
+    }
+
+    StagingArenaStats stagingStats() const
+    {
+        return m_staging ? m_staging->stats() : StagingArenaStats();
+    }
+
+    void trimStaging()
+    {
+        if (m_staging)
+            m_staging->trim();
     }
 
     void notifyOwner()
@@ -896,6 +925,7 @@ struct TextureDecoder::Impl
         }
 
         const char* reason = detail::JpegCompute::classify(jinfo);
+        report.prepare_parse_ms = elapsedMs(t0);
         if (reason)
         {
             report.fallback_reason = reason;
@@ -908,7 +938,15 @@ struct TextureDecoder::Impl
         {
             auto compute = std::make_unique<detail::JpegComputeJob>();
             std::string error;
-            if (m_compute->prepare(decoder, *compute, m_config.wait_for_pipelines, error))
+            const bool prepared = m_compute->prepare(decoder, *compute, m_config.wait_for_pipelines, error);
+            report.prepare_extract_ms = compute->extract_ms;
+            report.prepare_unstuff_ms = compute->unstuff_ms;
+            report.prepare_tables_ms = compute->tables_ms;
+            report.prepare_pipelines_ms = compute->pipelines_ms;
+            report.prepare_alloc_ms = compute->alloc_ms;
+            report.prepare_upload_ms = compute->upload_ms;
+            report.staging_reserved_bytes = size_t(m_staging->stats().reserved_bytes);
+            if (prepared)
             {
                 job.compute = std::move(compute);
                 job.path = Path::Compute;
@@ -1501,6 +1539,16 @@ void TextureDecoder::wait()
 size_t TextureDecoder::pending() const
 {
     return m->pending();
+}
+
+StagingArenaStats TextureDecoder::stagingStats() const
+{
+    return m->stagingStats();
+}
+
+void TextureDecoder::trimStaging()
+{
+    m->trimStaging();
 }
 
 VkImageView createTextureView(VkDevice device, const ImageAllocation& image, const TextureInfo& info)

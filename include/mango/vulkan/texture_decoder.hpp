@@ -13,6 +13,7 @@
 #include <mango/core/memory.hpp>
 #include <mango/image/color.hpp>
 #include <mango/vulkan/allocator.hpp>
+#include <mango/vulkan/staging_arena.hpp>
 
 namespace mango::vulkan
 {
@@ -106,6 +107,16 @@ namespace mango::vulkan
         double downscale_ms = 0.0;      // cpu: downscale
         double staging_ms = 0.0;        // cpu: copy into the staging buffer
         double compile_ms = 0.0;        // compute: pipelines this decode had to build first
+
+        // compute: prepare_ms split
+        double prepare_parse_ms = 0.0;      // JpegDecoder header parse + classify
+        double prepare_extract_ms = 0.0;    // entropy segment extraction
+        double prepare_unstuff_ms = 0.0;    // unstuff + chunk/segment tables
+        double prepare_tables_ms = 0.0;     // Huffman tables
+        double prepare_pipelines_ms = 0.0;  // pipeline lookup (includes compile_ms)
+        double prepare_alloc_ms = 0.0;      // staging buffer allocation
+        double prepare_upload_ms = 0.0;     // byteswap + copy into staging
+
         double submit_ms = 0.0;         // decode() call to vkQueueSubmit (includes waiting for process())
         double gpu_ms = 0.0;            // GPU execution (timestamps, compute only)
 
@@ -120,6 +131,7 @@ namespace mango::vulkan
 
         size_t peak_host_bytes = 0;     // largest simultaneous CPU allocation for this decode
         size_t staging_bytes = 0;       // host-visible bytes used for the upload
+        size_t staging_reserved_bytes = 0;  // compute: staging arena size after this prepare
         size_t image_bytes = 0;         // VkImage memory requirement
     };
 
@@ -154,6 +166,12 @@ namespace mango::vulkan
 
         // Concurrent CPU decodes. Each one is multithreaded internally.
         int max_concurrent_cpu = 2;
+
+        // Host-visible upload memory for compute decodes. initial_chunk is
+        // reserved in the background at construction; the arena then stays
+        // allocated until the decoder is destroyed or trimStaging(). At the
+        // limit, preparation waits for retired decodes instead of growing.
+        StagingArenaConfig staging;
 
         // Called from any thread when process() has new work. Must be thread-safe
         // and cheap (post an event, signal a condition variable).
@@ -205,6 +223,12 @@ namespace mango::vulkan
 
         // Decodes whose callback has not fired yet.
         size_t pending() const;
+
+        // Compute upload memory: usage and reservation over the decoder lifetime.
+        StagingArenaStats stagingStats() const;
+
+        // Frees the staging chunks no decode is using.
+        void trimStaging();
 
     private:
         struct Impl;

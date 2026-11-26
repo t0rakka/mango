@@ -78,6 +78,13 @@ namespace
         printLine("  stages    : header {}, image {}, prepare {} (compile {}), decode {}, convert {}, downscale {}, staging {}",
             optionalMs(r.header_ms), optionalMs(r.image_ms), optionalMs(r.prepare_ms), optionalMs(r.compile_ms),
             optionalMs(r.decode_ms), optionalMs(r.convert_ms), optionalMs(r.downscale_ms), optionalMs(r.staging_ms));
+        if (r.prepare_ms > 0.0)
+        {
+            printLine("  prepare   : parse {}, extract {}, unstuff {}, tables {}, pipelines {}, alloc {}, upload {}",
+                optionalMs(r.prepare_parse_ms), optionalMs(r.prepare_extract_ms), optionalMs(r.prepare_unstuff_ms),
+                optionalMs(r.prepare_tables_ms), optionalMs(r.prepare_pipelines_ms), optionalMs(r.prepare_alloc_ms),
+                optionalMs(r.prepare_upload_ms));
+        }
         printLine("  queue     : submitted at {}, gpu {}", optionalMs(r.submit_ms), optionalMs(r.gpu_ms));
 
         // DECODE / READY match gpujpeg: GPU timestamps and submit→fence wall.
@@ -106,8 +113,9 @@ namespace
         printLine("  VISIBLE   : {:.2f} ms   (callback / first chance to draw)", r.visible_ms);
         printLine("  RATE      : {:.0f} MP/s decode, {:.0f} MP/s ready ({:.1f} MP)",
             mps(decode_ms), mps(r.ready_ms), mp);
-        printLine("  memory    : host peak {}, staging {}, image {}, process peak RSS {}",
+        printLine("  memory    : host peak {}, staging {}{}, image {}, process peak RSS {}",
             megabytes(r.peak_host_bytes), megabytes(r.staging_bytes),
+            r.staging_reserved_bytes ? " (arena " + megabytes(r.staging_reserved_bytes) + ")" : std::string(),
             megabytes(r.image_bytes), megabytes(processPeakBytes()));
         printLine("");
     }

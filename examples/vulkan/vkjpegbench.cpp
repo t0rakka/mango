@@ -38,6 +38,7 @@ struct Args
     int cpu_jobs = 0;              // max_concurrent_cpu (0 = auto from HW threads)
     int loops = 1;                 // repeat the whole set
     int depth = 64;                // target in-flight decodes (submit window)
+    int staging_mb = 0;            // staging arena limit (0 = default)
 };
 
 struct FileEntry
@@ -167,6 +168,11 @@ public:
         config.wait_for_pipelines = m_args.wait_pipelines;
         config.max_inflight_compute = std::max(m_args.inflight, 1);
         config.max_concurrent_cpu = std::max(m_args.cpu_jobs, 1);
+        if (m_args.staging_mb > 0)
+        {
+            config.staging.limit = VkDeviceSize(m_args.staging_mb) << 20;
+            config.staging.initial_chunk = std::min(config.staging.initial_chunk, config.staging.limit);
+        }
         config.wake = [this]
         {
             invalidate();
@@ -392,12 +398,16 @@ private:
                 m_stats.sum_decode_ms / double(std::max(m_stats.cpu, size_t(1))));
         }
 
+        const StagingArenaStats staging = m_decoder->stagingStats();
         summary += fmt::format(
             "  throughput : {:.1f} images/s, {:.0f} MP/s  ({:.1f} MP total)\n"
             "  image mem  : {} total allocations (destroyed on Ready)\n"
+            "  staging    : {} reserved in {} chunk(s), peak use {}, {} chunk allocation(s), {} wait(s)\n"
             "  peak RSS   : {}\n",
             ips, mps, m_stats.sum_megapixels,
             megabytes(size_t(m_stats.sum_image_bytes)),
+            megabytes(size_t(staging.reserved_bytes)), staging.chunks,
+            megabytes(size_t(staging.peak_used_bytes)), staging.chunk_allocations, staging.waits,
             megabytes(processPeakBytes()));
 
         if (!m_stats.failures.empty())
@@ -454,6 +464,8 @@ int mangoMain(const mango::CommandLine& commands)
         [&] (int value) { args.depth = std::max(value, 1); });
     commands.optionInt("--loops", "repeat the whole folder N times (default 1)",
         [&] (int value) { args.loops = std::max(value, 1); });
+    commands.optionInt("--staging-limit", "staging arena limit in MB (default 256)",
+        [&] (int value) { args.staging_mb = std::max(value, 1); });
     commands.positional([&] (std::string_view token)
     {
         if (args.root.empty())
@@ -477,6 +489,7 @@ int mangoMain(const mango::CommandLine& commands)
         printLine("    --min-mp F     compute threshold in megapixels (0 = all JPEGs)");
         printLine("    --no-wait      allow CPU fallback while shaders compile");
         printLine("    --loops N      replay the set");
+        printLine("    --staging-limit MB  staging arena limit");
         printLine("    --verbose      per-image READY lines");
         return 1;
     }

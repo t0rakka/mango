@@ -1034,10 +1034,12 @@ VkDeviceSize align16(VkDeviceSize v)
 // JpegCompute
 // -----------------------------------------------------------------------
 
-JpegCompute::JpegCompute(VkPhysicalDevice physicalDevice, VkDevice device, Allocator& allocator, int slots)
+JpegCompute::JpegCompute(VkPhysicalDevice physicalDevice, VkDevice device, Allocator& allocator,
+    StagingArena& staging, int slots)
     : m_physical_device(physicalDevice)
     , m_device(device)
     , m_allocator(allocator)
+    , m_staging(staging)
 {
     VkFormatProperties fp = {};
     vkGetPhysicalDeviceFormatProperties(physicalDevice, VK_FORMAT_R8G8B8A8_UNORM, &fp);
@@ -1331,7 +1333,17 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
 {
     const image::jpeg::JpegInfo& info = decoder.info();
 
+    u64 lap_us = Time::us();
+    auto lap = [&lap_us] () -> double
+    {
+        const u64 now = Time::us();
+        const double ms = double(now - lap_us) / 1000.0;
+        lap_us = now;
+        return ms;
+    };
+
     image::jpeg::EntropyStream stream = decoder.extractEntropy();
+    job.extract_ms = lap();
     if (!stream.ok)
     {
         error = stream.error.empty() ? "entropy extract failed" : "entropy: " + stream.error;
@@ -1435,6 +1447,7 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
     std::memset(bytes.get() + nunstuffed, 0, nbytes - nunstuffed);
     const u32 nwords = u32(nbytes / 4);
+    job.unstuff_ms = lap();
 
     // Huffman tables: only the ones the MCU references, packed into slots.
     std::unique_ptr<TablesGpu> tab(new TablesGpu());
@@ -1487,7 +1500,10 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
 
     // Without waiting, missing variants are queued and this image takes the CPU path.
     const Resolve mode = wait_for_pipelines ? Resolve::Wait : Resolve::Try;
-    if (!resolvePipelines(ntables, push, job.pipelines, mode, job.compile_ms, error))
+    job.tables_ms = lap();
+    const bool resolved = resolvePipelines(ntables, push, job.pipelines, mode, job.compile_ms, error);
+    job.pipelines_ms = lap();
+    if (!resolved)
     {
         if (error.empty())
             error = "compute pipelines compiling";
@@ -1543,18 +1559,17 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         total += align16(need[b]);
     }
 
-    job.staging = m_allocator.createBuffer(total, VK_BUFFER_USAGE_TRANSFER_SRC_BIT, MemoryUsage::Upload, true);
-    if (!job.staging || !job.staging.mapped)
+    lap();
+    job.staging = m_staging.acquire(total);
+    job.alloc_ms = lap();
+    if (!job.staging)
     {
         error = "staging allocation failed";
-        if (job.staging)
-            m_allocator.destroyBuffer(job.staging);
-        job.staging = {};
         return false;
     }
     job.staging_bytes = size_t(total);
 
-    u8* dst = static_cast<u8*>(job.staging.mapped);
+    u8* dst = job.staging.mapped;
 
     // Endian-swap straight into staging (no intermediate buffer). The shader
     // reads big-endian words; on LE hosts this is a 32-bit byteswap per word.
@@ -1568,7 +1583,8 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     std::memcpy(dst + job.src_offset[BindTables], tab.get(), sizeof(TablesGpu));
     std::memcpy(dst + job.src_offset[BindQt], natural_qt, sizeof(natural_qt));
     std::memcpy(dst + job.src_offset[BindSegStart], seg_start.data(), size_t(need[BindSegStart]));
-    m_allocator.flush(job.staging.allocation, 0, total);
+    m_staging.flush(job.staging, 0, total);
+    job.upload_ms = lap();
 
     return true;
 }
@@ -1730,7 +1746,7 @@ bool JpegCompute::record(VkCommandBuffer cmd, JpegComputeJob& job, VkImage image
     {
         if (job.src_size[i])
         {
-            VkBufferCopy region = { job.src_offset[i], 0, job.src_size[i] };
+            VkBufferCopy region = { job.staging.offset + job.src_offset[i], 0, job.src_size[i] };
             vkCmdCopyBuffer(cmd, job.staging.buffer, slot.buffer[i].buffer, 1, &region);
         }
     }
@@ -1845,11 +1861,7 @@ double JpegCompute::gpuMilliseconds(const JpegComputeJob& job) const
 
 void JpegCompute::release(JpegComputeJob& job)
 {
-    if (job.staging)
-    {
-        m_allocator.destroyBuffer(job.staging);
-        job.staging = {};
-    }
+    m_staging.release(job.staging);
 
     if (job.slot >= 0)
     {

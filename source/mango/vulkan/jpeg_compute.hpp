@@ -15,6 +15,7 @@
 
 #include <mango/image/jpeg.hpp>
 #include <mango/vulkan/allocator.hpp>
+#include <mango/vulkan/staging_arena.hpp>
 
 namespace mango::vulkan::detail
 {
@@ -61,7 +62,7 @@ namespace mango::vulkan::detail
         int segments = 0;
         int dc_groups = 0;
 
-        BufferAllocation staging;
+        StagingRange staging;
         size_t staging_bytes = 0;
 
         // byte offset and size of each uploaded binding inside staging (size 0 = not uploaded)
@@ -72,13 +73,24 @@ namespace mango::vulkan::detail
         VkDeviceSize need[kJpegComputeBindings] {};
 
         double compile_ms = 0.0;
+
+        // prepare() wall time split
+        double extract_ms = 0.0;        // extractEntropy
+        double unstuff_ms = 0.0;        // unstuff + chunk/segment tables
+        double tables_ms = 0.0;         // Huffman tables
+        double pipelines_ms = 0.0;      // resolvePipelines (includes compile_ms)
+        double alloc_ms = 0.0;          // staging acquire (includes waiting for space)
+        double upload_ms = 0.0;         // byteswap + memcpy + flush into staging
+
         int slot = -1;
     };
 
     class JpegCompute : private NonCopyable
     {
     public:
-        JpegCompute(VkPhysicalDevice physicalDevice, VkDevice device, Allocator& allocator, int slots);
+        // staging must outlive this object.
+        JpegCompute(VkPhysicalDevice physicalDevice, VkDevice device, Allocator& allocator,
+                    StagingArena& staging, int slots);
         ~JpegCompute();
 
         // The device can imageStore into R8G8B8A8_UNORM.
@@ -147,6 +159,7 @@ namespace mango::vulkan::detail
         VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
         VkDevice m_device = VK_NULL_HANDLE;
         Allocator& m_allocator;
+        StagingArena& m_staging;
         bool m_supported = false;
         float m_tick_ns = 0.0f;
 
