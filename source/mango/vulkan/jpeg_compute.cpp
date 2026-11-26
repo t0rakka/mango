@@ -7,6 +7,8 @@
 #include <algorithm>
 #include <cstring>
 #include <future>
+#include <iterator>
+#include <limits>
 #include <memory>
 
 #include <mango/core/bits.hpp>
@@ -146,9 +148,12 @@ void loadTabs()
 
 struct Rd { uint wi; uint a; uint b; };
 
+// Scan bytes are uploaded in file order; the bit reader wants big-endian words.
 uint wordAt(uint i)
 {
-    return i < pc.nwords ? words[i] : 0u;
+    uint w = i < pc.nwords ? words[i] : 0u;
+    w = ((w & 0x00ff00ffu) << 8) | ((w >> 8) & 0x00ff00ffu);
+    return (w << 16) | (w >> 16);
 }
 
 void seek(inout Rd r, uint pos)
@@ -1028,6 +1033,55 @@ VkDeviceSize align16(VkDeviceSize v)
     return (v + 15) & ~VkDeviceSize(15);
 }
 
+// Copies [p, end) to out, dropping the 0x00 stuffed after every 0xFF. Whole
+// 16-byte blocks are stored, so bytes past the returned pointer may be
+// written, but never past out + (end - p).
+u8* unstuff(u8* out, const u8* p, const u8* end)
+{
+#if defined(MANGO_ENABLE_SSE2)
+    const __m128i ff = _mm_set1_epi8(-1);
+    while (end - p >= 16)
+    {
+        const __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+        _mm_storeu_si128(reinterpret_cast<__m128i*>(out), v);
+        const u32 mask = u32(_mm_movemask_epi8(_mm_cmpeq_epi8(v, ff)));
+        const int n = mask ? u32_tzcnt(mask) + 1 : 16;
+        p += n;
+        out += n;
+        if (mask && p < end && *p == 0)
+            ++p;
+    }
+#elif defined(MANGO_ENABLE_NEON64)
+    const uint8x16_t ff = vdupq_n_u8(0xff);
+    while (end - p >= 16)
+    {
+        const uint8x16_t v = vld1q_u8(p);
+        vst1q_u8(out, v);
+        const uint8x16_t hit = vceqq_u8(v, ff);
+        const u64 mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(hit), 4)), 0);
+        const int n = mask ? (u64_tzcnt(mask) >> 2) + 1 : 16;
+        p += n;
+        out += n;
+        if (mask && p < end && *p == 0)
+            ++p;
+    }
+#endif
+
+    while (p < end)
+    {
+        // Copy up to and including the next 0xFF, then drop the stuffed zero after it.
+        const void* ff = std::memchr(p, 0xff, size_t(end - p));
+        const size_t run = ff ? size_t(static_cast<const u8*>(ff) - p) + 1 : size_t(end - p);
+        std::memcpy(out, p, run);
+        out += run;
+        p += run;
+        if (ff && p < end && *p == 0)
+            ++p;
+    }
+
+    return out;
+}
+
 } // namespace
 
 // -----------------------------------------------------------------------
@@ -1379,76 +1433,6 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         }
     }
 
-    // Unstuff the scan, cut it into chunks that never cross a segment.
-    size_t stuffed = 0;
-    for (const auto& seg : stream.segments)
-        stuffed += seg.bytes.size;
-
-    const size_t capacity = ((stuffed + 3u) & ~size_t(3)) + 32u;
-    std::unique_ptr<u8[]> bytes(new u8[capacity]);
-    size_t nunstuffed = 0;
-    std::vector<ChunkGpu> chunk_host;
-    std::vector<SegGpu> seg_host;
-    chunk_host.reserve(stuffed * 8 / kChunkBits + stream.segments.size() + 1);
-    seg_host.reserve(stream.segments.size());
-    u32 bit = 0;
-    int block = 0;
-    int mcu = 0;
-
-    for (const auto& seg : stream.segments)
-    {
-        const u32 seg_bit = bit;
-        const u8* p = seg.bytes.address;
-        const u8* end = p + seg.bytes.size;
-        u8* out = bytes.get() + nunstuffed;
-        while (p < end)
-        {
-            // Copy up to and including the next 0xFF, then drop the stuffed zero after it.
-            const void* ff = std::memchr(p, 0xff, size_t(end - p));
-            const size_t run = ff ? size_t(static_cast<const u8*>(ff) - p) + 1 : size_t(end - p);
-            std::memcpy(out, p, run);
-            out += run;
-            p += run;
-            if (ff && p < end && *p == 0)
-                ++p;
-        }
-        nunstuffed = size_t(out - bytes.get());
-        bit = u32(nunstuffed * 8);
-        const u32 seg_end = bit;
-
-        SegGpu sg = {};
-        sg.chunk0 = int(chunk_host.size());
-        sg.block0 = block;
-        sg.mcu0 = mcu;
-        sg.mcus = seg.mcus;
-        for (u32 at = seg_bit; at < seg_end; at += kChunkBits)
-        {
-            ChunkGpu c = {};
-            c.bit0 = at;
-            c.bit1 = std::min(at + kChunkBits, seg_end);
-            c.seg0 = seg_bit;
-            c.seg1 = seg_end;
-            c.block0 = block;
-            c.block1 = block + seg.mcus * bpm;
-            chunk_host.push_back(c);
-        }
-        sg.nchunks = int(chunk_host.size()) - sg.chunk0;
-        seg_host.push_back(sg);
-        block += seg.mcus * bpm;
-        mcu += seg.mcus;
-    }
-
-    if (chunk_host.empty())
-    {
-        error = "no entropy chunks";
-        return false;
-    }
-
-    const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
-    std::memset(bytes.get() + nunstuffed, 0, nbytes - nunstuffed);
-    const u32 nwords = u32(nbytes / 4);
-    job.unstuff_ms = lap();
-
     // Huffman tables: only the ones the MCU references, packed into slots.
     std::unique_ptr<TablesGpu> tab(new TablesGpu());
     std::vector<u16> lut(8 * kLut, 0);
@@ -1510,53 +1494,43 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         return false;
     }
 
-    const size_t nch = chunk_host.size();
-    push.nch = int(nch);
-    push.nwords = nwords;
-
+    const size_t nseg = stream.segments.size();
     const int nmcu = push.nmcu;
-    const int nblk_alloc = std::max(block, nmcu * bpm);
     const int dc_groups = (nmcu + kDcTile - 1) / kDcTile;
 
-    std::vector<u32> seg_start(size_t(nmcu + 31) / 32 + 1, 0u);
-    for (const SegGpu& sg : seg_host)
+    // Unstuffing only shrinks the scan, so the stuffed sizes bound the words
+    // and the chunk count; staging is laid out before the scan is touched.
+    size_t stuffed = 0;
+    size_t max_chunks = 0;
+    for (const auto& seg : stream.segments)
     {
-        if (sg.mcu0 < nmcu)
-            seg_start[size_t(sg.mcu0) >> 5] |= 1u << (sg.mcu0 & 31);
+        stuffed += seg.bytes.size;
+        max_chunks += (seg.bytes.size * 8 + kChunkBits - 1) / kChunkBits;
+    }
+    if (stuffed > size_t(std::numeric_limits<u32>::max() / 8) - 64)
+    {
+        error = "entropy stream too large";
+        return false;
     }
 
-    job.chunks = int(nch);
-    job.segments = int(seg_host.size());
-    job.dc_groups = dc_groups;
+    const size_t seg_start_words = size_t(nmcu + 31) / 32 + 1;
+    const VkDeviceSize max_upload[] =
+    {
+        ((stuffed + 3u) & ~size_t(3)) + 32u,    // BindWords
+        max_chunks * sizeof(ChunkGpu),          // BindChunks
+        nseg * sizeof(SegGpu),                  // BindSegs
+        sizeof(TablesGpu),                      // BindTables
+        sizeof(natural_qt),                     // BindQt
+        seg_start_words * 4,                    // BindSegStart
+    };
 
-    // Device sizes for every binding.
-    VkDeviceSize* need = job.need;
-    need[BindWords] = VkDeviceSize(nwords) * 4;
-    need[BindChunks] = nch * sizeof(ChunkGpu);
-    need[BindSegs] = seg_host.size() * sizeof(SegGpu);
-    need[BindTables] = sizeof(TablesGpu);
-    need[BindStIn] = nch * 8;
-    need[BindStOut] = nch * 8;
-    need[BindCnt] = nch * 4;
-    need[BindCps] = nch * kNcp * 8;
-    need[BindCpc] = nch * kNcp * 4;
-    need[BindFirst] = nch * 4;
-    need[BindCoef] = VkDeviceSize(nblk_alloc) * 32 * 4;
-    need[BindDcd] = VkDeviceSize(nblk_alloc) * 4;
-    need[BindQt] = sizeof(natural_qt);
-    need[BindFlags] = kMaxPasses * 4;
-    need[BindImage] = 0;
-    need[BindSegStart] = seg_start.size() * 4;
-    need[BindAgg] = VkDeviceSize(std::max(dc_groups, 1)) * 2 * 16;
-
-    // One staging buffer holds everything the GPU reads from the host.
+    // One staging range holds everything the GPU reads from the host.
     const Binding uploads[] = { BindWords, BindChunks, BindSegs, BindTables, BindQt, BindSegStart };
     VkDeviceSize total = 0;
-    for (Binding b : uploads)
+    for (size_t i = 0; i < std::size(uploads); ++i)
     {
-        job.src_offset[b] = total;
-        job.src_size[b] = need[b];
-        total += align16(need[b]);
+        job.src_offset[uploads[i]] = total;
+        total += align16(max_upload[i]);
     }
 
     lap();
@@ -1570,19 +1544,97 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     job.staging_bytes = size_t(total);
 
     u8* dst = job.staging.mapped;
+    u8* const words = dst + job.src_offset[BindWords];
+    ChunkGpu* const chunks = reinterpret_cast<ChunkGpu*>(dst + job.src_offset[BindChunks]);
+    SegGpu* const segs = reinterpret_cast<SegGpu*>(dst + job.src_offset[BindSegs]);
+    u32* const seg_start = reinterpret_cast<u32*>(dst + job.src_offset[BindSegStart]);
+    std::memset(seg_start, 0, seg_start_words * 4);
 
-    // Endian-swap straight into staging (no intermediate buffer). The shader
-    // reads big-endian words; on LE hosts this is a 32-bit byteswap per word.
-    u32* words = reinterpret_cast<u32*>(dst + job.src_offset[BindWords]);
-    const u32* raw = reinterpret_cast<const u32*>(bytes.get());
-    for (u32 i = 0; i < nwords; ++i)
-        words[i] = byteswap(raw[i]);
+    // Unstuff straight into staging in file byte order (the shader assembles
+    // big-endian words), cutting chunks that never cross a segment.
+    u8* out = words;
+    size_t nch = 0;
+    int block = 0;
+    int mcu = 0;
 
-    std::memcpy(dst + job.src_offset[BindChunks], chunk_host.data(), size_t(need[BindChunks]));
-    std::memcpy(dst + job.src_offset[BindSegs], seg_host.data(), size_t(need[BindSegs]));
+    for (size_t s = 0; s < nseg; ++s)
+    {
+        const auto& seg = stream.segments[s];
+        const u32 seg_bit = u32(out - words) * 8;
+        out = unstuff(out, seg.bytes.address, seg.bytes.address + seg.bytes.size);
+        const u32 seg_end = u32(out - words) * 8;
+
+        SegGpu sg = {};
+        sg.chunk0 = int(nch);
+        sg.block0 = block;
+        sg.mcu0 = mcu;
+        sg.mcus = seg.mcus;
+        for (u32 at = seg_bit; at < seg_end; at += kChunkBits)
+        {
+            ChunkGpu c = {};
+            c.bit0 = at;
+            c.bit1 = std::min(at + kChunkBits, seg_end);
+            c.seg0 = seg_bit;
+            c.seg1 = seg_end;
+            c.block0 = block;
+            c.block1 = block + seg.mcus * bpm;
+            chunks[nch++] = c;
+        }
+        sg.nchunks = int(nch) - sg.chunk0;
+        segs[s] = sg;
+        if (mcu < nmcu)
+            seg_start[size_t(mcu) >> 5] |= 1u << (mcu & 31);
+        block += seg.mcus * bpm;
+        mcu += seg.mcus;
+    }
+
+    const size_t nunstuffed = size_t(out - words);
+    const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
+    std::memset(out, 0, nbytes - nunstuffed);
+    const u32 nwords = u32(nbytes / 4);
+    job.unstuff_ms = lap();
+
+    if (!nch)
+    {
+        m_staging.release(job.staging);
+        error = "no entropy chunks";
+        return false;
+    }
+
+    push.nch = int(nch);
+    push.nwords = nwords;
+
+    const int nblk_alloc = std::max(block, nmcu * bpm);
+
+    job.chunks = int(nch);
+    job.segments = int(nseg);
+    job.dc_groups = dc_groups;
+
+    // Device sizes for every binding.
+    VkDeviceSize* need = job.need;
+    need[BindWords] = VkDeviceSize(nwords) * 4;
+    need[BindChunks] = nch * sizeof(ChunkGpu);
+    need[BindSegs] = nseg * sizeof(SegGpu);
+    need[BindTables] = sizeof(TablesGpu);
+    need[BindStIn] = nch * 8;
+    need[BindStOut] = nch * 8;
+    need[BindCnt] = nch * 4;
+    need[BindCps] = nch * kNcp * 8;
+    need[BindCpc] = nch * kNcp * 4;
+    need[BindFirst] = nch * 4;
+    need[BindCoef] = VkDeviceSize(nblk_alloc) * 32 * 4;
+    need[BindDcd] = VkDeviceSize(nblk_alloc) * 4;
+    need[BindQt] = sizeof(natural_qt);
+    need[BindFlags] = kMaxPasses * 4;
+    need[BindImage] = 0;
+    need[BindSegStart] = seg_start_words * 4;
+    need[BindAgg] = VkDeviceSize(std::max(dc_groups, 1)) * 2 * 16;
+
+    for (Binding b : uploads)
+        job.src_size[b] = need[b];
+
     std::memcpy(dst + job.src_offset[BindTables], tab.get(), sizeof(TablesGpu));
     std::memcpy(dst + job.src_offset[BindQt], natural_qt, sizeof(natural_qt));
-    std::memcpy(dst + job.src_offset[BindSegStart], seg_start.data(), size_t(need[BindSegStart]));
     m_staging.flush(job.staging, 0, total);
     job.upload_ms = lap();
 

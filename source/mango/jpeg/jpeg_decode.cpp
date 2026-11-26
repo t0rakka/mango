@@ -640,6 +640,51 @@ namespace mango::image::jpeg
     }
 
     // ----------------------------------------------------------------------------
+    // entropy scan
+    // ----------------------------------------------------------------------------
+
+    // First 0xff in [p, end - 1) followed by a non-zero byte, or nullptr. Stuffed
+    // 0xff 0x00 pairs are skipped without leaving the vector loop.
+    static
+    const u8* findMarkerCandidate(const u8* p, const u8* end)
+    {
+#if defined(MANGO_ENABLE_SSE2)
+        const __m128i ff = _mm_set1_epi8(-1);
+        const __m128i zero = _mm_setzero_si128();
+        while (end - p >= 17)
+        {
+            const __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+            const __m128i n = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p + 1));
+            const __m128i hit = _mm_andnot_si128(_mm_cmpeq_epi8(n, zero), _mm_cmpeq_epi8(v, ff));
+            const u32 mask = u32(_mm_movemask_epi8(hit));
+            if (mask)
+                return p + u32_tzcnt(mask);
+            p += 16;
+        }
+#elif defined(MANGO_ENABLE_NEON64)
+        const uint8x16_t ff = vdupq_n_u8(0xff);
+        while (end - p >= 17)
+        {
+            const uint8x16_t v = vld1q_u8(p);
+            const uint8x16_t n = vld1q_u8(p + 1);
+            const uint8x16_t hit = vandq_u8(vceqq_u8(v, ff), vtstq_u8(n, n));
+            const u64 mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(hit), 4)), 0);
+            if (mask)
+                return p + (u64_tzcnt(mask) >> 2);
+            p += 16;
+        }
+#endif
+
+        for ( ; p + 1 < end; ++p)
+        {
+            if (p[0] == 0xff && p[1] != 0)
+                return p;
+        }
+
+        return nullptr;
+    }
+
+    // ----------------------------------------------------------------------------
     // UltraHDR detection helpers
     // ----------------------------------------------------------------------------
 
@@ -699,15 +744,15 @@ namespace mango::image::jpeg
 
                 while (p < end)
                 {
-                    p = reinterpret_cast<const u8*>(std::memchr(p, 0xff, size_t(end - p)));
-                    if (!p || p + 1 >= end)
+                    p = findMarkerCandidate(p, end);
+                    if (!p)
                         return end;
 
                     const u8 mm = p[1];
 
-                    if (mm == 0x00 || mm == 0xff || (mm >= 0xd0 && mm <= 0xd7))
+                    if (mm == 0xff || (mm >= 0xd0 && mm <= 0xd7))
                     {
-                        p += 2; // stuffed byte / fill / RSTn
+                        p += 2; // fill / RSTn
                         continue;
                     }
 
@@ -1449,27 +1494,22 @@ namespace mango::image::jpeg
 
         while (p < end)
         {
-            p = mango::memchr(p, 0xff, end - p);
+            p = findMarkerCandidate(p, end + 1);
             if (!p)
             {
                 // found nothing
                 return end + 1;
             }
-            else if (p[1])
-            {
-                if (p[1] == 0xff)
-                {
-                    // workaround for ancient encoder using 0xff, 0xff as padding
-                    p += 2;
-                    continue;
-                }
 
-                // found a marker
-                return p;
+            if (p[1] == 0xff)
+            {
+                // workaround for ancient encoder using 0xff, 0xff as padding
+                p += 2;
+                continue;
             }
 
-            // skip stuff byte (0xff, 0x00)
-            p += 2;
+            // found a marker
+            return p;
         }
 
         printLine(Print::Debug, "  Seek: {} bytes", p - start);
