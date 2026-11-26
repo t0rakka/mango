@@ -127,6 +127,18 @@ namespace mango::image::jpeg
         int mcu_y1 = 0;          // exclusive
         int mcus = 0;            // full MCUs in this segment
         size_t packed_offset = 0; // byte offset in a packed upload (RSTs omitted)
+        size_t packed_size = 0;   // bytes at packed_offset
+    };
+
+    enum class EntropyExtract
+    {
+        // Segment bytes are resolved: DRI scans walk their RSTn markers.
+        Views,
+
+        // Tables and segment MCU ranges only; DRI and no-restart scans are not
+        // walked and segment bytes stay empty. packEntropy() resolves them in
+        // the same pass that removes byte stuffing.
+        Deferred,
     };
 
     // Huffman bitstream for a full-GPU decode. Segments are non-contiguous in
@@ -139,6 +151,10 @@ namespace mango::image::jpeg
 
         std::vector<EntropySegment> segments;
         size_t packed_bytes = 0;
+
+        // File bytes the segments come from (stuffing and RSTn included). Its
+        // size bounds the output of packEntropy().
+        ConstMemory scan;
 
         std::vector<HuffmanCodeTable> huffman;
         McuBlock block[10] {};
@@ -193,7 +209,14 @@ namespace mango::image::jpeg
         // requires intervals that end on an MCU row.
         // No restarts: one view of the whole scan, up to the next marker.
         // Segment bytes alias the memory passed to the constructor.
-        EntropyStream extractEntropy();
+        EntropyStream extractEntropy(EntropyExtract mode = EntropyExtract::Views);
+
+        // Copies every segment back-to-back into dest with the 0x00 after each
+        // 0xFF removed, and updates packed_offset / packed_size / packed_bytes.
+        // Deferred streams get their segments resolved here, with the same
+        // restart validation as Views. dest must hold stream.scan.size bytes;
+        // bytes past packed_bytes are scratch.
+        bool packEntropy(EntropyStream& stream, u8* dest);
 
         // Optional cancellation (same flag ImageDecodeInterface uses).
         void cancel();

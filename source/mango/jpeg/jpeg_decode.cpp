@@ -805,6 +805,103 @@ namespace mango::image::jpeg
         return nullptr;
     }
 
+    // Walk the marker segments of a JPEG stream starting at its SOI and return
+    // the first SOS (or EOI / end). Entropy data is never touched, so the result
+    // bounds the stream's metadata: APPn, tables and frame header.
+    static
+    const u8* findFirstSOS(const u8* p, const u8* end)
+    {
+        if (p + 2 > end)
+            return end;
+
+        p += 2; // SOI
+
+        while (p + 4 <= end)
+        {
+            if (p[0] != 0xff || p[1] == 0xff)
+            {
+                ++p;
+                continue;
+            }
+
+            const u8 m = p[1];
+            if (m == 0xda || m == 0xd9)
+                return p;
+
+            if (m == 0x01 || m == 0xd8 || (m >= 0xd0 && m <= 0xd7))
+            {
+                p += 2;
+                continue;
+            }
+
+            p += 2 + bigEndian::uload16(p + 2);
+        }
+
+        return end;
+    }
+
+    // Secondary images listed in an MPF index (CIPA DC-007): a TIFF header with
+    // an MPEntry tag (0xb002), 16 bytes per image whose data offset is relative
+    // to the TIFF header; the primary image has offset 0.
+    static
+    void findMpfImages(ConstMemory mpf, const u8* fstart, const u8* fend, std::vector<const u8*>& images)
+    {
+        const u8* base = mpf.address;
+        const size_t size = mpf.size;
+        if (!base || size < 8)
+            return;
+
+        bool little;
+        if (base[0] == 'I' && base[1] == 'I')
+            little = true;
+        else if (base[0] == 'M' && base[1] == 'M')
+            little = false;
+        else
+            return;
+
+        auto load16 = [&] (size_t offset) -> u32
+        {
+            return little ? littleEndian::uload16(base + offset) : bigEndian::uload16(base + offset);
+        };
+
+        auto load32 = [&] (size_t offset) -> u32
+        {
+            return little ? littleEndian::uload32(base + offset) : bigEndian::uload32(base + offset);
+        };
+
+        const size_t ifd = load32(4);
+        if (ifd + 2 > size)
+            return;
+
+        const u32 count = load16(ifd);
+        for (u32 i = 0; i < count; ++i)
+        {
+            const size_t entry = ifd + 2 + size_t(i) * 12;
+            if (entry + 12 > size)
+                return;
+
+            if (load16(entry) != 0xb002)
+                continue;
+
+            const size_t bytes = load32(entry + 4);
+            const size_t offset = load32(entry + 8);
+            if (bytes % 16 || offset > size || bytes > size - offset)
+                return;
+
+            for (size_t k = 0; k < bytes / 16; ++k)
+            {
+                const size_t image_offset = load32(offset + k * 16 + 8);
+                if (!image_offset)
+                    continue;
+
+                const u8* soi = base + image_offset;
+                if (soi >= fstart && soi < fend && fend - soi >= 2 && soi[0] == 0xff && soi[1] == 0xd8)
+                    images.push_back(soi);
+            }
+            return;
+        }
+    }
+
     // Parse a scalar XMP value, accepting either the attribute form
     // (prefix:Name="value") or the element form (<prefix:Name>value</...>).
     static
@@ -1183,24 +1280,69 @@ namespace mango::image::jpeg
         const u8* fstart = memory.address;
         const u8* fend = memory.address + memory.size;
 
-        // both conventions append the gain map as a second JPEG after the primary
-        // image; bail cheaply for ordinary single-image files
-        const u8* primaryEnd = findPrimaryEnd(memory);
-        const u8* soi = findNextSOI(primaryEnd, fend);
+        // Both conventions append the gain map as a second JPEG after the primary
+        // image and index it with MPF. Without an index only an XMP container
+        // (Adobe GContainer) can describe one, and only then is the primary
+        // image's entropy data walked to find its end. Ordinary single-image
+        // files are decided from their metadata alone.
+        std::vector<const u8*> candidates;
+        findMpfImages(m_base.mpfIndex(), fstart, fend, candidates);
+        if (candidates.empty())
+        {
+            if (!m_base.gainMapContainer())
+                return;
+
+            const u8* soi = findNextSOI(findPrimaryEnd(memory), fend);
+            if (!soi)
+                return;
+            candidates.push_back(soi);
+        }
+
+        // Signals and gain map parameters live in the metadata (APPn segments)
+        // of the primary image and of the gain map image.
+        const u8* primary_meta = findFirstSOS(fstart, fend);
+        const u8* soi = nullptr;
+        const u8* gain_meta = nullptr;
+        bool isoSignal = false;
+        bool appleSignal = false;
+
+        for (const u8* candidate : candidates)
+        {
+            const u8* candidate_meta = findFirstSOS(candidate, fend);
+            auto signal = [&] (const char* needle, size_t n)
+            {
+                return findBytes(fstart, primary_meta, needle, n) || findBytes(candidate, candidate_meta, needle, n);
+            };
+
+            // require a recognized gain map signal to avoid false positives on generic
+            // multi-picture (MPF) JPEGs that carry an unrelated second image
+            isoSignal = signal("hdr-gain-map", 12) || signal("hdrgm:", 6);
+            appleSignal = signal("aux:hdrgainmap", 14) || signal("HDRGainMap:", 11);
+            if (isoSignal || appleSignal)
+            {
+                soi = candidate;
+                gain_meta = candidate_meta;
+                break;
+            }
+        }
+
         if (!soi)
             return;
 
-        // require a recognized gain map signal to avoid false positives on generic
-        // multi-picture (MPF) JPEGs that carry an unrelated second image
-        const bool isoSignal =
-            findBytes(fstart, fend, "hdr-gain-map", 12) ||
-            findBytes(fstart, fend, "hdrgm:", 6);
-        const bool appleSignal =
-            findBytes(fstart, fend, "aux:hdrgainmap", 14) ||
-            findBytes(fstart, fend, "HDRGainMap:", 11);
+        // First match in the primary metadata, then in the gain map's.
+        auto xmpVec3 = [&] (const char* token, float (&out)[3])
+        {
+            return parseXmpVec3(fstart, primary_meta, token, out) || parseXmpVec3(soi, gain_meta, token, out);
+        };
 
-        if (!isoSignal && !appleSignal)
-            return;
+        auto xmpBytes = [&] (const char* needle, size_t n)
+        {
+            const u8* q = findBytes(fstart, primary_meta, needle, n);
+            if (q)
+                return std::make_pair(q, primary_meta);
+            q = findBytes(soi, gain_meta, needle, n);
+            return std::make_pair(q, gain_meta);
+        };
 
         ConstMemory gainMemory(soi, size_t(fend - soi));
 
@@ -1223,18 +1365,18 @@ namespace mango::image::jpeg
                 dst[2] = src[2];
             };
 
-            if (parseXmpVec3(fstart, fend, "hdrgm:GainMapMin", v3)) copy3(meta.gainMapMin, v3);
-            if (parseXmpVec3(fstart, fend, "hdrgm:GainMapMax", v3)) copy3(meta.gainMapMax, v3);
-            if (parseXmpVec3(fstart, fend, "hdrgm:Gamma", v3)) copy3(meta.gainMapGamma, v3);
-            if (parseXmpVec3(fstart, fend, "hdrgm:OffsetSDR", v3)) copy3(meta.offsetSdr, v3);
-            if (parseXmpVec3(fstart, fend, "hdrgm:OffsetHDR", v3)) copy3(meta.offsetHdr, v3);
-            if (parseXmpVec3(fstart, fend, "hdrgm:HDRCapacityMin", v3)) meta.hdrCapacityMin = v3[0];
-            if (parseXmpVec3(fstart, fend, "hdrgm:HDRCapacityMax", v3)) meta.hdrCapacityMax = v3[0];
+            if (xmpVec3("hdrgm:GainMapMin", v3)) copy3(meta.gainMapMin, v3);
+            if (xmpVec3("hdrgm:GainMapMax", v3)) copy3(meta.gainMapMax, v3);
+            if (xmpVec3("hdrgm:Gamma", v3)) copy3(meta.gainMapGamma, v3);
+            if (xmpVec3("hdrgm:OffsetSDR", v3)) copy3(meta.offsetSdr, v3);
+            if (xmpVec3("hdrgm:OffsetHDR", v3)) copy3(meta.offsetHdr, v3);
+            if (xmpVec3("hdrgm:HDRCapacityMin", v3)) meta.hdrCapacityMin = v3[0];
+            if (xmpVec3("hdrgm:HDRCapacityMax", v3)) meta.hdrCapacityMax = v3[0];
 
-            const u8* base_is_hdr = findBytes(fstart, fend, "BaseRenditionIsHDR", 18);
+            const auto [base_is_hdr, region_end] = xmpBytes("BaseRenditionIsHDR", 18);
             if (base_is_hdr)
             {
-                const u8* tail = std::min(base_is_hdr + 64, fend);
+                const u8* tail = std::min(base_is_hdr + 64, region_end);
                 meta.baseRenditionIsHDR = findBytes(base_is_hdr, tail, "True", 4) != nullptr;
             }
 
@@ -1258,10 +1400,12 @@ namespace mango::image::jpeg
             // Apple HDRGainMap: prefer the explicit XMP headroom, fall back to the
             // MakerNote-derived value used by older captures
             float headroom = 0.0f;
-            bool found = parseXmpFloat(fstart, fend, "HDRGainMap:HDRGainMapHeadroom", headroom);
+            bool found = parseXmpFloat(fstart, primary_meta, "HDRGainMap:HDRGainMapHeadroom", headroom) ||
+                         parseXmpFloat(soi, gain_meta, "HDRGainMap:HDRGainMapHeadroom", headroom);
             if (!found)
             {
-                found = appleHeadroomFromMakerNote(fstart, fend, headroom);
+                // the MakerNote sits in the primary image's Exif
+                found = appleHeadroomFromMakerNote(fstart, primary_meta, headroom);
             }
 
             // without a usable headroom there is nothing to reconstruct
@@ -1402,6 +1546,8 @@ namespace mango::image::jpeg
     void StreamDecoder::setMemory(ConstMemory memory)
     {
         m_memory = memory;
+        m_mpf = ConstMemory();
+        m_gainmap_container = false;
         parse(m_memory, false);
     }
 
@@ -1658,7 +1804,15 @@ namespace mango::image::jpeg
                     p += xmp_id_length;
                     size -= int(xmp_id_length);
                     printLine(Print::Debug, "  XMP: {} bytes", size);
-                    // NOTE: We don't support XMP but this is where it would be processed
+
+                    // UltraHDR detection reads the packet itself; only remember whether
+                    // it can describe an appended gain map.
+                    const u8* xmp_end = p + size;
+                    m_gainmap_container = m_gainmap_container ||
+                        findBytes(p, xmp_end, "hdrgm", 5) ||
+                        findBytes(p, xmp_end, "GContainer", 10) ||
+                        findBytes(p, xmp_end, "hdrgainmap", 10) ||
+                        findBytes(p, xmp_end, "HDRGainMap", 10);
                 }
 
                 break;
@@ -1686,6 +1840,11 @@ namespace mango::image::jpeg
 
                     // append ICC segment (JPEG markers have a maximum size and are split)
                     icc_buffer.append(p, size);
+                }
+                else if (size >= 8 && !std::memcmp(p, "MPF\0", 4))
+                {
+                    m_mpf = ConstMemory(p + 4, size - 4);
+                    printLine(Print::Debug, "  MPF: {} bytes", size - 4);
                 }
 
                 break;
@@ -4902,7 +5061,7 @@ namespace mango::image::jpeg
         m_sink.finalize(rect);
     }
 
-    EntropyStream StreamDecoder::extractEntropy()
+    EntropyStream StreamDecoder::extractEntropy(EntropyExtract mode)
     {
         EntropyStream out;
 
@@ -5014,9 +5173,34 @@ namespace mango::image::jpeg
                 seg.mcu_y1 = y1;
                 seg.mcus = (y1 - y0) * xmcu;
                 seg.packed_offset = packed;
+                seg.packed_size = seg.bytes.size;
                 packed += seg.bytes.size;
                 out.segments.push_back(seg);
             }
+
+            const EntropySegment& tail = out.segments.back();
+            out.scan = ConstMemory(entropy, size_t(tail.bytes.end() - entropy));
+        }
+        else if (mode == EntropyExtract::Deferred)
+        {
+            if (restartInterval > 0 && restartInterval % xmcu != 0)
+            {
+                out.error = "restart interval does not end on an MCU row";
+                return out;
+            }
+
+            rows_per_segment = restartInterval > 0 ? restartInterval / xmcu : ymcu;
+            const int segment_count = (ymcu + rows_per_segment - 1) / rows_per_segment;
+            out.segments.resize(size_t(segment_count));
+            for (int s = 0; s < segment_count; ++s)
+            {
+                EntropySegment& seg = out.segments[size_t(s)];
+                seg.mcu_y0 = s * rows_per_segment;
+                seg.mcu_y1 = std::min(seg.mcu_y0 + rows_per_segment, ymcu);
+                seg.mcus = (seg.mcu_y1 - seg.mcu_y0) * xmcu;
+            }
+
+            out.scan = ConstMemory(entropy, size_t(decodeState.buffer.end - entropy));
         }
         else if (restartInterval > 0)
         {
@@ -5065,6 +5249,7 @@ namespace mango::image::jpeg
                 seg.mcu_y1 = y1;
                 seg.mcus = (y1 - y0) * xmcu;
                 seg.packed_offset = packed;
+                seg.packed_size = seg.bytes.size;
                 packed += seg.bytes.size;
                 out.segments.push_back(seg);
 
@@ -5090,6 +5275,8 @@ namespace mango::image::jpeg
                     return out;
                 }
             }
+
+            out.scan = ConstMemory(entropy, size_t(scan_end - entropy));
         }
         else
         {
@@ -5111,8 +5298,10 @@ namespace mango::image::jpeg
             seg.mcu_y1 = ymcu;
             seg.mcus = ymcu * xmcu;
             seg.packed_offset = 0;
+            seg.packed_size = seg.bytes.size;
             packed = seg.bytes.size;
             out.segments.push_back(seg);
+            out.scan = ConstMemory(entropy, size_t(scan_end - entropy));
         }
 
         out.packed_bytes = packed;
@@ -5162,6 +5351,204 @@ namespace mango::image::jpeg
         out.rows_per_segment = rows_per_segment;
         out.ok = true;
         return out;
+    }
+
+    // Copies [p, end) to out up to the first marker, dropping the 0x00 stuffed
+    // after every 0xFF. 0xFF 0xFF padding is copied through (and is not a
+    // marker prefix) and a lone 0xFF on the last byte is data, as in seekMarker. Returns the marker or end.
+    // Whole 16-byte blocks are stored, so bytes past the returned out may be
+    // written, but never past out + (end - p).
+    static
+    const u8* unstuffToMarker(u8*& out_ref, const u8* p, const u8* end)
+    {
+        u8* out = out_ref;
+
+#if defined(MANGO_ENABLE_SSE2)
+        const __m128i ff = _mm_set1_epi8(-1);
+        while (end - p >= 17)
+        {
+            const __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
+            _mm_storeu_si128(reinterpret_cast<__m128i*>(out), v);
+            const u32 mask = u32(_mm_movemask_epi8(_mm_cmpeq_epi8(v, ff)));
+            if (!mask)
+            {
+                p += 16;
+                out += 16;
+                continue;
+            }
+
+            const int n = u32_tzcnt(mask);
+            const u8 next = p[n + 1];
+            if (next != 0x00 && next != 0xff)
+            {
+                out_ref = out + n;
+                return p + n;
+            }
+
+            out += n + 1;
+            p += n + 2;
+            if (next == 0xff)
+            {
+                *out++ = 0xff;
+                if (p < end && *p == 0)
+                    ++p;
+            }
+        }
+#elif defined(MANGO_ENABLE_NEON64)
+        const uint8x16_t ff = vdupq_n_u8(0xff);
+        while (end - p >= 17)
+        {
+            const uint8x16_t v = vld1q_u8(p);
+            vst1q_u8(out, v);
+            const uint8x16_t hit = vceqq_u8(v, ff);
+            const u64 mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(hit), 4)), 0);
+            if (!mask)
+            {
+                p += 16;
+                out += 16;
+                continue;
+            }
+
+            const int n = int(u64_tzcnt(mask) >> 2);
+            const u8 next = p[n + 1];
+            if (next != 0x00 && next != 0xff)
+            {
+                out_ref = out + n;
+                return p + n;
+            }
+
+            out += n + 1;
+            p += n + 2;
+            if (next == 0xff)
+            {
+                *out++ = 0xff;
+                if (p < end && *p == 0)
+                    ++p;
+            }
+        }
+#endif
+
+        while (p < end)
+        {
+            const void* hit = std::memchr(p, 0xff, size_t(end - p));
+            const u8* f = hit ? static_cast<const u8*>(hit) : end;
+            std::memcpy(out, p, size_t(f - p));
+            out += f - p;
+            p = f;
+            if (p == end)
+                break;
+
+            if (p + 1 == end)
+            {
+                *out++ = 0xff;
+                ++p;
+                break;
+            }
+
+            const u8 next = p[1];
+            if (next != 0x00 && next != 0xff)
+                break;
+
+            *out++ = 0xff;
+            p += 2;
+            if (next == 0xff)
+            {
+                *out++ = 0xff;
+                if (p < end && *p == 0)
+                    ++p;
+            }
+        }
+
+        out_ref = out;
+        return p;
+    }
+
+    bool StreamDecoder::packEntropy(EntropyStream& stream, u8* dest) const
+    {
+        auto fail = [&] (const char* message)
+        {
+            stream.error = message;
+            stream.ok = false;
+            stream.segments.clear();
+            stream.packed_bytes = 0;
+            return false;
+        };
+
+        if (!stream.ok || stream.segments.empty() || !stream.scan.address)
+        {
+            if (stream.error.empty())
+                stream.error = "entropy stream is not valid";
+            return false;
+        }
+
+        u8* out = dest;
+        const size_t nseg = stream.segments.size();
+
+        if (stream.segments[0].bytes.address)
+        {
+            // Resolved segments (Views, Mango1): they hold no markers, unless
+            // a file was written that way; markers are copied through.
+            for (EntropySegment& seg : stream.segments)
+            {
+                seg.packed_offset = size_t(out - dest);
+                const u8* p = seg.bytes.address;
+                const u8* end = seg.bytes.address + seg.bytes.size;
+                while (p < end)
+                {
+                    p = unstuffToMarker(out, p, end);
+                    if (p < end)
+                    {
+                        *out++ = p[0];
+                        *out++ = p[1];
+                        p += 2;
+                    }
+                }
+                seg.packed_size = size_t(out - dest) - seg.packed_offset;
+            }
+
+            stream.packed_bytes = size_t(out - dest);
+            return true;
+        }
+
+        const u8* const scan_end = stream.scan.address + stream.scan.size;
+        const u8* cursor = stream.scan.address;
+        bool last_was_rst = false;
+        const u8* last_rst = nullptr;
+
+        for (size_t s = 0; s < nseg; ++s)
+        {
+            EntropySegment& seg = stream.segments[s];
+            const bool last = (s + 1 == nseg);
+            seg.packed_offset = size_t(out - dest);
+            const u8* marker = unstuffToMarker(out, cursor, scan_end);
+            const bool rst = (marker + 1 < scan_end) && isRestartMarker(marker);
+
+            // Without DRI there is one segment, which ends on any marker.
+            if (!last && !rst)
+                return fail("restart marker is missing");
+            if (marker <= cursor)
+                return fail(restartInterval > 0 ? "restart segment is outside the scan" : "entropy scan is empty");
+
+            seg.bytes = ConstMemory(cursor, size_t(marker - cursor));
+            seg.packed_size = size_t(out - dest) - seg.packed_offset;
+
+            last_was_rst = rst;
+            if (rst)
+            {
+                last_rst = marker;
+                cursor = marker + 2;
+            }
+        }
+
+        if (restartInterval > 0 && last_was_rst)
+        {
+            const u8* extra = seekMarker(last_rst + 2, scan_end);
+            if ((extra + 1 < scan_end) && isRestartMarker(extra))
+                return fail("too many restart markers");
+        }
+
+        stream.packed_bytes = size_t(out - dest);
+        return true;
     }
 
 } // namespace mango::image::jpeg

@@ -136,9 +136,14 @@ namespace mango::image::jpeg
         return m->parser.base().decodeCoefficients(options);
     }
 
-    EntropyStream JpegDecoder::extractEntropy()
+    EntropyStream JpegDecoder::extractEntropy(EntropyExtract mode)
     {
-        return m->parser.base().extractEntropy();
+        return m->parser.base().extractEntropy(mode);
+    }
+
+    bool JpegDecoder::packEntropy(EntropyStream& stream, u8* dest)
+    {
+        return m->parser.base().packEntropy(stream, dest);
     }
 
     void JpegDecoder::cancel()

@@ -556,6 +556,9 @@ namespace mango::image::jpeg
         std::vector<u32> m_restart_offsets;
         bool m_bind_scan_only = false; // processSOS: stop at entropy, do not decode
 
+        ConstMemory m_mpf;                  // APP2 "MPF" payload: the multi-picture index
+        bool m_gainmap_container = false;   // XMP names a gain map or a GContainer
+
         CoeffOrder m_coeff_order = CoeffOrder::Natural;
         CoeffSink m_coeff_sink = nullptr;
         void* m_coeff_sink_user = nullptr;
@@ -765,6 +768,16 @@ namespace mango::image::jpeg
             return restartInterval > 0;
         }
 
+        ConstMemory mpfIndex() const
+        {
+            return m_mpf;
+        }
+
+        bool gainMapContainer() const
+        {
+            return m_gainmap_container;
+        }
+
         bool isRgbColorspace() const
         {
             return m_rgb_colorspace;
@@ -787,7 +800,8 @@ namespace mango::image::jpeg
 
         ImageDecodeStatus decode(const Surface& target, const ImageDecodeOptions& options);
         ImageDecodeStatus decodeCoefficients(const ImageDecodeOptions& options);
-        EntropyStream extractEntropy();
+        EntropyStream extractEntropy(EntropyExtract mode);
+        bool packEntropy(EntropyStream& stream, u8* dest) const;
     };
 
     // ----------------------------------------------------------------------------

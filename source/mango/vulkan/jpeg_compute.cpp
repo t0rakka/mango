@@ -1033,55 +1033,6 @@ VkDeviceSize align16(VkDeviceSize v)
     return (v + 15) & ~VkDeviceSize(15);
 }
 
-// Copies [p, end) to out, dropping the 0x00 stuffed after every 0xFF. Whole
-// 16-byte blocks are stored, so bytes past the returned pointer may be
-// written, but never past out + (end - p).
-u8* unstuff(u8* out, const u8* p, const u8* end)
-{
-#if defined(MANGO_ENABLE_SSE2)
-    const __m128i ff = _mm_set1_epi8(-1);
-    while (end - p >= 16)
-    {
-        const __m128i v = _mm_loadu_si128(reinterpret_cast<const __m128i*>(p));
-        _mm_storeu_si128(reinterpret_cast<__m128i*>(out), v);
-        const u32 mask = u32(_mm_movemask_epi8(_mm_cmpeq_epi8(v, ff)));
-        const int n = mask ? u32_tzcnt(mask) + 1 : 16;
-        p += n;
-        out += n;
-        if (mask && p < end && *p == 0)
-            ++p;
-    }
-#elif defined(MANGO_ENABLE_NEON64)
-    const uint8x16_t ff = vdupq_n_u8(0xff);
-    while (end - p >= 16)
-    {
-        const uint8x16_t v = vld1q_u8(p);
-        vst1q_u8(out, v);
-        const uint8x16_t hit = vceqq_u8(v, ff);
-        const u64 mask = vget_lane_u64(vreinterpret_u64_u8(vshrn_n_u16(vreinterpretq_u16_u8(hit), 4)), 0);
-        const int n = mask ? (u64_tzcnt(mask) >> 2) + 1 : 16;
-        p += n;
-        out += n;
-        if (mask && p < end && *p == 0)
-            ++p;
-    }
-#endif
-
-    while (p < end)
-    {
-        // Copy up to and including the next 0xFF, then drop the stuffed zero after it.
-        const void* ff = std::memchr(p, 0xff, size_t(end - p));
-        const size_t run = ff ? size_t(static_cast<const u8*>(ff) - p) + 1 : size_t(end - p);
-        std::memcpy(out, p, run);
-        out += run;
-        p += run;
-        if (ff && p < end && *p == 0)
-            ++p;
-    }
-
-    return out;
-}
-
 } // namespace
 
 // -----------------------------------------------------------------------
@@ -1396,7 +1347,7 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         return ms;
     };
 
-    image::jpeg::EntropyStream stream = decoder.extractEntropy();
+    image::jpeg::EntropyStream stream = decoder.extractEntropy(image::jpeg::EntropyExtract::Deferred);
     job.extract_ms = lap();
     if (!stream.ok)
     {
@@ -1404,7 +1355,7 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         return false;
     }
 
-    if (stream.packed_bytes == 0 || stream.segments.empty())
+    if (stream.scan.size == 0 || stream.segments.empty())
     {
         error = "empty entropy stream";
         return false;
@@ -1498,15 +1449,11 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     const int nmcu = push.nmcu;
     const int dc_groups = (nmcu + kDcTile - 1) / kDcTile;
 
-    // Unstuffing only shrinks the scan, so the stuffed sizes bound the words
-    // and the chunk count; staging is laid out before the scan is touched.
-    size_t stuffed = 0;
-    size_t max_chunks = 0;
-    for (const auto& seg : stream.segments)
-    {
-        stuffed += seg.bytes.size;
-        max_chunks += (seg.bytes.size * 8 + kChunkBits - 1) / kChunkBits;
-    }
+    // Packing only shrinks the scan, so its file size bounds the words and the
+    // chunk count (each segment adds at most one partial chunk); staging is
+    // laid out before the scan is touched.
+    const size_t stuffed = stream.scan.size;
+    const size_t max_chunks = (stuffed * 8 + kChunkBits - 1) / kChunkBits + nseg;
     if (stuffed > size_t(std::numeric_limits<u32>::max() / 8) - 64)
     {
         error = "entropy stream too large";
@@ -1550,9 +1497,15 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     u32* const seg_start = reinterpret_cast<u32*>(dst + job.src_offset[BindSegStart]);
     std::memset(seg_start, 0, seg_start_words * 4);
 
-    // Unstuff straight into staging in file byte order (the shader assembles
-    // big-endian words), cutting chunks that never cross a segment.
-    u8* out = words;
+    // Pack straight into staging in file byte order (the shader assembles
+    // big-endian words), then cut chunks that never cross a segment.
+    if (!decoder.packEntropy(stream, words))
+    {
+        m_staging.release(job.staging);
+        error = "entropy: " + stream.error;
+        return false;
+    }
+
     size_t nch = 0;
     int block = 0;
     int mcu = 0;
@@ -1560,9 +1513,8 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     for (size_t s = 0; s < nseg; ++s)
     {
         const auto& seg = stream.segments[s];
-        const u32 seg_bit = u32(out - words) * 8;
-        out = unstuff(out, seg.bytes.address, seg.bytes.address + seg.bytes.size);
-        const u32 seg_end = u32(out - words) * 8;
+        const u32 seg_bit = u32(seg.packed_offset) * 8;
+        const u32 seg_end = u32(seg.packed_offset + seg.packed_size) * 8;
 
         SegGpu sg = {};
         sg.chunk0 = int(nch);
@@ -1588,9 +1540,9 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         mcu += seg.mcus;
     }
 
-    const size_t nunstuffed = size_t(out - words);
+    const size_t nunstuffed = stream.packed_bytes;
     const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
-    std::memset(out, 0, nbytes - nunstuffed);
+    std::memset(words + nunstuffed, 0, nbytes - nunstuffed);
     const u32 nwords = u32(nbytes / 4);
     job.unstuff_ms = lap();
 
