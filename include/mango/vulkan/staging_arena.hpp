@@ -32,7 +32,16 @@ namespace mango::vulkan
         // Offset alignment of every range (power of two).
         VkDeviceSize alignment = 64;
 
-        VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT;
+        // TRANSFER_SRC: fall back to vkCmdCopyBuffer when the chunk is not
+        // device-local. STORAGE_BUFFER: ReBAR / host-visible VRAM can be bound
+        // directly as a compute storage buffer (no copy).
+        VkBufferUsageFlags usage = VK_BUFFER_USAGE_TRANSFER_SRC_BIT
+                                 | VK_BUFFER_USAGE_STORAGE_BUFFER_BIT;
+
+        // Opt into DEVICE_LOCAL|HOST_VISIBLE staging (ReBAR). Off by default:
+        // host unstuff into ReBAR without a cached bounce buffer is much slower
+        // than uncached system RAM + a GPU copy on current corpora.
+        bool prefer_device_local = false;
     };
 
     struct StagingRange
@@ -41,6 +50,9 @@ namespace mango::vulkan
         VkDeviceSize offset = 0;        // of the range inside buffer
         VkDeviceSize size = 0;
         u8* mapped = nullptr;           // host address of offset
+        // True when the underlying chunk is DEVICE_LOCAL|HOST_VISIBLE (ReBAR):
+        // safe to bind as a storage buffer and skip the host→device copy.
+        bool device_local = false;
 
         // arena bookkeeping
         void* chunk = nullptr;
@@ -60,6 +72,7 @@ namespace mango::vulkan
         size_t chunks = 0;
         size_t chunk_allocations = 0;       // chunks created over the lifetime
         size_t waits = 0;                   // acquire() calls that waited for release()
+        size_t device_local_chunks = 0;     // ReBAR / DEVICE_LOCAL|HOST_VISIBLE chunks
     };
 
     // Host-visible, persistently mapped upload memory carved out of a few large

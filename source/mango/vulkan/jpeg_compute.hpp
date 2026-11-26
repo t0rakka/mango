@@ -42,6 +42,7 @@ namespace mango::vulkan::detail
     struct JpegComputePipelines
     {
         VkPipeline sync = VK_NULL_HANDLE;
+        VkPipeline sync_gate = VK_NULL_HANDLE; // 1-thread: flags[pass] -> DispatchIndirect args
         VkPipeline prefix = VK_NULL_HANDLE;
         VkPipeline write = VK_NULL_HANDLE;
         VkPipeline dc_local = VK_NULL_HANDLE;
@@ -170,6 +171,14 @@ namespace mango::vulkan::detail
 
         std::mutex m_pipeline_mutex;
         std::unordered_map<std::string, std::shared_future<VkPipeline>> m_pipelines;
+        // Complete pipeline sets keyed by (ntables + IDCT layout); avoids GLSL
+        // string rebuild and six map lookups on every prepare of the same kind.
+        std::unordered_map<u64, JpegComputePipelines> m_pipeline_sets;
+
+        // Huffman/QT GPU blobs keyed by content hash (corpus hits are common).
+        // Value is shared_ptr<const TablesCacheEntry> cast through void (defined in .cpp).
+        std::mutex m_tables_mutex;
+        std::unordered_map<u64, std::shared_ptr<const void>> m_tables_cache;
     };
 
 } // namespace mango::vulkan::detail

@@ -2588,19 +2588,21 @@ namespace mango::image::jpeg
                 return;
             }
 
-            std::string ms = "    codes: ";
-
             int count = 0;
-
             for (int i = 1; i <= 16; ++i)
             {
                 u8 L = p[i]; // Number of Huffman codes of length i bits
                 table.size[i] = L;
                 count += L;
-                ms += fmt::format("{} ", L);
             }
 
-            printLine(Print::Debug, ms);
+            if (isEnable(Print::Debug))
+            {
+                std::string ms = "    codes: ";
+                for (int i = 1; i <= 16; ++i)
+                    ms += fmt::format("{} ", table.size[i]);
+                printLine(Print::Debug, ms);
+            }
 
             p += 17;
             Lh -= 17;

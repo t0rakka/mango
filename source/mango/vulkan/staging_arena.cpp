@@ -54,6 +54,7 @@ struct StagingArena::Impl
         u8* mapped = nullptr;
         VkDeviceSize size = 0;
         size_t live = 0;
+        bool device_local = false;
     };
 
     using ChunkPtr = std::unique_ptr<Chunk>;
@@ -102,8 +103,14 @@ struct StagingArena::Impl
             .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
         };
 
+        // AUTO + sequential-write usually lands in uncached system RAM (good for
+        // host unstuff bandwidth). ReBAR (DEVICE_LOCAL|HOST_VISIBLE) is opted
+        // into only when the config asks for it — raw unstuff into ReBAR over
+        // PCIe without a cached bounce buffer collapses throughput.
         VmaAllocationCreateInfo alloc_info = {};
-        alloc_info.usage = VMA_MEMORY_USAGE_AUTO;
+        alloc_info.usage = m_config.prefer_device_local
+            ? VMA_MEMORY_USAGE_AUTO_PREFER_DEVICE
+            : VMA_MEMORY_USAGE_AUTO;
         alloc_info.flags = VMA_ALLOCATION_CREATE_DEDICATED_MEMORY_BIT
                          | VMA_ALLOCATION_CREATE_HOST_ACCESS_SEQUENTIAL_WRITE_BIT
                          | VMA_ALLOCATION_CREATE_MAPPED_BIT;
@@ -129,6 +136,9 @@ struct StagingArena::Impl
 
         chunk->mapped = static_cast<u8*>(info.pMappedData);
         chunk->size = size;
+        VkMemoryPropertyFlags mem_flags = 0;
+        vmaGetAllocationMemoryProperties(m_vma, chunk->allocation, &mem_flags);
+        chunk->device_local = (mem_flags & VK_MEMORY_PROPERTY_DEVICE_LOCAL_BIT) != 0;
         return chunk;
     }
 
@@ -160,6 +170,7 @@ struct StagingArena::Impl
             range.offset = offset;
             range.size = size;
             range.mapped = chunk->mapped + offset;
+            range.device_local = chunk->device_local;
             range.chunk = chunk.get();
             range.handle = toHandle(allocation);
             return true;
@@ -335,7 +346,12 @@ struct StagingArena::Impl
     StagingArenaStats stats() const
     {
         std::lock_guard lock(m_mutex);
-        return m_stats;
+        StagingArenaStats out = m_stats;
+        out.device_local_chunks = 0;
+        for (const ChunkPtr& chunk : m_chunks)
+            if (chunk->device_local)
+                ++out.device_local_chunks;
+        return out;
     }
 };
 

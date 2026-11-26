@@ -540,6 +540,9 @@ struct TextureDecoder::Impl
         // owner thread
         VkCommandBuffer cmd = VK_NULL_HANDLE;
         VkFence fence = VK_NULL_HANDLE;
+        // Shared across a multi-CB vkQueueSubmit batch; only the owner returns
+        // the fence to the free list (must be the last job waited in the batch).
+        bool fence_owner = false;
         bool submitted = false;
     };
 
@@ -579,7 +582,7 @@ struct TextureDecoder::Impl
     std::deque<JobPtr> m_inflight;      // waiter: submitted, in fence order
     std::deque<JobPtr> m_finished;      // owner: retire + callback
 
-    std::thread m_worker;
+    std::vector<std::thread> m_workers;
     std::thread m_waiter;
 
     Impl(VkPhysicalDevice physicalDevice, VkDevice device, VkQueue queue, u32 family,
@@ -593,6 +596,7 @@ struct TextureDecoder::Impl
     {
         m_config.max_inflight_compute = std::max(m_config.max_inflight_compute, 1);
         m_config.max_concurrent_cpu = std::max(m_config.max_concurrent_cpu, 1);
+        m_config.prepare_workers = std::max(m_config.prepare_workers, 1);
 
         VkPhysicalDeviceProperties props = {};
         vkGetPhysicalDeviceProperties(physicalDevice, &props);
@@ -627,7 +631,9 @@ struct TextureDecoder::Impl
             }
         }
 
-        m_worker = std::thread([this] { workerMain(); });
+        m_workers.reserve(size_t(m_config.prepare_workers));
+        for (int i = 0; i < m_config.prepare_workers; ++i)
+            m_workers.emplace_back([this] { workerMain(); });
         m_waiter = std::thread([this] { waiterMain(); });
     }
 
@@ -649,7 +655,8 @@ struct TextureDecoder::Impl
         }
         m_worker_cv.notify_all();
         m_waiter_cv.notify_all();
-        m_worker.join();
+        for (std::thread& worker : m_workers)
+            worker.join();
         m_waiter.join();
 
         for (VkFence fence : m_free_fences)
@@ -700,6 +707,25 @@ struct TextureDecoder::Impl
     Texture decode(ConstMemory memory, const std::string& filename, Callback callback)
     {
         Texture texture;
+
+        // Warm the mapping before header parse / prepare touch it (page faults
+        // otherwise land inside unstuff_ms on cold corpora).
+        if (memory.address && memory.size)
+        {
+#if defined(MANGO_PLATFORM_WINDOWS)
+            WIN32_MEMORY_RANGE_ENTRY entry = {};
+            entry.VirtualAddress = const_cast<void*>(static_cast<const void*>(memory.address));
+            entry.NumberOfBytes = SIZE_T(memory.size);
+            PrefetchVirtualMemory(GetCurrentProcess(), 1, &entry, 0);
+#else
+            volatile const u8* p = memory.address;
+            const u8* end = memory.address + memory.size;
+            for (; p < end; p += 4096)
+                (void)*p;
+            if (memory.size)
+                (void)*(end - 1);
+#endif
+        }
 
         const u64 t0 = Time::us();
         auto job = std::make_shared<Job>();
@@ -1275,7 +1301,8 @@ struct TextureDecoder::Impl
             0, 0, nullptr, 0, nullptr, 1, &to_read);
     }
 
-    bool submit(Job& job)
+    // Record a primary command buffer; queue submit is batched in process().
+    bool recordJob(Job& job)
     {
         if (job.path == Path::Compute)
         {
@@ -1301,10 +1328,9 @@ struct TextureDecoder::Impl
         }
 
         job.cmd = acquireCommandBuffer();
-        job.fence = acquireFence();
-        if (!job.cmd || !job.fence)
+        if (!job.cmd)
         {
-            job.error = "command buffer or fence allocation failed";
+            job.error = "command buffer allocation failed";
             return false;
         }
 
@@ -1329,23 +1355,6 @@ struct TextureDecoder::Impl
         }
 
         vkEndCommandBuffer(job.cmd);
-
-        VkSubmitInfo submit_info =
-        {
-            .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
-            .commandBufferCount = 1,
-            .pCommandBuffers = &job.cmd,
-        };
-        VkResult result = vkQueueSubmit(m_queue, 1, &submit_info, job.fence);
-        if (result != VK_SUCCESS)
-        {
-            job.error = fmt::format("vkQueueSubmit: {}", getString(result));
-            return false;
-        }
-
-        job.submitted = true;
-        job.submit_us = Time::us();
-        job.report.submit_ms = elapsedMs(job.start_us);
         return true;
     }
 
@@ -1380,8 +1389,12 @@ struct TextureDecoder::Impl
 
         if (job.fence)
         {
-            m_free_fences.push_back(job.fence);
+            // Shared batch fence: only the owner returns it after every waiter
+            // in the batch has observed the signal.
+            if (job.fence_owner)
+                m_free_fences.push_back(job.fence);
             job.fence = VK_NULL_HANDLE;
+            job.fence_owner = false;
         }
     }
 
@@ -1436,6 +1449,75 @@ struct TextureDecoder::Impl
         }
 
         std::deque<JobPtr> blocked;
+        // Cap each vkQueueSubmit so one process() tick cannot dump hundreds of
+        // CBs onto the queue (inflight slots already bound concurrency).
+        const size_t batch_limit = size_t(std::max(m_config.max_inflight_compute, 1));
+        std::vector<JobPtr> batch;
+        std::vector<VkCommandBuffer> batch_cmds;
+        batch.reserve(std::min(ready.size(), batch_limit));
+        batch_cmds.reserve(batch.capacity());
+
+        auto flushBatch = [&] ()
+        {
+            if (batch.empty())
+                return;
+
+            VkFence fence = acquireFence();
+            if (!fence)
+            {
+                for (JobPtr& job : batch)
+                {
+                    job->error = "fence allocation failed";
+                    job->status = TextureStatus::Failed;
+                    retire(*job);
+                    fire(job);
+                }
+                batch.clear();
+                batch_cmds.clear();
+                return;
+            }
+
+            VkSubmitInfo submit_info =
+            {
+                .sType = VK_STRUCTURE_TYPE_SUBMIT_INFO,
+                .commandBufferCount = u32(batch_cmds.size()),
+                .pCommandBuffers = batch_cmds.data(),
+            };
+            VkResult result = vkQueueSubmit(m_queue, 1, &submit_info, fence);
+            const u64 submit_us = Time::us();
+            if (result != VK_SUCCESS)
+            {
+                m_free_fences.push_back(fence);
+                for (JobPtr& job : batch)
+                {
+                    job->error = fmt::format("vkQueueSubmit: {}", getString(result));
+                    job->status = TextureStatus::Failed;
+                    retire(*job);
+                    fire(job);
+                }
+            }
+            else
+            {
+                for (size_t i = 0; i < batch.size(); ++i)
+                {
+                    Job& job = *batch[i];
+                    job.fence = fence;
+                    job.fence_owner = (i + 1 == batch.size());
+                    job.submitted = true;
+                    job.submit_us = submit_us;
+                    job.report.submit_ms = elapsedMs(job.start_us);
+                }
+                {
+                    std::lock_guard lock(m_mutex);
+                    for (JobPtr& job : batch)
+                        m_inflight.push_back(job);
+                }
+                m_waiter_cv.notify_one();
+            }
+            batch.clear();
+            batch_cmds.clear();
+        };
+
         for (JobPtr& job : ready)
         {
             if (job->cancelled)
@@ -1452,7 +1534,7 @@ struct TextureDecoder::Impl
                 continue;
             }
 
-            if (!submit(*job))
+            if (!recordJob(*job))
             {
                 job->status = TextureStatus::Failed;
                 retire(*job);
@@ -1460,12 +1542,12 @@ struct TextureDecoder::Impl
                 continue;
             }
 
-            {
-                std::lock_guard lock(m_mutex);
-                m_inflight.push_back(job);
-            }
-            m_waiter_cv.notify_one();
+            batch.push_back(job);
+            batch_cmds.push_back(job->cmd);
+            if (batch.size() >= batch_limit)
+                flushBatch();
         }
+        flushBatch();
 
         if (!blocked.empty())
         {

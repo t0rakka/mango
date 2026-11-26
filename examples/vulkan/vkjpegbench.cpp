@@ -431,11 +431,11 @@ private:
         summary += fmt::format(
             "  throughput : {:.1f} images/s, {:.0f} MP/s  ({:.1f} MP total)\n"
             "  image mem  : {} total allocations (destroyed on Ready)\n"
-            "  staging    : {} reserved in {} chunk(s), peak use {}, {} chunk allocation(s), {} wait(s)\n"
+            "  staging    : {} reserved in {} chunk(s) ({} ReBAR), peak use {}, {} chunk allocation(s), {} wait(s)\n"
             "  peak RSS   : {}\n",
             ips, mps, m_stats.sum_megapixels,
             megabytes(size_t(m_stats.sum_image_bytes)),
-            megabytes(size_t(staging.reserved_bytes)), staging.chunks,
+            megabytes(size_t(staging.reserved_bytes)), staging.chunks, staging.device_local_chunks,
             megabytes(size_t(staging.peak_used_bytes)), staging.chunk_allocations, staging.waits,
             megabytes(processPeakBytes()));
 
@@ -452,6 +452,13 @@ private:
         summary += "==================================================\n";
 
         printLine("{}", summary);
+        // WinMain/AllocConsole often detach stdout from the parent pipe; keep a
+        // copy on disk so scripted runs can read the numbers.
+        if (FILE* fp = std::fopen("vkjpegbench.log", "w"))
+        {
+            std::fputs(summary.c_str(), fp);
+            std::fclose(fp);
+        }
         requestQuit();
     }
 };

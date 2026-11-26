@@ -10,6 +10,7 @@
 #include <iterator>
 #include <limits>
 #include <memory>
+#include <vector>
 
 #include <mango/core/bits.hpp>
 #include <mango/core/timer.hpp>
@@ -32,6 +33,9 @@ constexpr int kSyncWg = 128;
 constexpr int kWriteWg = 128;
 constexpr int kDcTile = 1024; // MCUs per DC scan workgroup: 256 threads x 4
 constexpr int kQueries = 2;
+// flags[0..kMaxPasses) + VkDispatchIndirectCommand (3 x uint)
+constexpr VkDeviceSize kFlagsBytes = VkDeviceSize(kMaxPasses + 3) * 4;
+constexpr VkDeviceSize kIndirectOffset = VkDeviceSize(kMaxPasses) * 4;
 
 enum Binding : u32
 {
@@ -83,7 +87,43 @@ struct TablesGpu
     u32 lut[8 * kLut / 2];
 };
 
+struct TablesCacheEntry
+{
+    TablesGpu tables {};
+    s32 qt[4 * 64] {};
+    u32 dc_pack = 0;
+    u32 ac_pack = 0;
+    u32 comp_pack = 0;
+    int ntables = 0;
+};
+
 static_assert(sizeof(JpegComputePush) <= 128, "push constants");
+
+u64 mixHash(u64 h, u64 v)
+{
+    h ^= v + 0x9e3779b97f4a7c15ull + (h << 6) + (h >> 2);
+    return h;
+}
+
+u64 hashBytes(u64 h, const void* data, size_t bytes)
+{
+    const u8* p = static_cast<const u8*>(data);
+    for (size_t i = 0; i < bytes; ++i)
+        h = mixHash(h, p[i]);
+    return h;
+}
+
+u64 pipelineSetKey(int ntables, const JpegComputePush& push)
+{
+    u64 h = mixHash(0xC0FFEEu, u64(ntables));
+    h = mixHash(h, u64(push.bpm));
+    h = mixHash(h, u64(push.xblock) | (u64(push.yblock) << 16) | (u64(push.components) << 32));
+    h = mixHash(h, u64(push.mcus_per_group));
+    h = mixHash(h, u64(push.y_hsf) | (u64(push.y_vsf) << 8) | (u64(push.y_off) << 16));
+    h = mixHash(h, u64(push.cb_hsf) | (u64(push.cb_vsf) << 8) | (u64(push.cb_off) << 16));
+    h = mixHash(h, u64(push.cr_hsf) | (u64(push.cr_vsf) << 8) | (u64(push.cr_off) << 16));
+    return h;
+}
 
 constexpr char kCommon[] = R"glsl(
 #version 450
@@ -363,6 +403,25 @@ void main()
     int last = min(SYNC_WG, pc.nch - int(gl_WorkGroupID.x) * SYNC_WG) - 1;
     if (tid == last && (myOut != out0 || more || (pc.pass == 0 && gl_NumWorkGroups.x > 1u)))
         flags[pc.pass] = 1u;
+}
+)glsl";
+
+// One thread: turn flags[pass] into VkDispatchIndirectCommand at flags[8..10].
+// Empty groupCountX skips the next sync when the previous pass converged.
+constexpr char kSyncGateMain[] = R"glsl(
+layout(local_size_x = 1) in;
+void main()
+{
+    const uint base = 8u;
+    uint groups = 0u;
+    if (flags[uint(pc.pass)] != 0u)
+    {
+        uint wg = uint(max(pc.rounds, 1));
+        groups = (uint(pc.nch) + wg - 1u) / wg;
+    }
+    flags[base + 0u] = groups;
+    flags[base + 1u] = 1u;
+    flags[base + 2u] = 1u;
 }
 )glsl";
 
@@ -1384,54 +1443,105 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         }
     }
 
-    // Huffman tables: only the ones the MCU references, packed into slots.
-    std::unique_ptr<TablesGpu> tab(new TablesGpu());
-    std::vector<u16> lut(8 * kLut, 0);
-    std::vector<u8> hv(8 * 256, 0);
-    int slot_of[8];
-    for (int i = 0; i < 8; ++i)
-        slot_of[i] = -1;
-
-    int ntables = 0;
-    for (int b = 0; b < bpm; ++b)
-    {
-        const int used[2] = { stream.block[b].dc & 3, 4 + (stream.block[b].ac & 3) };
-        for (int u : used)
-        {
-            if (slot_of[u] < 0)
-                slot_of[u] = ntables++;
-        }
-    }
-
-    for (const auto& table : stream.huffman)
-    {
-        const int id = table.cls * 4 + table.id;
-        if (id < 0 || id >= 8)
-        {
-            error = "Huffman table id outside 0..3";
-            return false;
-        }
-        if (slot_of[id] >= 0)
-            buildSlot(table, table.cls == 0, lut, hv, *tab, slot_of[id]);
-    }
-
-    for (int i = 0; i < 8 * kLut / 2; ++i)
-        tab->lut[i] = u32(lut[2 * i]) | (u32(lut[2 * i + 1]) << 16);
-
-    for (int i = 0; i < 8 * 256 / 4; ++i)
-    {
-        tab->hv[i] = u32(hv[4 * i]) | (u32(hv[4 * i + 1]) << 8)
-            | (u32(hv[4 * i + 2]) << 16) | (u32(hv[4 * i + 3]) << 24);
-    }
-
-    push.dc_pack = push.ac_pack = push.comp_pack = 0;
+    // Cache key: MCU block table refs + DHT contents + QT (same file family hits).
+    u64 tables_key = mixHash(0x7AB1Eu, u64(bpm));
     for (int b = 0; b < bpm; ++b)
     {
         const auto& mb = stream.block[b];
-        push.dc_pack |= u32(slot_of[mb.dc & 3]) << (3 * b);
-        push.ac_pack |= u32(slot_of[4 + (mb.ac & 3)]) << (3 * b);
-        push.comp_pack |= u32(mb.component & 3) << (2 * b);
+        tables_key = mixHash(tables_key, u64(mb.dc) | (u64(mb.ac) << 8) | (u64(mb.component) << 16));
     }
+    for (const auto& table : stream.huffman)
+    {
+        tables_key = mixHash(tables_key, u64(table.cls) | (u64(table.id) << 8));
+        tables_key = hashBytes(tables_key, table.bits, sizeof(table.bits));
+        int count = 0;
+        for (int i = 0; i < 16; ++i)
+            count += table.bits[i];
+        tables_key = hashBytes(tables_key, table.values, size_t(count));
+    }
+    tables_key = hashBytes(tables_key, natural_qt, sizeof(natural_qt));
+
+    std::shared_ptr<const TablesCacheEntry> cached;
+    {
+        std::lock_guard lock(m_tables_mutex);
+        auto it = m_tables_cache.find(tables_key);
+        if (it != m_tables_cache.end())
+            cached = std::static_pointer_cast<const TablesCacheEntry>(it->second);
+    }
+
+    std::shared_ptr<TablesCacheEntry> built;
+    const TablesCacheEntry* tab_entry = nullptr;
+    if (cached)
+    {
+        tab_entry = cached.get();
+    }
+    else
+    {
+        built = std::make_shared<TablesCacheEntry>();
+        TablesGpu& tab = built->tables;
+        std::vector<u16> lut(8 * kLut, 0);
+        std::vector<u8> hv(8 * 256, 0);
+        int slot_of[8];
+        for (int i = 0; i < 8; ++i)
+            slot_of[i] = -1;
+
+        int ntables = 0;
+        for (int b = 0; b < bpm; ++b)
+        {
+            const int used[2] = { stream.block[b].dc & 3, 4 + (stream.block[b].ac & 3) };
+            for (int u : used)
+            {
+                if (slot_of[u] < 0)
+                    slot_of[u] = ntables++;
+            }
+        }
+
+        for (const auto& table : stream.huffman)
+        {
+            const int id = table.cls * 4 + table.id;
+            if (id < 0 || id >= 8)
+            {
+                error = "Huffman table id outside 0..3";
+                return false;
+            }
+            if (slot_of[id] >= 0)
+                buildSlot(table, table.cls == 0, lut, hv, tab, slot_of[id]);
+        }
+
+        for (int i = 0; i < 8 * kLut / 2; ++i)
+            tab.lut[i] = u32(lut[2 * i]) | (u32(lut[2 * i + 1]) << 16);
+
+        for (int i = 0; i < 8 * 256 / 4; ++i)
+        {
+            tab.hv[i] = u32(hv[4 * i]) | (u32(hv[4 * i + 1]) << 8)
+                | (u32(hv[4 * i + 2]) << 16) | (u32(hv[4 * i + 3]) << 24);
+        }
+
+        built->dc_pack = built->ac_pack = built->comp_pack = 0;
+        for (int b = 0; b < bpm; ++b)
+        {
+            const auto& mb = stream.block[b];
+            built->dc_pack |= u32(slot_of[mb.dc & 3]) << (3 * b);
+            built->ac_pack |= u32(slot_of[4 + (mb.ac & 3)]) << (3 * b);
+            built->comp_pack |= u32(mb.component & 3) << (2 * b);
+        }
+        built->ntables = ntables;
+        std::memcpy(built->qt, natural_qt, sizeof(natural_qt));
+
+        {
+            std::lock_guard lock(m_tables_mutex);
+            auto [it, inserted] = m_tables_cache.emplace(tables_key, built);
+            if (!inserted)
+                built = std::const_pointer_cast<TablesCacheEntry>(
+                    std::static_pointer_cast<const TablesCacheEntry>(it->second));
+        }
+        tab_entry = built.get();
+    }
+
+    push.dc_pack = tab_entry->dc_pack;
+    push.ac_pack = tab_entry->ac_pack;
+    push.comp_pack = tab_entry->comp_pack;
+    const int ntables = tab_entry->ntables;
 
     // Without waiting, missing variants are queued and this image takes the CPU path.
     const Resolve mode = wait_for_pipelines ? Resolve::Wait : Resolve::Try;
@@ -1494,8 +1604,10 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     u8* const words = dst + job.src_offset[BindWords];
     ChunkGpu* const chunks = reinterpret_cast<ChunkGpu*>(dst + job.src_offset[BindChunks]);
     SegGpu* const segs = reinterpret_cast<SegGpu*>(dst + job.src_offset[BindSegs]);
-    u32* const seg_start = reinterpret_cast<u32*>(dst + job.src_offset[BindSegStart]);
-    std::memset(seg_start, 0, seg_start_words * 4);
+
+    // Build seg_start in cached memory: write-combined staging turns RMW |= into
+    // a read of undefined neighbouring bits.
+    std::vector<u32> seg_start_local(seg_start_words, 0);
 
     // Pack straight into staging in file byte order (the shader assembles
     // big-endian words), then cut chunks that never cross a segment.
@@ -1535,10 +1647,12 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         sg.nchunks = int(nch) - sg.chunk0;
         segs[s] = sg;
         if (mcu < nmcu)
-            seg_start[size_t(mcu) >> 5] |= 1u << (mcu & 31);
+            seg_start_local[size_t(mcu) >> 5] |= 1u << (mcu & 31);
         block += seg.mcus * bpm;
         mcu += seg.mcus;
     }
+
+    std::memcpy(dst + job.src_offset[BindSegStart], seg_start_local.data(), seg_start_words * 4);
 
     const size_t nunstuffed = stream.packed_bytes;
     const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
@@ -1577,7 +1691,7 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     need[BindCoef] = VkDeviceSize(nblk_alloc) * 32 * 4;
     need[BindDcd] = VkDeviceSize(nblk_alloc) * 4;
     need[BindQt] = sizeof(natural_qt);
-    need[BindFlags] = kMaxPasses * 4;
+    need[BindFlags] = kFlagsBytes;
     need[BindImage] = 0;
     need[BindSegStart] = seg_start_words * 4;
     need[BindAgg] = VkDeviceSize(std::max(dc_groups, 1)) * 2 * 16;
@@ -1585,8 +1699,8 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     for (Binding b : uploads)
         job.src_size[b] = need[b];
 
-    std::memcpy(dst + job.src_offset[BindTables], tab.get(), sizeof(TablesGpu));
-    std::memcpy(dst + job.src_offset[BindQt], natural_qt, sizeof(natural_qt));
+    std::memcpy(dst + job.src_offset[BindTables], &tab_entry->tables, sizeof(TablesGpu));
+    std::memcpy(dst + job.src_offset[BindQt], tab_entry->qt, sizeof(tab_entry->qt));
     m_staging.flush(job.staging, 0, total);
     job.upload_ms = lap();
 
@@ -1597,6 +1711,19 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
 bool JpegCompute::resolvePipelines(int ntables, const JpegComputePush& push,
     JpegComputePipelines& p, Resolve mode, double& ms, std::string& error)
 {
+    const u64 set_key = pipelineSetKey(ntables, push);
+    {
+        std::lock_guard lock(m_pipeline_mutex);
+        auto it = m_pipeline_sets.find(set_key);
+        if (it != m_pipeline_sets.end()
+            && it->second.sync && it->second.sync_gate && it->second.prefix
+            && it->second.write && it->second.dc_local && it->second.dc_groups && it->second.idct)
+        {
+            p = it->second;
+            return true;
+        }
+    }
+
     const std::string huff_sync = huffmanDefines(ntables, kSyncWg, "SYNC_WG");
     const std::string huff_write = huffmanDefines(ntables, kWriteWg, "WRITE_WG");
     const std::string idct = idctDefines(push);
@@ -1604,12 +1731,20 @@ bool JpegCompute::resolvePipelines(int ntables, const JpegComputePush& push,
     // Look every variant up (queueing the missing ones) before reporting a miss,
     // so one job requests its whole set at once.
     p.sync = pipeline("sync" + huff_sync, std::string(kCommon) + huff_sync + kHuffman + kSyncMain, mode, ms, error);
+    p.sync_gate = pipeline("syncgate", std::string(kCommon) + kSyncGateMain, mode, ms, error);
     p.prefix = pipeline("prefix", std::string(kCommon) + kPrefixMain, mode, ms, error);
     p.write = pipeline("write" + huff_write, std::string(kCommon) + huff_write + kHuffman + kWriteMain, mode, ms, error);
     p.dc_local = pipeline("dclocal", std::string(kCommon) + kDcScan + kDcLocalMain, mode, ms, error);
     p.dc_groups = pipeline("dcgroups", std::string(kCommon) + kDcScan + kDcGroupsMain, mode, ms, error);
     p.idct = pipeline("idct" + idct, std::string(kCommon) + idct + kIdctMain, mode, ms, error);
-    return p.sync && p.prefix && p.write && p.dc_local && p.dc_groups && p.idct;
+
+    const bool ready = p.sync && p.sync_gate && p.prefix && p.write && p.dc_local && p.dc_groups && p.idct;
+    if (ready)
+    {
+        std::lock_guard lock(m_pipeline_mutex);
+        m_pipeline_sets[set_key] = p;
+    }
+    return ready;
 }
 
 void JpegCompute::warmup()
@@ -1683,11 +1818,23 @@ bool JpegCompute::record(VkCommandBuffer cmd, JpegComputeJob& job, VkImage image
 {
     Slot& slot = m_slots[job.slot];
 
+    // ReBAR: host-written uploads already live in device-local memory — bind the
+    // staging ranges directly and skip vkCmdCopyBuffer for those bindings.
+    const bool direct_uploads = job.staging.device_local && job.staging.buffer;
+    const Binding upload_bindings[] = { BindWords, BindChunks, BindSegs, BindTables, BindQt, BindSegStart };
+    auto isUpload = [&] (u32 b) -> bool
+    {
+        for (Binding u : upload_bindings)
+            if (u32(u) == b)
+                return true;
+        return false;
+    };
+
     // Grow the slot's device buffers to fit this frame; the slot is idle, so
-    // the old ones can go right away.
+    // the old ones can go right away. Direct uploads need no device-local twin.
     for (u32 i = 0; i < kJpegComputeBindings; ++i)
     {
-        if (i == BindImage || slot.capacity[i] >= job.need[i])
+        if (i == BindImage || (direct_uploads && isUpload(i)) || slot.capacity[i] >= job.need[i])
             continue;
 
         if (slot.buffer[i])
@@ -1695,8 +1842,10 @@ bool JpegCompute::record(VkCommandBuffer cmd, JpegComputeJob& job, VkImage image
 
         // 25% headroom keeps a stream of similar images from reallocating each time.
         const VkDeviceSize size = std::max<VkDeviceSize>(align16(job.need[i] + job.need[i] / 4), 16);
-        slot.buffer[i] = m_allocator.createBuffer(size,
-            VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT, MemoryUsage::GpuOnly, false);
+        VkBufferUsageFlags usage = VK_BUFFER_USAGE_STORAGE_BUFFER_BIT | VK_BUFFER_USAGE_TRANSFER_DST_BIT;
+        if (i == BindFlags)
+            usage |= VK_BUFFER_USAGE_INDIRECT_BUFFER_BIT;
+        slot.buffer[i] = m_allocator.createBuffer(size, usage, MemoryUsage::GpuOnly, false);
         if (!slot.buffer[i])
         {
             slot.capacity[i] = 0;
@@ -1712,7 +1861,10 @@ bool JpegCompute::record(VkCommandBuffer cmd, JpegComputeJob& job, VkImage image
     {
         if (i == BindImage)
             continue;
-        buffer_info[i] = { slot.buffer[i].buffer, 0, VK_WHOLE_SIZE };
+        if (direct_uploads && isUpload(i) && job.src_size[i])
+            buffer_info[i] = { job.staging.buffer, job.staging.offset + job.src_offset[i], job.src_size[i] };
+        else
+            buffer_info[i] = { slot.buffer[i].buffer, 0, VK_WHOLE_SIZE };
         writes[i] =
         {
             .sType = VK_STRUCTURE_TYPE_WRITE_DESCRIPTOR_SET,
@@ -1746,22 +1898,27 @@ bool JpegCompute::record(VkCommandBuffer cmd, JpegComputeJob& job, VkImage image
         vkCmdWriteTimestamp(cmd, VK_PIPELINE_STAGE_TOP_OF_PIPE_BIT, slot.queries, 0);
     }
 
-    for (u32 i = 0; i < kJpegComputeBindings; ++i)
+    if (!direct_uploads)
     {
-        if (job.src_size[i])
+        for (u32 i = 0; i < kJpegComputeBindings; ++i)
         {
-            VkBufferCopy region = { job.staging.offset + job.src_offset[i], 0, job.src_size[i] };
-            vkCmdCopyBuffer(cmd, job.staging.buffer, slot.buffer[i].buffer, 1, &region);
+            if (job.src_size[i])
+            {
+                VkBufferCopy region = { job.staging.offset + job.src_offset[i], 0, job.src_size[i] };
+                vkCmdCopyBuffer(cmd, job.staging.buffer, slot.buffer[i].buffer, 1, &region);
+            }
         }
     }
     vkCmdFillBuffer(cmd, slot.buffer[BindDcd].buffer, 0, job.need[BindDcd], 0);
     vkCmdFillBuffer(cmd, slot.buffer[BindFlags].buffer, 0, job.need[BindFlags], 0);
 
-    // Previous users of this slot's buffers and the transfers above both
-    // finish before the first dispatch.
-    memBarrier(cmd, VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-        VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
-        VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
+    // Host writes (ReBAR) and/or copies + prior slot users must finish first.
+    const VkAccessFlags src_access = VK_ACCESS_TRANSFER_WRITE_BIT | VK_ACCESS_SHADER_WRITE_BIT
+        | (direct_uploads ? VK_ACCESS_HOST_WRITE_BIT : 0);
+    const VkPipelineStageFlags src_stage = VK_PIPELINE_STAGE_TRANSFER_BIT | VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT
+        | (direct_uploads ? VK_PIPELINE_STAGE_HOST_BIT : 0);
+    memBarrier(cmd, src_access, VK_ACCESS_SHADER_READ_BIT | VK_ACCESS_SHADER_WRITE_BIT,
+        src_stage, VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT);
 
     JpegComputePush push = job.push;
     vkCmdBindDescriptorSets(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, m_pipeline_layout, 0, 1, &slot.set, 0, nullptr);
@@ -1775,12 +1932,40 @@ bool JpegCompute::record(VkCommandBuffer cmd, JpegComputeJob& job, VkImage image
 
     const u32 chunks = u32(job.chunks);
     const u32 sync_groups = (chunks + kSyncWg - 1u) / kSyncWg;
-    for (int pass = 0; pass < kMaxPasses; ++pass)
+
+    // Single workgroup: local rounds already converge; extra passes are no-ops.
+    // Multi-WG: pass 0 is always full; later passes use DispatchIndirect so a
+    // converged flags[pass-1]==0 launches zero groups instead of a full sync.
+    const int sync_passes = sync_groups <= 1u ? 1 : kMaxPasses;
+    push.pass = 0;
+    dispatch(job.pipelines.sync, sync_groups);
+    for (int pass = 1; pass < sync_passes; ++pass)
     {
-        push.pass = pass;
-        dispatch(job.pipelines.sync, sync_groups);
         computeBarrier(cmd);
+        push.pass = pass - 1;
+        dispatch(job.pipelines.sync_gate, 1);
+
+        VkBufferMemoryBarrier to_indirect =
+        {
+            .sType = VK_STRUCTURE_TYPE_BUFFER_MEMORY_BARRIER,
+            .srcAccessMask = VK_ACCESS_SHADER_WRITE_BIT,
+            .dstAccessMask = VK_ACCESS_INDIRECT_COMMAND_READ_BIT,
+            .srcQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .dstQueueFamilyIndex = VK_QUEUE_FAMILY_IGNORED,
+            .buffer = slot.buffer[BindFlags].buffer,
+            .offset = kIndirectOffset,
+            .size = 12,
+        };
+        vkCmdPipelineBarrier(cmd,
+            VK_PIPELINE_STAGE_COMPUTE_SHADER_BIT, VK_PIPELINE_STAGE_DRAW_INDIRECT_BIT,
+            0, 0, nullptr, 1, &to_indirect, 0, nullptr);
+
+        push.pass = pass;
+        vkCmdBindPipeline(cmd, VK_PIPELINE_BIND_POINT_COMPUTE, job.pipelines.sync);
+        vkCmdPushConstants(cmd, m_pipeline_layout, VK_SHADER_STAGE_COMPUTE_BIT, 0, sizeof(push), &push);
+        vkCmdDispatchIndirect(cmd, slot.buffer[BindFlags].buffer, kIndirectOffset);
     }
+    computeBarrier(cmd);
 
     dispatch(job.pipelines.prefix, u32(job.segments));
     computeBarrier(cmd);

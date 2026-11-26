@@ -169,6 +169,11 @@ namespace mango::vulkan
         // Concurrent CPU decodes. Each one is multithreaded internally.
         int max_concurrent_cpu = 2;
 
+        // Host threads that classify JPEGs and run compute prepare() (entropy
+        // extract, unstuff, tables, staging upload). Default 4 keeps the GPU
+        // fed when max_inflight_compute is 6; set 1 to serialise prepare.
+        int prepare_workers = 4;
+
         // Host-visible upload memory for compute decodes. initial_chunk is
         // reserved in the background at construction; the arena then stays
         // allocated until the decoder is destroyed or trimStaging(). At the
