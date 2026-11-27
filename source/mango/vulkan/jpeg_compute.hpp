@@ -15,6 +15,7 @@
 
 #include <mango/image/jpeg.hpp>
 #include <mango/vulkan/allocator.hpp>
+#include <mango/vulkan/compiler.hpp>
 #include <mango/vulkan/staging_arena.hpp>
 
 namespace mango::vulkan::detail
@@ -132,8 +133,7 @@ namespace mango::vulkan::detail
         enum class Resolve
         {
             Try,    // ready or nothing; queue missing variants
-            Build,  // compile missing variants inline, skip ones in progress
-            Wait,   // compile or wait until available
+            Wait,   // queue missing variants and block until compiled
         };
 
         struct CompileRequest
@@ -143,19 +143,40 @@ namespace mango::vulkan::detail
             std::promise<VkPipeline> promise;
         };
 
-        VkPipeline pipeline(const std::string& key, const std::string& source, Resolve mode,
-                            double& compile_ms, std::string& error);
+        // One GLSL source. A frame needs seven of these; several share a key
+        // across sampling modes (only the IDCT, and the Huffman shaders when
+        // the table count changes, are distinct).
+        struct PipelineSpec
+        {
+            std::string key;
+            std::string source;
+        };
+
+        void pipelineSpecs(int ntables, const JpegComputePush& push, PipelineSpec (&specs)[7]);
         VkPipeline compilePipeline(const std::string& key, const std::string& source, std::string& error);
         bool resolvePipelines(int ntables, const JpegComputePush& push, JpegComputePipelines& pipelines,
                               Resolve mode, double& compile_ms, std::string& error);
 
-        // Background compiler: requested variants first, then the common ones,
-        // so the first JPEGs of a session find their pipelines ready.
-        void warmup();
-        std::thread m_warmup_thread;
+        // Queue specs that are not already compiled or queued. front puts a
+        // decode's own set ahead of speculative warmup.
+        void enqueueMissing(PipelineSpec* specs, int count, bool front);
+        // m_pipeline_mutex must be held. Moves matching queued compiles to the front.
+        void prioritize(const PipelineSpec* specs, int count);
+        // Pop one queued compile whose key is in keys (every key, when key_count is 0).
+        bool compileMatching(const std::string* keys, int key_count);
+        void compilerMain();
+        void enqueueWarmup();
+
+        // One JPEG is seven pipelines, plus one spare for the next sampling's
+        // IDCT. Capped so a large CPU does not start a glslang parse per core.
+        std::vector<std::thread> m_compiler_threads;
         std::condition_variable m_compile_cv;
         std::deque<CompileRequest> m_compile_queue;
-        bool m_stop_warmup = false;
+        bool m_stop_compile = false;
+        // Holds glslang's process refcount for the life of the decoder. Each
+        // compile constructs its own Compiler; without this, one finishing
+        // thread can FinalizeProcess while another is still parsing.
+        Compiler m_glslang;
 
         VkPhysicalDevice m_physical_device = VK_NULL_HANDLE;
         VkDevice m_device = VK_NULL_HANDLE;

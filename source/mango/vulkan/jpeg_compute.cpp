@@ -5,6 +5,7 @@
 #include "jpeg_compute.hpp"
 
 #include <algorithm>
+#include <chrono>
 #include <cstring>
 #include <future>
 #include <iterator>
@@ -1199,18 +1200,44 @@ JpegCompute::JpegCompute(VkPhysicalDevice physicalDevice, VkDevice device, Alloc
     }
 
     m_supported = true;
-    m_warmup_thread = std::thread([this] { warmup(); });
+    // m_glslang is the process-lifetime glslang init; the compilers below each
+    // construct another Compiler around a single pipeline.
+    (void)m_glslang;
+
+    // Fill the queue before the compilers start, so the common variants are
+    // already ordered and none of them is compiled twice.
+    enqueueWarmup();
+
+    unsigned compilers = std::thread::hardware_concurrency();
+    if (compilers < 1)
+        compilers = 1;
+    // Seven pipelines for one frame, and one more so the next sampling's IDCT
+    // is in the same wave instead of waiting for that wave to finish.
+    if (compilers > 8)
+        compilers = 8;
+    m_compiler_threads.reserve(compilers);
+    for (unsigned i = 0; i < compilers; ++i)
+        m_compiler_threads.emplace_back([this] { compilerMain(); });
 }
 
 JpegCompute::~JpegCompute()
 {
     {
         std::lock_guard lock(m_pipeline_mutex);
-        m_stop_warmup = true;
+        m_stop_compile = true;
     }
     m_compile_cv.notify_all();
-    if (m_warmup_thread.joinable())
-        m_warmup_thread.join();
+    for (std::thread& thread : m_compiler_threads)
+    {
+        if (thread.joinable())
+            thread.join();
+    }
+    {
+        std::lock_guard lock(m_pipeline_mutex);
+        for (CompileRequest& request : m_compile_queue)
+            request.promise.set_value(VK_NULL_HANDLE);
+        m_compile_queue.clear();
+    }
 
     for (Slot& slot : m_slots)
     {
@@ -1298,57 +1325,154 @@ const char* JpegCompute::classify(const image::jpeg::JpegInfo& info)
     return nullptr;
 }
 
-// Each variant compiles exactly once. Try never blocks: a missing variant is
-// queued for the warmup thread. Build compiles a missing variant inline and
-// skips one already in progress (the warmup thread must not wait for itself).
-// Wait compiles inline or blocks on the compile in progress.
-VkPipeline JpegCompute::pipeline(const std::string& key, const std::string& source, Resolve mode,
-    double& compile_ms, std::string& error)
+void JpegCompute::pipelineSpecs(int ntables, const JpegComputePush& push, PipelineSpec (&specs)[7])
 {
-    std::promise<VkPipeline> promise;
-    std::shared_future<VkPipeline> future;
+    const std::string huff_sync = huffmanDefines(ntables, kSyncWg, "SYNC_WG");
+    const std::string huff_write = huffmanDefines(ntables, kWriteWg, "WRITE_WG");
+    const std::string idct = idctDefines(push);
+    specs[0] = { "sync" + huff_sync, std::string(kCommon) + huff_sync + kHuffman + kSyncMain };
+    specs[1] = { "syncgate", std::string(kCommon) + kSyncGateMain };
+    specs[2] = { "prefix", std::string(kCommon) + kPrefixMain };
+    specs[3] = { "write" + huff_write, std::string(kCommon) + huff_write + kHuffman + kWriteMain };
+    specs[4] = { "dclocal", std::string(kCommon) + kDcScan + kDcLocalMain };
+    specs[5] = { "dcgroups", std::string(kCommon) + kDcScan + kDcGroupsMain };
+    specs[6] = { "idct" + idct, std::string(kCommon) + idct + kIdctMain };
+}
+
+void JpegCompute::enqueueMissing(PipelineSpec* specs, int count, bool front)
+{
+    int added = 0;
     {
         std::lock_guard lock(m_pipeline_mutex);
-        auto it = m_pipelines.find(key);
-        if (it != m_pipelines.end())
+        if (m_stop_compile)
+            return;
+
+        // Pushing the front in reverse leaves specs[0] as the next compile.
+        const int begin = front ? count - 1 : 0;
+        const int end = front ? -1 : count;
+        const int step = front ? -1 : 1;
+        for (int i = begin; i != end; i += step)
         {
-            future = it->second;
-        }
-        else if (mode == Resolve::Try)
-        {
+            if (m_pipelines.find(specs[i].key) != m_pipelines.end())
+                continue;
+
             CompileRequest request;
-            request.key = key;
-            request.source = source;
-            m_pipelines.emplace(key, request.promise.get_future().share());
-            m_compile_queue.push_back(std::move(request));
-            m_compile_cv.notify_one();
-            return VK_NULL_HANDLE;
-        }
-        else
-        {
-            m_pipelines.emplace(key, promise.get_future().share());
+            request.key = specs[i].key;
+            request.source = std::move(specs[i].source);
+            m_pipelines.emplace(request.key, request.promise.get_future().share());
+            if (front)
+                m_compile_queue.push_front(std::move(request));
+            else
+                m_compile_queue.push_back(std::move(request));
+            ++added;
         }
     }
+    if (added)
+        m_compile_cv.notify_all();
+}
 
-    if (future.valid())
+void JpegCompute::prioritize(const PipelineSpec* specs, int count)
+{
+    std::deque<CompileRequest> urgent;
+    for (auto it = m_compile_queue.begin(); it != m_compile_queue.end();)
     {
-        const bool ready = future.wait_for(std::chrono::seconds(0)) == std::future_status::ready;
-        if (!ready && mode != Resolve::Wait)
-            return VK_NULL_HANDLE;
+        bool match = false;
+        for (int i = 0; i < count; ++i)
+        {
+            if (it->key == specs[i].key)
+            {
+                match = true;
+                break;
+            }
+        }
+        if (!match)
+        {
+            ++it;
+            continue;
+        }
+        urgent.push_back(std::move(*it));
+        it = m_compile_queue.erase(it);
+    }
+    while (!urgent.empty())
+    {
+        m_compile_queue.push_front(std::move(urgent.back()));
+        urgent.pop_back();
+    }
+}
 
-        const u64 t0 = Time::us();
-        VkPipeline result = future.get();
-        compile_ms += double(Time::us() - t0) / 1000.0;
-        if (!result)
-            error = "jpeg compute pipeline unavailable";
-        return result;
+bool JpegCompute::compileMatching(const std::string* keys, int key_count)
+{
+    CompileRequest request;
+    {
+        std::lock_guard lock(m_pipeline_mutex);
+        if (m_stop_compile)
+            return false;
+
+        for (auto it = m_compile_queue.begin(); it != m_compile_queue.end(); ++it)
+        {
+            bool match = key_count == 0;
+            for (int i = 0; i < key_count && !match; ++i)
+                match = it->key == keys[i];
+            if (!match)
+                continue;
+
+            request = std::move(*it);
+            m_compile_queue.erase(it);
+            break;
+        }
+        if (request.key.empty())
+            return false;
     }
 
-    const u64 t0 = Time::us();
-    VkPipeline result = compilePipeline(key, source, error);
-    promise.set_value(result);
-    compile_ms += double(Time::us() - t0) / 1000.0;
-    return result;
+    std::string error;
+    VkPipeline pipeline = VK_NULL_HANDLE;
+    try
+    {
+        pipeline = compilePipeline(request.key, request.source, error);
+    }
+    catch (...)
+    {
+        pipeline = VK_NULL_HANDLE;
+    }
+    request.promise.set_value(pipeline);
+    return true;
+}
+
+void JpegCompute::compilerMain()
+{
+    for (;;)
+    {
+        {
+            std::unique_lock lock(m_pipeline_mutex);
+            m_compile_cv.wait(lock, [&] { return m_stop_compile || !m_compile_queue.empty(); });
+            if (m_stop_compile)
+                return;
+        }
+        compileMatching(nullptr, 0);
+    }
+}
+
+void JpegCompute::enqueueWarmup()
+{
+    // Most common first: 4 tables (separate luma/chroma), then shared tables.
+    // enqueueMissing keeps the first variant's seven pipelines at the front.
+    struct Variant { int ntables, components, yh, yv; };
+    static const Variant variants[] =
+    {
+        { 4, 3, 2, 2 },     // 4:2:0
+        { 4, 3, 1, 1 },     // 4:4:4
+        { 4, 3, 2, 1 },     // 4:2:2
+        { 2, 1, 1, 1 },     // grayscale
+        { 2, 3, 2, 2 },
+        { 2, 3, 1, 1 },
+        { 4, 3, 1, 2 },     // 4:4:0
+    };
+    for (const Variant& variant : variants)
+    {
+        PipelineSpec specs[7];
+        pipelineSpecs(variant.ntables, warmLayout(variant.components, variant.yh, variant.yv), specs);
+        enqueueMissing(specs, 7, false);
+    }
 }
 
 VkPipeline JpegCompute::compilePipeline(const std::string& key, const std::string& source, std::string& error)
@@ -1765,6 +1889,7 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
 }
 
 // Huffman pipelines vary by table count, the IDCT by frame layout.
+// The seven pipelines compile together: wall time is the slowest one.
 bool JpegCompute::resolvePipelines(int ntables, const JpegComputePush& push,
     JpegComputePipelines& p, Resolve mode, double& ms, std::string& error)
 {
@@ -1781,80 +1906,96 @@ bool JpegCompute::resolvePipelines(int ntables, const JpegComputePush& push,
         }
     }
 
-    const std::string huff_sync = huffmanDefines(ntables, kSyncWg, "SYNC_WG");
-    const std::string huff_write = huffmanDefines(ntables, kWriteWg, "WRITE_WG");
-    const std::string idct = idctDefines(push);
+    PipelineSpec specs[7];
+    pipelineSpecs(ntables, push, specs);
+    // Queue the whole set before deciding it is a miss, and ahead of warmup
+    // variants that have not started yet.
+    enqueueMissing(specs, 7, true);
 
-    // Look every variant up (queueing the missing ones) before reporting a miss,
-    // so one job requests its whole set at once.
-    p.sync = pipeline("sync" + huff_sync, std::string(kCommon) + huff_sync + kHuffman + kSyncMain, mode, ms, error);
-    p.sync_gate = pipeline("syncgate", std::string(kCommon) + kSyncGateMain, mode, ms, error);
-    p.prefix = pipeline("prefix", std::string(kCommon) + kPrefixMain, mode, ms, error);
-    p.write = pipeline("write" + huff_write, std::string(kCommon) + huff_write + kHuffman + kWriteMain, mode, ms, error);
-    p.dc_local = pipeline("dclocal", std::string(kCommon) + kDcScan + kDcLocalMain, mode, ms, error);
-    p.dc_groups = pipeline("dcgroups", std::string(kCommon) + kDcScan + kDcGroupsMain, mode, ms, error);
-    p.idct = pipeline("idct" + idct, std::string(kCommon) + idct + kIdctMain, mode, ms, error);
+    std::shared_future<VkPipeline> future[7];
+    {
+        std::lock_guard lock(m_pipeline_mutex);
+        prioritize(specs, 7);
+        for (int i = 0; i < 7; ++i)
+        {
+            auto it = m_pipelines.find(specs[i].key);
+            if (it == m_pipelines.end())
+                return false;
+            future[i] = it->second;
+        }
+    }
+    m_compile_cv.notify_all();
 
-    const bool ready = p.sync && p.sync_gate && p.prefix && p.write && p.dc_local && p.dc_groups && p.idct;
-    if (ready)
+    auto ready = [&] (int index)
+    {
+        return future[index].wait_for(std::chrono::seconds(0)) == std::future_status::ready;
+    };
+
+    if (mode != Resolve::Wait)
+    {
+        for (int i = 0; i < 7; ++i)
+        {
+            if (!ready(i))
+                return false;
+        }
+    }
+    else
+    {
+        const u64 t0 = Time::us();
+        bool stalled = false;
+        std::string keys[7];
+        for (int i = 0; i < 7; ++i)
+            keys[i] = specs[i].key;
+
+        for (;;)
+        {
+            bool pending = false;
+            for (int i = 0; i < 7; ++i)
+            {
+                if (!ready(i))
+                    pending = true;
+            }
+            if (!pending)
+                break;
+
+            stalled = true;
+            // Compile one of this frame's pipelines on the waiting thread when
+            // a compiler has not picked it up yet. Otherwise block on one that
+            // is already in a compiler.
+            if (!compileMatching(keys, 7))
+            {
+                for (int i = 0; i < 7; ++i)
+                {
+                    if (!ready(i))
+                    {
+                        future[i].wait();
+                        break;
+                    }
+                }
+            }
+        }
+        if (stalled)
+            ms += double(Time::us() - t0) / 1000.0;
+    }
+
+    p.sync = future[0].get();
+    p.sync_gate = future[1].get();
+    p.prefix = future[2].get();
+    p.write = future[3].get();
+    p.dc_local = future[4].get();
+    p.dc_groups = future[5].get();
+    p.idct = future[6].get();
+    if (!p.sync || !p.sync_gate || !p.prefix || !p.write || !p.dc_local || !p.dc_groups || !p.idct)
+    {
+        error = "jpeg compute pipeline unavailable";
+        return false;
+    }
+
     {
         std::lock_guard lock(m_pipeline_mutex);
         m_pipeline_sets[set_key] = p;
     }
-    return ready;
-}
-
-void JpegCompute::warmup()
-{
-    // Most common first: 4 tables (separate luma/chroma), then shared tables.
-    struct Variant { int ntables, components, yh, yv; };
-    static const Variant variants[] =
-    {
-        { 4, 3, 2, 2 },     // 4:2:0
-        { 4, 3, 1, 1 },     // 4:4:4
-        { 4, 3, 2, 1 },     // 4:2:2
-        { 2, 1, 1, 1 },     // grayscale
-        { 2, 3, 2, 2 },
-        { 2, 3, 1, 1 },
-        { 4, 3, 1, 2 },     // 4:4:0
-    };
-    const size_t count = sizeof(variants) / sizeof(variants[0]);
-    size_t next = 0;
-
-    for (;;)
-    {
-        CompileRequest request;
-        {
-            std::unique_lock lock(m_pipeline_mutex);
-            m_compile_cv.wait(lock, [&] { return m_stop_warmup || !m_compile_queue.empty() || next < count; });
-            if (m_stop_warmup)
-                break;
-            if (!m_compile_queue.empty())
-            {
-                request = std::move(m_compile_queue.front());
-                m_compile_queue.pop_front();
-            }
-        }
-
-        // Variants a decode is waiting for come before the speculative ones.
-        if (!request.key.empty())
-        {
-            std::string error;
-            request.promise.set_value(compilePipeline(request.key, request.source, error));
-            continue;
-        }
-
-        const Variant& v = variants[next++];
-        JpegComputePipelines p;
-        double ms = 0.0;
-        std::string error;
-        resolvePipelines(v.ntables, warmLayout(v.components, v.yh, v.yv), p, Resolve::Build, ms, error);
-    }
-
-    std::lock_guard lock(m_pipeline_mutex);
-    for (CompileRequest& request : m_compile_queue)
-        request.promise.set_value(VK_NULL_HANDLE);
-    m_compile_queue.clear();
+    return true;
 }
 
 bool JpegCompute::acquire(JpegComputeJob& job)
