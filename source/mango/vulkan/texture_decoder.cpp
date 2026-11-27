@@ -806,50 +806,15 @@ struct TextureDecoder::Impl
         }
 
         report.header_ms = elapsedMs(t0);
-        const u64 t1 = Time::us();
-        VkFormat view_formats[2] = { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB };
-        VkImageFormatListCreateInfo format_list =
-        {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO,
-            .viewFormatCount = 2,
-            .pViewFormats = view_formats,
-        };
 
-        VkImageCreateInfo image_info =
-        {
-            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
-            .imageType = VK_IMAGE_TYPE_2D,
-            .format = plan.format,
-            .extent = { info.width, info.height, 1 },
-            .mipLevels = 1,
-            .arrayLayers = 1,
-            .samples = VK_SAMPLE_COUNT_1_BIT,
-            .tiling = VK_IMAGE_TILING_OPTIMAL,
-            .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
-            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
-            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
-        };
-
+        // Estimate only — the VkImage is allocated in ensureImage() at record/submit
+        // time. Allocating here pinned ~1 GB per job for every prepare/CPU-wait entry
+        // and blew past any client memory budget on 16k folders.
         if (job->storage)
-        {
-            image_info.pNext = &format_list;
-            image_info.flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT;
-            image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
-            image_info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
             info.image_format = VK_FORMAT_R8G8B8A8_UNORM;
-        }
-
-        job->image = m_allocator.createImage(image_info, MemoryUsage::GpuOnly);
-        if (!job->image)
-        {
-            texture.error = fmt::format("image allocation failed ({} x {})", info.width, info.height);
-            return texture;
-        }
-
-        VkMemoryRequirements requirements = {};
-        vkGetImageMemoryRequirements(m_device, job->image.image, &requirements);
-        report.image_bytes = size_t(requirements.size);
-        report.image_ms = elapsedMs(t1);
+        const size_t bpp = plan.format == VK_FORMAT_R16G16B16A16_SFLOAT ? 8u
+            : plan.format == VK_FORMAT_R32G32B32A32_SFLOAT ? 16u : 4u;
+        report.image_bytes = size_t(info.width) * size_t(info.height) * bpp;
 
         {
             std::lock_guard lock(m_mutex);
@@ -867,10 +832,64 @@ struct TextureDecoder::Impl
             }
         }
 
+        // image stays empty until Ready/Failed; clients must use the callback.
         texture.handle = job->handle;
-        texture.image = job->image;
         texture.info = info;
         return texture;
+    }
+
+    // Create the output VkImage on first use (GPU record or CPU upload record).
+    // Cancelled jobs that never reach recordJob never allocate.
+    bool ensureImage(Job& job)
+    {
+        if (job.image)
+            return true;
+
+        const u64 t0 = Time::us();
+        VkFormat view_formats[2] = { VK_FORMAT_R8G8B8A8_UNORM, VK_FORMAT_R8G8B8A8_SRGB };
+        VkImageFormatListCreateInfo format_list =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_FORMAT_LIST_CREATE_INFO,
+            .viewFormatCount = 2,
+            .pViewFormats = view_formats,
+        };
+
+        VkImageCreateInfo image_info =
+        {
+            .sType = VK_STRUCTURE_TYPE_IMAGE_CREATE_INFO,
+            .imageType = VK_IMAGE_TYPE_2D,
+            .format = job.plan.format,
+            .extent = { job.info.width, job.info.height, 1 },
+            .mipLevels = 1,
+            .arrayLayers = 1,
+            .samples = VK_SAMPLE_COUNT_1_BIT,
+            .tiling = VK_IMAGE_TILING_OPTIMAL,
+            .usage = VK_IMAGE_USAGE_SAMPLED_BIT | VK_IMAGE_USAGE_TRANSFER_DST_BIT | VK_IMAGE_USAGE_TRANSFER_SRC_BIT,
+            .sharingMode = VK_SHARING_MODE_EXCLUSIVE,
+            .initialLayout = VK_IMAGE_LAYOUT_UNDEFINED,
+        };
+
+        if (job.storage)
+        {
+            image_info.pNext = &format_list;
+            image_info.flags = VK_IMAGE_CREATE_MUTABLE_FORMAT_BIT | VK_IMAGE_CREATE_EXTENDED_USAGE_BIT;
+            image_info.format = VK_FORMAT_R8G8B8A8_UNORM;
+            image_info.usage |= VK_IMAGE_USAGE_STORAGE_BIT;
+            job.info.image_format = VK_FORMAT_R8G8B8A8_UNORM;
+        }
+
+        job.image = m_allocator.createImage(image_info, MemoryUsage::GpuOnly);
+        if (!job.image)
+        {
+            job.error = fmt::format("image allocation failed ({} x {})", job.info.width, job.info.height);
+            return false;
+        }
+
+        VkMemoryRequirements requirements = {};
+        vkGetImageMemoryRequirements(m_device, job.image.image, &requirements);
+        job.report.image_bytes = size_t(requirements.size);
+        job.report.image_ms += elapsedMs(t0);
+        return true;
     }
 
     void cancel(Handle handle)
@@ -964,7 +983,12 @@ struct TextureDecoder::Impl
         {
             auto compute = std::make_unique<detail::JpegComputeJob>();
             std::string error;
-            const bool prepared = m_compute->prepare(decoder, *compute, m_config.wait_for_pipelines, error);
+            // Huge frames must not fall back to CPU while shaders compile: that
+            // allocates a full host bitmap on top of the eventual VkImage (~2 GB
+            // for 16k²) and is what pages extreme/ folders to death.
+            const u64 pixels = u64(job.info.source_width) * u64(job.info.source_height);
+            const bool wait = m_config.wait_for_pipelines || pixels >= 8ull * 1000ull * 1000ull;
+            const bool prepared = m_compute->prepare(decoder, *compute, wait, error);
             report.prepare_extract_ms = compute->extract_ms;
             report.prepare_unstuff_ms = compute->unstuff_ms;
             report.prepare_tables_ms = compute->tables_ms;
@@ -1304,6 +1328,9 @@ struct TextureDecoder::Impl
     // Record a primary command buffer; queue submit is batched in process().
     bool recordJob(Job& job)
     {
+        if (!ensureImage(job))
+            return false;
+
         if (job.path == Path::Compute)
         {
             VkImageViewUsageCreateInfo usage =

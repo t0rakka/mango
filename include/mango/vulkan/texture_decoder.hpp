@@ -194,6 +194,8 @@ namespace mango::vulkan
         struct Texture
         {
             Handle handle = 0;      // 0 when the header failed; the callback does not fire
+            // Empty until the callback: the VkImage is allocated at GPU record /
+            // CPU upload time so cancelled/queued jobs do not pin full-frame memory.
             ImageAllocation image;
             TextureInfo info;
             std::string error;

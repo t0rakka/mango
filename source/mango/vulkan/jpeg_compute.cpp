@@ -13,6 +13,7 @@
 #include <vector>
 
 #include <mango/core/bits.hpp>
+#include <mango/core/thread.hpp>
 #include <mango/core/timer.hpp>
 #include <mango/vulkan/compiler.hpp>
 
@@ -1443,118 +1444,6 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         }
     }
 
-    // Cache key: MCU block table refs + DHT contents + QT (same file family hits).
-    u64 tables_key = mixHash(0x7AB1Eu, u64(bpm));
-    for (int b = 0; b < bpm; ++b)
-    {
-        const auto& mb = stream.block[b];
-        tables_key = mixHash(tables_key, u64(mb.dc) | (u64(mb.ac) << 8) | (u64(mb.component) << 16));
-    }
-    for (const auto& table : stream.huffman)
-    {
-        tables_key = mixHash(tables_key, u64(table.cls) | (u64(table.id) << 8));
-        tables_key = hashBytes(tables_key, table.bits, sizeof(table.bits));
-        int count = 0;
-        for (int i = 0; i < 16; ++i)
-            count += table.bits[i];
-        tables_key = hashBytes(tables_key, table.values, size_t(count));
-    }
-    tables_key = hashBytes(tables_key, natural_qt, sizeof(natural_qt));
-
-    std::shared_ptr<const TablesCacheEntry> cached;
-    {
-        std::lock_guard lock(m_tables_mutex);
-        auto it = m_tables_cache.find(tables_key);
-        if (it != m_tables_cache.end())
-            cached = std::static_pointer_cast<const TablesCacheEntry>(it->second);
-    }
-
-    std::shared_ptr<TablesCacheEntry> built;
-    const TablesCacheEntry* tab_entry = nullptr;
-    if (cached)
-    {
-        tab_entry = cached.get();
-    }
-    else
-    {
-        built = std::make_shared<TablesCacheEntry>();
-        TablesGpu& tab = built->tables;
-        std::vector<u16> lut(8 * kLut, 0);
-        std::vector<u8> hv(8 * 256, 0);
-        int slot_of[8];
-        for (int i = 0; i < 8; ++i)
-            slot_of[i] = -1;
-
-        int ntables = 0;
-        for (int b = 0; b < bpm; ++b)
-        {
-            const int used[2] = { stream.block[b].dc & 3, 4 + (stream.block[b].ac & 3) };
-            for (int u : used)
-            {
-                if (slot_of[u] < 0)
-                    slot_of[u] = ntables++;
-            }
-        }
-
-        for (const auto& table : stream.huffman)
-        {
-            const int id = table.cls * 4 + table.id;
-            if (id < 0 || id >= 8)
-            {
-                error = "Huffman table id outside 0..3";
-                return false;
-            }
-            if (slot_of[id] >= 0)
-                buildSlot(table, table.cls == 0, lut, hv, tab, slot_of[id]);
-        }
-
-        for (int i = 0; i < 8 * kLut / 2; ++i)
-            tab.lut[i] = u32(lut[2 * i]) | (u32(lut[2 * i + 1]) << 16);
-
-        for (int i = 0; i < 8 * 256 / 4; ++i)
-        {
-            tab.hv[i] = u32(hv[4 * i]) | (u32(hv[4 * i + 1]) << 8)
-                | (u32(hv[4 * i + 2]) << 16) | (u32(hv[4 * i + 3]) << 24);
-        }
-
-        built->dc_pack = built->ac_pack = built->comp_pack = 0;
-        for (int b = 0; b < bpm; ++b)
-        {
-            const auto& mb = stream.block[b];
-            built->dc_pack |= u32(slot_of[mb.dc & 3]) << (3 * b);
-            built->ac_pack |= u32(slot_of[4 + (mb.ac & 3)]) << (3 * b);
-            built->comp_pack |= u32(mb.component & 3) << (2 * b);
-        }
-        built->ntables = ntables;
-        std::memcpy(built->qt, natural_qt, sizeof(natural_qt));
-
-        {
-            std::lock_guard lock(m_tables_mutex);
-            auto [it, inserted] = m_tables_cache.emplace(tables_key, built);
-            if (!inserted)
-                built = std::const_pointer_cast<TablesCacheEntry>(
-                    std::static_pointer_cast<const TablesCacheEntry>(it->second));
-        }
-        tab_entry = built.get();
-    }
-
-    push.dc_pack = tab_entry->dc_pack;
-    push.ac_pack = tab_entry->ac_pack;
-    push.comp_pack = tab_entry->comp_pack;
-    const int ntables = tab_entry->ntables;
-
-    // Without waiting, missing variants are queued and this image takes the CPU path.
-    const Resolve mode = wait_for_pipelines ? Resolve::Wait : Resolve::Try;
-    job.tables_ms = lap();
-    const bool resolved = resolvePipelines(ntables, push, job.pipelines, mode, job.compile_ms, error);
-    job.pipelines_ms = lap();
-    if (!resolved)
-    {
-        if (error.empty())
-            error = "compute pipelines compiling";
-        return false;
-    }
-
     const size_t nseg = stream.segments.size();
     const int nmcu = push.nmcu;
     const int dc_groups = (nmcu + kDcTile - 1) / kDcTile;
@@ -1590,104 +1479,270 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
         total += align16(max_upload[i]);
     }
 
-    lap();
-    job.staging = m_staging.acquire(total);
-    job.alloc_ms = lap();
-    if (!job.staging)
+    // After extract, tables/pipelines and staging pack are independent. Run pack
+    // on the ThreadPool so prepare wall ≈ max(tables+pipelines, alloc+unstuff)
+    // and idle cores show up on the TP graph while scrolling.
+    struct PackLane
     {
-        error = "staging allocation failed";
-        return false;
-    }
-    job.staging_bytes = size_t(total);
+        bool ok = true;
+        std::string error;
+        size_t nch = 0;
+        int block = 0;
+        u32 nwords = 0;
+        double alloc_ms = 0.0;
+        double unstuff_ms = 0.0;
+    } pack;
 
-    u8* dst = job.staging.mapped;
-    u8* const words = dst + job.src_offset[BindWords];
-    ChunkGpu* const chunks = reinterpret_cast<ChunkGpu*>(dst + job.src_offset[BindChunks]);
-    SegGpu* const segs = reinterpret_cast<SegGpu*>(dst + job.src_offset[BindSegs]);
-
-    // Build seg_start in cached memory: write-combined staging turns RMW |= into
-    // a read of undefined neighbouring bits.
-    std::vector<u32> seg_start_local(seg_start_words, 0);
-
-    // Pack straight into staging in file byte order (the shader assembles
-    // big-endian words), then cut chunks that never cross a segment.
-    if (!decoder.packEntropy(stream, words))
+    ConcurrentQueue pack_queue;
+    pack_queue.enqueue([&]
     {
-        m_staging.release(job.staging);
-        error = "entropy: " + stream.error;
-        return false;
-    }
-
-    size_t nch = 0;
-    int block = 0;
-    int mcu = 0;
-
-    for (size_t s = 0; s < nseg; ++s)
-    {
-        const auto& seg = stream.segments[s];
-        const u32 seg_bit = u32(seg.packed_offset) * 8;
-        const u32 seg_end = u32(seg.packed_offset + seg.packed_size) * 8;
-
-        SegGpu sg = {};
-        sg.chunk0 = int(nch);
-        sg.block0 = block;
-        sg.mcu0 = mcu;
-        sg.mcus = seg.mcus;
-        for (u32 at = seg_bit; at < seg_end; at += kChunkBits)
+        const u64 t_alloc0 = Time::us();
+        job.staging = m_staging.acquire(total);
+        pack.alloc_ms = double(Time::us() - t_alloc0) / 1000.0;
+        if (!job.staging)
         {
-            ChunkGpu c = {};
-            c.bit0 = at;
-            c.bit1 = std::min(at + kChunkBits, seg_end);
-            c.seg0 = seg_bit;
-            c.seg1 = seg_end;
-            c.block0 = block;
-            c.block1 = block + seg.mcus * bpm;
-            chunks[nch++] = c;
+            pack.ok = false;
+            pack.error = "staging allocation failed";
+            return;
         }
-        sg.nchunks = int(nch) - sg.chunk0;
-        segs[s] = sg;
-        if (mcu < nmcu)
-            seg_start_local[size_t(mcu) >> 5] |= 1u << (mcu & 31);
-        block += seg.mcus * bpm;
-        mcu += seg.mcus;
+        job.staging_bytes = size_t(total);
+
+        const u64 t_pack0 = Time::us();
+        u8* dst = job.staging.mapped;
+        u8* const words = dst + job.src_offset[BindWords];
+        ChunkGpu* const chunks = reinterpret_cast<ChunkGpu*>(dst + job.src_offset[BindChunks]);
+        SegGpu* const segs = reinterpret_cast<SegGpu*>(dst + job.src_offset[BindSegs]);
+
+        // Build seg_start in cached memory: write-combined staging turns RMW |= into
+        // a read of undefined neighbouring bits.
+        std::vector<u32> seg_start_local(seg_start_words, 0);
+
+        // Pack straight into staging in file byte order (the shader assembles
+        // big-endian words), then cut chunks that never cross a segment.
+        if (!decoder.packEntropy(stream, words))
+        {
+            pack.ok = false;
+            pack.error = "entropy: " + stream.error;
+            return;
+        }
+
+        size_t nch = 0;
+        int block = 0;
+        int mcu = 0;
+
+        for (size_t s = 0; s < nseg; ++s)
+        {
+            const auto& seg = stream.segments[s];
+            const u32 seg_bit = u32(seg.packed_offset) * 8;
+            const u32 seg_end = u32(seg.packed_offset + seg.packed_size) * 8;
+
+            SegGpu sg = {};
+            sg.chunk0 = int(nch);
+            sg.block0 = block;
+            sg.mcu0 = mcu;
+            sg.mcus = seg.mcus;
+            for (u32 at = seg_bit; at < seg_end; at += kChunkBits)
+            {
+                ChunkGpu c = {};
+                c.bit0 = at;
+                c.bit1 = std::min(at + kChunkBits, seg_end);
+                c.seg0 = seg_bit;
+                c.seg1 = seg_end;
+                c.block0 = block;
+                c.block1 = block + seg.mcus * bpm;
+                chunks[nch++] = c;
+            }
+            sg.nchunks = int(nch) - sg.chunk0;
+            segs[s] = sg;
+            if (mcu < nmcu)
+                seg_start_local[size_t(mcu) >> 5] |= 1u << (mcu & 31);
+            block += seg.mcus * bpm;
+            mcu += seg.mcus;
+        }
+
+        std::memcpy(dst + job.src_offset[BindSegStart], seg_start_local.data(), seg_start_words * 4);
+
+        const size_t nunstuffed = stream.packed_bytes;
+        const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
+        std::memset(words + nunstuffed, 0, nbytes - nunstuffed);
+
+        pack.nch = nch;
+        pack.block = block;
+        pack.nwords = u32(nbytes / 4);
+        pack.unstuff_ms = double(Time::us() - t_pack0) / 1000.0;
+
+        if (!nch)
+        {
+            pack.ok = false;
+            pack.error = "no entropy chunks";
+        }
+    });
+
+    // Tables + pipelines on this prepare worker (overlaps the pack lane).
+    const u64 t_tables0 = Time::us();
+
+    u64 tables_key = mixHash(0x7AB1Eu, u64(bpm));
+    for (int b = 0; b < bpm; ++b)
+    {
+        const auto& mb = stream.block[b];
+        tables_key = mixHash(tables_key, u64(mb.dc) | (u64(mb.ac) << 8) | (u64(mb.component) << 16));
+    }
+    for (const auto& table : stream.huffman)
+    {
+        tables_key = mixHash(tables_key, u64(table.cls) | (u64(table.id) << 8));
+        tables_key = hashBytes(tables_key, table.bits, sizeof(table.bits));
+        int count = 0;
+        for (int i = 0; i < 16; ++i)
+            count += table.bits[i];
+        tables_key = hashBytes(tables_key, table.values, size_t(count));
+    }
+    tables_key = hashBytes(tables_key, natural_qt, sizeof(natural_qt));
+
+    std::shared_ptr<const TablesCacheEntry> cached;
+    {
+        std::lock_guard lock(m_tables_mutex);
+        auto it = m_tables_cache.find(tables_key);
+        if (it != m_tables_cache.end())
+            cached = std::static_pointer_cast<const TablesCacheEntry>(it->second);
     }
 
-    std::memcpy(dst + job.src_offset[BindSegStart], seg_start_local.data(), seg_start_words * 4);
-
-    const size_t nunstuffed = stream.packed_bytes;
-    const size_t nbytes = ((nunstuffed + 3u) & ~size_t(3)) + 32u;
-    std::memset(words + nunstuffed, 0, nbytes - nunstuffed);
-    const u32 nwords = u32(nbytes / 4);
-    job.unstuff_ms = lap();
-
-    if (!nch)
+    std::shared_ptr<TablesCacheEntry> built;
+    const TablesCacheEntry* tab_entry = nullptr;
+    std::string tables_error;
+    if (cached)
     {
-        m_staging.release(job.staging);
-        error = "no entropy chunks";
+        tab_entry = cached.get();
+    }
+    else
+    {
+        built = std::make_shared<TablesCacheEntry>();
+        TablesGpu& tab = built->tables;
+        std::vector<u16> lut(8 * kLut, 0);
+        std::vector<u8> hv(8 * 256, 0);
+        int slot_of[8];
+        for (int i = 0; i < 8; ++i)
+            slot_of[i] = -1;
+
+        int ntables = 0;
+        for (int b = 0; b < bpm; ++b)
+        {
+            const int used[2] = { stream.block[b].dc & 3, 4 + (stream.block[b].ac & 3) };
+            for (int u : used)
+            {
+                if (slot_of[u] < 0)
+                    slot_of[u] = ntables++;
+            }
+        }
+
+        for (const auto& table : stream.huffman)
+        {
+            const int id = table.cls * 4 + table.id;
+            if (id < 0 || id >= 8)
+            {
+                tables_error = "Huffman table id outside 0..3";
+                break;
+            }
+            if (slot_of[id] >= 0)
+                buildSlot(table, table.cls == 0, lut, hv, tab, slot_of[id]);
+        }
+
+        if (tables_error.empty())
+        {
+            for (int i = 0; i < 8 * kLut / 2; ++i)
+                tab.lut[i] = u32(lut[2 * i]) | (u32(lut[2 * i + 1]) << 16);
+
+            for (int i = 0; i < 8 * 256 / 4; ++i)
+            {
+                tab.hv[i] = u32(hv[4 * i]) | (u32(hv[4 * i + 1]) << 8)
+                    | (u32(hv[4 * i + 2]) << 16) | (u32(hv[4 * i + 3]) << 24);
+            }
+
+            built->dc_pack = built->ac_pack = built->comp_pack = 0;
+            for (int b = 0; b < bpm; ++b)
+            {
+                const auto& mb = stream.block[b];
+                built->dc_pack |= u32(slot_of[mb.dc & 3]) << (3 * b);
+                built->ac_pack |= u32(slot_of[4 + (mb.ac & 3)]) << (3 * b);
+                built->comp_pack |= u32(mb.component & 3) << (2 * b);
+            }
+            built->ntables = ntables;
+            std::memcpy(built->qt, natural_qt, sizeof(natural_qt));
+
+            {
+                std::lock_guard lock(m_tables_mutex);
+                auto [it, inserted] = m_tables_cache.emplace(tables_key, built);
+                if (!inserted)
+                    built = std::const_pointer_cast<TablesCacheEntry>(
+                        std::static_pointer_cast<const TablesCacheEntry>(it->second));
+            }
+            tab_entry = built.get();
+        }
+    }
+
+    job.tables_ms = double(Time::us() - t_tables0) / 1000.0;
+
+    bool resolved = false;
+    if (tab_entry)
+    {
+        push.dc_pack = tab_entry->dc_pack;
+        push.ac_pack = tab_entry->ac_pack;
+        push.comp_pack = tab_entry->comp_pack;
+        const int ntables = tab_entry->ntables;
+
+        // Without waiting, missing variants are queued and this image takes the CPU path.
+        const Resolve mode = wait_for_pipelines ? Resolve::Wait : Resolve::Try;
+        const u64 t_pipe0 = Time::us();
+        resolved = resolvePipelines(ntables, push, job.pipelines, mode, job.compile_ms, error);
+        job.pipelines_ms = double(Time::us() - t_pipe0) / 1000.0;
+        if (!resolved && error.empty())
+            error = "compute pipelines compiling";
+    }
+    else if (!tables_error.empty())
+    {
+        error = tables_error;
+    }
+
+    pack_queue.wait();
+
+    job.alloc_ms = pack.alloc_ms;
+    job.unstuff_ms = pack.unstuff_ms;
+
+    if (!pack.ok)
+    {
+        if (job.staging)
+            m_staging.release(job.staging);
+        error = pack.error;
+        return false;
+    }
+    if (!resolved || !tab_entry)
+    {
+        if (job.staging)
+            m_staging.release(job.staging);
+        if (error.empty())
+            error = tables_error.empty() ? "tables failed" : tables_error;
         return false;
     }
 
-    push.nch = int(nch);
-    push.nwords = nwords;
+    push.nch = int(pack.nch);
+    push.nwords = pack.nwords;
 
-    const int nblk_alloc = std::max(block, nmcu * bpm);
+    const int nblk_alloc = std::max(pack.block, nmcu * bpm);
 
-    job.chunks = int(nch);
+    job.chunks = int(pack.nch);
     job.segments = int(nseg);
     job.dc_groups = dc_groups;
 
-    // Device sizes for every binding.
     VkDeviceSize* need = job.need;
-    need[BindWords] = VkDeviceSize(nwords) * 4;
-    need[BindChunks] = nch * sizeof(ChunkGpu);
+    need[BindWords] = VkDeviceSize(pack.nwords) * 4;
+    need[BindChunks] = pack.nch * sizeof(ChunkGpu);
     need[BindSegs] = nseg * sizeof(SegGpu);
     need[BindTables] = sizeof(TablesGpu);
-    need[BindStIn] = nch * 8;
-    need[BindStOut] = nch * 8;
-    need[BindCnt] = nch * 4;
-    need[BindCps] = nch * kNcp * 8;
-    need[BindCpc] = nch * kNcp * 4;
-    need[BindFirst] = nch * 4;
+    need[BindStIn] = pack.nch * 8;
+    need[BindStOut] = pack.nch * 8;
+    need[BindCnt] = pack.nch * 4;
+    need[BindCps] = pack.nch * kNcp * 8;
+    need[BindCpc] = pack.nch * kNcp * 4;
+    need[BindFirst] = pack.nch * 4;
     need[BindCoef] = VkDeviceSize(nblk_alloc) * 32 * 4;
     need[BindDcd] = VkDeviceSize(nblk_alloc) * 4;
     need[BindQt] = sizeof(natural_qt);
@@ -1699,10 +1754,12 @@ bool JpegCompute::prepare(image::jpeg::JpegDecoder& decoder, JpegComputeJob& job
     for (Binding b : uploads)
         job.src_size[b] = need[b];
 
+    const u64 t_upload0 = Time::us();
+    u8* dst = job.staging.mapped;
     std::memcpy(dst + job.src_offset[BindTables], &tab_entry->tables, sizeof(TablesGpu));
     std::memcpy(dst + job.src_offset[BindQt], tab_entry->qt, sizeof(tab_entry->qt));
     m_staging.flush(job.staging, 0, total);
-    job.upload_ms = lap();
+    job.upload_ms = double(Time::us() - t_upload0) / 1000.0;
 
     return true;
 }
