@@ -149,7 +149,10 @@ namespace mango::image::jpeg
             }
         }
         valueOffset[18] = 0;
-        maxcode[17] = 0xfffff; // ensures jpeg_huff_decode terminates
+        // All-ones sentinel: maxcode[1..16] are left-justified, so a small
+        // constant like 0xfffff never stops the walk and an invalid code would
+        // run size past 16 into out-of-bounds table memory.
+        maxcode[17] = ~HuffmanType(0);
 
         // Compute lookahead tables to speed up decoding.
         // First we set all the table entries to 0, indicating "too long";
@@ -241,15 +244,23 @@ namespace mango::image::jpeg
         else
         {
             HuffmanType x = (buffer.data << (JPEG_REGISTER_BITS - buffer.remain));
-            while (x > maxcode[c_size])
+            while (c_size < 17 && x > maxcode[c_size])
             {
                 ++c_size;
             }
 
+            if (c_size > 16)
+            {
+                // Invalid code. Consume a byte's worth so the stream still moves.
+                buffer.remain -= 16;
+                return 0;
+            }
+
             HuffmanType offset = (x >> (JPEG_REGISTER_BITS - c_size)) + valueOffset[c_size];
             if (offset > 255)
-                return 0; // decoding error
-            symbol = value[offset];
+                symbol = 0; // decoding error
+            else
+                symbol = value[offset];
         }
 
         buffer.remain -= c_size;
@@ -347,12 +358,19 @@ namespace mango::image::jpeg
         JPEG_HUFF_NOINLINE
         int huff_decode_long(const HuffmanTable& table, HuffmanType top, int size)
         {
-            while (top > table.maxcode[size])
+            while (size < 17 && top > table.maxcode[size])
             {
                 ++size;
             }
 
+            // Invalid bitstream: do not index past maxcode[16] / value[255].
+            // Return symbol 0 with a non-zero length so the caller still advances.
+            if (size > 16)
+                return 16 << 8;
+
             HuffmanType offset = (top >> (JPEG_REGISTER_BITS - size)) + table.valueOffset[size];
+            if (offset > 255)
+                return size << 8;
             int symbol = table.value[offset];
             return symbol | (size << 8);
         }
@@ -426,6 +444,8 @@ namespace mango::image::jpeg
                         if (bits)
                         {
                             i += (symbol >> 4);
+                            if (i >= 64)
+                                break;
                             symbol = buffer.receive(bits);
                             if constexpr (Spectral)
                             {
@@ -550,6 +570,8 @@ namespace mango::image::jpeg
                     }
 
                     i += symbol >> 4;
+                    if (i >= 64)
+                        break;
 
                     if (remain < bits) [[unlikely]]
                     {
@@ -659,6 +681,8 @@ namespace mango::image::jpeg
                 s &= 15;
 
                 i += r;
+                if (i > end)
+                    break;
 
                 if (s)
                 {
